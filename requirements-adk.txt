@@ -1,0 +1,3 @@
+google-adk==2.8.0
+litellm==1.98.0
+redis==8.1.0

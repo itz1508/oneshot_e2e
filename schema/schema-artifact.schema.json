@@ -1,0 +1,38 @@
+{
+  "$id": "urn:oneshot:schema:schema-artifact:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "evidence_ids": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "researcher_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_document": {
+      "type": "object"
+    },
+    "schema_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "target": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_id",
+    "researcher_id",
+    "target",
+    "schema_document",
+    "evidence_ids"
+  ],
+  "type": "object"
+}

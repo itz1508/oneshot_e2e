@@ -1,0 +1,102 @@
+{
+  "$defs": {
+    "artifact_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "digest_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "evidence_ref": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "provenance": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "source": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "statement": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "source",
+        "statement",
+        "provenance"
+      ],
+      "type": "object"
+    },
+    "root_cause": {
+      "additionalProperties": false,
+      "properties": {
+        "actual": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "expected": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "issue": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "recheck_target": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "required_correction": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "issue",
+        "expected",
+        "actual",
+        "evidence_ids",
+        "required_correction",
+        "recheck_target"
+      ],
+      "type": "object"
+    },
+    "validation_result": {
+      "enum": [
+        "VALID",
+        "NOT_VALID"
+      ],
+      "type": "string"
+    },
+    "workflow_result": {
+      "enum": [
+        "PASSED",
+        "ROOT_CAUSE"
+      ],
+      "type": "string"
+    }
+  },
+  "$id": "urn:oneshot:schema:common:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {},
+  "required": [],
+  "type": "object"
+}

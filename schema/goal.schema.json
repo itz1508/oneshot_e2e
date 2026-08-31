@@ -1,0 +1,72 @@
+{
+  "$id": "urn:oneshot:schema:goal:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "goal_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "objective": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "researcher_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "success_criteria": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "criterion_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "expected_result": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "measurement": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "statement": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "criterion_id",
+          "statement",
+          "measurement",
+          "expected_result",
+          "evidence_ids"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "success_meaning": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "goal_id",
+    "researcher_id",
+    "objective",
+    "success_meaning",
+    "success_criteria"
+  ],
+  "type": "object"
+}

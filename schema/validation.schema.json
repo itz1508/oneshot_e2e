@@ -1,0 +1,100 @@
+{
+  "$id": "urn:oneshot:schema:validation:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "fixture_validation": {
+      "additionalProperties": false,
+      "properties": {
+        "assertion_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "fixture_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "plan_id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "plan_id",
+        "fixture_id",
+        "assertion_ids"
+      ],
+      "type": "object"
+    },
+    "goal_validation": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "goal_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "plan_id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "plan_id",
+        "goal_id",
+        "criterion_ids"
+      ],
+      "type": "object"
+    },
+    "plan_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "researcher_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_validation": {
+      "additionalProperties": false,
+      "properties": {
+        "plan_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "schema_id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "plan_id",
+        "schema_id"
+      ],
+      "type": "object"
+    },
+    "validation_id": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "validation_id",
+    "researcher_id",
+    "plan_id",
+    "schema_validation",
+    "fixture_validation",
+    "goal_validation"
+  ],
+  "type": "object"
+}

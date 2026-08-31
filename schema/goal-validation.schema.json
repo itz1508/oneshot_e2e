@@ -1,0 +1,61 @@
+{
+  "$id": "urn:oneshot:schema:goal-validation:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "criterion_results": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "criterion_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "mapped_plan_refs": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "satisfied": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "criterion_id",
+          "mapped_plan_refs",
+          "satisfied"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "urn:oneshot:schema:common:1#/$defs/evidence_ref"
+      },
+      "type": "array"
+    },
+    "goal_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "plan_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "result": {
+      "$ref": "urn:oneshot:schema:common:1#/$defs/validation_result"
+    }
+  },
+  "required": [
+    "plan_id",
+    "goal_id",
+    "criterion_results",
+    "result",
+    "evidence"
+  ],
+  "type": "object"
+}

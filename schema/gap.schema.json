@@ -1,0 +1,119 @@
+{
+  "$id": "urn:oneshot:schema:gap:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "result": {
+            "const": "PASSED"
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "root_cause"
+          ]
+        },
+        "properties": {
+          "gap_0": {
+            "const": true
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "result": {
+            "const": "ROOT_CAUSE"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "gap_0": {
+            "const": false
+          }
+        },
+        "required": [
+          "root_cause"
+        ]
+      }
+    }
+  ],
+  "properties": {
+    "gap_0": {
+      "type": "boolean"
+    },
+    "plan_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "resolved_gaps": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "affected_branch": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "expected_resolved_state": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "gap_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "issue": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "required_correction": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "resolution_evidence": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "gap_id",
+          "affected_branch",
+          "issue",
+          "evidence_ids",
+          "required_correction",
+          "expected_resolved_state",
+          "resolution_evidence"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "result": {
+      "$ref": "urn:oneshot:schema:common:1#/$defs/workflow_result"
+    },
+    "root_cause": {
+      "$ref": "urn:oneshot:schema:common:1#/$defs/root_cause"
+    }
+  },
+  "required": [
+    "plan_id",
+    "result",
+    "resolved_gaps",
+    "gap_0"
+  ],
+  "type": "object"
+}

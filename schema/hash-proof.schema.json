@@ -1,0 +1,32 @@
+{
+  "$id": "urn:oneshot:schema:hash-proof:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "algorithm": {
+      "const": "sha256",
+      "type": "string"
+    },
+    "canonicalization_id": {
+      "const": "oneshot-jcs-rfc8785-v1",
+      "type": "string"
+    },
+    "created_hash": {
+      "$ref": "urn:oneshot:schema:common:1#/$defs/digest_sha256"
+    },
+    "equal": {
+      "type": "boolean"
+    },
+    "recomputed_hash": {
+      "$ref": "urn:oneshot:schema:common:1#/$defs/digest_sha256"
+    }
+  },
+  "required": [
+    "canonicalization_id",
+    "algorithm",
+    "created_hash",
+    "recomputed_hash",
+    "equal"
+  ],
+  "type": "object"
+}

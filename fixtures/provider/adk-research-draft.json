@@ -1,0 +1,50 @@
+{
+  "summary": "The requested product needs a small deterministic implementation plan with visible success criteria.",
+  "requirements": [
+    "The product must execute the requested outcome through the canonical workflow.",
+    "The result must expose deterministic validation evidence and a final hash proof."
+  ],
+  "dependencies": [
+    {
+      "description": "Deterministic proof depends on the requested product behavior requirement.",
+      "required_by": [
+        1
+      ]
+    }
+  ],
+  "plan_steps": [
+    {
+      "description": "Implement the requested product behavior.",
+      "responsibility": "ProductImplementation",
+      "requirement_indexes": [
+        0
+      ]
+    },
+    {
+      "description": "Validate the completed product and produce deterministic proof.",
+      "responsibility": "CanonicalProof",
+      "requirement_indexes": [
+        1
+      ]
+    }
+  ],
+  "success_meaning": "The requested product behavior is represented by the plan and reaches deterministic canonical proof.",
+  "success_criteria": [
+    {
+      "statement": "Requested product behavior is represented in the plan.",
+      "measurement": "At least one plan step references the product requirement.",
+      "expected_result": "mapped plan step",
+      "requirement_indexes": [
+        0
+      ]
+    },
+    {
+      "statement": "Deterministic proof is represented in the plan.",
+      "measurement": "At least one plan step references the proof requirement.",
+      "expected_result": "mapped proof step",
+      "requirement_indexes": [
+        1
+      ]
+    }
+  ]
+}

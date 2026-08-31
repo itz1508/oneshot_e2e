@@ -1,0 +1,64 @@
+{
+  "$id": "urn:oneshot:schema:confirmed-package:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "confirmed": {
+      "const": true,
+      "type": "boolean"
+    },
+    "core": {
+      "additionalProperties": false,
+      "properties": {
+        "audit": {
+          "$ref": "urn:oneshot:schema:audit:1"
+        },
+        "evaluation": {
+          "$ref": "urn:oneshot:schema:evaluation:1"
+        },
+        "fixture": {
+          "$ref": "urn:oneshot:schema:fixture:1"
+        },
+        "gap_analysis": {
+          "$ref": "urn:oneshot:schema:gap:1"
+        },
+        "goal": {
+          "$ref": "urn:oneshot:schema:goal:1"
+        },
+        "plan": {
+          "$ref": "urn:oneshot:schema:plan:1"
+        },
+        "researcher": {
+          "$ref": "urn:oneshot:schema:researcher:1"
+        },
+        "schema_artifact": {
+          "$ref": "urn:oneshot:schema:schema-artifact:1"
+        },
+        "triple_validation": {
+          "$ref": "urn:oneshot:schema:triple-validation:1"
+        },
+        "validation": {
+          "$ref": "urn:oneshot:schema:validation:1"
+        }
+      },
+      "required": [
+        "researcher",
+        "plan",
+        "schema_artifact",
+        "fixture",
+        "goal",
+        "validation",
+        "audit",
+        "gap_analysis",
+        "evaluation",
+        "triple_validation"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "confirmed",
+    "core"
+  ],
+  "type": "object"
+}

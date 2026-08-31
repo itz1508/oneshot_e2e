@@ -1,0 +1,70 @@
+{
+  "$id": "urn:oneshot:schema:contract-registry:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "contracts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_type": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "consumers": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "contract_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "producer": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "schema_digest": {
+            "$ref": "urn:oneshot:schema:common:1#/$defs/digest_sha256"
+          },
+          "schema_path": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "version": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "contract_id",
+          "version",
+          "artifact_type",
+          "schema_path",
+          "schema_digest",
+          "producer",
+          "consumers"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "registry_id": {
+      "const": "oneshot-contract-registry",
+      "type": "string"
+    },
+    "registry_version": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "registry_id",
+    "registry_version",
+    "contracts"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,57 @@
+{
+  "$id": "urn:oneshot:schema:prompt:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "context": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "context_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "statement": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "context_id",
+          "statement"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "intent": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "prompt_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "requested_outcome": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "research_direction": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "prompt_id",
+    "intent",
+    "requested_outcome",
+    "context",
+    "research_direction"
+  ],
+  "type": "object"
+}

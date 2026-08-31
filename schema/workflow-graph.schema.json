@@ -1,0 +1,138 @@
+{
+  "$id": "urn:oneshot:schema:workflow-graph:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifact_ownership": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "consumers": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "owner": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "artifact",
+          "owner",
+          "consumers"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "edges": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "from": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "to": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "artifact"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "nodes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "source",
+              "processor",
+              "validator",
+              "gate",
+              "proof",
+              "terminal"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "parallel_groups": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "group_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "join": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "group_id",
+          "members",
+          "join"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "version": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "workflow_id": {
+      "const": "oneshot-canonical-workflow",
+      "type": "string"
+    }
+  },
+  "required": [
+    "workflow_id",
+    "version",
+    "nodes",
+    "edges",
+    "artifact_ownership",
+    "parallel_groups"
+  ],
+  "type": "object"
+}

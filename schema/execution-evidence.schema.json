@@ -1,0 +1,118 @@
+{
+  "$id": "urn:oneshot:schema:execution-evidence:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExecutionEvidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "execution_id",
+    "sandbox_id",
+    "confirmed_package_hash",
+    "started_at",
+    "completed_at",
+    "commands",
+    "exit_codes",
+    "stdout_refs",
+    "stderr_refs",
+    "file_changes",
+    "bytes_written",
+    "resource_usage",
+    "environment_allowlist_used",
+    "network_policy_used",
+    "cleanup_result",
+    "hash_sandbox"
+  ],
+  "properties": {
+    "execution_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sandbox_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "confirmed_package_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    },
+    "commands": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "exit_codes": {
+      "type": "array",
+      "items": { "type": "integer" }
+    },
+    "stdout_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "stderr_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "file_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "action", "bytes"],
+        "properties": {
+          "path": { "type": "string" },
+          "action": { "type": "string", "enum": ["created", "modified", "deleted"] },
+          "bytes": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "bytes_written": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "resource_usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["duration_ms"],
+      "properties": {
+        "duration_ms": { "type": "number", "minimum": 0 },
+        "peak_memory_mb": { "type": "number", "minimum": 0 },
+        "cpu_time_ms": { "type": "number", "minimum": 0 }
+      }
+    },
+    "timeout_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["timed_out", "limit_seconds", "elapsed_seconds"],
+      "properties": {
+        "timed_out": { "type": "boolean" },
+        "limit_seconds": { "type": "number", "minimum": 0 },
+        "elapsed_seconds": { "type": "number", "minimum": 0 }
+      }
+    },
+    "environment_allowlist_used": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "network_policy_used": {
+      "type": "string"
+    },
+    "cleanup_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workspace_cleaned", "processes_terminated"],
+      "properties": {
+        "workspace_cleaned": { "type": "boolean" },
+        "processes_terminated": { "type": "boolean" }
+      }
+    },
+    "hash_sandbox": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

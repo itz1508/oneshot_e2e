@@ -1,0 +1,54 @@
+{
+  "$id": "urn:oneshot:schema:fixture-validation:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "assertion_results": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "actual": {},
+          "assertion_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "expected": {},
+          "satisfied": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "assertion_id",
+          "satisfied"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "urn:oneshot:schema:common:1#/$defs/evidence_ref"
+      },
+      "type": "array"
+    },
+    "fixture_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "plan_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "result": {
+      "$ref": "urn:oneshot:schema:common:1#/$defs/validation_result"
+    }
+  },
+  "required": [
+    "plan_id",
+    "fixture_id",
+    "assertion_results",
+    "result",
+    "evidence"
+  ],
+  "type": "object"
+}

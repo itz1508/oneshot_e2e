@@ -1,0 +1,94 @@
+{
+  "$id": "urn:oneshot:schema:researcher:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "evidence": {
+      "items": {
+        "$ref": "urn:oneshot:schema:common:1#/$defs/evidence_ref"
+      },
+      "type": "array"
+    },
+    "fixture_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "goal_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "plan_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "prompt_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "requirement_ids": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "researcher_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "success_definition": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "success_criteria_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "success_meaning": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "success_criteria_ids",
+        "success_meaning",
+        "evidence_ids"
+      ],
+      "type": "object"
+    },
+    "validation_id": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "researcher_id",
+    "prompt_id",
+    "plan_id",
+    "schema_id",
+    "fixture_id",
+    "goal_id",
+    "validation_id",
+    "requirement_ids",
+    "evidence",
+    "success_definition"
+  ],
+  "type": "object"
+}

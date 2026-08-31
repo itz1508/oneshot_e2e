@@ -1,0 +1,2856 @@
+# OneShot Canonical Contract & Verification Specification
+
+## 1. Purpose
+
+This specification completes the machine-readable definitions required by the OneShot workflow:
+
+```text
+Prompt_id
+→ Researcher
+→ Researcher(id)
+→ Planner
+→ audit_id
+→ Refactor
+→ plan_id
+→ Gap Analysis
+→ gap_0 + plan_id
+→ Evaluation
+→ plan_id
+→ Triple Validation
+   ├── Schema Validation
+   ├── Fixture Validation
+   └── Goal Validation
+→ CONFIRMED
+→ CREATE HASH
+→ HASH
+→ DONE
+```
+
+It defines:
+
+1. Canonical JSON Schema files and fields
+2. `Researcher(id)`
+3. `audit_id`
+4. Gap records and `gap_0`
+5. Evaluation evidence and output
+6. `validation_id`
+7. Confirmed package
+8. Canonicalization bytes
+9. Hash creation and verification
+10. Machine-readable workflow graph
+11. Contract registry and contract identity
+12. Concrete E2E fixtures
+
+---
+
+# 2. Canonical Contract Directory
+
+```text
+schema/
+├── common.schema.json
+├── researcher.schema.json
+├── plan.schema.json
+├── schema-artifact.schema.json
+├── fixture.schema.json
+├── goal.schema.json
+├── validation.schema.json
+├── audit.schema.json
+├── gap.schema.json
+├── evaluation.schema.json
+├── triple-validation.schema.json
+├── confirmed-package.schema.json
+├── hash-proof.schema.json
+├── workflow-graph.schema.json
+└── contract-registry.schema.json
+```
+
+All schemas use JSON Schema Draft 2020-12.
+
+Canonical contract identity uses URN identifiers:
+
+```text
+urn:oneshot:schema:<contract-name>:<version>
+```
+
+Example:
+
+```text
+urn:oneshot:schema:researcher:1
+```
+
+---
+
+# 3. Common Definitions
+
+## `common.schema.json`
+
+Canonical reusable definitions:
+
+```json
+{
+  "$id": "urn:oneshot:schema:common:1",
+  "type": "object",
+  "$defs": {
+    "artifact_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "digest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+
+    "validation_result": {
+      "type": "string",
+      "enum": ["VALID", "NOT_VALID"]
+    },
+
+    "workflow_result": {
+      "type": "string",
+      "enum": ["PASSED", "ROOT_CAUSE"]
+    },
+
+    "evidence_ref": {
+      "type": "object",
+      "properties": {
+        "evidence_id": {
+          "$ref": "#/$defs/artifact_id"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "evidence_id",
+        "source",
+        "statement",
+        "provenance"
+      ],
+      "additionalProperties": false
+    },
+
+    "root_cause": {
+      "type": "object",
+      "properties": {
+        "issue": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/artifact_id"
+          },
+          "uniqueItems": true
+        },
+        "required_correction": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recheck_target": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "issue",
+        "expected",
+        "actual",
+        "evidence_ids",
+        "required_correction",
+        "recheck_target"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
+```
+
+---
+
+# 4. Researcher(id)
+
+`Researcher(id)` is the Researcher-owned aggregate that connects the complete researched package.
+
+## Canonical shape
+
+```text
+Researcher(id)
+├── researcher_id
+├── prompt_id
+├── plan_id
+├── schema_id
+├── fixture_id
+├── goal_id
+├── validation_id
+├── requirement_ids
+├── evidence
+└── success_definition
+```
+
+## `researcher.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:researcher:1",
+  "type": "object",
+
+  "properties": {
+    "researcher_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "prompt_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "plan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "schema_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "fixture_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "goal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "validation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "requirement_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "statement": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "provenance": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "required": [
+          "evidence_id",
+          "source",
+          "statement",
+          "provenance"
+        ],
+
+        "additionalProperties": false
+      }
+    },
+
+    "success_definition": {
+      "type": "object",
+
+      "properties": {
+        "success_criteria_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+
+        "success_meaning": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+
+      "required": [
+        "success_criteria_ids",
+        "success_meaning",
+        "evidence_ids"
+      ],
+
+      "additionalProperties": false
+    }
+  },
+
+  "required": [
+    "researcher_id",
+    "prompt_id",
+    "plan_id",
+    "schema_id",
+    "fixture_id",
+    "goal_id",
+    "validation_id",
+    "requirement_ids",
+    "evidence",
+    "success_definition"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+---
+
+# 5. Plan
+
+The plan is the logical artifact that moves through Planner, Refactor, Gap Analysis, Evaluation, and Triple Validation.
+
+## `plan.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:plan:1",
+  "type": "object",
+
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "researcher_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "requirements": {
+      "type": "array",
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "requirement_id": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "statement": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        },
+
+        "required": [
+          "requirement_id",
+          "statement",
+          "evidence_ids"
+        ],
+
+        "additionalProperties": false
+      }
+    },
+
+    "dependencies": {
+      "type": "array",
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "dependency_id": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "required_by": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+
+        "required": [
+          "dependency_id",
+          "description",
+          "required_by"
+        ],
+
+        "additionalProperties": false
+      }
+    },
+
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "step_id": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "responsibility": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+
+          "requirement_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+
+          "goal_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+
+          "fixture_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+
+          "schema_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        },
+
+        "required": [
+          "step_id",
+          "description",
+          "responsibility",
+          "depends_on",
+          "requirement_refs",
+          "goal_refs",
+          "fixture_refs",
+          "schema_refs"
+        ],
+
+        "additionalProperties": false
+      }
+    },
+
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+
+    "revision_evidence": {
+      "type": "array",
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+
+          "affected_area": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "audit_finding_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "required": [
+          "revision",
+          "affected_area",
+          "reason",
+          "audit_finding_id"
+        ],
+
+        "additionalProperties": false
+      }
+    }
+  },
+
+  "required": [
+    "plan_id",
+    "researcher_id",
+    "requirements",
+    "dependencies",
+    "steps",
+    "revision",
+    "revision_evidence"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+The same `plan_id` identifies every revision of the same logical plan.
+
+---
+
+# 6. Schema Artifact
+
+`schema_id` identifies the Researcher-owned canonical structure required for Schema Validation.
+
+## `schema-artifact.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:schema-artifact:1",
+  "type": "object",
+
+  "properties": {
+    "schema_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "researcher_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "target": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "schema_document": {
+      "type": "object"
+    },
+
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  },
+
+  "required": [
+    "schema_id",
+    "researcher_id",
+    "target",
+    "schema_document",
+    "evidence_ids"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+---
+
+# 7. Goal
+
+## `goal.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:goal:1",
+  "type": "object",
+
+  "properties": {
+    "goal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "researcher_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "objective": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "success_meaning": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "success_criteria": {
+      "type": "array",
+      "minItems": 1,
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "criterion_id": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "statement": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "measurement": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "expected_result": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        },
+
+        "required": [
+          "criterion_id",
+          "statement",
+          "measurement",
+          "expected_result",
+          "evidence_ids"
+        ],
+
+        "additionalProperties": false
+      }
+    }
+  },
+
+  "required": [
+    "goal_id",
+    "researcher_id",
+    "objective",
+    "success_meaning",
+    "success_criteria"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+---
+
+# 8. Fixture
+
+Fixture assertions provide deterministic proof cases for `plan_id`.
+
+## `fixture.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:fixture:1",
+  "type": "object",
+
+  "properties": {
+    "fixture_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "researcher_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "plan_assertions": {
+      "type": "array",
+      "minItems": 1,
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "assertion_id": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "operator": {
+            "type": "string",
+            "enum": [
+              "exists",
+              "equals",
+              "contains",
+              "matchesSchema",
+              "references",
+              "edgeExists",
+              "allFilesSpecified"
+            ]
+          },
+
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "expected": {},
+
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        },
+
+        "required": [
+          "assertion_id",
+          "operator",
+          "target",
+          "evidence_ids"
+        ],
+
+        "additionalProperties": false
+      }
+    }
+  },
+
+  "required": [
+    "fixture_id",
+    "researcher_id",
+    "plan_assertions"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+---
+
+# 9. validation_id
+
+`validation_id` is the Researcher-owned validation routing artifact.
+
+It connects the completed `plan_id` to its three proof sources.
+
+```text
+validation_id
+├── plan_id
+├── schema_validation
+│   ├── plan_id
+│   └── schema_id
+├── fixture_validation
+│   ├── plan_id
+│   ├── fixture_id
+│   └── assertion_ids
+└── goal_validation
+    ├── plan_id
+    ├── goal_id
+    └── criterion_ids
+```
+
+## `validation.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:validation:1",
+  "type": "object",
+
+  "properties": {
+    "validation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "researcher_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "plan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "schema_validation": {
+      "type": "object",
+
+      "properties": {
+        "plan_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "schema_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+
+      "required": [
+        "plan_id",
+        "schema_id"
+      ],
+
+      "additionalProperties": false
+    },
+
+    "fixture_validation": {
+      "type": "object",
+
+      "properties": {
+        "plan_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "fixture_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "assertion_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+
+      "required": [
+        "plan_id",
+        "fixture_id",
+        "assertion_ids"
+      ],
+
+      "additionalProperties": false
+    },
+
+    "goal_validation": {
+      "type": "object",
+
+      "properties": {
+        "plan_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "goal_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "criterion_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+
+      "required": [
+        "plan_id",
+        "goal_id",
+        "criterion_ids"
+      ],
+
+      "additionalProperties": false
+    }
+  },
+
+  "required": [
+    "validation_id",
+    "researcher_id",
+    "plan_id",
+    "schema_validation",
+    "fixture_validation",
+    "goal_validation"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+---
+
+# 10. audit_id
+
+`audit_id` is Planner's durable review artifact.
+
+```text
+audit_id
+├── audit_id
+├── researcher_id
+├── plan_id
+├── reviewed_areas
+└── findings
+```
+
+## `audit.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:audit:1",
+  "type": "object",
+
+  "properties": {
+    "audit_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "researcher_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "plan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "reviewed_areas": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+
+    "findings": {
+      "type": "array",
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "finding_id": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "area": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "finding": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "affected_plan_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+
+          "required_refinement": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "required": [
+          "finding_id",
+          "area",
+          "finding",
+          "affected_plan_refs",
+          "evidence_ids",
+          "required_refinement"
+        ],
+
+        "additionalProperties": false
+      }
+    }
+  },
+
+  "required": [
+    "audit_id",
+    "researcher_id",
+    "plan_id",
+    "reviewed_areas",
+    "findings"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+Planner's `reviewed_areas` normally include:
+
+```text
+evidence sufficiency
+file or subject coverage
+requirement coverage
+dependency coverage
+goal clarity
+success criteria
+fixture usability
+schema applicability
+validation traceability
+plan structure
+unresolved findings
+```
+
+---
+
+# 11. Gap Record
+
+Gap Analysis identifies and repairs concrete missing or incomplete portions of the plan.
+
+## Gap record
+
+```text
+gap
+├── gap_id
+├── plan_id
+├── affected_branch
+├── issue
+├── evidence_ids
+├── required_correction
+├── expected_resolved_state
+└── resolution_evidence
+```
+
+## Gap Analysis output
+
+```text
+plan_id
++
+resolved_gaps[]
++
+gap_0 = true
+```
+
+`gap_0 = true` means the fresh recheck found zero remaining identified gaps.
+
+## `gap.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:gap:1",
+  "type": "object",
+
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "resolved_gaps": {
+      "type": "array",
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "gap_id": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "affected_branch": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "issue": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+
+          "required_correction": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "expected_resolved_state": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "resolution_evidence": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "required": [
+          "gap_id",
+          "affected_branch",
+          "issue",
+          "evidence_ids",
+          "required_correction",
+          "expected_resolved_state",
+          "resolution_evidence"
+        ],
+
+        "additionalProperties": false
+      }
+    },
+
+    "gap_0": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+
+  "required": [
+    "plan_id",
+    "resolved_gaps",
+    "gap_0"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+---
+
+# 12. Evaluation Evidence and Output
+
+Evaluation receives:
+
+```text
+gap_0 + plan_id
+```
+
+It returns the same logical `plan_id` with evaluation evidence.
+
+## Evaluation evidence areas
+
+```text
+research alignment
+requirement coverage
+dependency coherence
+plan coherence
+goal traceability
+success-criteria traceability
+fixture traceability
+schema traceability
+execution meaning
+```
+
+## `evaluation.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:evaluation:1",
+  "type": "object",
+
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "result": {
+      "type": "string",
+      "enum": [
+        "PASSED",
+        "ROOT_CAUSE"
+      ]
+    },
+
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "check_id": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "subject": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "finding": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        },
+
+        "required": [
+          "check_id",
+          "subject",
+          "finding",
+          "evidence_ids"
+        ],
+
+        "additionalProperties": false
+      }
+    },
+
+    "root_cause": {
+      "type": "object",
+
+      "properties": {
+        "issue": {
+          "type": "string"
+        },
+
+        "expected": {
+          "type": "string"
+        },
+
+        "actual": {
+          "type": "string"
+        },
+
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+
+        "required_correction": {
+          "type": "string"
+        },
+
+        "recheck_target": {
+          "type": "string"
+        }
+      },
+
+      "required": [
+        "issue",
+        "expected",
+        "actual",
+        "evidence_ids",
+        "required_correction",
+        "recheck_target"
+      ],
+
+      "additionalProperties": false
+    }
+  },
+
+  "required": [
+    "plan_id",
+    "result",
+    "evidence"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+A successful Evaluation is:
+
+```json
+{
+  "plan_id": "plan:example",
+  "result": "PASSED",
+  "evidence": [
+    {
+      "check_id": "evaluation:requirements",
+      "subject": "requirement coverage",
+      "finding": "Every researched requirement maps to at least one plan step.",
+      "evidence_ids": [
+        "evidence:requirements-map"
+      ]
+    }
+  ]
+}
+```
+
+---
+
+# 13. Triple Validation
+
+## Schema Validation
+
+Input:
+
+```text
+plan_id + schema_id
+```
+
+Output:
+
+```text
+VALID | NOT_VALID
+```
+
+## Fixture Validation
+
+Input:
+
+```text
+plan_id + fixture_id
+```
+
+Output:
+
+```text
+VALID | NOT_VALID
+```
+
+## Goal Validation
+
+Input:
+
+```text
+plan_id + goal_id
+```
+
+Output:
+
+```text
+VALID | NOT_VALID
+```
+
+## `triple-validation.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:triple-validation:1",
+  "type": "object",
+
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "validation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "schema_validation": {
+      "$ref": "#/$defs/validator_result"
+    },
+
+    "fixture_validation": {
+      "$ref": "#/$defs/validator_result"
+    },
+
+    "goal_validation": {
+      "$ref": "#/$defs/validator_result"
+    },
+
+    "all_valid": {
+      "type": "boolean"
+    }
+  },
+
+  "required": [
+    "plan_id",
+    "validation_id",
+    "schema_validation",
+    "fixture_validation",
+    "goal_validation",
+    "all_valid"
+  ],
+
+  "additionalProperties": false,
+
+  "$defs": {
+    "validator_result": {
+      "type": "object",
+
+      "properties": {
+        "result": {
+          "type": "string",
+          "enum": [
+            "VALID",
+            "NOT_VALID"
+          ]
+        },
+
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+
+      "required": [
+        "result",
+        "evidence_ids"
+      ],
+
+      "additionalProperties": false
+    }
+  }
+}
+```
+
+`all_valid` is calculated as:
+
+```text
+schema_validation.result == VALID
+AND
+fixture_validation.result == VALID
+AND
+goal_validation.result == VALID
+```
+
+---
+
+# 14. Confirmed Package
+
+The confirmed package is the exact immutable workflow content accepted by Triple Validation.
+
+## Confirmation core
+
+```text
+confirmation_core
+├── researcher
+├── plan
+├── schema_artifact
+├── fixture
+├── goal
+├── validation
+├── audit
+├── gap_analysis
+├── evaluation
+└── triple_validation
+```
+
+## `confirmed-package.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:confirmed-package:1",
+  "type": "object",
+
+  "properties": {
+    "confirmed": {
+      "type": "boolean",
+      "const": true
+    },
+
+    "core": {
+      "type": "object",
+
+      "properties": {
+        "researcher": {
+          "type": "object"
+        },
+
+        "plan": {
+          "type": "object"
+        },
+
+        "schema_artifact": {
+          "type": "object"
+        },
+
+        "fixture": {
+          "type": "object"
+        },
+
+        "goal": {
+          "type": "object"
+        },
+
+        "validation": {
+          "type": "object"
+        },
+
+        "audit": {
+          "type": "object"
+        },
+
+        "gap_analysis": {
+          "type": "object"
+        },
+
+        "evaluation": {
+          "type": "object"
+        },
+
+        "triple_validation": {
+          "type": "object"
+        }
+      },
+
+      "required": [
+        "researcher",
+        "plan",
+        "schema_artifact",
+        "fixture",
+        "goal",
+        "validation",
+        "audit",
+        "gap_analysis",
+        "evaluation",
+        "triple_validation"
+      ],
+
+      "additionalProperties": false
+    }
+  },
+
+  "required": [
+    "confirmed",
+    "core"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+The nested artifacts are independently validated using their corresponding canonical schemas before the confirmation package is accepted.
+
+---
+
+# 15. Canonicalization Byte Algorithm
+
+Canonicalization identity:
+
+```text
+oneshot-jcs-rfc8785-v1
+```
+
+Hash identity:
+
+```text
+sha256
+```
+
+Combined proof identity:
+
+```text
+oneshot-jcs-rfc8785-sha256-v1
+```
+
+## Exact operation
+
+Input:
+
+```text
+confirmed_package.core
+```
+
+Processing:
+
+```text
+1. Validate confirmed_package.
+2. Extract confirmed_package.core.
+3. Parse the core as JSON data.
+4. Canonicalize the JSON value using RFC 8785 JCS.
+5. Use the exact UTF-8 byte sequence emitted by JCS.
+6. Compute SHA-256 over those bytes.
+7. Encode the digest as lowercase hexadecimal.
+```
+
+Formally:
+
+```text
+canonical_bytes =
+    JCS_RFC8785(confirmed_package.core)
+
+HASH =
+    HEX_LOWER(
+        SHA256(canonical_bytes)
+    )
+```
+
+No timestamp, runtime status, filesystem path, checkpoint state, execution environment metadata, or packaging metadata participates in the comparable representation.
+
+The comparable object is:
+
+```text
+confirmed_package.core
+```
+
+The exact same object definition is used during creation and later verification.
+
+---
+
+# 16. Reference Python Hash Interface
+
+```python
+from __future__ import annotations
+
+import hashlib
+from typing import Any, Protocol
+
+
+class JCSCanonicalizer(Protocol):
+    def canonicalize(self, value: Any) -> bytes:
+        ...
+
+
+def create_hash(
+    confirmed_core: dict,
+    canonicalizer: JCSCanonicalizer,
+) -> str:
+    canonical_bytes = canonicalizer.canonicalize(confirmed_core)
+
+    return hashlib.sha256(
+        canonical_bytes
+    ).hexdigest()
+
+
+def verify_hash(
+    confirmed_core: dict,
+    expected_hash: str,
+    canonicalizer: JCSCanonicalizer,
+) -> bool:
+    actual_hash = create_hash(
+        confirmed_core=confirmed_core,
+        canonicalizer=canonicalizer,
+    )
+
+    return actual_hash == expected_hash
+```
+
+The `JCSCanonicalizer` implementation follows RFC 8785 exactly.
+
+This keeps the hash implementation independent from the library selected to perform JCS serialization.
+
+---
+
+# 17. Hash Proof
+
+## `hash-proof.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:hash-proof:1",
+  "type": "object",
+
+  "properties": {
+    "canonicalization_id": {
+      "type": "string",
+      "const": "oneshot-jcs-rfc8785-v1"
+    },
+
+    "algorithm": {
+      "type": "string",
+      "const": "sha256"
+    },
+
+    "created_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+
+    "recomputed_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+
+    "equal": {
+      "type": "boolean"
+    }
+  },
+
+  "required": [
+    "canonicalization_id",
+    "algorithm",
+    "created_hash",
+    "recomputed_hash",
+    "equal"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+Successful proof:
+
+```text
+created_hash == recomputed_hash
+```
+
+produces:
+
+```json
+{
+  "equal": true
+}
+```
+
+and routes to:
+
+```text
+DONE
+```
+
+---
+
+# 18. Machine-Readable Workflow Graph
+
+The machine graph represents workflow processors, artifact routes, ownership, and Triple Validation membership.
+
+## `workflow-graph.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:workflow-graph:1",
+  "type": "object",
+
+  "properties": {
+    "workflow_id": {
+      "type": "string",
+      "const": "oneshot-canonical-workflow"
+    },
+
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "processors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+
+    "transitions": {
+      "type": "array",
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+
+          "to": {
+            "type": "string"
+          },
+
+          "artifact": {
+            "type": "string"
+          }
+        },
+
+        "required": [
+          "from",
+          "to",
+          "artifact"
+        ],
+
+        "additionalProperties": false
+      }
+    },
+
+    "artifact_ownership": {
+      "type": "array",
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "artifact": {
+            "type": "string"
+          },
+
+          "owner": {
+            "type": "string"
+          },
+
+          "consumers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+
+        "required": [
+          "artifact",
+          "owner",
+          "consumers"
+        ],
+
+        "additionalProperties": false
+      }
+    },
+
+    "parallel_groups": {
+      "type": "array",
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "group_id": {
+            "type": "string"
+          },
+
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+
+          "join": {
+            "type": "string"
+          }
+        },
+
+        "required": [
+          "group_id",
+          "members",
+          "join"
+        ],
+
+        "additionalProperties": false
+      }
+    }
+  },
+
+  "required": [
+    "workflow_id",
+    "version",
+    "processors",
+    "transitions",
+    "artifact_ownership",
+    "parallel_groups"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+---
+
+# 19. Canonical Workflow Graph Instance
+
+```json
+{
+  "workflow_id": "oneshot-canonical-workflow",
+  "version": "1",
+
+  "processors": [
+    "Researcher",
+    "Planner",
+    "Refactor",
+    "GapAnalysis",
+    "Evaluation",
+    "TripleValidation",
+    "Confirmed",
+    "CreateHash",
+    "Hash",
+    "Done"
+  ],
+
+  "transitions": [
+    {
+      "from": "Prompt_id",
+      "to": "Researcher",
+      "artifact": "Prompt_id"
+    },
+
+    {
+      "from": "Researcher",
+      "to": "Planner",
+      "artifact": "plan_id"
+    },
+
+    {
+      "from": "Planner",
+      "to": "Refactor",
+      "artifact": "audit_id"
+    },
+
+    {
+      "from": "Refactor",
+      "to": "GapAnalysis",
+      "artifact": "plan_id"
+    },
+
+    {
+      "from": "GapAnalysis",
+      "to": "Evaluation",
+      "artifact": "gap_0+plan_id"
+    },
+
+    {
+      "from": "Evaluation",
+      "to": "TripleValidation",
+      "artifact": "plan_id"
+    },
+
+    {
+      "from": "TripleValidation",
+      "to": "Confirmed",
+      "artifact": "triple_validation"
+    },
+
+    {
+      "from": "Confirmed",
+      "to": "CreateHash",
+      "artifact": "confirmed_package"
+    },
+
+    {
+      "from": "CreateHash",
+      "to": "Hash",
+      "artifact": "HASH"
+    },
+
+    {
+      "from": "Hash",
+      "to": "Done",
+      "artifact": "verified_HASH"
+    }
+  ],
+
+  "artifact_ownership": [
+    {
+      "artifact": "Researcher(id)",
+      "owner": "Researcher",
+      "consumers": [
+        "Planner",
+        "TripleValidation"
+      ]
+    },
+
+    {
+      "artifact": "plan_id",
+      "owner": "Researcher",
+      "consumers": [
+        "Planner",
+        "Refactor",
+        "GapAnalysis",
+        "Evaluation",
+        "TripleValidation"
+      ]
+    },
+
+    {
+      "artifact": "schema_id",
+      "owner": "Researcher",
+      "consumers": [
+        "SchemaValidation"
+      ]
+    },
+
+    {
+      "artifact": "fixture_id",
+      "owner": "Researcher",
+      "consumers": [
+        "FixtureValidation"
+      ]
+    },
+
+    {
+      "artifact": "goal_id",
+      "owner": "Researcher",
+      "consumers": [
+        "GoalValidation"
+      ]
+    },
+
+    {
+      "artifact": "validation_id",
+      "owner": "Researcher",
+      "consumers": [
+        "TripleValidation"
+      ]
+    },
+
+    {
+      "artifact": "audit_id",
+      "owner": "Planner",
+      "consumers": [
+        "Refactor"
+      ]
+    },
+
+    {
+      "artifact": "gap_0",
+      "owner": "GapAnalysis",
+      "consumers": [
+        "Evaluation"
+      ]
+    },
+
+    {
+      "artifact": "HASH",
+      "owner": "CreateHash",
+      "consumers": [
+        "Hash"
+      ]
+    }
+  ],
+
+  "parallel_groups": [
+    {
+      "group_id": "TripleValidation",
+      "members": [
+        "SchemaValidation",
+        "FixtureValidation",
+        "GoalValidation"
+      ],
+      "join": "Confirmed"
+    }
+  ]
+}
+```
+
+---
+
+# 20. Contract Registry
+
+The contract registry identifies the canonical schema used for every workflow artifact.
+
+## Contract identity
+
+```text
+contract_id
++
+version
++
+schema_digest
+```
+
+Example:
+
+```text
+urn:oneshot:schema:plan:1
+```
+
+## `contract-registry.schema.json`
+
+```json
+{
+  "$id": "urn:oneshot:schema:contract-registry:1",
+  "type": "object",
+
+  "properties": {
+    "registry_id": {
+      "type": "string",
+      "const": "oneshot-contract-registry"
+    },
+
+    "registry_version": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "contracts": {
+      "type": "array",
+
+      "items": {
+        "type": "object",
+
+        "properties": {
+          "contract_id": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "artifact_type": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "schema_path": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "schema_digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+
+          "producer": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "consumers": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        },
+
+        "required": [
+          "contract_id",
+          "version",
+          "artifact_type",
+          "schema_path",
+          "schema_digest",
+          "producer",
+          "consumers"
+        ],
+
+        "additionalProperties": false
+      }
+    }
+  },
+
+  "required": [
+    "registry_id",
+    "registry_version",
+    "contracts"
+  ],
+
+  "additionalProperties": false
+}
+```
+
+---
+
+# 21. Contract Registry Instance
+
+```json
+{
+  "registry_id": "oneshot-contract-registry",
+  "registry_version": "1",
+
+  "contracts": [
+    {
+      "contract_id": "urn:oneshot:schema:researcher:1",
+      "version": "1",
+      "artifact_type": "Researcher(id)",
+      "schema_path": "schema/researcher.schema.json",
+      "schema_digest": "<sha256>",
+      "producer": "Researcher",
+      "consumers": [
+        "Planner",
+        "TripleValidation"
+      ]
+    },
+
+    {
+      "contract_id": "urn:oneshot:schema:plan:1",
+      "version": "1",
+      "artifact_type": "plan_id",
+      "schema_path": "schema/plan.schema.json",
+      "schema_digest": "<sha256>",
+      "producer": "Researcher",
+      "consumers": [
+        "Planner",
+        "Refactor",
+        "GapAnalysis",
+        "Evaluation",
+        "TripleValidation"
+      ]
+    },
+
+    {
+      "contract_id": "urn:oneshot:schema:audit:1",
+      "version": "1",
+      "artifact_type": "audit_id",
+      "schema_path": "schema/audit.schema.json",
+      "schema_digest": "<sha256>",
+      "producer": "Planner",
+      "consumers": [
+        "Refactor"
+      ]
+    },
+
+    {
+      "contract_id": "urn:oneshot:schema:gap:1",
+      "version": "1",
+      "artifact_type": "gap_0",
+      "schema_path": "schema/gap.schema.json",
+      "schema_digest": "<sha256>",
+      "producer": "GapAnalysis",
+      "consumers": [
+        "Evaluation"
+      ]
+    },
+
+    {
+      "contract_id": "urn:oneshot:schema:evaluation:1",
+      "version": "1",
+      "artifact_type": "evaluation",
+      "schema_path": "schema/evaluation.schema.json",
+      "schema_digest": "<sha256>",
+      "producer": "Evaluation",
+      "consumers": [
+        "TripleValidation"
+      ]
+    },
+
+    {
+      "contract_id": "urn:oneshot:schema:validation:1",
+      "version": "1",
+      "artifact_type": "validation_id",
+      "schema_path": "schema/validation.schema.json",
+      "schema_digest": "<sha256>",
+      "producer": "Researcher",
+      "consumers": [
+        "TripleValidation"
+      ]
+    },
+
+    {
+      "contract_id": "urn:oneshot:schema:confirmed-package:1",
+      "version": "1",
+      "artifact_type": "confirmed_package",
+      "schema_path": "schema/confirmed-package.schema.json",
+      "schema_digest": "<sha256>",
+      "producer": "Confirmed",
+      "consumers": [
+        "CreateHash"
+      ]
+    },
+
+    {
+      "contract_id": "urn:oneshot:schema:hash-proof:1",
+      "version": "1",
+      "artifact_type": "hash_proof",
+      "schema_path": "schema/hash-proof.schema.json",
+      "schema_digest": "<sha256>",
+      "producer": "Hash",
+      "consumers": [
+        "Done"
+      ]
+    }
+  ]
+}
+```
+
+`<sha256>` is filled from the actual canonical schema file bytes during registry generation.
+
+---
+
+# 22. Runtime Validation
+
+JSON Schema is the contract authority.
+
+Python executes the canonical JSON Schema and then creates the corresponding strict Pydantic runtime representation.
+
+Reference Pydantic base:
+
+```python
+from pydantic import BaseModel, ConfigDict
+
+
+class StrictModel(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid"
+    )
+```
+
+Every runtime model inherits from `StrictModel`.
+
+Example:
+
+```python
+class ResearcherArtifact(StrictModel):
+    researcher_id: str
+    prompt_id: str
+    plan_id: str
+    schema_id: str
+    fixture_id: str
+    goal_id: str
+    validation_id: str
+    requirement_ids: list[str]
+    evidence: list[EvidenceRef]
+    success_definition: SuccessDefinition
+```
+
+Validation order:
+
+```text
+JSON
+↓
+canonical JSON Schema validation
+↓
+strict Pydantic parsing
+↓
+runtime value
+```
+
+---
+
+# 23. Schema ↔ Pydantic Parity
+
+Every canonical artifact receives parity tests.
+
+For each fixture:
+
+```text
+canonical JSON Schema accepts
+==
+Pydantic accepts
+```
+
+and:
+
+```text
+canonical JSON Schema rejects
+==
+Pydantic rejects
+```
+
+Parity coverage includes:
+
+```text
+required fields
+field types
+nested objects
+arrays
+accepted enums
+unknown fields
+identifier fields
+validation results
+root-cause structures
+```
+
+---
+
+# 24. Concrete E2E Fixture Suite
+
+The initial canonical suite contains the following cases.
+
+## E2E-001 — Complete Success
+
+Input:
+
+```text
+valid Prompt_id
+valid Researcher(id)
+valid plan_id
+valid audit_id
+Gap Analysis reaches gap_0
+Evaluation = PASSED
+Schema = VALID
+Fixture = VALID
+Goal = VALID
+```
+
+Expected:
+
+```text
+CONFIRMED
+→ CREATE HASH
+→ recompute HASH
+→ equal = true
+→ DONE
+```
+
+Assertions:
+
+```text
+Researcher owns plan_id
+Planner owns audit_id
+Refactor returns same plan_id
+Gap Analysis returns gap_0 = true
+Evaluation returns same plan_id
+Triple Validation all_valid = true
+confirmed = true
+created_hash == recomputed_hash
+final result = PASSED
+```
+
+---
+
+## E2E-002 — Plan Identity Through Refactor
+
+Input:
+
+```text
+Researcher plan_id = plan:001
+Planner audit_id = audit:001
+```
+
+Refactor output:
+
+```text
+plan_id = plan:001
+revision = 2
+```
+
+Expected:
+
+```text
+logical plan identity preserved
+revision evidence present
+```
+
+---
+
+## E2E-003 — Gap Correction
+
+Initial plan:
+
+```text
+one researched requirement lacks a plan step
+```
+
+Gap Analysis:
+
+```text
+gap_1 identified
+correction applied
+fresh recheck executed
+```
+
+Expected output:
+
+```json
+{
+  "plan_id": "plan:001",
+  "gap_0": true
+}
+```
+
+with `gap_1` recorded under `resolved_gaps`.
+
+---
+
+## E2E-004 — Evaluation Root Cause
+
+Input:
+
+```text
+gap_0 = true
+plan lacks traceability to one success criterion
+```
+
+Expected:
+
+```text
+Evaluation.result = ROOT_CAUSE
+```
+
+Root Cause identifies:
+
+```text
+issue
+expected
+actual
+evidence
+required correction
+recheck target
+```
+
+---
+
+## E2E-005 — Schema NOT_VALID
+
+Triple Validation:
+
+```text
+Schema = NOT_VALID
+Fixture = VALID
+Goal = VALID
+```
+
+Expected:
+
+```text
+all_valid = false
+```
+
+and validation evidence identifies the Schema failure.
+
+---
+
+## E2E-006 — Fixture NOT_VALID
+
+Triple Validation:
+
+```text
+Schema = VALID
+Fixture = NOT_VALID
+Goal = VALID
+```
+
+Expected:
+
+```text
+all_valid = false
+```
+
+---
+
+## E2E-007 — Goal NOT_VALID
+
+Triple Validation:
+
+```text
+Schema = VALID
+Fixture = VALID
+Goal = NOT_VALID
+```
+
+Expected:
+
+```text
+all_valid = false
+```
+
+---
+
+## E2E-008 — Triple Validation Success
+
+Triple Validation:
+
+```text
+Schema = VALID
+Fixture = VALID
+Goal = VALID
+```
+
+Expected:
+
+```text
+all_valid = true
+→ CONFIRMED
+```
+
+---
+
+## E2E-009 — Contract Rejection
+
+Input artifact contains an undeclared field.
+
+Expected:
+
+```text
+JSON Schema rejection
+Pydantic rejection
+parity confirmed
+```
+
+---
+
+## E2E-010 — Missing Required Field
+
+Input artifact lacks `plan_id`.
+
+Expected:
+
+```text
+JSON Schema rejection
+Pydantic rejection
+parity confirmed
+```
+
+---
+
+## E2E-011 — Canonical Ordering
+
+Two JSON objects contain exactly the same values with different object-property ordering.
+
+Expected:
+
+```text
+JCS bytes A == JCS bytes B
+SHA256 A == SHA256 B
+```
+
+---
+
+## E2E-012 — Content Mutation
+
+Confirmed core A and confirmed core B differ by one meaningful value.
+
+Expected:
+
+```text
+JCS bytes A != JCS bytes B
+SHA256 A != SHA256 B
+```
+
+---
+
+## E2E-013 — Verification Equality
+
+The same confirmed immutable core is independently canonicalized twice.
+
+Expected:
+
+```text
+created_hash == recomputed_hash
+equal = true
+```
+
+---
+
+## E2E-014 — Verification Mismatch
+
+Verification input differs from the confirmed core.
+
+Expected:
+
+```text
+created_hash != recomputed_hash
+equal = false
+ROOT CAUSE
+```
+
+---
+
+## E2E-015 — Workflow Graph
+
+Load the machine-readable graph.
+
+Verify:
+
+```text
+Prompt_id → Researcher
+Researcher → Planner
+Planner → Refactor
+Refactor → GapAnalysis
+GapAnalysis → Evaluation
+Evaluation → TripleValidation
+TripleValidation → Confirmed
+Confirmed → CreateHash
+CreateHash → Hash
+Hash → Done
+```
+
+Verify artifact ownership:
+
+```text
+Researcher → plan_id
+Researcher → schema_id
+Researcher → fixture_id
+Researcher → goal_id
+Researcher → validation_id
+Planner → audit_id
+GapAnalysis → gap_0
+CreateHash → HASH
+```
+
+Expected:
+
+```text
+PASSED
+```
+
+---
+
+# 25. Canonical Proof Chain
+
+The complete machine proof becomes:
+
+```text
+Prompt_id
+↓
+Researcher
+↓
+Researcher(id)
+├── plan_id
+├── schema_id
+├── fixture_id
+├── goal_id
+└── validation_id
+↓
+Planner
+↓
+audit_id
+↓
+Refactor
+↓
+same plan_id
+↓
+Gap Analysis
+↓
+resolved gaps
+↓
+fresh recheck
+↓
+gap_0 + plan_id
+↓
+Evaluation
+↓
+PASSED + plan_id
+↓
+Triple Validation
+├── Schema = VALID
+├── Fixture = VALID
+└── Goal = VALID
+↓
+CONFIRMED
+↓
+confirmed_package.core
+↓
+RFC 8785 JCS
+↓
+canonical bytes
+↓
+SHA-256
+↓
+HASH
+↓
+same confirmed_package.core
+↓
+RFC 8785 JCS
+↓
+canonical bytes
+↓
+SHA-256
+↓
+recomputed HASH
+↓
+HASH == recomputed HASH
+↓
+DONE
+```
+
+This is the complete canonical contract and verification layer for the workflow.

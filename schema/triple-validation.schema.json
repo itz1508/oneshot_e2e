@@ -1,0 +1,36 @@
+{
+  "$id": "urn:oneshot:schema:triple-validation:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "all_valid": {
+      "type": "boolean"
+    },
+    "fixture_validation": {
+      "$ref": "urn:oneshot:schema:fixture-validation:1"
+    },
+    "goal_validation": {
+      "$ref": "urn:oneshot:schema:goal-validation:1"
+    },
+    "plan_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_validation": {
+      "$ref": "urn:oneshot:schema:schema-validation:1"
+    },
+    "validation_id": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "plan_id",
+    "validation_id",
+    "schema_validation",
+    "fixture_validation",
+    "goal_validation",
+    "all_valid"
+  ],
+  "type": "object"
+}

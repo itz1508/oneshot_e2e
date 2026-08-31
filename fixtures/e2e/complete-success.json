@@ -1,0 +1,303 @@
+{
+  "audit": {
+    "audit_id": "audit:001",
+    "findings": [
+      {
+        "affected_plan_refs": [
+          "step:001"
+        ],
+        "area": "goal traceability",
+        "evidence_ids": [
+          "evidence:research"
+        ],
+        "finding": "Make goal traceability explicit in the plan step",
+        "finding_id": "finding:001",
+        "required_refinement": "add goal_refs criterion:001"
+      }
+    ],
+    "plan_id": "plan:001",
+    "researcher_id": "researcher:001",
+    "reviewed_areas": [
+      "evidence sufficiency",
+      "file or subject coverage",
+      "requirement coverage",
+      "dependency coverage",
+      "goal clarity",
+      "success criteria",
+      "fixture usability",
+      "schema applicability",
+      "validation traceability",
+      "plan structure",
+      "unresolved findings"
+    ]
+  },
+  "evaluation": {
+    "evidence": [
+      {
+        "check_id": "evaluation:research-alignment",
+        "subject": "research alignment",
+        "finding": "complete",
+        "evidence_ids": [
+          "evidence:research"
+        ]
+      },
+      {
+        "check_id": "evaluation:requirement-coverage",
+        "subject": "requirement coverage",
+        "finding": "complete",
+        "evidence_ids": [
+          "evidence:research"
+        ]
+      },
+      {
+        "check_id": "evaluation:dependency-coherence",
+        "subject": "dependency coherence",
+        "finding": "complete",
+        "evidence_ids": [
+          "evidence:research"
+        ]
+      },
+      {
+        "check_id": "evaluation:plan-coherence",
+        "subject": "plan coherence",
+        "finding": "complete",
+        "evidence_ids": [
+          "evidence:research"
+        ]
+      },
+      {
+        "check_id": "evaluation:goal-traceability",
+        "subject": "goal traceability",
+        "finding": "complete",
+        "evidence_ids": [
+          "evidence:research"
+        ]
+      },
+      {
+        "check_id": "evaluation:success-criteria-traceability",
+        "subject": "success-criteria traceability",
+        "finding": "complete",
+        "evidence_ids": [
+          "evidence:research"
+        ]
+      },
+      {
+        "check_id": "evaluation:fixture-traceability",
+        "subject": "fixture traceability",
+        "finding": "complete",
+        "evidence_ids": [
+          "evidence:research"
+        ]
+      },
+      {
+        "check_id": "evaluation:schema-traceability",
+        "subject": "schema traceability",
+        "finding": "complete",
+        "evidence_ids": [
+          "evidence:research"
+        ]
+      },
+      {
+        "check_id": "evaluation:execution-meaning",
+        "subject": "execution meaning",
+        "finding": "complete",
+        "evidence_ids": [
+          "evidence:research"
+        ]
+      }
+    ],
+    "plan_id": "plan:001",
+    "result": "PASSED"
+  },
+  "fixture": {
+    "fixture_id": "fixture:001",
+    "plan_assertions": [
+      {
+        "assertion_id": "assertion:001",
+        "evidence_ids": [
+          "evidence:research"
+        ],
+        "expected": "plan:001",
+        "operator": "equals",
+        "target": "$.plan_id"
+      }
+    ],
+    "researcher_id": "researcher:001"
+  },
+  "gap_analysis": {
+    "gap_0": true,
+    "plan_id": "plan:001",
+    "resolved_gaps": [
+      {
+        "affected_branch": "plan.steps[0].goal_refs",
+        "evidence_ids": [
+          "evidence:research"
+        ],
+        "expected_resolved_state": "criterion appears in step goal_refs",
+        "gap_id": "gap:001",
+        "issue": "Criterion mapping required explicit traceability",
+        "required_correction": "Reference criterion:001",
+        "resolution_evidence": "step:001 contains criterion:001"
+      }
+    ],
+    "result": "PASSED"
+  },
+  "goal": {
+    "goal_id": "goal:001",
+    "objective": "Produce a plan whose canonical proof can be verified",
+    "researcher_id": "researcher:001",
+    "success_criteria": [
+      {
+        "criterion_id": "criterion:001",
+        "evidence_ids": [
+          "evidence:research"
+        ],
+        "expected_result": "at least one mapped plan step",
+        "measurement": "criterion id occurs in plan goal_refs",
+        "statement": "Plan maps the researched requirement into executable responsibility"
+      }
+    ],
+    "success_meaning": "Deterministic workflow evidence is reproducible"
+  },
+  "plan": {
+    "dependencies": [],
+    "plan_id": "plan:001",
+    "requirements": [
+      {
+        "evidence_ids": [
+          "evidence:research"
+        ],
+        "requirement_id": "req:001",
+        "statement": "Plan must preserve canonical workflow traceability"
+      }
+    ],
+    "researcher_id": "researcher:001",
+    "revision": 2,
+    "revision_evidence": [
+      {
+        "affected_area": "step:001",
+        "audit_finding_id": "finding:001",
+        "reason": "add goal_refs criterion:001",
+        "revision": 2
+      }
+    ],
+    "steps": [
+      {
+        "depends_on": [],
+        "description": "Implement deterministic contract proof",
+        "fixture_refs": [
+          "assertion:001"
+        ],
+        "goal_refs": [
+          "criterion:001"
+        ],
+        "requirement_refs": [
+          "req:001"
+        ],
+        "responsibility": "ContractProof",
+        "schema_refs": [
+          "schema:001"
+        ],
+        "step_id": "step:001"
+      }
+    ]
+  },
+  "prompt": {
+    "context": [
+      {
+        "context_id": "ctx:001",
+        "statement": "Current canonical workflow"
+      }
+    ],
+    "intent": "Create a deterministic validation plan",
+    "prompt_id": "prompt:001",
+    "requested_outcome": "A plan with explicit proof contracts",
+    "research_direction": [
+      "contracts",
+      "proof"
+    ]
+  },
+  "researcher": {
+    "evidence": [
+      {
+        "evidence_id": "evidence:research",
+        "provenance": "conversation",
+        "source": "canonical-input",
+        "statement": "Requirement is established by current canonical information"
+      }
+    ],
+    "fixture_id": "fixture:001",
+    "goal_id": "goal:001",
+    "plan_id": "plan:001",
+    "prompt_id": "prompt:001",
+    "requirement_ids": [
+      "req:001"
+    ],
+    "researcher_id": "researcher:001",
+    "schema_id": "schema:001",
+    "success_definition": {
+      "evidence_ids": [
+        "evidence:research"
+      ],
+      "success_criteria_ids": [
+        "criterion:001"
+      ],
+      "success_meaning": "The plan has deterministic traceability and proof"
+    },
+    "validation_id": "validation:001"
+  },
+  "schema_artifact": {
+    "evidence_ids": [
+      "evidence:research"
+    ],
+    "researcher_id": "researcher:001",
+    "schema_document": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "properties": {
+        "plan_id": {
+          "const": "plan:001"
+        },
+        "steps": {
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "plan_id",
+        "researcher_id",
+        "requirements",
+        "dependencies",
+        "steps",
+        "revision",
+        "revision_evidence"
+      ],
+      "type": "object"
+    },
+    "schema_id": "schema:001",
+    "target": "plan"
+  },
+  "validation": {
+    "fixture_validation": {
+      "assertion_ids": [
+        "assertion:001"
+      ],
+      "fixture_id": "fixture:001",
+      "plan_id": "plan:001"
+    },
+    "goal_validation": {
+      "criterion_ids": [
+        "criterion:001"
+      ],
+      "goal_id": "goal:001",
+      "plan_id": "plan:001"
+    },
+    "plan_id": "plan:001",
+    "researcher_id": "researcher:001",
+    "schema_validation": {
+      "schema_id": "schema:001",
+      "plan_id": "plan:001"
+    },
+    "validation_id": "validation:001"
+  }
+}

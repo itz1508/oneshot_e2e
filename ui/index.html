@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="OneShot IDE — live canonical workflow execution, evidence, and sandbox proofs.">
+  <title>OneShot IDE</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="titlebar">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">1</div>
+        <div class="brand-copy"><strong>OneShot</strong><span>IDE</span></div>
+        <div class="workspace-crumb" aria-label="Current workspace"><span class="crumb-muted">workspace</span><span>/</span><span>oneshot_e2e</span></div>
+      </div>
+      <nav class="view-tabs" aria-label="Workspace views">
+        <button class="view-tab active" data-view="studio" type="button">Studio</button>
+        <button class="view-tab" data-view="artifacts" type="button">Proofs</button>
+        <button class="view-tab" data-view="sandbox" type="button">Sandbox</button>
+        <button class="view-tab" data-view="graphs" type="button">Graphs</button>
+      </nav>
+      <div class="titlebar-actions">
+        <span class="health-state checking" id="healthChip"><span class="health-dot" aria-hidden="true"></span><span id="healthText">Checking backend</span></span>
+        <button class="icon-button" id="btnRefreshHealth" type="button" aria-label="Refresh backend health" title="Refresh backend health"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v6h-6"/></svg></button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="view active" id="view-studio" aria-label="Workflow studio">
+        <div class="ide-grid">
+          <aside class="pane explorer-pane" aria-label="Repository files">
+            <div class="pane-header"><div><span class="eyebrow">FILES</span><span class="pane-context">repository</span></div><span class="pane-count">8 roots</span></div>
+            <div class="file-tree" id="fileTree">
+              <button class="tree-row folder expanded" type="button" data-folder="backend" aria-expanded="true"><span class="chevron">›</span><span class="folder-icon"></span><span>backend</span></button>
+              <div class="tree-children" data-children="backend">
+                <button class="tree-row file" type="button" data-path="backend/index.ts"><span class="file-icon ts">TS</span><span>index.ts</span></button>
+                <button class="tree-row folder nested" type="button" data-path="backend/server"><span class="chevron placeholder">›</span><span class="folder-icon"></span><span>server</span></button>
+                <button class="tree-row folder nested" type="button" data-path="backend/role"><span class="chevron placeholder">›</span><span class="folder-icon"></span><span>role</span></button>
+                <button class="tree-row folder nested" type="button" data-path="backend/runtime"><span class="chevron placeholder">›</span><span class="folder-icon"></span><span>runtime</span></button>
+              </div>
+              <button class="tree-row folder" type="button" data-folder="schema" aria-expanded="false"><span class="chevron">›</span><span class="folder-icon"></span><span>schema</span></button>
+              <div class="tree-children collapsed" data-children="schema"><button class="tree-row file" type="button" data-path="schema"><span class="file-icon json">{ }</span><span>contracts</span></button></div>
+              <button class="tree-row folder" type="button" data-folder="skill" aria-expanded="false"><span class="chevron">›</span><span class="folder-icon"></span><span>skill</span></button>
+              <div class="tree-children collapsed" data-children="skill"><button class="tree-row file" type="button" data-path="skill"><span class="file-icon md">#</span><span>runtime skills</span></button></div>
+              <button class="tree-row folder" type="button" data-folder="tests" aria-expanded="false"><span class="chevron">›</span><span class="folder-icon"></span><span>tests</span></button>
+              <div class="tree-children collapsed" data-children="tests"><button class="tree-row file" type="button" data-path="tests_ts"><span class="file-icon test">✓</span><span>tests_ts</span></button><button class="tree-row file" type="button" data-path="tests"><span class="file-icon test">✓</span><span>python tests</span></button></div>
+              <button class="tree-row folder" type="button" data-folder="ui" aria-expanded="false"><span class="chevron">›</span><span class="folder-icon"></span><span>ui</span></button>
+              <div class="tree-children collapsed" data-children="ui"><button class="tree-row file" type="button" data-path="ui/index.html"><span class="file-icon html">&lt;&gt;</span><span>index.html</span></button><button class="tree-row file" type="button" data-path="ui/app.css"><span class="file-icon css">#</span><span>app.css</span></button><button class="tree-row file" type="button" data-path="ui/app.js"><span class="file-icon js">JS</span><span>app.js</span></button></div>
+              <button class="tree-row folder" type="button" data-folder="workflow" aria-expanded="false"><span class="chevron">›</span><span class="folder-icon"></span><span>workflow</span></button>
+              <div class="tree-children collapsed" data-children="workflow"><button class="tree-row file" type="button" data-path="workflow/graph.json"><span class="file-icon json">{ }</span><span>graph.json</span></button></div>
+              <button class="tree-row file root-file" type="button" data-path="README.md"><span class="file-icon md">#</span><span>README.md</span></button>
+              <button class="tree-row file root-file" type="button" data-path="CANONICAL_WORKFLOW.md"><span class="file-icon md">#</span><span>CANONICAL_WORKFLOW.md</span></button>
+              <button class="tree-row file root-file" type="button" data-path="contract-registry.json"><span class="file-icon json">{ }</span><span>contract-registry.json</span></button>
+            </div>
+            <div class="selection-bar" id="selectedPath">D:\oneshot_e2e</div>
+          </aside>
+
+          <section class="pane chat-pane" aria-label="OneShot chat">
+            <div class="pane-header chat-header"><div><span class="eyebrow">CHAT</span><span class="pane-context">intent → canonical run</span></div><button class="text-button" id="btnNewChat" type="button">New session</button></div>
+            <div class="chat-messages" id="chatMessages" aria-live="polite">
+              <div class="empty-chat" id="emptyChat"><div class="empty-symbol">›_</div><strong>Describe the work once.</strong><p>OneShot collects intent, creates a traceable prompt, then runs the canonical workflow. Live states appear in Tasks and Events.</p></div>
+            </div>
+            <div class="composer-shell">
+              <label class="sr-only" for="chatInput">Message OneShot</label>
+              <textarea id="chatInput" rows="3" placeholder="Ask OneShot to build, audit, analyze, refactor, or fix…"></textarea>
+              <div class="composer-actions"><span class="composer-hint"><kbd>Ctrl</kbd><span>+</span><kbd>Enter</kbd> to send</span><div class="action-group"><button class="secondary-button" id="btnRunSample" type="button" title="Run the real deterministic benchmark">Run benchmark</button><button class="secondary-button" id="btnRunChat" type="button" disabled>Run workflow</button><button class="primary-button" id="btnSendChat" type="button">Send<svg viewBox="0 0 24 24"><path d="m5 12 14-7-4 14-3-6-7-1Z"/></svg></button></div></div>
+            </div>
+          </section>
+
+          <aside class="pane tasks-pane" aria-label="Workflow tasks">
+            <div class="pane-header"><div><span class="eyebrow">TASKS</span><span class="pane-context" id="taskSummary">0 / 13 complete</span></div><span class="run-state idle" id="resultBadge">IDLE</span></div>
+            <div class="run-reference" id="runBadge">run: idle</div>
+            <div class="stage-list" id="stageList"></div>
+          </aside>
+
+          <section class="pane terminal-pane" aria-label="Terminal and workflow events">
+            <div class="pane-header terminal-header">
+              <div class="terminal-title-group"><span class="eyebrow">TERMINAL / EVENTS</span><div class="event-filters" role="group" aria-label="Filter events by scope"><button class="event-filter active" type="button" data-scope="ALL">All</button><button class="event-filter" type="button" data-scope="WORKFLOW">Workflow</button><button class="event-filter" type="button" data-scope="ADK">ADK</button><button class="event-filter" type="button" data-scope="SANDBOX">Sandbox</button></div></div>
+              <div class="terminal-actions"><span id="eventCount">0 events</span><button class="icon-button" id="btnCopyEvents" type="button" aria-label="Copy visible events" title="Copy visible events"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button><button class="icon-button" id="btnClearEvents" type="button" aria-label="Clear event display" title="Clear event display"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 11v5m4-5v5"/></svg></button></div>
+            </div>
+            <div class="terminal-output" id="terminalOutput" role="log" aria-live="polite"><div class="terminal-empty">No events yet — send a request or run the benchmark.</div></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view secondary-view" id="view-artifacts" aria-label="Artifacts and proofs">
+        <div class="secondary-header"><div><span class="eyebrow">ARTIFACTS & PROOFS</span><h2>Canonical evidence</h2></div><span class="run-reference" id="artifactRunId">No run selected</span></div>
+        <div class="artifact-layout"><nav class="artifact-nav" id="artifactNav" aria-label="Run artifacts"><button class="artifact-button" data-artifact="prompt" type="button">prompt.json</button><button class="artifact-button" data-artifact="researcher" type="button">researcher.json</button><button class="artifact-button" data-artifact="plan.gap" type="button">plan.gap.json</button><button class="artifact-button" data-artifact="audit" type="button">audit.json</button><button class="artifact-button" data-artifact="evaluation" type="button">evaluation.json</button><button class="artifact-button" data-artifact="triple-validation" type="button">triple-validation.json</button><button class="artifact-button" data-artifact="confirmed" type="button">confirmed.json</button><button class="artifact-button" data-artifact="hash-proof" type="button">hash-proof.json</button></nav><pre class="code-viewer" id="artifactViewer">Select a completed run to inspect backend-generated artifacts.</pre></div>
+      </section>
+
+      <section class="view secondary-view" id="view-sandbox" aria-label="External sandbox">
+        <div class="secondary-header"><div><span class="eyebrow">EXTERNAL SANDBOX</span><h2>Execution boundary</h2></div><span class="run-state idle" id="sandboxStatusBadge">READY</span></div>
+        <div class="sandbox-controls"><label>Timeout <span>seconds</span><input type="number" id="sbxTimeout" value="10" min="1" max="300"></label><label>Write limit <span>bytes</span><input type="number" id="sbxMaxBytes" value="10485760"></label><label>Network <span>policy</span><select id="sbxNetPolicy"><option value="DENY_ALL">DENY_ALL</option><option value="ALLOW_SPECIFIC">ALLOW_SPECIFIC</option></select></label><button class="primary-button" id="btnExecuteSandbox" type="button">Execute confirmed package</button></div>
+        <div class="evidence-grid" id="evidenceGrid" hidden><div><span id="statExitCode">—</span><small>exit code</small></div><div><span id="statDuration">—</span><small>duration</small></div><div><span id="statFiles">—</span><small>files changed</small></div><div><span id="statHashMatch">—</span><small>hash comparison</small></div></div>
+        <pre class="code-viewer sandbox-terminal" id="sandboxTerminal">External Sandbox idle. Complete a canonical run before execution.</pre>
+      </section>
+
+      <section class="view secondary-view" id="view-graphs" aria-label="Graph projections">
+        <div class="secondary-header graph-header"><div><span class="eyebrow">GRAPH PROJECTIONS</span><h2>Runtime traceability</h2></div><div class="graph-actions"><button class="secondary-button active" id="btnGraphAuthority" type="button">Authority</button><button class="secondary-button" id="btnGraphAdk" type="button">ADK</button><button class="secondary-button" id="btnGraphSandbox" type="button">Sandbox</button></div></div>
+        <pre class="code-viewer graph-viewer" id="graphViewer">Open a graph projection.</pre>
+      </section>
+    </main>
+
+    <footer class="statusbar" aria-label="Execution evidence status">
+      <span class="status-item status-run" id="statusRun"><span class="status-led idle"></span>run: idle</span><span class="status-divider"></span>
+      <span class="status-item"><strong>Gemini 3.7 Flash</strong><em class="target">TARGET</em></span>
+      <span class="status-item"><strong>Google ADK</strong><em id="statusAdk">NOT OBSERVED</em></span>
+      <span class="status-item"><strong>ADC</strong><em>SERVER SIDE</em></span>
+      <span class="status-item"><strong id="statusRuntime">Local backend</strong><em id="runtimeProof">REPORTED BY ORIGIN</em></span>
+      <span class="status-spacer"></span><button class="hash-status" id="statusHash" type="button" title="No hash available">hash: pending</button>
+    </footer>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

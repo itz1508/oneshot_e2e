@@ -1,0 +1,74 @@
+{
+  "$id": "urn:oneshot:schema:sandbox-execution:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SandboxExecutionInput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["confirmed_package", "hash"],
+  "properties": {
+    "confirmed_package": {
+      "$ref": "urn:oneshot:schema:confirmed-package:1"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "execution_authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "execution_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_root": {
+          "type": "string"
+        },
+        "permitted_operations": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "protected_paths": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "memory_limit_mb": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cpu_limit": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "pid_limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "network_policy": {
+          "type": "string",
+          "enum": ["DENY_ALL", "ALLOW_SPECIFIC"]
+        },
+        "environment_allowlist": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "max_output_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_files_changed": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_total_bytes_written": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

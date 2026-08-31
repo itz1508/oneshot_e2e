@@ -1,0 +1,66 @@
+{
+  "$id": "urn:oneshot:schema:fixture:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "fixture_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "plan_assertions": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "assertion_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "expected": {},
+          "operator": {
+            "enum": [
+              "exists",
+              "equals",
+              "contains",
+              "matchesSchema",
+              "references",
+              "edgeExists",
+              "allFilesSpecified"
+            ],
+            "type": "string"
+          },
+          "target": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "assertion_id",
+          "operator",
+          "target",
+          "evidence_ids"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "researcher_id": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "fixture_id",
+    "researcher_id",
+    "plan_assertions"
+  ],
+  "type": "object"
+}
