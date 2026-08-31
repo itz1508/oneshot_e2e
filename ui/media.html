@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="OneShot Media Studio — Interactive Voice Walkthrough, Real-Time Workflow Visualization, and Video Export.">
+  <title>OneShot — Media & Interactive Video Walkthrough</title>
+  <link rel="stylesheet" href="/media.css">
+</head>
+<body>
+  <div class="media-app">
+    <!-- Top Navigation Header -->
+    <header class="media-header">
+      <div class="brand-group">
+        <a href="/" class="brand-link" title="Return to OneShot Studio">
+          <span class="brand-icon">1</span>
+          <span class="brand-text"><strong>OneShot</strong> <em>MEDIA STUDIO</em></span>
+        </a>
+        <span class="badge live-badge">LIVE RUNTIME 1.3.0</span>
+      </div>
+
+      <div class="header-nav">
+        <a href="/" class="nav-btn">← Back to IDE Studio</a>
+        <button id="btnFetchLatestRun" class="nav-btn accent-btn" type="button">Load Live Backend Run</button>
+      </div>
+    </header>
+
+    <!-- Main Presentation Container -->
+    <main class="media-main">
+      <!-- Player & Live Canvas Viewport -->
+      <section class="viewport-section">
+        <div class="video-container" id="videoContainer">
+          <!-- Canvas for real-time graphics & video export -->
+          <canvas id="stageCanvas" width="1280" height="720"></canvas>
+
+          <!-- Overlay HUD -->
+          <div class="video-hud">
+            <div class="hud-top">
+              <span class="hud-tag" id="hudStepTag">STEP 1 OF 10</span>
+              <span class="hud-phase" id="hudPhaseName">Multi-Turn Intent Collection</span>
+              <span class="hud-status live" id="hudStatusBadge">PROCESSING</span>
+            </div>
+            
+            <div class="hud-center" id="hudCenterContent">
+              <!-- Dynamically populated step visualization card -->
+            </div>
+
+            <!-- Synced Subtitles / Narration Caption Bar -->
+            <div class="captions-bar" id="captionsBar">
+              <div class="caption-speaker">NARRATOR</div>
+              <p class="caption-text" id="captionText">Welcome to OneShot — the deterministic AI execution platform.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video & Narration Playback Controls -->
+        <div class="controls-bar">
+          <div class="playback-controls">
+            <button id="btnPrev" class="ctrl-btn" title="Previous Stage" type="button">⏮</button>
+            <button id="btnPlayPause" class="ctrl-btn primary-ctrl" title="Play / Pause Walkthrough" type="button">▶ PLAY WALKTHROUGH</button>
+            <button id="btnNext" class="ctrl-btn" title="Next Stage" type="button">⏭</button>
+            <button id="btnRestart" class="ctrl-btn" title="Restart from Beginning" type="button">🔄 Restart</button>
+          </div>
+
+          <div class="progress-container">
+            <div class="progress-bar-bg" id="progressBarBg">
+              <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+            <span class="progress-time" id="progressTime">0:00 / 2:30</span>
+          </div>
+
+          <div class="action-controls">
+            <button id="btnToggleVoice" class="ctrl-btn voice-active" title="Toggle Voice Narration" type="button">🔊 Voice: ON</button>
+            <button id="btnExportVideo" class="ctrl-btn export-btn" title="Record and download WebM video" type="button">🎥 Export Video</button>
+            <button id="btnSnapshot" class="ctrl-btn" title="Capture high-resolution PNG snapshot" type="button">📸 Snapshot</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live Evidence & Artifact Inspector Sidebar -->
+      <aside class="evidence-sidebar">
+        <div class="sidebar-header">
+          <span class="eyebrow">LIVE RUN EVIDENCE</span>
+          <h3 id="sidebarTitle">Stage Artifacts & Proofs</h3>
+          <span class="run-chip" id="sidebarRunChip">run: live-sample</span>
+        </div>
+
+        <div class="metric-tiles">
+          <div class="metric-tile">
+            <small>Validation Result</small>
+            <strong id="metricResult" class="stat-valid">PASSED</strong>
+          </div>
+          <div class="metric-tile">
+            <small>Canonical Hash</small>
+            <strong id="metricHash">f671e49f3969...</strong>
+          </div>
+          <div class="metric-tile">
+            <small>Sandbox Match</small>
+            <strong id="metricSandbox" class="stat-valid">HASH MATCHED</strong>
+          </div>
+        </div>
+
+        <div class="inspector-tabs" id="inspectorTabs">
+          <button class="tab-btn active" data-tab="summary" type="button">Overview</button>
+          <button class="tab-btn" data-tab="json" type="button">Live JSON</button>
+          <button class="tab-btn" data-tab="architecture" type="button">Architecture</button>
+        </div>
+
+        <div class="inspector-body">
+          <div id="tabContentSummary" class="tab-content active">
+            <div class="stage-info-card" id="stageInfoCard">
+              <h4 id="infoCardTitle">Multi-Turn Intent Collection</h4>
+              <p id="infoCardDesc">Captures user requirements into an immutable intent revision with turn provenance.</p>
+              <div class="info-highlights" id="infoHighlights"></div>
+            </div>
+          </div>
+
+          <div id="tabContentJson" class="tab-content">
+            <pre class="json-viewer" id="jsonViewer">Loading live run artifact...</pre>
+          </div>
+
+          <div id="tabContentArchitecture" class="tab-content">
+            <div class="arch-card">
+              <img src="/assets/oneshot_workflow_hero.jpg" alt="OneShot Architecture Diagram" class="arch-img">
+              <p class="arch-caption">Three-tier authority separation: Schema (Source of Truth) → Python Engine (RFC 8785 Proofs) → TypeScript Runtime (Orchestration & Projections).</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- 10-Stage Visual Timeline Stepper -->
+    <footer class="timeline-footer">
+      <div class="timeline-track" id="timelineTrack">
+        <!-- 10 Interactive Stage Pills -->
+        <button class="stage-step active" data-index="0" type="button">
+          <span class="step-num">01</span>
+          <span class="step-label">Intent</span>
+        </button>
+        <button class="stage-step" data-index="1" type="button">
+          <span class="step-num">02</span>
+          <span class="step-label">Prompt</span>
+        </button>
+        <button class="stage-step" data-index="2" type="button">
+          <span class="step-num">03</span>
+          <span class="step-label">Researcher</span>
+        </button>
+        <button class="stage-step" data-index="3" type="button">
+          <span class="step-num">04</span>
+          <span class="step-label">Planner</span>
+        </button>
+        <button class="stage-step" data-index="4" type="button">
+          <span class="step-num">05</span>
+          <span class="step-label">Refactor</span>
+        </button>
+        <button class="stage-step" data-index="5" type="button">
+          <span class="step-num">06</span>
+          <span class="step-label">Gap Analysis</span>
+        </button>
+        <button class="stage-step" data-index="6" type="button">
+          <span class="step-num">07</span>
+          <span class="step-label">Evaluation</span>
+        </button>
+        <button class="stage-step" data-index="7" type="button">
+          <span class="step-num">08</span>
+          <span class="step-label">Triple Validation</span>
+        </button>
+        <button class="stage-step" data-index="8" type="button">
+          <span class="step-num">09</span>
+          <span class="step-label">SHA-256 Hash</span>
+        </button>
+        <button class="stage-step" data-index="9" type="button">
+          <span class="step-num">10</span>
+          <span class="step-label">Sandbox Run</span>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <script type="module" src="/media.js"></script>
+</body>
+</html>
