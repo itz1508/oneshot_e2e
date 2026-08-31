@@ -343,6 +343,8 @@ d:/oneshot_e2e/
 * [`bootstrap.py`](file:///d:/oneshot_e2e/scripts/bootstrap.py): Installs Python dependencies and offline npm packages from `vendor/npm/`.
 * [`build_deterministic_zip.py`](file:///d:/oneshot_e2e/scripts/build_deterministic_zip.py): Packages a normalized, reproducible zip archive.
 * [`generate_manifest.py`](file:///d:/oneshot_e2e/scripts/generate_manifest.py): Generates `MANIFEST.sha256` for all source files.
+* [`generate_workflow_pdf.py`](file:///d:/oneshot_e2e/scripts/generate_workflow_pdf.py): Generates the comprehensive Workflow Processing specification PDF.
+* [`generate_workflow_tree_pdf.py`](file:///d:/oneshot_e2e/scripts/generate_workflow_tree_pdf.py): Generates the Source of Truth WORKFLOW_TREE.pdf document.
 * [`ollama_preflight.py`](file:///d:/oneshot_e2e/scripts/ollama_preflight.py): Preflight check for local Ollama service and `gemma2:9b` model.
 * [`verify_adk_live.py`](file:///d:/oneshot_e2e/scripts/verify_adk_live.py): Live structured inference test for Google ADK + LiteLLM + Ollama.
 * [`verify_all.py`](file:///d:/oneshot_e2e/scripts/verify_all.py): Master test runner executing dependency verification, Python unit tests, TypeScript compilation, and E2E tests.
