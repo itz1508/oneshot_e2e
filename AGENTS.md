@@ -139,7 +139,7 @@ d:/oneshot_e2e/
 ├── contract-registry.json                    # Central contract registry mapping URNs to JSON Schema paths
 ├── package.json                              # Node.js engine specification, offline npm scripts, devDependencies
 ├── package-lock.json                         # Pinned offline lockfile for npm packages
-├── tsconfig.json                             # TypeScript compiler options (ES2022, NodeNext modules)
+├── Dockerfile                                # Production multi-stage container build for Cloud Run & Kubernetes
 ├── .gitignore                                # Git ignore patterns (ignores .venv, .ollama, dist, data runs)
 ├── .env.example                              # Environment configuration template for OneShot runtime
 ├── .env.workspace.example                    # Environment configuration template for Workspace API sidecar
