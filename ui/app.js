@@ -157,6 +157,29 @@ function initStages() {
     meta.textContent = stage.detail;
     copy.append(name, meta);
 
+    row.style.cursor = "pointer";
+    row.title = `Click to inspect ${stage.name} artifact in Proofs`;
+    row.addEventListener("click", () => {
+      const stageToArtifact = {
+        Researcher: "researcher",
+        Planner: "audit",
+        Refactor: "plan.refactored",
+        GapAnalysis: "gap",
+        Evaluation: "evaluation",
+        SchemaValidation: "schema",
+        FixtureValidation: "fixture",
+        GoalValidation: "goal",
+        TripleValidation: "triple-validation",
+        Confirmed: "confirmed",
+        CreateHash: "hash-proof",
+        Hash: "hash-proof",
+        Done: "hash-proof",
+      };
+      const art = stageToArtifact[stage.id] || "confirmed";
+      selectView("artifacts");
+      loadArtifact(art);
+    });
+
     const status = document.createElement("span");
     status.className = "stage-status";
     status.textContent = "PENDING";
@@ -660,6 +683,12 @@ byId("btnGraphAdk").addEventListener("click", () => {
 byId("btnGraphSandbox").addEventListener("click", () => {
   const url = currentRunId ? `/api/runs/${encodeURIComponent(currentRunId)}/sandbox-graph` : "/api/graphs/sandbox";
   loadGraph(url, byId("btnGraphSandbox"));
+});
+byId("btnGraphIntent")?.addEventListener("click", () => {
+  const url = currentConversationId
+    ? `/api/conversations/${encodeURIComponent(currentConversationId)}/graph`
+    : "/api/graphs/authority";
+  loadGraph(url, byId("btnGraphIntent"));
 });
 
 // ---------------------------------------------------------------------------
