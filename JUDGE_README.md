@@ -68,6 +68,7 @@ chmod +x ./start-oneshot.sh ./stop-oneshot.sh
 Wait for the launcher to report that OneShot is healthy. The browser will open automatically at `http://localhost:8787`.
 
 The launcher will:
+
 - load the prebuilt `oneshot:1.3.0` image (`oneshot-1.3.0.tar`)
 - generate the local access token in `.env`
 - start Docker Compose (non-root, resource-limited)
@@ -188,13 +189,16 @@ All settings are configured via environment variables or `.env` and map directly
 Once the IDE loads at `http://localhost:8787`:
 
 ### Step 1: Explore the Welcome Hub & Video Demonstration
+
 - The Welcome screen features native video playback of a full workflow run.
 - Click any card (e.g. **Canonical Execution**, **Google ADK & Authority Graph**, or **Contract Specification**) to open the document directly in the multi-tab `FileViewer`.
 - Click **"📚 Specification & Contract Index"** or press `Ctrl+K` to search through 21 schema contracts and architecture documents.
 
 ### Step 2: Trigger 1-Click Execution
+
 - Click **"🚀 1-Click Run Canonical Sample"** or click **"Start Verification Session"** in the chat input.
 - Watch the live workflow progression:
+
   1. `INTENT_COLLECTED`: Deterministic intent revision created.
   2. `RESEARCH_COMPLETE`: Research gathered via Google ADK / Provider.
   3. `PLAN_PROPOSED` & `REFACTOR_EVALUATED`: Multi-stage plan synthesized.
@@ -203,6 +207,7 @@ Once the IDE loads at `http://localhost:8787`:
   6. `SANDBOX_EXECUTED`: Ephemeral isolated execution with evidence capture.
 
 ### Step 3: Inspect Telemetry & Artifact Proofs
+
 - Open the collapsible **Task Drawer** on the right to inspect real-time stage progress, event log timestamps, and W3C trace identifiers.
 - Click on the generated hash proof to view the deterministic SHA-256 digest and verify hash equality.
 
@@ -211,6 +216,7 @@ Once the IDE loads at `http://localhost:8787`:
 ## 🏛️ Architectural Proofs & Verification Matrix
 
 ### Multi-Tier Ownership Model
+
 - **`schema/`**: 21 Draft 2020-12 schemas defining canonical contracts.
 - **`validation/`**: Python canonicalization (RFC 8785), SHA-256 hashing, and fixture execution.
 - **`backend/`**: TypeScript runtime, append-only event store, and HTTP/SSE server.
@@ -246,8 +252,10 @@ Open your browser and navigate to `http://localhost:8787`. If prompted for an ac
 <summary><b>Q: How do I change the listening port?</b></summary>
 
 Pass the `Port` parameter to the startup script:
+
 - Windows: `.\start-oneshot.ps1 -Port 9000`
 - macOS / Linux: `PORT=9000 ./start-oneshot.sh`
+
 </details>
 
 <details>
