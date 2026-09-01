@@ -164,16 +164,28 @@ export function WelcomeDocsIndex({
                         <span className={styles.videoTitle}>Live Product Demonstration</span>
                         <span className={styles.videoBadge}>Interactive Walkthrough</span>
                     </div>
-                    <a
-                        href="/OneShot_Task_Drawer_Compatibility_Fixed.mp4"
-                        target="_blank"
-                        rel="noreferrer"
-                        className={styles.rawLink}
-                        title="Open video in new tab"
-                    >
-                        <ExternalLink size={12}/>
-                        <span>Open Video</span>
-                    </a>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
+                        <a
+                            href="https://www.youtube.com/watch?v=RQTxYwcNx_0"
+                            target="_blank"
+                            rel="noreferrer"
+                            className={styles.rawLink}
+                            title="Watch demonstration on YouTube"
+                        >
+                            <ExternalLink size={12}/>
+                            <span>YouTube Video</span>
+                        </a>
+                        <a
+                            href="/OneShot_Task_Drawer_Compatibility_Fixed.mp4"
+                            target="_blank"
+                            rel="noreferrer"
+                            className={styles.rawLink}
+                            title="Open video in new tab"
+                        >
+                            <ExternalLink size={12}/>
+                            <span>Local Video</span>
+                        </a>
+                    </div>
                 </div>
                 <div className={styles.videoPlayerWrap}>
                     <video

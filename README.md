@@ -20,10 +20,25 @@ Licensed under the **Apache License, Version 2.0** for all workflow processing c
 
 ---
 
+## 🎬 Instant Video Demonstration & Walkthrough
+
+Review the full end-to-end execution, task drawer telemetry, live activity disclosures, and proof generation in under 60 seconds:
+
+- 📺 **Watch Video Demonstration on YouTube:** [https://www.youtube.com/watch?v=RQTxYwcNx_0](https://www.youtube.com/watch?v=RQTxYwcNx_0)
+- 📁 **Direct Local MP4 File:** [`docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4`](docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4)
+
+<video width="100%" max-width="880px" controls autoplay muted loop playsinline preload="auto">
+  <source src="docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4" type="video/mp4">
+  Your browser does not support the video tag. You can watch the demonstration on YouTube at <a href="https://www.youtube.com/watch?v=RQTxYwcNx_0">https://www.youtube.com/watch?v=RQTxYwcNx_0</a> or view the local video file at <a href="docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4">docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4</a>.
+</video>
+
+---
+
 <details>
 <summary><b>📖 Table of Contents</b> (click to expand / collapse)</summary>
 
 - [🖥️ Modern Product Interface & Visual Overview](#️-modern-product-interface--visual-overview)
+- [🎬 Instant Video Demonstration & Walkthrough](#-instant-video-demonstration--walkthrough)
 - [⚡ 60-Second Start](#-60-second-start)
   - [Prerequisites](#prerequisites)
   - [Setup and launch (one command)](#setup-and-launch-one-command)

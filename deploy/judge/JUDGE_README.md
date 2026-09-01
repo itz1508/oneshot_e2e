@@ -8,12 +8,13 @@ Fast-path evaluation guide for hackathon judges to verify the OneShot determinis
 
 Review the full end-to-end execution, task drawer telemetry, live activity disclosures, and proof generation in under 60 seconds:
 
+- 📺 **Watch Video Demonstration on YouTube:** [https://www.youtube.com/watch?v=RQTxYwcNx_0](https://www.youtube.com/watch?v=RQTxYwcNx_0)
+- 📁 **Direct Local MP4 File:** [`docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4`](docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4)
+
 <video width="100%" max-width="880px" controls autoplay muted loop playsinline preload="auto">
   <source src="docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4" type="video/mp4">
-  Your browser does not support the video tag. You can view the demonstration directly at <a href="docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4">docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4</a>.
+  Your browser does not support the video tag. You can watch the demonstration on YouTube at <a href="https://www.youtube.com/watch?v=RQTxYwcNx_0">https://www.youtube.com/watch?v=RQTxYwcNx_0</a> or view the local video file at <a href="docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4">docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4</a>.
 </video>
-
-*Direct video file:* [`docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4`](docs/OneShot_Task_Drawer_Compatibility_Fixed.mp4)
 
 ---
 
