@@ -9,7 +9,7 @@
  *   ONESHOT_MODE=production npm run demo # Demonstration with Production Provider
  *
  * The demonstration runs the REAL OneShot product, real Chat API, real
- * canonical 27-phase workflow, real validators, and real cryptographic proofs.
+ * canonical workflow (Prompt_id → DONE), real validators, and real cryptographic proofs.
  */
 
 import { execSync, spawn } from "node:child_process";
@@ -90,9 +90,13 @@ const shutdown = () => {
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
-child.on("exit", (code) => {
+child.on("exit", (code, signal) => {
+  if (signal) {
+    log(`Backend terminated by signal ${signal}`);
+    process.exit(1);
+  }
   log(`Backend exited with code ${code}`);
-  process.exit(code || 0);
+  process.exit(code ?? 0);
 });
 
 // ── Step 4: Wait for backend readiness, then open browser ───────
@@ -127,7 +131,7 @@ child.stdout.on("data", async (data) => {
       log("");
       log(`${C.dim}  1. Interact with the real OneShot IDE in your browser${C.reset}`);
       log(`${C.dim}  2. Submit a request through the real Chat flow (or click example prompt)${C.reset}`);
-      log(`${C.dim}  3. Watch the canonical 27-phase pipeline execute live with real SSE events${C.reset}`);
+      log(`${C.dim}  3. Watch the canonical workflow execute live with real SSE events${C.reset}`);
       log(`${C.dim}  4. Inspect the generated SHA-256 hash proof in the status bar & Proofs tab${C.reset}`);
       log(`${C.dim}  5. Press Ctrl+C to stop${C.reset}`);
       log("");
