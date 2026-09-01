@@ -297,6 +297,25 @@ svg {
 .empty-chat strong { display: block; color: var(--text); margin-bottom: 7px; font-size: 13px; }
 .empty-chat p { margin: 0; font-size: 11px; line-height: 1.65; }
 .empty-symbol { margin: 0 auto 12px; color: var(--blue); font: 700 21px/1 var(--mono); }
+.demo-prompt-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-bright);
+  background: var(--surface-3);
+  color: var(--cyan);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.demo-prompt-button:hover {
+  background: #112044;
+  border-color: #2563eb;
+  color: #bfdbfe;
+}
 .chat-message { max-width: min(78%, 620px); }
 .chat-message.user { align-self: flex-end; }
 .chat-message.system, .chat-message.help, .chat-message.error { align-self: flex-start; }

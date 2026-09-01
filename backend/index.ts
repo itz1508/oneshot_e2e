@@ -22,7 +22,7 @@ import { HashWorkflow } from "./workflow/hash.js";
 import { WorkflowRuntime } from "./runtime/workflow-runtime.js";
 import { SandboxService } from "./sandbox/sandbox-service.js";
 import { HardenedProcessRunner } from "./sandbox/runner/process-runner.js";
-import { startHttpServer } from "./server/http-server.js";
+import { startHttpServer, type RuntimeInfo } from "./server/http-server.js";
 
 // ---------------------------------------------------------------------------
 // Bootstrap
@@ -62,6 +62,11 @@ await contracts.verifyStatic();
 // --- Research Provider (with event bus for ADK-scoped events) ---
 const provider = await resolveResearchProvider(projectRoot, events);
 
+// --- Runtime Info (mode + provider name for health endpoint / UI) ---
+const runtimeMode = (process.env.ONESHOT_MODE || "sample").toLowerCase();
+const providerName = provider.constructor?.name || "UnknownProvider";
+const runtimeInfo: RuntimeInfo = { mode: runtimeMode, provider: providerName };
+
 // --- Deterministic Validation ---
 const deterministic = new DeterministicValidationRuntime(bridge);
 
@@ -98,12 +103,13 @@ const server = await startHttpServer(
   task,
   intent,
   sandbox,
+  runtimeInfo,
 );
 
 const address = server.address();
 const port =
   typeof address === "object" && address ? address.port : process.env.PORT;
-console.log(`ONESHOT_SERVER_READY port=${port}`);
+console.log(`ONESHOT_SERVER_READY port=${port} mode=${runtimeInfo.mode} provider=${runtimeInfo.provider}`);
 
 // --- Graceful shutdown ---
 const shutdown = () => {

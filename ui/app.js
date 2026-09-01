@@ -125,6 +125,14 @@ async function loadHealth() {
     const cloudRunOrigin = location.hostname.endsWith(".run.app");
     byId("statusRuntime").textContent = cloudRunOrigin ? "Cloud Run" : "Local backend";
     byId("runtimeProof").textContent = cloudRunOrigin ? "ORIGIN PROOF" : "LOCAL ORIGIN";
+
+    // Display real mode and provider from the backend
+    if (health.mode) {
+      byId("statusModeValue").textContent = health.mode.toUpperCase();
+    }
+    if (health.provider) {
+      byId("statusProviderValue").textContent = health.provider;
+    }
   } catch (error) {
     chip.className = "health-state offline";
     text.textContent = "Backend unavailable";
@@ -224,8 +232,6 @@ function resetRunUI(runId) {
   byId("statusHash").textContent = "hash: pending";
   byId("statusHash").classList.remove("ready");
   byId("statusHash").title = "No hash available";
-  byId("statusAdk").textContent = "NOT OBSERVED";
-  byId("statusAdk").className = "";
   activeEventSource?.close();
   activeEventSource = null;
 }
@@ -239,8 +245,6 @@ function handleEvent(event) {
   }
 
   if (event.scope === "ADK" || String(event.processor).startsWith("ADK:")) {
-    byId("statusAdk").textContent = "OBSERVED";
-    byId("statusAdk").className = "observed";
     const researcher = stageList.querySelector('[data-stage="Researcher"]');
     if (researcher && !researcher.classList.contains("complete")) {
       researcher.querySelector(".stage-meta").textContent = `${String(event.processor).replace("ADK:", "ADK / ")} · ${normalizeResult(event.result || event.state)}`;
@@ -698,3 +702,14 @@ byId("btnGraphIntent")?.addEventListener("click", () => {
 initStages();
 renderEvents();
 loadHealth();
+
+// --- Demo prompt button ---
+const demoPromptBtn = byId("btnDemoPrompt");
+if (demoPromptBtn) {
+  demoPromptBtn.addEventListener("click", () => {
+    chatInput.value = "Explain what JSON Schema is and give me 3 practical reasons to use it in an API project.";
+    chatInput.focus();
+    byId("emptyChat")?.remove();
+    showToast("Example prompt loaded. Click Send to start the real workflow.");
+  });
+}

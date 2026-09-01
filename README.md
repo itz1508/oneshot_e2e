@@ -4,6 +4,52 @@ Deterministic AI execution platform combining strict Draft 2020-12 schema valida
 
 Licensed under the **Apache License, Version 2.0** for all workflow processing components.
 
+> **📋 Hackathon judges:** See [JUDGE_README.md](JUDGE_README.md) for a focused quick-start guide.
+
+---
+
+## ⚡ 60-Second Start
+
+### Prerequisites
+- **Node.js 20+** — [nodejs.org](https://nodejs.org)
+- **Python 3.11+** — [python.org](https://www.python.org)
+
+### Setup (one command)
+
+**Windows:**
+```cmd
+git clone https://github.com/itz1508/oneshot_e2e.git
+cd oneshot_e2e
+setup.bat
+```
+
+**macOS / Linux:**
+```bash
+git clone https://github.com/itz1508/oneshot_e2e.git
+cd oneshot_e2e
+chmod +x setup.sh && ./setup.sh
+```
+
+### Launch OneShot for Demonstration
+```bash
+npm run demo
+```
+
+Clean-builds from current source, starts the **real OneShot backend**, and opens the real OneShot IDE in your browser at `http://localhost:8787`. Click **"💡 Try example prompt"**, then **Send** — watch the canonical 27-phase pipeline execute live with real Server-Sent Events, Triple Validation proofs, and cryptographic SHA-256 hash verification.
+
+### Run Tests
+```bash
+npm test          # 46 TypeScript tests
+npm run verify    # Full 92-test suite (Python + TypeScript)
+```
+
+### Start the Server (without demo launcher)
+```bash
+npm run build
+npm start
+```
+Open **http://localhost:8787** for the real-time IDE.
+
 ---
 
 ## 1. Canonical Workflow Pipeline

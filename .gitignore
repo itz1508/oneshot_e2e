@@ -16,6 +16,7 @@ data/task-events/
 data/checkpoints/
 data/conversations/
 data/sandbox-workspaces/
+data/demo-*/
 dist/
 .venv/
 .ollama/

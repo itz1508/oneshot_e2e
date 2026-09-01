@@ -61,7 +61,7 @@
           <section class="pane chat-pane" aria-label="OneShot chat">
             <div class="pane-header chat-header"><div><span class="eyebrow">CHAT</span><span class="pane-context">intent → canonical run</span></div><button class="text-button" id="btnNewChat" type="button">New session</button></div>
             <div class="chat-messages" id="chatMessages" aria-live="polite">
-              <div class="empty-chat" id="emptyChat"><div class="empty-symbol">›_</div><strong>Describe the work once.</strong><p>OneShot collects intent, creates a traceable prompt, then runs the canonical workflow. Live states appear in Tasks and Events.</p></div>
+              <div class="empty-chat" id="emptyChat"><div class="empty-symbol">›_</div><strong>Describe the work once.</strong><p>OneShot collects intent, creates a traceable prompt, then runs the canonical workflow. Live states appear in Tasks and Events.</p><button class="demo-prompt-button" id="btnDemoPrompt" type="button">💡 Try example prompt</button></div>
             </div>
             <div class="composer-shell">
               <label class="sr-only" for="chatInput">Message OneShot</label>
@@ -106,9 +106,8 @@
 
     <footer class="statusbar" aria-label="Execution evidence status">
       <span class="status-item status-run" id="statusRun"><span class="status-led idle"></span>run: idle</span><span class="status-divider"></span>
-      <span class="status-item"><strong>Gemini 3.7 Flash</strong><em class="target">TARGET</em></span>
-      <span class="status-item"><strong>Google ADK</strong><em id="statusAdk">NOT OBSERVED</em></span>
-      <span class="status-item"><strong>ADC</strong><em>SERVER SIDE</em></span>
+      <span class="status-item"><strong id="statusMode">Mode</strong><em id="statusModeValue">loading…</em></span>
+      <span class="status-item"><strong id="statusProvider">Provider</strong><em id="statusProviderValue">loading…</em></span>
       <span class="status-item"><strong id="statusRuntime">Local backend</strong><em id="runtimeProof">REPORTED BY ORIGIN</em></span>
       <span class="status-spacer"></span><button class="hash-status" id="statusHash" type="button" title="No hash available">hash: pending</button>
     </footer>

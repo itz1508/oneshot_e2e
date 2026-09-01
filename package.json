@@ -11,6 +11,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/backend/index.js",
     "test": "npm run build && node --test dist/tests_ts/*.test.js",
+    "demo": "node demo.mjs",
+    "setup": "node -e \"require('child_process').execSync(process.platform==='win32'?'setup.bat':'bash setup.sh',{stdio:'inherit'})\"",
     "verify": "python scripts/verify_all.py",
     "verify:adk-adapter": "npm run build && node --test --test-force-exit dist/tests_ts/adk-gemma-provider.test.js",
     "verify:featherless-adapter": "npm run build && node --test --test-force-exit dist/tests_ts/featherless-provider.test.js",

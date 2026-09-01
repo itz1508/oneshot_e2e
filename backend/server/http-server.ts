@@ -59,6 +59,11 @@ const mime = (p: string) => MIME[extname(p)] || "application/octet-stream";
 // HTTP server
 // ---------------------------------------------------------------------------
 
+export interface RuntimeInfo {
+  mode: string;
+  provider: string;
+}
+
 export function startHttpServer(
   runtime: WorkflowRuntime,
   runs: RunRepository,
@@ -68,6 +73,7 @@ export function startHttpServer(
   task?: TaskManagement,
   intent?: IntentCollectionService,
   sandbox?: SandboxService,
+  runtimeInfo?: RuntimeInfo,
 ): Promise<ReturnType<typeof createServer>> {
   const security = new HttpSecurity();
 
@@ -86,6 +92,8 @@ export function startHttpServer(
           return json(res, 200, {
             status: "ok",
             workflow: "oneshot-canonical-workflow",
+            mode: runtimeInfo?.mode || process.env.ONESHOT_MODE || "sample",
+            provider: runtimeInfo?.provider || "unknown",
             task_management: Boolean(task),
             intent_collection: Boolean(intent),
             sandbox_service: Boolean(sandbox),

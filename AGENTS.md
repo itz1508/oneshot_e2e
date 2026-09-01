@@ -141,8 +141,10 @@ d:/oneshot_e2e/
 ├── package-lock.json                         # Pinned offline lockfile for npm packages
 ├── Dockerfile                                # Production multi-stage container build for Cloud Run & Kubernetes
 ├── .gitignore                                # Git ignore patterns (ignores .venv, .ollama, dist, data runs)
-├── .env.example                              # Environment configuration template for OneShot runtime
-├── .env.workspace.example                    # Environment configuration template for Workspace API sidecar
+├── JUDGE_README.md                           # Hackathon judge quick start and evaluation guide
+├── demo.mjs                                  # Interactive terminal demo launcher with live browser sync
+├── setup.bat                                 # 1-click Windows environment installer and dependency bootstrap
+├── setup.sh                                  # 1-click Linux/macOS environment installer and dependency bootstrap
 ├── requirements.txt                          # Pinned Python dependencies for base validation runtime
 ├── requirements-adk.txt                      # Pinned Python dependencies for Google ADK + LiteLLM + Ollama
 ├── requirements-featherless.txt               # Pinned Python dependencies for Featherless OpenAI API
