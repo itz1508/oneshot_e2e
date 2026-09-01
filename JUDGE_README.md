@@ -22,8 +22,10 @@ Review the full end-to-end execution, task drawer telemetry, live activity discl
 
 - [⚡ Option 1: Judge Fast-Path (Prebuilt Docker Image — Recommended)](#-option-1-judge-fast-path-prebuilt-docker-image--recommended)
   - [Prerequisites](#prerequisites)
-  - [Method A: Automated 1-Click Launch (Recommended)](#method-a-automated-1-click-launch-recommended)
-  - [Method B: Manual Step-by-Step Launch](#method-b-manual-step-by-step-launch)
+  - [Start OneShot](#start-oneshot)
+    - [Windows](#windows)
+    - [macOS / Linux](#macos--linux)
+  - [Manual Step-by-Step Launch](#manual-step-by-step-launch)
   - [Stop the Platform](#stop-the-platform)
 - [🛠️ Option 2: Developer & Source Build Verification Path](#️-option-2-developer--source-build-verification-path)
   - [Source Prerequisites](#source-prerequisites)
@@ -46,16 +48,37 @@ The fastest way to evaluate OneShot. No repository cloning, Node.js, Python, npm
 
 - **Docker Desktop** (or Docker Engine) running on Windows (WSL 2 or Hyper-V), macOS, or Linux.
 
-### Method A: Automated 1-Click Launch (Recommended)
+---
 
-1. **Windows**: Run `.\start-oneshot.ps1`
-2. **macOS / Linux**: Run `./start-oneshot.sh`
+## Start OneShot
 
-The startup script automatically loads `oneshot-1.3.0.tar` (if present), generates a secure local access token in `.env`, starts Docker Compose, polls for healthy status, displays your access token, and opens `http://localhost:8787` in your browser.
+### Windows
+
+```powershell
+.\start-oneshot.ps1
+```
+
+### macOS / Linux
+
+```bash
+chmod +x ./start-oneshot.sh ./stop-oneshot.sh
+./start-oneshot.sh
+```
+
+Wait for the launcher to report that OneShot is healthy. The browser will open automatically at `http://localhost:8787`.
+
+The launcher will:
+- load the prebuilt `oneshot:1.3.0` image (`oneshot-1.3.0.tar`)
+- generate the local access token in `.env`
+- start Docker Compose (non-root, resource-limited)
+- wait for the container to become healthy
+- open `http://localhost:8787` automatically
+
+No repository clone or build is required.
 
 ---
 
-### Method B: Manual Step-by-Step Launch
+### Manual Step-by-Step Launch
 
 If you prefer running standard Docker CLI commands manually:
 
@@ -137,7 +160,7 @@ npm run verify
 # Run React IDE Vitest unit tests (104 tests)
 npm --prefix web test
 
-# Verify source hash manifest integrity (470 files)
+# Verify source hash manifest integrity (471 files)
 python scripts/verify_manifest.py
 ```
 
@@ -202,7 +225,7 @@ ONE-SHOT PRODUCTION E2E 1.3.0 - MASTER VERIFICATION SUMMARY
   [PASS] Python Unit Suite:            49 / 49 tests passed
   [PASS] TypeScript E2E Suite:         50 / 50 tests passed
   [PASS] React IDE Vitest Suite:       104 / 104 tests passed
-  [PASS] Checksum Manifest Integrity:  470 / 470 files verified
+  [PASS] Checksum Manifest Integrity:  471 / 471 files verified
   [PASS] Docker Packaging & Runtime:   5 / 5 container tests passed
 ======================================================================
   STATUS: ONESHOT_PRODUCTION_E2E_VERIFIED (100% PASS)
