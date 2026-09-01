@@ -7,13 +7,8 @@
 
 import type {ClaimRequest, ClaimResponse} from './types'
 
-const DEV_HEADERS = {'x-oneshot-dev-user': 'operator'}
-
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-    const response = await fetch(path, {
-        ...init,
-        headers: {...DEV_HEADERS, ...(init?.headers ?? {})},
-    })
+    const response = await fetch(path, init)
     if (!response.ok) {
         const body = await response.json().catch(() => ({detail: response.statusText}))
         throw new Error(JSON.stringify(body.detail ?? body))

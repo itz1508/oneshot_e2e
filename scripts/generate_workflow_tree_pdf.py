@@ -2,6 +2,9 @@
 """
 Generate WORKFLOW_TREE.pdf from docs/WORKFLOW_TREE.
 Generates clean ASCII tree without font glyph replacement issues.
+
+MANUAL_DOC_TOOLING: run manually to regenerate the tracked
+docs/WORKFLOW_TREE.pdf; not part of automated verification.
 """
 
 from pathlib import Path

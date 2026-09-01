@@ -89,22 +89,18 @@ export async function readFile(path: string): Promise<string> {
 
 /**
  * Write content to a file in the workspace.
- * Requires X-OneShot-Dev-User header (dev auth).
  *
  * @param path Relative path to the file
  * @param content The text content to write
- * @param devUser The developer user identifier
  */
 export async function writeFile(
     path: string,
     content: string,
-    devUser = 'operator',
 ): Promise<void> {
     const res = await fetch('/v1/workspace/file', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-OneShot-Dev-User': devUser,
         },
         body: JSON.stringify({path, content}),
     })

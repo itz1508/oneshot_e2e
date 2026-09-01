@@ -2,6 +2,9 @@
 """
 Generate OneShot Workflow Processing Specification PDF.
 Generates docs/Workflow_Processing.pdf
+
+MANUAL_DOC_TOOLING: run manually to regenerate the tracked
+docs/Workflow_Processing.pdf; not part of automated verification.
 """
 
 import os

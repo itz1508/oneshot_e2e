@@ -79,7 +79,6 @@ export async function fetchChatEstimate(
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-OneShot-Dev-User': 'operator',
         },
         body: JSON.stringify(payload),
         signal,

@@ -1,11 +1,26 @@
+"""Deterministic release/archive tooling.
+
+Builds a byte-reproducible ZIP archive: fixed member timestamps, fixed
+permissions, stable POSIX-style member ordering, deterministic compression.
+File selection reuses ``source_file_policy.iter_source_files``, so archives
+preserve exactly the shared sensitive-file exclusion policy used by
+``generate_manifest.py`` / ``verify_manifest.py``.
+
+Usage: python scripts/build_deterministic_zip.py SRC OUT
+Prints the SHA-256 of the produced archive.
+"""
 from __future__ import annotations
 import hashlib,sys,zipfile
 from pathlib import Path
+try:
+    from .source_file_policy import iter_source_files
+except ImportError:
+    from source_file_policy import iter_source_files
+
 FIXED=(2020,1,1,0,0,0)
-EXCLUDED_DIRS={'node_modules','__pycache__','.git','data','.venv','.ollama','dist','.pytest_cache'}
 def build(src:Path,out:Path):
-    files=[p for p in src.rglob('*') if p.is_file() and not any(part in EXCLUDED_DIRS for part in p.relative_to(src).parts) and p.name not in {'.DS_Store'}]
-    files=sorted(files,key=lambda p:p.relative_to(src).as_posix())
+    src=src.resolve()
+    files=list(iter_source_files(src))
     with zipfile.ZipFile(out,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as z:
         for p in files:
             rel=f'{src.name}/{p.relative_to(src).as_posix()}'

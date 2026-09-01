@@ -105,7 +105,7 @@ echo        Build complete
 
 REM ── Tests ──────────────────────────────────────────────────────
 echo.
-echo [6/6] Running test suite (92 tests)...
+echo [6/6] Running test suite (94 tests)...
 echo.
 
 python -m unittest discover -s tests -v 2>&1
@@ -125,7 +125,7 @@ if %ERRORLEVEL% neq 0 (
 
 echo.
 echo  ============================================================
-echo   SETUP COMPLETE - All 92 tests passed!
+echo   SETUP COMPLETE - All 94 tests passed!
 echo  ============================================================
 echo.
 echo   Next steps:

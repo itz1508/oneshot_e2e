@@ -6,10 +6,8 @@ import {
 import { readFile, writeFile, readdir } from "node:fs/promises";
 import {
   extname,
-  isAbsolute,
   join,
   normalize,
-  relative,
   resolve,
 } from "node:path";
 import type { Prompt } from "../contract/types.js";
@@ -26,6 +24,11 @@ import type { SandboxService } from "../sandbox/sandbox-service.js";
 import { projectSandboxGraph } from "../sandbox/graph/sandbox-graph.js";
 import type { SandboxExecutionInput } from "../sandbox/types.js";
 import { HttpSecurity } from "./http-security.js";
+import {
+  WorkspacePathDeniedError,
+  WorkspacePathPolicy,
+  WorkspacePathTraversalError,
+} from "./workspace-path-policy.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -61,17 +64,20 @@ const MIME: Record<string, string> = {
   ".webp": "image/webp",
 };
 const mime = (p: string) => MIME[extname(p)] || "application/octet-stream";
-function resolveWorkspacePath(
-  workspaceRoot: string,
-  requestedPath: string,
-): string {
-  const root = resolve(workspaceRoot);
-  const target = resolve(root, requestedPath);
-  const fromRoot = relative(root, target);
-  if (fromRoot.startsWith("..") || isAbsolute(fromRoot)) {
-    throw new Error("path must stay within the workspace root");
+
+function workspacePolicyError(
+  res: ServerResponse,
+  error: unknown,
+): boolean {
+  if (error instanceof WorkspacePathTraversalError) {
+    json(res, 400, { error: error.message });
+    return true;
   }
-  return target;
+  if (error instanceof WorkspacePathDeniedError) {
+    json(res, 403, { error: error.message });
+    return true;
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -87,35 +93,42 @@ interface TreeNode {
   children?: TreeNode[];
 }
 
-const IGNORE_DIRS = new Set([
-  ".git",
-  ".venv",
-  "node_modules",
-  "dist",
-  ".ollama",
-  ".pytest_cache",
-  "__pycache__",
-]);
-
 async function buildFileTree(
-  dir: string,
+  policy: WorkspacePathPolicy,
+  requestedDir: string,
   basePath = "",
   currentDepth = 0,
   maxDepth?: number,
 ): Promise<TreeNode[]> {
   if (maxDepth !== undefined && currentDepth >= maxDepth) return [];
   try {
+    const dir = await policy.authorizeExisting(requestedDir);
     const entries = await readdir(dir, { withFileTypes: true });
     const nodes: TreeNode[] = [];
 
     for (const entry of entries) {
-      if (IGNORE_DIRS.has(entry.name)) continue;
       const relPath = basePath ? `${basePath}/${entry.name}` : entry.name;
-      const fullPath = join(dir, entry.name);
+      const policyPath =
+        requestedDir === "."
+          ? entry.name
+          : `${requestedDir}/${entry.name}`;
+
+      try {
+        await policy.authorizeExisting(policyPath);
+      } catch (error) {
+        if (
+          error instanceof WorkspacePathDeniedError ||
+          error instanceof WorkspacePathTraversalError
+        ) {
+          continue;
+        }
+        throw error;
+      }
 
       if (entry.isDirectory()) {
         const children = await buildFileTree(
-          fullPath,
+          policy,
+          policyPath,
           relPath,
           currentDepth + 1,
           maxDepth,
@@ -138,7 +151,13 @@ async function buildFileTree(
       if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof WorkspacePathDeniedError ||
+      error instanceof WorkspacePathTraversalError
+    ) {
+      throw error;
+    }
     return [];
   }
 }
@@ -156,7 +175,7 @@ export interface HttpServerOptions {
   workspaceRoot?: string;
 }
 
-export function startHttpServer(
+export async function startHttpServer(
   runtime: WorkflowRuntime,
   runs: RunRepository,
   events: ProcessingEventBus,
@@ -168,10 +187,18 @@ export function startHttpServer(
   runtimeInfo?: RuntimeInfo,
   options: HttpServerOptions = {},
 ): Promise<ReturnType<typeof createServer>> {
+  const bindHost = (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
+  const apiToken = (process.env.ONESHOT_API_TOKEN || "").trim();
+  if (bindHost !== "127.0.0.1" && bindHost !== "::1" && !apiToken) {
+    throw new Error(
+      `ROOT_CAUSE: non-loopback ONESHOT_BIND_HOST '${bindHost}' requires ONESHOT_API_TOKEN`,
+    );
+  }
   const security = new HttpSecurity();
   const workspaceRoot = resolve(
     options.workspaceRoot || process.env.ONESHOT_WORKSPACE_ROOT || process.cwd(),
   );
+  const workspacePolicy = await WorkspacePathPolicy.create(workspaceRoot);
 
   const server = createServer(
     async (req: IncomingMessage, res: ServerResponse) => {
@@ -201,21 +228,18 @@ export function startHttpServer(
               error: "depth must be an integer from 1 to 100",
             });
           }
-          let targetDir: string;
           try {
-            targetDir = resolveWorkspacePath(workspaceRoot, reqPath);
-          } catch (error) {
-            return json(res, 400, {
-              error: error instanceof Error ? error.message : String(error),
+            const nodes = await buildFileTree(workspacePolicy, reqPath, "", 0, maxDepth);
+            return json(res, 200, {
+              root: reqPath,
+              path: reqPath,
+              depth: maxDepth ?? null,
+              nodes,
             });
+          } catch (error) {
+            if (workspacePolicyError(res, error)) return;
+            throw error;
           }
-          const nodes = await buildFileTree(targetDir, "", 0, maxDepth);
-          return json(res, 200, {
-            root: reqPath,
-            path: reqPath,
-            depth: maxDepth ?? null,
-            nodes,
-          });
         }
 
         if (
@@ -225,18 +249,12 @@ export function startHttpServer(
         ) {
           const reqPath = url.searchParams.get("path") || "";
           if (!reqPath) return json(res, 400, { error: "path parameter required" });
-          let targetFile: string;
           try {
-            targetFile = resolveWorkspacePath(workspaceRoot, reqPath);
-          } catch (error) {
-            return json(res, 400, {
-              error: error instanceof Error ? error.message : String(error),
-            });
-          }
-          try {
+            const targetFile = await workspacePolicy.authorizeExisting(reqPath);
             const data = await readFile(targetFile, "utf-8");
             return json(res, 200, { path: reqPath, content: data });
-          } catch (err) {
+          } catch (error) {
+            if (workspacePolicyError(res, error)) return;
             return json(res, 404, { error: `File not found: ${reqPath}` });
           }
         }
@@ -250,16 +268,14 @@ export function startHttpServer(
           const filePath = String(b.path || "");
           const content = String(b.content ?? "");
           if (!filePath) return json(res, 400, { error: "path parameter required" });
-          let targetFile: string;
           try {
-            targetFile = resolveWorkspacePath(workspaceRoot, filePath);
+            const targetFile = await workspacePolicy.authorizeWrite(filePath);
+            await writeFile(targetFile, content, "utf-8");
+            return json(res, 200, { ok: true, path: filePath });
           } catch (error) {
-            return json(res, 400, {
-              error: error instanceof Error ? error.message : String(error),
-            });
+            if (workspacePolicyError(res, error)) return;
+            throw error;
           }
-          await writeFile(targetFile, content, "utf-8");
-          return json(res, 200, { ok: true, path: filePath });
         }
 
         if (
@@ -678,6 +694,6 @@ export function startHttpServer(
   );
 
   return new Promise<ReturnType<typeof createServer>>((resolveServer) =>
-    server.listen(port, () => resolveServer(server)),
+    server.listen(port, bindHost, () => resolveServer(server)),
   );
 }

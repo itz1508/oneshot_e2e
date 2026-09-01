@@ -18,6 +18,15 @@ import { resolve } from "node:path";
 import { platform } from "node:os";
 
 const ROOT = resolve(import.meta.dirname || ".");
+const environmentFile = resolve(ROOT, ".env");
+if (existsSync(environmentFile)) {
+  if (typeof process.loadEnvFile !== "function") {
+    throw new Error(
+      "ROOT_CAUSE: loading .env requires Node.js 20.12+; set variables in the process environment instead",
+    );
+  }
+  process.loadEnvFile(environmentFile);
+}
 
 // ── Colors ──────────────────────────────────────────────────────
 const C = {
@@ -83,6 +92,10 @@ try {
 log("Starting real OneShot backend...");
 
 const port = process.env.PORT || "8787";
+const bindHost = (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
+const probeHost = bindHost === "0.0.0.0" ? "127.0.0.1" : bindHost === "::" ? "::1" : bindHost;
+const probeAddress = probeHost.includes(":") ? `[${probeHost}]` : probeHost;
+const apiToken = (process.env.ONESHOT_API_TOKEN || "").trim();
 const child = spawn("node", ["dist/backend/index.js"], {
   cwd: ROOT,
   stdio: ["ignore", "pipe", "pipe"],
@@ -128,7 +141,11 @@ child.stdout.on("data", async (data) => {
     const url = `http://localhost:${port}`;
 
     try {
-      const res = await fetch(`${url}/api/health`);
+      const res = await fetch(`http://${probeAddress}:${port}/api/health`, {
+        headers: apiToken
+          ? { Authorization: `Bearer ${apiToken}` }
+          : undefined,
+      });
       if (!res.ok) {
         throw new Error(`Health endpoint returned status ${res.status}`);
       }

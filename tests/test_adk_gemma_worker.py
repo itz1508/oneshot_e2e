@@ -117,18 +117,23 @@ class AdkGemmaWorkerTests(unittest.TestCase):
             finally:
                 self._close(p)
 
-    def test_previous_performance_profile_present(self):
+    def test_local_ai_example_config_declares_live_settings_only(self):
         text = (ROOT / "config/local-ai.env.example").read_text(
             encoding="utf-8"
         )
         for expected in [
             "GEMMA2_LOCAL_MODEL=gemma2:9b",
-            "OLLAMA_CONTEXT_LENGTH=8192",
-            "OLLAMA_KEEP_ALIVE=5m",
-            "OLLAMA_NUM_PARALLEL=2",
             "CACHE_TTL=3600",
         ]:
             self.assertIn(expected, text)
+        # Obsolete "prior local performance profile" variables are never read
+        # by the runtime and were removed from the example configuration.
+        for obsolete in [
+            "OLLAMA_CONTEXT_LENGTH=",
+            "OLLAMA_KEEP_ALIVE=",
+            "OLLAMA_NUM_PARALLEL=",
+        ]:
+            self.assertNotIn(obsolete, text)
 
 
 if __name__ == "__main__":

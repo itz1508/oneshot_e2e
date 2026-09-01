@@ -81,7 +81,7 @@ echo "       Build complete"
 
 # ── Tests ────────────────────────────────────────────────────────
 echo ""
-echo "[6/6] Running test suite (92 tests)..."
+echo "[6/6] Running test suite (94 tests)..."
 echo ""
 
 $PYTHON_CMD -m unittest discover -s tests -v 2>&1
@@ -91,7 +91,7 @@ node --test --test-force-exit dist/tests_ts/*.test.js
 
 echo ""
 echo " ============================================================"
-echo "  SETUP COMPLETE - All 92 tests passed!"
+echo "  SETUP COMPLETE - All 94 tests passed!"
 echo " ============================================================"
 echo ""
 echo "  Next steps:"

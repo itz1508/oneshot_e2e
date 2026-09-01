@@ -16,7 +16,8 @@
  * 12. Consumed suspension rejects replay
  */
 
-import {describe, it, expect} from 'vitest'
+import {describe, it, expect, vi} from 'vitest'
+import {claimToolExecution} from '../agent/claimApi'
 
 // ─── Types ───
 
@@ -108,6 +109,22 @@ describe('Claim request shape', () => {
         const operationId = 'op-test-1'
         const url = `/v1/operations/${operationId}/claim`
         expect(url).toBe('/v1/operations/op-test-1/claim')
+    })
+
+    it('does not send an unvalidated client identity header', async () => {
+        const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => ({
+            ok: true,
+            json: async () => makeClaimResponse(),
+        }))
+        vi.stubGlobal('fetch', fetchMock)
+        try {
+            await claimToolExecution('op-test-1', makeClaimRequest())
+            const init = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined
+            const headers = new Headers(init?.headers)
+            expect(headers.has('x-oneshot-dev-user')).toBe(false)
+        } finally {
+            vi.unstubAllGlobals()
+        }
     })
 })
 

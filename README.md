@@ -4,15 +4,15 @@ Deterministic AI execution platform combining strict Draft 2020-12 schema valida
 
 Licensed under the **Apache License, Version 2.0** for all workflow processing components.
 
-> **📋 Hackathon judges:** See [JUDGE_README.md](JUDGE_README.md) for a focused quick-start guide.
+> **ðŸ“‹ Hackathon judges:** See [JUDGE_README.md](JUDGE_README.md) for a focused quick-start guide.
 
 ---
 
-## ⚡ 60-Second Start
+## âš¡ 60-Second Start
 
 ### Prerequisites
-- **Node.js 20+** — [nodejs.org](https://nodejs.org)
-- **Python 3.11+** — [python.org](https://www.python.org)
+- **Node.js 20+** â€” [nodejs.org](https://nodejs.org)
+- **Python 3.11+** â€” [python.org](https://www.python.org)
 
 ### Setup and launch (one command)
 
@@ -22,12 +22,12 @@ cd oneshot_e2e
 npm run oneshot
 ```
 
-`npm run oneshot` detects Windows, macOS, or Linux; checks Node.js and Python; creates `.venv`; installs the required Python, root Node, and `web/` dependency profiles; builds the backend and React IDE; verifies canonical contracts and `MANIFEST.sha256`; runs all 46 Python and 46 TypeScript tests; starts the real backend; waits for `/api/health`; and opens `http://localhost:8787` in the default browser.
+`npm run oneshot` detects Windows, macOS, or Linux; checks Node.js and Python; creates `.venv`; installs the required Python, root Node, and `web/` dependency profiles; builds the backend and React IDE; verifies canonical contracts and `MANIFEST.sha256`; runs all 47 Python and 47 TypeScript tests; starts the real backend; waits for `/api/health`; and opens `http://localhost:8787` in the default browser.
 
 ### Run Tests
 ```bash
-npm test          # 46 TypeScript tests
-npm run verify    # Full 92-test suite (Python + TypeScript)
+npm test          # 47 TypeScript tests
+npm run verify    # Full 94-test suite (Python + TypeScript)
 ```
 
 ### Start the Server (without demo launcher)
@@ -39,16 +39,16 @@ Open **http://localhost:8787** for the real-time IDE.
 
 ---
 
-## 🏛️ Repository Architecture
+## ðŸ›ï¸ Repository Architecture
 
 ```text
 oneshot_e2e/
-├─ backend/        OneShot backend/runtime authority
-├─ schema/         OneShot canonical contracts
-├─ validation/     OneShot deterministic proof
-├─ workspace_api/  OneShot workspace/control-plane support
-├─ web/            OneShot React IDE
-└─ ui/             legacy OneShot standalone UI
+â”œâ”€ backend/        OneShot backend/runtime authority
+â”œâ”€ schema/         OneShot canonical contracts
+â”œâ”€ validation/     OneShot deterministic proof
+â”œâ”€ workspace_api/  OneShot workspace/control-plane support
+â”œâ”€ web/            OneShot React IDE
+â””â”€ ui/             legacy OneShot standalone UI
 ```
 
 ---
@@ -59,36 +59,36 @@ The OneShot execution engine follows an immutable, deterministic pipeline:
 
 ```text
 Chat / Multi-turn Intent Collection
- └── Intent(id) revision
-      └── Prompt_id
-           └── Researcher
-                └── Researcher(id)
-                     └── Planner
-                          └── audit_id
-                               └── Refactor
-                                    └── same plan_id
-                                         └── Gap Analysis
-                                              └── gap_0 + plan_id
-                                                   └── Evaluation
-                                                        └── plan_id
-                                                             ├── Schema Validation ──┐
-                                                             ├── Fixture Validation ──┼─ Triple Validation
-                                                             └── Goal Validation ────┘      │
+ â””â”€â”€ Intent(id) revision
+      â””â”€â”€ Prompt_id
+           â””â”€â”€ Researcher
+                â””â”€â”€ Researcher(id)
+                     â””â”€â”€ Planner
+                          â””â”€â”€ audit_id
+                               â””â”€â”€ Refactor
+                                    â””â”€â”€ same plan_id
+                                         â””â”€â”€ Gap Analysis
+                                              â””â”€â”€ gap_0 + plan_id
+                                                   â””â”€â”€ Evaluation
+                                                        â””â”€â”€ plan_id
+                                                             â”œâ”€â”€ Schema Validation â”€â”€â”
+                                                             â”œâ”€â”€ Fixture Validation â”€â”€â”¼â”€ Triple Validation
+                                                             â””â”€â”€ Goal Validation â”€â”€â”€â”€â”˜      â”‚
                                                                                             v
                                                                                        all VALID
-                                                                                            │
+                                                                                            â”‚
                                                                                             v
                                                                                         CONFIRMED
-                                                                                            │
+                                                                                            â”‚
                                                                                             v
                                                                                        CREATE HASH
-                                                                                            │
+                                                                                            â”‚
                                                                                             v
                                                                                           HASH
-                                                                                            │
+                                                                                            â”‚
                                                                                             v
                                                                                           DONE
-                                                                                            │
+                                                                                            â”‚
                                                                                             v
                                                                                     Sandbox Execution
 ```
@@ -103,7 +103,7 @@ For the complete detailed hierarchy and source-of-truth specification, see [`doc
 - **Python Canonical Engine (`validation/`)**: Strict Pydantic model validation, reference resolution, fixture assertion execution, schema parity proof, RFC 8785 canonicalization (JCS), and SHA-256 verification.
 - **TypeScript Runtime (`backend/`)**: Multi-turn Intent collection, Role workflow orchestration, provider resolution, append-only Task Management event store, W3C trace propagation, checkpoint projections, and fast HTTP/SSE server.
 - **Workspace API Control Plane (`workspace_api/`)**: FastAPI control plane providing multi-tenant workspaces, encrypted API keys, provider routing, rate limiting, and token analytics.
-- **OneShot IDE (`ui/`)**: Event-driven frontend providing user interaction, live workflow visualization, task state tracking, artifact inspection, and sandbox execution proofs.
+- **OneShot React IDE (`web/`)**: Event-driven React frontend providing user interaction, live workflow visualization, task state tracking, artifact inspection, and sandbox execution proofs.
 
 ---
 
@@ -148,7 +148,7 @@ python scripts/bootstrap.py --with-featherless
 *(Or `pip install -r requirements-featherless.txt`)*
 
 #### Option D: With Workspace API Sidecar Control Plane
-Installs FastAPI, SQLAlchemy, Alembic, and security libraries:
+Installs FastAPI, SQLAlchemy, Redis, JWT,and security libraries:
 ```bash
 python scripts/bootstrap.py --with-workspace-api
 ```
@@ -159,11 +159,24 @@ python scripts/bootstrap.py --with-workspace-api
 ## 4. Running the Platform
 
 ### Start the OneShot IDE & HTTP Server
+
+Copy `.env.example` to `.env` to configure the Node runtime. On Node.js 20.12+, the launchers and compiled backend load it automatically; variables already set by the parent process take precedence. With an earlier Node.js 20 release, set the variables in the parent process instead.
+
 ```bash
 npm run build
 npm start
 ```
 Open your browser at **`http://localhost:8787`**.
+
+The Node server binds to `127.0.0.1` by default. External binding is an explicit authenticated mode:
+
+```bash
+ONESHOT_BIND_HOST=0.0.0.0 ONESHOT_API_TOKEN="replace-with-a-secret" npm start
+```
+
+When `ONESHOT_API_TOKEN` is configured, every `/api`, `/api/*`, `/v1`, and `/v1/*` requestâ€”including `/api/health`â€”must send `Authorization: Bearer <token>`. Static UI assets remain public. The browser bundle never embeds the server token, so token-enabled operation is intended for authenticated launchers, probes, and API clients.
+
+Use `.env.workspace.example` for the FastAPI sidecar and `web/env.example` for Vite development-proxy settings. Real `.env*`, credentials, private keys, secrets, and `data/` are ignored and excluded from source archives.
 
 ### Research Provider Configuration Modes
 
@@ -207,9 +220,9 @@ python scripts/verify_all.py
 
 This master script verifies:
 1. **Dependency Versions**: Exact pinned versions across Python and Node.
-2. **Python Canonical Engine**: 46 unit tests including schema validator, model parity, graph validator, fixture assertions, JCS canonicalization, and Workspace API.
+2. **Python Canonical Engine**: 47 unit tests including schema validator, model parity, graph validator, fixture assertions, JCS canonicalization, Workspace API, and archive secret-selection parity.
 3. **TypeScript Compilation**: `tsc -p tsconfig.json`.
-4. **TypeScript E2E Test Suite**: 46 E2E integration tests including ADK adapter, Featherless adapter, intent collection, sandbox boundary, SSE server, and task management.
+4. **TypeScript E2E Test Suite**: 47 E2E integration tests including ADK adapter, Featherless adapter, intent collection, sandbox boundary, SSE server, task management, and workspace filesystem security.
 
 ### Specialized Verification Commands
 ```bash
@@ -252,7 +265,7 @@ The platform provides 5 built-in skills with 26 callable tools:
 4. **`oneshot-sandbox-runtime`** (TypeScript): `verify_admission`, `execute_sandbox`, `audit_sandbox`, `project_sandbox_graph`.
 5. **`oneshot-init`** (TypeScript): `init_workspace`, `check_preflight`.
 
-For complete operational rules and file maps, see [`AGENTS.md`](AGENTS.md).
+For reusable-skill vs. role placement rules, see [`.agents/rules/oneshot-skill-architecture.md`](.agents/rules/oneshot-skill-architecture.md); for canonical workflow ordering, see [`CANONICAL_WORKFLOW.md`](CANONICAL_WORKFLOW.md). Contributor guidelines live in [`AGENTS.md`](AGENTS.md).
 
 ---
 

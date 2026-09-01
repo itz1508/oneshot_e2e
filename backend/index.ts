@@ -1,3 +1,4 @@
+import "./environment.js";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { ProcessingEventBus } from "./runtime/event-bus.js";

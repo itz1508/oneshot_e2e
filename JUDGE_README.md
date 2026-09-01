@@ -8,23 +8,6 @@
 
 **OneShot** is an enterprise-grade deterministic AI execution platform that transforms natural language intent into a provably correct, cryptographically hash-verified execution plan.
 
-Every run executes through the canonical workflow state machine (defined by `CANONICAL_WORKFLOW.md`), traced across 27 discrete operational implementation steps:
-1. **Multi-Turn Intent Collection** — Collects conversational intent and validates requirements
-2. **Canonical Prompt Creation** — Emits `Prompt(id)` with goal, context, and research direction
-3. **Research & Evidence Gathering** — Resolves provider (`Sample`, `Google ADK + Gemma 2`, or `Featherless Gemma 4`) and creates verifiable draft artifacts
-4. **Planning & Peer Audit** — Reviews requirements, dependencies, and coverage to emit structured findings
-5. **Identity-Preserving Refactor** — Applies audit refinements while strictly preserving `plan_id`
-6. **Gap Analysis Gate** — Identifies missing branches, closes gaps, and asserts `gap_0: true`
-7. **9-Point Evaluation** — Scores criteria matrix to emit `Evaluation` artifact
-8. **Triple Validation** — Three independent proof engines:
-   - **Schema Validation** — Proves Draft 2020-12 schema conformance (`VALID`)
-   - **Fixture Validation** — Proves assertion operators against test fixtures (`VALID`)
-   - **Goal Validation** — Proves outcome satisfaction against success criteria (`VALID`)
-9. **Confirmation Gate** — Assembles `ConfirmedPackage` (`confirmed: true`) containing 10 canonical artifacts
-10. **Canonical Hashing & Cryptographic Proof** — Confirmation completed → canonical package hashed using RFC 8785 JSON Canonicalization Scheme (JCS) and SHA-256 (`created_hash == recomputed_hash`)
-11. **Isolated Sandbox Execution** — Enforces sandbox admission gate (`HASH == hash_sandbox`) with resource, network, and timeout constraints
-
-If any validation or contract fails, OneShot produces a structured **`ROOT_CAUSE`** error with evidence IDs — never a silent failure.
 
 ---
 
@@ -47,7 +30,7 @@ npm run oneshot
 - ✅ Installs root and `web/` Node dependencies from their lockfiles
 - ✅ Builds the TypeScript backend and OneShot React IDE
 - ✅ Verifies canonical contracts and `MANIFEST.sha256`
-- ✅ Runs the entire 92-test verification suite (46 Python + 46 TypeScript)
+- ✅ Runs the entire 94-test verification suite (47 Python + 47 TypeScript)
 - ✅ Starts the runtime, waits for `/api/health`, and opens `http://localhost:8787`
 
 ---
@@ -61,7 +44,7 @@ npm run oneshot
 ### What Happens:
 
 1. **Bootstrap & Build** — Verifies the environment and compiles current backend and web source
-2. **Proof Gates** — Verifies contracts, manifest integrity, and all 92 tests
+2. **Proof Gates** — Verifies contracts, manifest integrity, and all 94 tests
 3. **Backend Startup** — Boots the real OneShot HTTP & Server-Sent Events (SSE) backend on port 8787
 4. **IDE Launch** — Waits for health and opens your default browser at `http://localhost:8787`
 5. **Status Verification** — Status bar displays active `MODE` and `PROVIDER`
@@ -149,8 +132,8 @@ python scripts/verify_all.py
 ```
 
 ### Verification Matrix:
-- **46 Python unit tests** (`tests/`): Schema validation, model parity, graph structure, fixture assertions, RFC 8785 JCS canonicalization, SHA-256 equality, Workspace API security & rate limiting.
-- **46 TypeScript integration tests** (`tests_ts/`): Google ADK adapter, Featherless adapter, intent collection, sandbox admission boundary, process isolation, SSE streaming, task event store.
+- **47 Python unit tests** (`tests/`): Schema validation, model parity, graph structure, fixture assertions, RFC 8785 JCS canonicalization, SHA-256 equality, Workspace API security, rate limiting, and archive secret-selection parity.
+- **47 TypeScript integration tests** (`tests_ts/`): Google ADK adapter, Featherless adapter, intent collection, sandbox admission boundary, process isolation, SSE streaming, task event store, and workspace filesystem security.
 - **Expected result:** `ONESHOT_PRODUCTION_E2E_VERIFIED`
 
 To run TypeScript tests directly:

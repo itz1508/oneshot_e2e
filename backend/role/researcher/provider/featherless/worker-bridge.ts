@@ -1,23 +1,11 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
-import { existsSync } from "node:fs";
 import { delimiter, resolve } from "node:path";
+import { resolvePythonExecutable } from "../../../../python-runtime.js";
 import type {
   FeatherlessConfig,
   FeatherlessResearchDraft,
   FeatherlessWorkerEvent,
 } from "./types.js";
-
-function defaultPython(projectRoot: string): string {
-  if (process.env.ONESHOT_PYTHON) return process.env.ONESHOT_PYTHON;
-  const venvPy = resolve(projectRoot, ".venv/Scripts/python.exe");
-  if (existsSync(venvPy)) return venvPy;
-  const uvPy = resolve(
-    process.env.APPDATA || "",
-    "uv/python/cpython-3.12.13-windows-x86_64-none/python.exe",
-  );
-  if (existsSync(uvPy)) return uvPy;
-  return "python";
-}
 
 function pythonPath(projectRoot: string): string {
   const parts = [projectRoot, resolve(projectRoot, ".venv/Lib/site-packages")];
@@ -42,7 +30,7 @@ export class FeatherlessWorker {
     private projectRoot: string,
     private config: FeatherlessConfig,
     private onEvent?: (runId: string, event: FeatherlessWorkerEvent) => void,
-    private python = defaultPython(projectRoot),
+    private python = resolvePythonExecutable(projectRoot),
   ) {}
 
   private rejectAll(reason: Error) {

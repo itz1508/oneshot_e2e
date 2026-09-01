@@ -12,6 +12,15 @@ import http from "node:http";
 import { join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname);
+const environmentFile = join(ROOT, ".env");
+if (existsSync(environmentFile)) {
+  if (typeof process.loadEnvFile !== "function") {
+    throw new Error(
+      "ROOT_CAUSE: loading .env requires Node.js 20.12+; set variables in the process environment instead",
+    );
+  }
+  process.loadEnvFile(environmentFile);
+}
 const PLATFORM_NAMES = {
   win32: "Windows",
   darwin: "macOS",
@@ -376,22 +385,25 @@ if (skipTests) {
   const pythonCount = pythonMatch
     ? Number.parseInt(pythonMatch[1], 10)
     : Number.NaN;
-  if (pythonCount !== 46 || typeScriptCount !== 46) {
+  if (pythonCount !== 47 || typeScriptCount !== 47) {
     fail(
-      `Expected 46 Python and 46 TypeScript tests; observed Python=${pythonCount}, TypeScript=${typeScriptCount}`,
+      `Expected 47 Python and 47 TypeScript tests; observed Python=${pythonCount}, TypeScript=${typeScriptCount}`,
     );
   }
   if (!testOutput.includes("ONESHOT_PRODUCTION_E2E_VERIFIED")) {
     fail("The verification suite did not emit ONESHOT_PRODUCTION_E2E_VERIFIED");
   }
-  pass("46 / 46 Python tests passed");
-  pass("46 / 46 TypeScript tests passed");
-  pass("92 / 92 total tests passed");
+  pass("47 / 47 Python tests passed");
+  pass("47 / 47 TypeScript tests passed");
+  pass("94 / 94 total tests passed");
 }
 
 header("7. Runtime service startup");
 
 const port = process.env.PORT || "8787";
+const bindHost = (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
+const probeHost = bindHost === "0.0.0.0" ? "127.0.0.1" : bindHost === "::" ? "::1" : bindHost;
+const apiToken = (process.env.ONESHOT_API_TOKEN || "").trim();
 const providerDisplay =
   mode === "sample" ? "deterministic sample provider" : providerKey;
 info(`Mode: ${mode}`);
@@ -457,7 +469,14 @@ function pollHealth(targetPort, timeoutMs = 15_000) {
 
     const attempt = () => {
       const request = http.get(
-        `http://localhost:${targetPort}/api/health`,
+        {
+          host: probeHost,
+          port: targetPort,
+          path: "/api/health",
+          headers: apiToken
+            ? { Authorization: `Bearer ${apiToken}` }
+            : undefined,
+        },
         (response) => {
           let body = "";
           response.on("data", (chunk) => {
