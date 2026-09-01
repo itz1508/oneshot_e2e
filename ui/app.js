@@ -103,7 +103,7 @@ document.querySelectorAll("[data-path]").forEach((row) => {
   row.addEventListener("click", () => {
     document.querySelectorAll(".tree-row.selected").forEach((item) => item.classList.remove("selected"));
     row.classList.add("selected");
-    byId("selectedPath").textContent = `D:\\oneshot_e2e\\${row.dataset.path.replaceAll("/", "\\")}`;
+    byId("selectedPath").textContent = `workspace/oneshot_e2e/${row.dataset.path}`;
   });
 });
 
@@ -369,13 +369,13 @@ async function finishRun(snapshot) {
   if (result === "PASSED") {
     // Fetch canonical artifact to render real model/workflow result
     let answerText = "";
-    let providerSource = "featherless:google/gemma-4-31B-it";
+    let providerSource = "";
     try {
       const confirmed = await jsonRequest(`/api/runs/${encodeURIComponent(snapshot.run_id)}/artifacts/confirmed`);
       const core = confirmed?.core;
       if (core) {
         const summary = core.researcher?.evidence?.[0]?.statement || "";
-        providerSource = core.researcher?.evidence?.[0]?.source || providerSource;
+        providerSource = core.researcher?.evidence?.[0]?.source || "";
         const reqs = (core.plan?.requirements || []).map((r) => `• ${r.statement}`);
         const steps = (core.plan?.steps || []).map((s, idx) => `${idx + 1}. ${s.description}`);
 
@@ -390,7 +390,7 @@ async function finishRun(snapshot) {
       try {
         const researcher = await jsonRequest(`/api/runs/${encodeURIComponent(snapshot.run_id)}/artifacts/researcher`);
         const summary = researcher?.evidence?.[0]?.statement || "";
-        providerSource = researcher?.evidence?.[0]?.source || providerSource;
+        providerSource = researcher?.evidence?.[0]?.source || "";
         if (summary) answerText = summary;
       } catch {}
     }
@@ -399,9 +399,14 @@ async function finishRun(snapshot) {
       answerText = `Run ${snapshot.run_id} completed with verified result PASSED.`;
     }
 
-    const providerParts = providerSource.split(":");
-    const providerName = providerParts[0] || "featherless";
-    const modelName = providerParts.slice(1).join(":") || "google/gemma-4-31B-it";
+    let providerName = byId("statusProviderValue")?.textContent || "FixtureResearchProvider";
+    let modelName = "N/A";
+
+    if (providerSource) {
+      const providerParts = providerSource.split(":");
+      providerName = providerParts[0] || providerName;
+      modelName = providerParts.slice(1).join(":") || "N/A";
+    }
 
     const metaBlock = [
       "─── Verification ───",

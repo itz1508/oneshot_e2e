@@ -102,7 +102,7 @@ For the complete detailed hierarchy and source-of-truth specification, see [`doc
 - **Python Canonical Engine (`validation/`)**: Strict Pydantic model validation, reference resolution, fixture assertion execution, schema parity proof, RFC 8785 canonicalization (JCS), and SHA-256 verification.
 - **TypeScript Runtime (`backend/`)**: Multi-turn Intent collection, Role workflow orchestration, provider resolution, append-only Task Management event store, W3C trace propagation, checkpoint projections, and fast HTTP/SSE server.
 - **Workspace API Control Plane (`workspace_api/`)**: FastAPI control plane providing multi-tenant workspaces, encrypted API keys, provider routing, rate limiting, and token analytics.
-- **Read-Only UI (`ui/`)**: Pure event-driven frontend displaying live runs, task states, event streams, audit graphs, and canonical hash proofs.
+- **OneShot IDE (`ui/`)**: Event-driven frontend providing user interaction, live workflow visualization, task state tracking, artifact inspection, and sandbox execution proofs.
 
 ---
 

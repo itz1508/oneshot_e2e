@@ -20,8 +20,8 @@ Every run executes through an immutable 27-phase canonical pipeline:
    - **Schema Validation** — Proves Draft 2020-12 schema conformance (`VALID`)
    - **Fixture Validation** — Proves assertion operators against test fixtures (`VALID`)
    - **Goal Validation** — Proves outcome satisfaction against success criteria (`VALID`)
-9. **Package Confirmation** — Assembles `ConfirmedPackage` containing 10 canonical artifacts
-10. **Cryptographic Proof** — Computes SHA-256 hash using RFC 8785 JSON Canonicalization Scheme (JCS) and verifies `created_hash == recomputed_hash`
+9. **Confirmation Gate** — Assembles `ConfirmedPackage` (`confirmed: true`) containing 10 canonical artifacts
+10. **Canonical Hashing & Cryptographic Proof** — Confirmation completed → canonical package hashed using RFC 8785 JSON Canonicalization Scheme (JCS) and SHA-256 (`created_hash == recomputed_hash`)
 11. **Isolated Sandbox Execution** — Enforces sandbox admission gate (`HASH == hash_sandbox`) with resource, network, and timeout constraints
 
 If any validation or contract fails, OneShot produces a structured **`ROOT_CAUSE`** error with evidence IDs — never a silent failure.
@@ -106,8 +106,11 @@ IDE Chat
 
 1. In the **OneShot IDE**, click **"💡 Try example prompt"** (or type any custom request in Chat)
 2. Click **Send** — this initiates the real Chat → Intent → Prompt flow
-3. Watch the **Tasks pane** update in real time (`PENDING` → `RUNNING` → `COMPLETE`)
-4. Watch the **Terminal / Events pane** stream real monotonic SSE events
+3. Watch the **13 visible workflow processors** update in real time (`PENDING` → `RUNNING` → `COMPLETE`):
+   - `Researcher`, `Planner`, `Refactor`, `Gap Analysis`, `Evaluation`
+   - `Schema Validation`, `Fixture Validation`, `Goal Validation`, `Triple Validation`
+   - `Confirmed`, `Create Hash`, `Hash`, `Done`
+4. Watch the **Terminal / Events pane** stream real monotonic SSE events (`event_id`, `sequence`, `processor`, `scope`, `state`, `result`, `message`)
 5. Inspect the generated **SHA-256 hash** in the status bar (click to copy full hash)
 6. Switch to the **Proofs tab** to view the live backend-generated artifacts (`confirmed.json`, `hash-proof.json`, `triple-validation.json`, etc.)
 7. Switch to the **Sandbox tab** to run the confirmed package inside the hardened isolated sandbox runner

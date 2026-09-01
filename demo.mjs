@@ -96,35 +96,56 @@ child.on("exit", (code) => {
 });
 
 // ── Step 4: Wait for backend readiness, then open browser ───────
-child.stdout.on("data", (data) => {
+let isHandlingReady = false;
+child.stdout.on("data", async (data) => {
   const text = data.toString();
   process.stdout.write(text);
 
-  if (text.includes("ONESHOT_SERVER_READY")) {
+  if (text.includes("ONESHOT_SERVER_READY") && !isHandlingReady) {
+    isHandlingReady = true;
     const url = `http://localhost:${port}`;
-    log("");
-    log(`${C.green}${C.bold}✓ Real OneShot IDE is ready${C.reset}`);
-    log("");
-    log(`  ${C.bold}URL:${C.reset}       ${C.cyan}${url}${C.reset}`);
-    log(`  ${C.bold}Mode:${C.reset}      ${mode.toUpperCase()}`);
-    log(`  ${C.bold}Provider:${C.reset}  ${provider}`);
-    log("");
-    log(`${C.dim}  1. Interact with the real OneShot IDE in your browser${C.reset}`);
-    log(`${C.dim}  2. Submit a request through the real Chat flow (or click example prompt)${C.reset}`);
-    log(`${C.dim}  3. Watch the canonical 27-phase pipeline execute live with real SSE events${C.reset}`);
-    log(`${C.dim}  4. Inspect the generated SHA-256 hash proof in the status bar & Proofs tab${C.reset}`);
-    log(`${C.dim}  5. Press Ctrl+C to stop${C.reset}`);
-    log("");
 
-    // Open the browser
     try {
-      const cmd =
-        platform() === "win32" ? `start "" "${url}"` :
-        platform() === "darwin" ? `open "${url}"` :
-        `xdg-open "${url}"`;
-      execSync(cmd, { stdio: "ignore", shell: true });
-    } catch {
-      log(`${C.yellow}Could not open browser automatically. Open ${url} manually.${C.reset}`);
+      const res = await fetch(`${url}/api/health`);
+      if (!res.ok) {
+        throw new Error(`Health endpoint returned status ${res.status}`);
+      }
+      const health = await res.json();
+      if (health.status !== "ok") {
+        throw new Error(`Unexpected health status: ${health.status}`);
+      }
+
+      const activeMode = (health.mode || mode).toUpperCase();
+      const activeProvider = health.provider || provider;
+
+      log("");
+      log(`${C.green}${C.bold}✓ Real OneShot IDE is ready${C.reset}`);
+      log("");
+      log(`  ${C.bold}URL:${C.reset}       ${C.cyan}${url}${C.reset}`);
+      log(`  ${C.bold}Mode:${C.reset}      ${activeMode}`);
+      log(`  ${C.bold}Provider:${C.reset}  ${activeProvider}`);
+      log("");
+      log(`${C.dim}  1. Interact with the real OneShot IDE in your browser${C.reset}`);
+      log(`${C.dim}  2. Submit a request through the real Chat flow (or click example prompt)${C.reset}`);
+      log(`${C.dim}  3. Watch the canonical 27-phase pipeline execute live with real SSE events${C.reset}`);
+      log(`${C.dim}  4. Inspect the generated SHA-256 hash proof in the status bar & Proofs tab${C.reset}`);
+      log(`${C.dim}  5. Press Ctrl+C to stop${C.reset}`);
+      log("");
+
+      // Open the browser
+      try {
+        const cmd =
+          platform() === "win32" ? `start "" "${url}"` :
+          platform() === "darwin" ? `open "${url}"` :
+          `xdg-open "${url}"`;
+        execSync(cmd, { stdio: "ignore", shell: true });
+      } catch {
+        log(`${C.yellow}Could not open browser automatically. Open ${url} manually.${C.reset}`);
+      }
+    } catch (err) {
+      console.error(`${C.red}Backend health check failed: ${err.message}${C.reset}`);
+      child.kill("SIGTERM");
+      process.exit(1);
     }
   }
 });

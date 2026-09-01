@@ -2,7 +2,7 @@ from __future__ import annotations
 import hashlib,sys,zipfile
 from pathlib import Path
 FIXED=(2020,1,1,0,0,0)
-EXCLUDED_DIRS={'node_modules','__pycache__','.git','data','.venv','.ollama'}
+EXCLUDED_DIRS={'node_modules','__pycache__','.git','data','.venv','.ollama','dist','.pytest_cache'}
 def build(src:Path,out:Path):
     files=[p for p in src.rglob('*') if p.is_file() and not any(part in EXCLUDED_DIRS for part in p.relative_to(src).parts) and p.name not in {'.DS_Store'}]
     files=sorted(files,key=lambda p:p.relative_to(src).as_posix())
