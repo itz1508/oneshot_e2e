@@ -146,7 +146,7 @@ Chat / Multi-turn Intent Collection (Pre-canonical Support)
 Every file in the repository is cataloged below with direct clickable links, its owner subsystem, and functional purpose.
 
 ```text
-d:/oneshot_e2e/
+oneshot_e2e/
 ├── AGENTS.md                                 # Master operational manual & comprehensive registry (this file)
 ├── CANONICAL_WORKFLOW.md                     # Canonical workflow state machine definition & DAG specification
 ├── README.md                                 # High-level architecture summary, quick start, and provider modes
@@ -476,7 +476,7 @@ d:/oneshot_e2e/
 
 ## 5. Complete Script Execution Runbook
 
-All commands must be executed from the repository root (`d:\oneshot_e2e`).
+All commands must be executed from the repository root.
 
 ```bash
 # 1. Master verification script (runs dependency check, Python tests, TypeScript compilation, and E2E tests)

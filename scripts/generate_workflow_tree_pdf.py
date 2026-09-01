@@ -147,13 +147,5 @@ def build_workflow_tree_pdf():
     doc.build(story, canvasmaker=NumberedCanvas)
     print(f"WORKFLOW_TREE_PDF_GENERATED path={output_pdf}")
 
-    # Copy to D:/oneshot/docs/ if present
-    alt_dir = Path("D:/oneshot/docs")
-    if alt_dir.exists():
-        alt_pdf = alt_dir / "WORKFLOW_TREE.pdf"
-        import shutil
-        shutil.copy(output_pdf, alt_pdf)
-        print(f"ALT_PATH_COPIED path={alt_pdf}")
-
 if __name__ == "__main__":
     build_workflow_tree_pdf()

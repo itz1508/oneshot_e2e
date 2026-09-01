@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate OneShot Workflow Processing Specification PDF.
-Generates D:/oneshot_e2e/docs/Workflow_Processing.pdf
+Generates docs/Workflow_Processing.pdf
 """
 
 import os
@@ -295,14 +295,6 @@ BUILDER / SANDBOX EXECUTION (backend/sandbox/sandbox-service.ts)
     # Build Document
     doc.build(story, canvasmaker=NumberedCanvas)
     print(f"WORKFLOW_PROCESSING_PDF_GENERATED path={output_pdf}")
-
-    # Also copy to D:/oneshot/docs/Workflow_Processing.pdf if D:/oneshot/docs exists
-    alt_dir = Path("D:/oneshot/docs")
-    if alt_dir.exists():
-        alt_pdf = alt_dir / "Workflow_Processing.pdf"
-        import shutil
-        shutil.copy(output_pdf, alt_pdf)
-        print(f"ALT_PATH_COPIED path={alt_pdf}")
 
 if __name__ == "__main__":
     build_pdf()
