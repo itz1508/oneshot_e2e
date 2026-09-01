@@ -48,6 +48,8 @@ export interface ActivatedSkill {
   descriptor: SkillDescriptor;
   activated_at: string;
   caller_id: string;
+  /** Underlying concrete skill runtime instance, when the factory wraps a class. */
+  underlying?: unknown;
   invoke<T = unknown>(tool: string, input: unknown): Promise<T>;
   definitions(): Array<{ name: string; description: string }>;
   deactivate(): Promise<void>;

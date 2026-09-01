@@ -1,4 +1,9 @@
 import type { ProcessingEvent } from "../contract/types.js";
+import { ResearcherRole } from "../role/researcher/role.js";
+import { PlannerRole } from "../role/planner/role.js";
+import { RefactorRole } from "../role/refactor/role.js";
+import { GapAnalysisRole } from "../role/gap-analysis/role.js";
+import { EvaluationRole } from "../role/evaluation/role.js";
 
 export interface AuthorityNode {
   id: string;
@@ -10,6 +15,8 @@ export interface AuthorityNode {
   capability?: string;
   input?: string;
   output?: string;
+  /** Canonical artifact/state ownership declared by the role boundary. */
+  owns?: readonly string[];
   state: "PENDING" | "RUNNING" | "COMPLETE";
   artifact_id?: string;
 }
@@ -24,7 +31,8 @@ const CATALOG: Record<
   Omit<AuthorityNode, "id" | "label" | "state" | "artifact_id">
 > = {
   Researcher: {
-    authority: "Researcher",
+    authority: ResearcherRole.id,
+    owns: ResearcherRole.owns,
     responsibility: "research and evidence synthesis",
     skill: "researcher",
     tool: "evidence-collector",
@@ -33,7 +41,8 @@ const CATALOG: Record<
     output: "Researcher(id)",
   },
   Planner: {
-    authority: "Planner",
+    authority: PlannerRole.id,
+    owns: PlannerRole.owns,
     responsibility: "read-only review and audit",
     skill: "planner",
     tool: "coverage",
@@ -41,7 +50,8 @@ const CATALOG: Record<
     output: "audit_id",
   },
   Refactor: {
-    authority: "Refactor",
+    authority: RefactorRole.id,
+    owns: RefactorRole.owns,
     responsibility: "apply audit refinements",
     skill: "refactor",
     tool: "apply-audit",
@@ -49,7 +59,8 @@ const CATALOG: Record<
     output: "same plan_id",
   },
   GapAnalysis: {
-    authority: "GapAnalysis",
+    authority: GapAnalysisRole.id,
+    owns: GapAnalysisRole.owns,
     responsibility: "identify/correct remaining plan gaps",
     skill: "gap-analysis",
     tool: "coverage",
@@ -57,7 +68,8 @@ const CATALOG: Record<
     output: "gap_0 + plan_id",
   },
   Evaluation: {
-    authority: "Evaluation",
+    authority: EvaluationRole.id,
+    owns: EvaluationRole.owns,
     responsibility: "evaluate completed plan",
     skill: "evaluation",
     tool: "evaluate-plan",

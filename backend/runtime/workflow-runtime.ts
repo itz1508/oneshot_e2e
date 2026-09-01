@@ -6,10 +6,15 @@ import { ProcessingEventBus } from "./event-bus.js";
 import { RunRepository } from "./run-repository.js";
 import { ArtifactStore } from "./artifact-store.js";
 import { ResearcherWorkflow } from "../role/researcher/workflow.js";
+import { ResearcherRole } from "../role/researcher/role.js";
 import { PlannerWorkflow } from "../role/planner/workflow.js";
+import { PlannerRole } from "../role/planner/role.js";
 import { RefactorWorkflow } from "../role/refactor/workflow.js";
+import { RefactorRole } from "../role/refactor/role.js";
 import { GapAnalysisWorkflow } from "../role/gap-analysis/workflow.js";
+import { GapAnalysisRole } from "../role/gap-analysis/role.js";
 import { EvaluationWorkflow } from "../role/evaluation/workflow.js";
+import { EvaluationRole } from "../role/evaluation/role.js";
 import { TripleValidationWorkflow } from "../workflow/triple-validation.js";
 import { ConfirmationWorkflow } from "../workflow/confirmation.js";
 import { HashWorkflow } from "../workflow/hash.js";
@@ -92,11 +97,11 @@ export class WorkflowRuntime {
   async run(runId: string, prompt: Prompt): Promise<RunSnapshot> {
     // Emit PENDING for all canonical processors
     const order = [
-      "Researcher",
-      "Planner",
-      "Refactor",
-      "GapAnalysis",
-      "Evaluation",
+      ResearcherRole.id,
+      PlannerRole.id,
+      RefactorRole.id,
+      GapAnalysisRole.id,
+      EvaluationRole.id,
       "SchemaValidation",
       "FixtureValidation",
       "GoalValidation",
@@ -110,7 +115,7 @@ export class WorkflowRuntime {
 
     try {
       // --- Researcher ---
-      this.ev(runId, "Researcher", "RUNNING");
+      this.ev(runId, ResearcherRole.id, "RUNNING");
       const b = await this.researcher.run(prompt, runId);
       await this.save(runId, "prompt", b.prompt);
       await this.save(runId, "researcher", b.researcher);
@@ -119,39 +124,39 @@ export class WorkflowRuntime {
       await this.save(runId, "fixture", b.fixture);
       await this.save(runId, "goal", b.goal);
       await this.save(runId, "validation", b.validation);
-      this.ev(runId, "Researcher", "COMPLETE", {
+      this.ev(runId, ResearcherRole.id, "COMPLETE", {
         result: "PASSED",
         artifact_id: b.researcher.researcher_id,
       });
 
       // --- Planner ---
-      this.ev(runId, "Planner", "RUNNING");
+      this.ev(runId, PlannerRole.id, "RUNNING");
       const audit = await this.planner.run(b, runId);
       await this.save(runId, "audit", audit);
-      this.ev(runId, "Planner", "COMPLETE", {
+      this.ev(runId, PlannerRole.id, "COMPLETE", {
         result: "PASSED",
         artifact_id: audit.audit_id,
         message: `reviewed=${audit.reviewed_areas.length}; findings=${audit.findings.length}`,
       });
 
       // --- Refactor ---
-      this.ev(runId, "Refactor", "RUNNING");
+      this.ev(runId, RefactorRole.id, "RUNNING");
       const refactored = await this.refactor.run(b, audit);
       b.plan = refactored;
       await this.save(runId, "plan.refactored", refactored);
-      this.ev(runId, "Refactor", "COMPLETE", {
+      this.ev(runId, RefactorRole.id, "COMPLETE", {
         result: "PASSED",
         artifact_id: refactored.plan_id,
         message: `plan_id preserved; revision=${refactored.revision}`,
       });
 
       // --- Gap Analysis ---
-      this.ev(runId, "GapAnalysis", "RUNNING");
+      this.ev(runId, GapAnalysisRole.id, "RUNNING");
       const g = await this.gapper.run(b, refactored);
       b.plan = g.plan;
       await this.save(runId, "plan.gap", g.plan);
       await this.save(runId, "gap", g.gap);
-      this.ev(runId, "GapAnalysis", "COMPLETE", {
+      this.ev(runId, GapAnalysisRole.id, "COMPLETE", {
         result: g.gap.result,
         artifact_id: g.gap.plan_id,
         message: `gap_0=${g.gap.gap_0}; resolved=${g.gap.resolved_gaps.length}`,
@@ -161,10 +166,10 @@ export class WorkflowRuntime {
       }
 
       // --- Evaluation ---
-      this.ev(runId, "Evaluation", "RUNNING");
+      this.ev(runId, EvaluationRole.id, "RUNNING");
       const evaluation = await this.evaluator.run(b, g.plan);
       await this.save(runId, "evaluation", evaluation);
-      this.ev(runId, "Evaluation", "COMPLETE", {
+      this.ev(runId, EvaluationRole.id, "COMPLETE", {
         result: evaluation.result,
         artifact_id: evaluation.plan_id,
         message: `evidence=${evaluation.evidence.length}`,

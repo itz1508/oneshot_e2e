@@ -35,6 +35,7 @@ export function createSkillSystem(catalog = new SkillCatalog()): {
         descriptor: desc,
         activated_at: new Date().toISOString(),
         caller_id: ctx.caller_id,
+        underlying: skill,
         async invoke<T>(tool: string, input: unknown): Promise<T> {
           return await skill.invoke<T>(tool, input);
         },
@@ -58,6 +59,7 @@ export function createSkillSystem(catalog = new SkillCatalog()): {
         descriptor: desc,
         activated_at: new Date().toISOString(),
         caller_id: ctx.caller_id,
+        underlying: skill,
         async invoke<T>(tool: string, input: unknown): Promise<T> {
           return await skill.invoke<T>(tool, input);
         },
@@ -80,6 +82,7 @@ export function createSkillSystem(catalog = new SkillCatalog()): {
         descriptor: desc,
         activated_at: new Date().toISOString(),
         caller_id: ctx.caller_id,
+        underlying: skill,
         async invoke<T>(tool: string, input: unknown): Promise<T> {
           return await skill.invoke<T>(tool, input);
         },
@@ -103,6 +106,7 @@ export function createSkillSystem(catalog = new SkillCatalog()): {
         descriptor: desc,
         activated_at: new Date().toISOString(),
         caller_id: ctx.caller_id,
+        underlying: skill,
         async invoke<T>(tool: string, input: unknown): Promise<T> {
           return await skill.invoke<T>(tool, input);
         },
@@ -124,6 +128,7 @@ export function createSkillSystem(catalog = new SkillCatalog()): {
         descriptor: desc,
         activated_at: new Date().toISOString(),
         caller_id: ctx.caller_id,
+        underlying: skill,
         async invoke<T>(tool: string, input: unknown): Promise<T> {
           return await skill.invoke<T>(tool, input);
         },

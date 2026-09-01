@@ -11,6 +11,7 @@ import { IntentCollectionService } from "./intent/intent-collection.js";
 import { PythonBridge } from "./validation/python-bridge.js";
 import { DeterministicValidationRuntime } from "./validation/deterministic-validation.js";
 import { CanonicalContractSkill } from "./skill/canonical-contract-skill.js";
+import { createSkillSystem } from "./skill/bootstrap.js";
 import { resolveResearchProvider } from "./role/researcher/provider-resolver.js";
 import { ResearcherWorkflow } from "./role/researcher/workflow.js";
 import { PlannerWorkflow } from "./role/planner/workflow.js";
@@ -23,6 +24,7 @@ import { HashWorkflow } from "./workflow/hash.js";
 import { WorkflowRuntime } from "./runtime/workflow-runtime.js";
 import { SandboxService } from "./sandbox/sandbox-service.js";
 import { HardenedProcessRunner } from "./sandbox/runner/process-runner.js";
+import { ContainerSandboxRunner } from "./sandbox/runner/container-runner.js";
 import { startHttpServer, type RuntimeInfo } from "./server/http-server.js";
 
 // ---------------------------------------------------------------------------
@@ -55,9 +57,23 @@ events.observe((e) => {
   task.onEvent(e, runs.require(e.run_id));
 });
 
-// --- Validation & Contracts ---
+// --- Validation & Contracts (composed through the Reusable Skill subsystem) ---
 const bridge = new PythonBridge();
-const contracts = new CanonicalContractSkill(bridge);
+const skills = createSkillSystem();
+const runtimeCtx = {
+  caller_id: "backend/runtime",
+  bridge,
+  events,
+  services: { task, runs, intent } as Record<string, unknown>,
+};
+const contractsSkill = await skills.activation.activate(
+  { skill_id: "oneshot-canonical-contracts" },
+  runtimeCtx,
+);
+const contracts = contractsSkill.underlying as CanonicalContractSkill;
+if (!(contracts instanceof CanonicalContractSkill)) {
+  throw new Error("canonical contracts skill did not bind its runtime instance");
+}
 await contracts.verifyStatic();
 
 // --- Research Provider (with event bus for ADK-scoped events) ---
@@ -86,13 +102,23 @@ const runtime = new WorkflowRuntime(
   new HashWorkflow(contracts),
 );
 
-// --- Sandbox Infrastructure ---
+// --- Sandbox Infrastructure (runner selectable via ONESHOT_SANDBOX_RUNNER) ---
 const sandbox = new SandboxService(
   contracts,
   events,
-  new HardenedProcessRunner(),
+  process.env.ONESHOT_SANDBOX_RUNNER === "container"
+    ? new ContainerSandboxRunner()
+    : new HardenedProcessRunner(),
   resolve(projectRoot, "data/sandbox-workspaces"),
 );
+
+// --- Bind the remaining production Skills to live runtime services ---
+runtimeCtx.services.sandbox = sandbox;
+runtimeCtx.services.contracts = contracts;
+await skills.activation.activate({ skill_id: "oneshot-task-runtime" }, runtimeCtx);
+await skills.activation.activate({ skill_id: "oneshot-intent-collection" }, runtimeCtx);
+await skills.activation.activate({ skill_id: "oneshot-sandbox-runtime" }, runtimeCtx);
+await skills.activation.activate({ skill_id: "oneshot-init" }, runtimeCtx);
 
 // --- HTTP Server ---
 const webDistPath = resolve(projectRoot, "web/dist");
