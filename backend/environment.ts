@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolveRuntimePaths } from "./runtime-paths.js";
 
-const environmentFile = resolve(process.cwd(), ".env");
+const environmentFile = resolveRuntimePaths().trace.environmentFile;
 if (existsSync(environmentFile)) {
   if (typeof process.loadEnvFile !== "function") {
     throw new Error(

@@ -103,7 +103,7 @@ document.querySelectorAll("[data-path]").forEach((row) => {
   row.addEventListener("click", () => {
     document.querySelectorAll(".tree-row.selected").forEach((item) => item.classList.remove("selected"));
     row.classList.add("selected");
-    byId("selectedPath").textContent = `workspace/oneshot_e2e/${row.dataset.path}`;
+    byId("selectedPath").textContent = `workspace/${row.dataset.path}`;
   });
 });
 

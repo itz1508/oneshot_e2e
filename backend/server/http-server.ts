@@ -23,6 +23,7 @@ import type { IntentCollectionService } from "../intent/intent-collection.js";
 import type { SandboxService } from "../sandbox/sandbox-service.js";
 import { projectSandboxGraph } from "../sandbox/graph/sandbox-graph.js";
 import type { SandboxExecutionInput } from "../sandbox/types.js";
+import { resolveRuntimePaths } from "../runtime-paths.js";
 import { HttpSecurity } from "./http-security.js";
 import {
   WorkspacePathDeniedError,
@@ -196,7 +197,7 @@ export async function startHttpServer(
   }
   const security = new HttpSecurity();
   const workspaceRoot = resolve(
-    options.workspaceRoot || process.env.ONESHOT_WORKSPACE_ROOT || process.cwd(),
+    options.workspaceRoot || resolveRuntimePaths().workspaceRoot,
   );
   const workspacePolicy = await WorkspacePathPolicy.create(workspaceRoot);
 

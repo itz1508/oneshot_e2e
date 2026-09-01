@@ -30,7 +30,7 @@ npm run oneshot
 - ✅ Installs root and `web/` Node dependencies from their lockfiles
 - ✅ Builds the TypeScript backend and OneShot React IDE
 - ✅ Verifies canonical contracts and `MANIFEST.sha256`
-- ✅ Runs the entire 94-test verification suite (47 Python + 47 TypeScript)
+- ✅ Runs the entire 98-test verification suite (49 Python + 49 TypeScript)
 - ✅ Starts the runtime, waits for `/api/health`, and opens `http://localhost:8787`
 
 ---
@@ -44,7 +44,7 @@ npm run oneshot
 ### What Happens:
 
 1. **Bootstrap & Build** — Verifies the environment and compiles current backend and web source
-2. **Proof Gates** — Verifies contracts, manifest integrity, and all 94 tests
+2. **Proof Gates** — Verifies contracts, manifest integrity, and all 98 tests
 3. **Backend Startup** — Boots the real OneShot HTTP & Server-Sent Events (SSE) backend on port 8787
 4. **IDE Launch** — Waits for health and opens your default browser at `http://localhost:8787`
 5. **Status Verification** — Status bar displays active `MODE` and `PROVIDER`
@@ -132,8 +132,8 @@ python scripts/verify_all.py
 ```
 
 ### Verification Matrix:
-- **47 Python unit tests** (`tests/`): Schema validation, model parity, graph structure, fixture assertions, RFC 8785 JCS canonicalization, SHA-256 equality, Workspace API security, rate limiting, and archive secret-selection parity.
-- **47 TypeScript integration tests** (`tests_ts/`): Google ADK adapter, Featherless adapter, intent collection, sandbox admission boundary, process isolation, SSE streaming, task event store, and workspace filesystem security.
+- **49 Python unit tests** (`tests/`): Schema validation, model parity, graph structure, fixture assertions, RFC 8785 JCS canonicalization, SHA-256 equality, Workspace API security, rate limiting, path portability, and archive secret-selection parity.
+- **49 TypeScript integration tests** (`tests_ts/`): Google ADK adapter, Featherless adapter, intent collection, runtime path relocation, sandbox admission boundary, process isolation, SSE streaming, task event store, and workspace filesystem security.
 - **Expected result:** `ONESHOT_PRODUCTION_E2E_VERIFIED`
 
 To run TypeScript tests directly:

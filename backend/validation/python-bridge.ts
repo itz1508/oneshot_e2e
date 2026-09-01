@@ -1,10 +1,9 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { delimiter, resolve } from "node:path";
 import { resolvePythonExecutable } from "../python-runtime.js";
+import { resolveRuntimePaths, type RuntimePaths } from "../runtime-paths.js";
 
-const projectRoot = process.env.ONESHOT_ROOT || process.cwd();
-
-function pythonPath(): string {
+function pythonPath(projectRoot: string): string {
   const parts = [projectRoot, resolve(projectRoot, ".venv/Lib/site-packages")];
   if (process.env.PYTHONPATH) parts.push(process.env.PYTHONPATH);
   return parts.filter(Boolean).join(delimiter);
@@ -21,15 +20,23 @@ export class PythonBridge {
   private nextId = 1;
   private pending = new Map<number, Pending>();
 
-  constructor(private python = resolvePythonExecutable(projectRoot)) {}
+  private python: string;
+
+  constructor(
+    python?: string,
+    private runtimePaths: RuntimePaths = resolveRuntimePaths(),
+  ) {
+    this.python = python ?? resolvePythonExecutable(runtimePaths.projectRoot);
+  }
 
   private ensure() {
     if (this.child && !this.child.killed) return this.child;
+    const projectRoot = this.runtimePaths.projectRoot;
     const child = spawn(this.python, ["-m", "validation.rpc"], {
       cwd: projectRoot,
       env: {
         ...process.env,
-        PYTHONPATH: pythonPath(),
+        PYTHONPATH: pythonPath(projectRoot),
       },
       stdio: ["pipe", "pipe", "pipe"],
     });

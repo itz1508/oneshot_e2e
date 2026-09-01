@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+project_root="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+cd "$project_root"
+
 echo ""
 echo " ============================================================"
 echo "  OneShot Production E2E - Automated Setup"
@@ -81,7 +84,7 @@ echo "       Build complete"
 
 # ── Tests ────────────────────────────────────────────────────────
 echo ""
-echo "[6/6] Running test suite (94 tests)..."
+echo "[6/6] Running test suite (98 tests)..."
 echo ""
 
 $PYTHON_CMD -m unittest discover -s tests -v 2>&1
@@ -91,7 +94,7 @@ node --test --test-force-exit dist/tests_ts/*.test.js
 
 echo ""
 echo " ============================================================"
-echo "  SETUP COMPLETE - All 94 tests passed!"
+echo "  SETUP COMPLETE - All 98 tests passed!"
 echo " ============================================================"
 echo ""
 echo "  Next steps:"

@@ -22,12 +22,12 @@ cd oneshot_e2e
 npm run oneshot
 ```
 
-`npm run oneshot` detects Windows, macOS, or Linux; checks Node.js and Python; creates `.venv`; installs the required Python, root Node, and `web/` dependency profiles; builds the backend and React IDE; verifies canonical contracts and `MANIFEST.sha256`; runs all 47 Python and 47 TypeScript tests; starts the real backend; waits for `/api/health`; and opens `http://localhost:8787` in the default browser.
+`npm run oneshot` detects Windows, macOS, or Linux; checks Node.js and Python; creates `.venv`; installs the required Python, root Node, and `web/` dependency profiles; builds the backend and React IDE; verifies canonical contracts and `MANIFEST.sha256`; runs all 49 Python and 49 TypeScript tests; starts the real backend; waits for `/api/health`; and opens `http://localhost:8787` in the default browser.
 
 ### Run Tests
 ```bash
-npm test          # 47 TypeScript tests
-npm run verify    # Full 94-test suite (Python + TypeScript)
+npm test          # 49 TypeScript tests
+npm run verify    # Full 98-test suite (Python + TypeScript)
 ```
 
 ### Start the Server (without demo launcher)
@@ -220,9 +220,9 @@ python scripts/verify_all.py
 
 This master script verifies:
 1. **Dependency Versions**: Exact pinned versions across Python and Node.
-2. **Python Canonical Engine**: 47 unit tests including schema validator, model parity, graph validator, fixture assertions, JCS canonicalization, Workspace API, and archive secret-selection parity.
+2. **Python Canonical Engine**: 49 unit tests including schema validator, model parity, graph validator, fixture assertions, JCS canonicalization, Workspace API, path portability, and archive secret-selection parity.
 3. **TypeScript Compilation**: `tsc -p tsconfig.json`.
-4. **TypeScript E2E Test Suite**: 47 E2E integration tests including ADK adapter, Featherless adapter, intent collection, sandbox boundary, SSE server, task management, and workspace filesystem security.
+4. **TypeScript E2E Test Suite**: 49 E2E integration tests including ADK adapter, Featherless adapter, intent collection, runtime path relocation, sandbox boundary, SSE server, task management, and workspace filesystem security.
 
 ### Specialized Verification Commands
 ```bash

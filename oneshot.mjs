@@ -11,8 +11,8 @@ import { existsSync } from "node:fs";
 import http from "node:http";
 import { join, resolve } from "node:path";
 
-const ROOT = resolve(import.meta.dirname);
-const environmentFile = join(ROOT, ".env");
+const projectRoot = resolve(import.meta.dirname);
+const environmentFile = join(projectRoot, ".env");
 if (existsSync(environmentFile)) {
   if (typeof process.loadEnvFile !== "function") {
     throw new Error(
@@ -77,7 +77,7 @@ function isBatchFile(cmd) {
 function run(command, args, options = {}) {
   const needsShell = isWindows && isBatchFile(command);
   const result = spawnSync(command, args, {
-    cwd: ROOT,
+    cwd: projectRoot,
     env: process.env,
     stdio: "inherit",
     windowsHide: true,
@@ -96,7 +96,7 @@ function run(command, args, options = {}) {
 function capture(command, args, options = {}) {
   const needsShell = isWindows && isBatchFile(command);
   return spawnSync(command, args, {
-    cwd: ROOT,
+    cwd: projectRoot,
     env: process.env,
     encoding: "utf8",
     input: options.input,
@@ -244,7 +244,7 @@ pass(`Node.js ${process.version} satisfies the >=20 requirement`);
 
 header("2. Python virtual environment and dependency profiles");
 
-const venvDir = join(ROOT, ".venv");
+const venvDir = join(projectRoot, ".venv");
 const venvPython = isWindows
   ? join(venvDir, "Scripts", "python.exe")
   : join(venvDir, "bin", "python");
@@ -307,7 +307,7 @@ header("3. Node dependency installation");
 ensureNodeDependencies(
   [],
   join(
-    ROOT,
+    projectRoot,
     "node_modules",
     ".bin",
     isWindows ? "tsc.cmd" : "tsc",
@@ -318,7 +318,7 @@ ensureNodeDependencies(
 ensureNodeDependencies(
   ["--prefix", "web"],
   join(
-    ROOT,
+    projectRoot,
     "web",
     "node_modules",
     ".bin",
@@ -385,17 +385,17 @@ if (skipTests) {
   const pythonCount = pythonMatch
     ? Number.parseInt(pythonMatch[1], 10)
     : Number.NaN;
-  if (pythonCount !== 47 || typeScriptCount !== 47) {
+  if (pythonCount !== 49 || typeScriptCount !== 49) {
     fail(
-      `Expected 47 Python and 47 TypeScript tests; observed Python=${pythonCount}, TypeScript=${typeScriptCount}`,
+      `Expected 49 Python and 49 TypeScript tests; observed Python=${pythonCount}, TypeScript=${typeScriptCount}`,
     );
   }
   if (!testOutput.includes("ONESHOT_PRODUCTION_E2E_VERIFIED")) {
     fail("The verification suite did not emit ONESHOT_PRODUCTION_E2E_VERIFIED");
   }
-  pass("47 / 47 Python tests passed");
-  pass("47 / 47 TypeScript tests passed");
-  pass("94 / 94 total tests passed");
+  pass("49 / 49 Python tests passed");
+  pass("49 / 49 TypeScript tests passed");
+  pass("98 / 98 total tests passed");
 }
 
 header("7. Runtime service startup");
@@ -418,7 +418,7 @@ const runtimeEnv = {
 if (providerKey) runtimeEnv.ONESHOT_RESEARCH_PROVIDER = providerKey;
 
 runtimeChild = spawn(process.execPath, ["dist/backend/index.js"], {
-  cwd: ROOT,
+  cwd: projectRoot,
   env: runtimeEnv,
   stdio: ["inherit", "pipe", "pipe"],
   windowsHide: true,
