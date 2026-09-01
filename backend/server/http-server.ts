@@ -63,8 +63,13 @@ const MIME: Record<string, string> = {
   ".png": "image/png",
   ".svg": "image/svg+xml",
   ".webp": "image/webp",
+  ".pdf": "application/pdf",
+  ".txt": "text/plain; charset=utf-8",
+  ".md": "text/markdown; charset=utf-8",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
 };
-const mime = (p: string) => MIME[extname(p)] || "application/octet-stream";
+const mime = (p: string) => MIME[extname(p).toLowerCase()] || "application/octet-stream";
 
 function workspacePolicyError(
   res: ServerResponse,
@@ -209,7 +214,6 @@ export async function startHttpServer(
       try {
         const url = new URL(req.url || "/", "http://localhost");
 
-
         // ---------------------------------------------------------------
         // Workspace Tree & File Endpoints (for OneShot IDE Explorer & Viewer)
         // ---------------------------------------------------------------
@@ -261,6 +265,29 @@ export async function startHttpServer(
         }
 
         if (
+          req.method === "GET" &&
+          (url.pathname === "/v1/workspace/raw" ||
+            url.pathname === "/api/workspace/raw")
+        ) {
+          const reqPath = url.searchParams.get("path") || "";
+          if (!reqPath) return json(res, 400, { error: "path parameter required" });
+          try {
+            const targetFile = await workspacePolicy.authorizeExisting(reqPath);
+            const data = await readFile(targetFile);
+            const contentType = mime(targetFile);
+            res.writeHead(200, {
+              "content-type": contentType,
+              "content-disposition": "inline",
+              "cache-control": "no-store",
+            });
+            return res.end(data);
+          } catch (error) {
+            if (workspacePolicyError(res, error)) return;
+            return json(res, 404, { error: `File not found: ${reqPath}` });
+          }
+        }
+
+        if (
           req.method === "POST" &&
           (url.pathname === "/v1/workspace/file" ||
             url.pathname === "/api/workspace/file")
@@ -305,8 +332,62 @@ export async function startHttpServer(
             sandbox_service: Boolean(sandbox),
             adk_graph: "oneshot-adk-researcher-v1",
             authority_graph: "oneshot-authority-trace-v1",
-            sandbox_graph: "oneshot-sandbox-execution-v1",
+                        sandbox_graph: "oneshot-sandbox-execution-v1",
           });
+        }
+
+        // ---------------------------------------------------------------
+        // Browser session authentication (cookie + CSRF layered on Bearer auth)
+        // ---------------------------------------------------------------
+        // POST /auth/login — exchange the operator token for a session cookie
+        //   + CSRF token. When auth is disabled (no ONESHOT_API_TOKEN) a session
+        //   is still issued so the IDE loads without a login wall.
+        if (req.method === "POST" && url.pathname === "/auth/login") {
+          if (!security.authDisabled) {
+            const input = await body(req);
+            const candidate = String(input.token || "");
+            if (!security.tokenMatches(candidate)) {
+              return json(res, 401, { error: "invalid token" });
+            }
+          }
+          const session = security.createSession();
+          security.applySessionCookie(res, session);
+          return json(res, 200, {
+            ok: true,
+            csrf_token: session.csrfToken,
+            expires_at: new Date(session.expiresAt).toISOString(),
+          });
+        }
+
+        // GET /auth/session — session status + CSRF token, or 401.
+        if (req.method === "GET" && url.pathname === "/auth/session") {
+          const session = security.sessionFromRequest(req);
+          if (!session && security.authDisabled) {
+            const anon = security.createSession();
+            security.applySessionCookie(res, anon);
+            return json(res, 200, {
+              ok: true,
+              csrf_token: anon.csrfToken,
+              expires_at: new Date(anon.expiresAt).toISOString(),
+            });
+          }
+          if (!session) {
+            return json(res, 401, { error: "no active session" });
+          }
+          return json(res, 200, {
+            ok: true,
+            csrf_token: session.csrfToken,
+            expires_at: new Date(session.expiresAt).toISOString(),
+          });
+        }
+
+        // POST /auth/logout — revoke session and clear cookie.
+        // Low-impact (session teardown only): CSRF-exempt by design, but the
+        // session cookie is sent so the correct session is revoked.
+        if (req.method === "POST" && url.pathname === "/auth/logout") {
+          security.revokeSession(req);
+          security.clearSessionCookie(res);
+          return json(res, 200, { ok: true });
         }
 
         // ---------------------------------------------------------------

@@ -6,6 +6,7 @@
  */
 
 import type {FileNode} from './types'
+import {fetchAuthed} from './authApi'
 
 // ─── Backend response shapes ───
 
@@ -97,7 +98,7 @@ export async function writeFile(
     path: string,
     content: string,
 ): Promise<void> {
-    const res = await fetch('/v1/workspace/file', {
+    const res = await fetchAuthed('/v1/workspace/file', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

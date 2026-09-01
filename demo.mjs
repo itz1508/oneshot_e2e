@@ -164,6 +164,14 @@ child.stdout.on("data", async (data) => {
       log(`  ${C.bold}Mode:${C.reset}      ${activeMode}`);
       log(`  ${C.bold}Provider:${C.reset}  ${activeProvider}`);
       log("");
+      log(`  ${C.bold}${C.cyan}Architecture & Verification Documentation Index:${C.reset}`);
+      log(`  • ${C.bold}Master Index:${C.reset}     docs/INDEX.md`);
+      log(`  • ${C.bold}Workflow Tree:${C.reset}    docs/WORKFLOW_TREE & docs/WORKFLOW_TREE.pdf`);
+      log(`  • ${C.bold}Canonical Spec:${C.reset}   docs/source/OneShot_Canonical_Contract_and_Verification.txt`);
+      log(`  • ${C.bold}ADK & Task Graph:${C.reset} docs/TASK_MANAGEMENT_AND_ADK_GRAPH.md`);
+      log(`  • ${C.bold}Visual Diagram:${C.reset}   docs/Workflow_Processing.pdf`);
+      log(`  • ${C.bold}Judge Guide:${C.reset}      JUDGE_README.md`);
+      log("");
       log(`${C.dim}  1. Interact with the real OneShot IDE in your browser${C.reset}`);
       log(`${C.dim}  2. Submit a request through the real Chat flow (or click example prompt)${C.reset}`);
       log(`${C.dim}  3. Watch the canonical workflow execute live with real SSE events${C.reset}`);

@@ -5,6 +5,8 @@
  * and a colour category for visual overlay.
  */
 
+import {fetchAuthed} from './authApi'
+
 export interface Issue {
     id: string
     type: string
@@ -96,7 +98,7 @@ export function issuesForFile(issues: Issue[], filePath: string): Issue[] {
  * Request a fix proposal for a specific issue.
  */
 export async function fetchFixProposal(issueId: string): Promise<FixProposal> {
-    const res = await fetch(`${ISSUES_ENDPOINT}/${encodeURIComponent(issueId)}/fix`, {
+    const res = await fetchAuthed(`${ISSUES_ENDPOINT}/${encodeURIComponent(issueId)}/fix`, {
         method: 'POST',
     })
     if (!res.ok) {

@@ -474,17 +474,21 @@ export const useAppStore = create<AppState>((set, get) => ({
                     }
                     : undefined
 
+                const activities = (Array.isArray(event.metadata?.activities)
+                    ? event.metadata.activities
+                    : [{
+                        id: `act-${Date.now()}`,
+                        label: 'Task result',
+                        detail: `Stage: ${event.stage}. Files touched: ${task.filesTouched.join(', ') || 'none'}`,
+                        status: 'completed',
+                    }]) as NonNullable<ChatMessage['activities']>
+
                 const agentMsg: ChatMessage = {
                     id: `msg-${Date.now()}-agent`,
                     role: 'agent',
                     content: event.message,
                     timestamp: event.timestamp ?? new Date().toISOString(),
-                    activities: [{
-                        id: `act-${Date.now()}`,
-                        label: 'Task result',
-                        detail: `Stage: ${event.stage}. Files touched: ${task.filesTouched.join(', ') || 'none'}`,
-                        status: 'completed',
-                    }],
+                    activities,
                     ...(tokens && {tokens}),
                 }
                 messages = [...messages, agentMsg]

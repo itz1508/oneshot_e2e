@@ -4,7 +4,7 @@
  */
 
 import {useState, useEffect} from 'react'
-import {Wifi, WifiOff, Sun, Moon} from 'lucide-react'
+import {Wifi, WifiOff, Sun, Moon, BookOpen} from 'lucide-react'
 import {TaskReviewDrawer} from './TaskReviewDrawer'
 import type {TaskState} from '../agent/types'
 import styles from './TopMenu.module.css'
@@ -16,9 +16,10 @@ interface TopMenuProps {
     drawerOpen: boolean
     onToggleDrawer: () => void
     onCancelTask: () => void
+    onOpenDocsModal?: () => void
 }
 
-export function TopMenu({runnerMode, loading, task, drawerOpen, onToggleDrawer, onCancelTask}: TopMenuProps) {
+export function TopMenu({runnerMode, loading, task, drawerOpen, onToggleDrawer, onCancelTask, onOpenDocsModal}: TopMenuProps) {
     const [dark, setDark] = useState(() => !document.documentElement.classList.contains('light'))
 
     useEffect(() => {
@@ -37,6 +38,16 @@ export function TopMenu({runnerMode, loading, task, drawerOpen, onToggleDrawer, 
                 <span className={styles.mode}>{runnerMode}</span>
             </div>
             <div className={styles.right}>
+                {onOpenDocsModal && (
+                    <button
+                        className={styles.docsBtn}
+                        onClick={onOpenDocsModal}
+                        title="View OneShot architecture, canonical contracts, and workflow tree"
+                    >
+                        <BookOpen size={13}/>
+                        <span>Docs & Architecture</span>
+                    </button>
+                )}
                 <button
                     className={styles.themeBtn}
                     onClick={() => setDark((d) => !d)}

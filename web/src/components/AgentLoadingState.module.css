@@ -2,48 +2,92 @@
     display: flex;
     justify-content: flex-start;
     padding: 4px 0;
+    width: 100%;
 }
 
-.indicator {
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: #121215;
+    border: 1px solid #27272a;
+    max-width: 720px;
+    width: 100%;
+}
+
+.phaseHeader {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 16px;
-    border-radius: 12px;
-    background: #111113;
+    gap: 8px;
 }
 
-.dots {
-    display: flex;
-    gap: 3px;
-}
-
-.dot {
-    width: 5px;
-    height: 5px;
+.statusDot {
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: #3f3f46;
-    animation: pulse 1.4s ease-in-out infinite;
+    background: #71717a;
+    animation: subtlePulse 1.8s ease-in-out infinite;
 }
 
-.dot:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.dot:nth-child(3) {
-    animation-delay: 0.4s;
-}
-
-@keyframes pulse {
-    0%, 80%, 100% {
-        opacity: 0.3;
+@keyframes subtlePulse {
+    0%, 100% {
+        opacity: 0.4;
+        transform: scale(0.9);
     }
-    40% {
+    50% {
         opacity: 1;
+        transform: scale(1.1);
     }
 }
 
-.text {
+.phaseTitle {
     font-size: 13px;
+    font-weight: 500;
+    color: #fafafa;
+}
+
+.phaseBadge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #18181b;
+    color: #a1a1aa;
+    border: 1px solid #27272a;
+    font-weight: 500;
+    text-transform: lowercase;
+}
+
+.eventStream {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 2px;
+    padding-left: 12px;
+    border-left: 1px solid #27272a;
+}
+
+.eventItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #a1a1aa;
+    line-height: 1.4;
+}
+
+.eventBullet {
+    font-size: 6px;
     color: #71717a;
+    flex-shrink: 0;
+}
+
+.eventCheck {
+    color: #a1a1aa;
+    flex-shrink: 0;
+}
+
+.eventText {
+    color: #d4d4d8;
 }

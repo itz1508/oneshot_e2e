@@ -174,6 +174,14 @@ test("workspace filesystem security boundary is enforced consistently", async ()
     assert.equal(safeRead.status, 200);
     assert.equal(((await safeRead.json()) as any).content, "whole-repo-readable");
 
+    const safeRaw = await fetch(
+      `${secureBase}/v1/workspace/raw?path=${encodeURIComponent("one/two/three/four/five/proof.txt")}`,
+      { headers: AUTHORIZATION },
+    );
+    assert.equal(safeRaw.status, 200);
+    assert.equal(await safeRaw.text(), "whole-repo-readable");
+    assert.ok(safeRaw.headers.get("content-type")?.includes("text/plain"));
+
     const safeWrite = await fetch(`${secureBase}/v1/workspace/file`, {
       method: "POST",
       headers: { ...AUTHORIZATION, "content-type": "application/json" },
@@ -191,6 +199,12 @@ test("workspace filesystem security boundary is enforced consistently", async ()
         { headers: AUTHORIZATION },
       );
       assert.equal(response.status, 403, `${deniedPath} must be denied`);
+
+      const rawResponse = await fetch(
+        `${secureBase}/v1/workspace/raw?path=${encodeURIComponent(deniedPath)}`,
+        { headers: AUTHORIZATION },
+      );
+      assert.equal(rawResponse.status, 403, `${deniedPath} raw must be denied`);
     }
 
     for (const deniedPath of [

@@ -7,7 +7,7 @@
  * Backend files show full-width code.
  */
 
-import {X, FileCode2, Copy, Check, Loader2, Eye} from 'lucide-react'
+import {X, FileCode2, Copy, Check, Loader2, Eye, ExternalLink, Download} from 'lucide-react'
 import {useState, useEffect} from 'react'
 import {readFile} from '../agent/workspaceApi'
 import {fetchFileStatus, type StatusColor} from '../agent/statusApi'
@@ -29,6 +29,12 @@ const isFrontendFile = (path: string): boolean => {
            lower.endsWith('.jsx') || lower.endsWith('.vue')
 }
 
+const isPdfFile = (path: string): boolean => path.toLowerCase().endsWith('.pdf')
+const isVideoFile = (path: string): boolean => {
+    const lower = path.toLowerCase()
+    return lower.endsWith('.mp4') || lower.endsWith('.webm') || lower.endsWith('.ogg') || lower.endsWith('.mov')
+}
+
 export function FileViewer({files, activeIndex, onSwitch, onClose}: FileViewerProps) {
     const [copied, setCopied] = useState(false)
     const [content, setContent] = useState<string>('')
@@ -44,10 +50,18 @@ export function FileViewer({files, activeIndex, onSwitch, onClose}: FileViewerPr
 
     const active = files[activeIndex] ?? files[0]
     const isFrontend = active ? isFrontendFile(active.path) : false
+    const isPdf = active ? isPdfFile(active.path) : false
+    const isVideo = active ? isVideoFile(active.path) : false
 
-    // Fetch file content when the active file changes
+    // Fetch file content when the active file changes (skip for PDF and Video)
     useEffect(() => {
         if (!active) return
+        if (isPdfFile(active.path) || isVideoFile(active.path)) {
+            setLoading(false)
+            setError(null)
+            setContent('')
+            return
+        }
         let cancelled = false
         setLoading(true)
         setError(null)
@@ -124,6 +138,31 @@ export function FileViewer({files, activeIndex, onSwitch, onClose}: FileViewerPr
                     {loading && <span className="file-viewer__lines">Loading...</span>}
                 </div>
                 <div className="file-viewer__actions">
+                    {isPdf && (
+                        <>
+                            <a
+                                href={`/v1/workspace/raw?path=${encodeURIComponent(active.path)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="file-viewer__btn"
+                                style={{textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px'}}
+                                title="Open PDF in new tab"
+                            >
+                                <ExternalLink size={13}/>
+                                <span>Open PDF</span>
+                            </a>
+                            <a
+                                href={`/v1/workspace/raw?path=${encodeURIComponent(active.path)}`}
+                                download={active.name}
+                                className="file-viewer__btn"
+                                style={{textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px'}}
+                                title="Download PDF diagram"
+                            >
+                                <Download size={13}/>
+                                <span>Download</span>
+                            </a>
+                        </>
+                    )}
                     {isFrontend && !loading && !error && (
                         <button
                             className="file-viewer__btn"
@@ -134,15 +173,17 @@ export function FileViewer({files, activeIndex, onSwitch, onClose}: FileViewerPr
                             <span>{showPreview ? 'Hide' : 'Show'}</span>
                         </button>
                     )}
-                    <button
-                        className="file-viewer__btn"
-                        onClick={handleCopy}
-                        title="Copy file content"
-                        disabled={loading || !!error}
-                    >
-                        {copied ? <Check size={13}/> : <Copy size={13}/>}
-                        <span>{copied ? 'Copied' : 'Copy'}</span>
-                    </button>
+                    {!isPdf && (
+                        <button
+                            className="file-viewer__btn"
+                            onClick={handleCopy}
+                            title="Copy file content"
+                            disabled={loading || !!error}
+                        >
+                            {copied ? <Check size={13}/> : <Copy size={13}/>}
+                            <span>{copied ? 'Copied' : 'Copy'}</span>
+                        </button>
+                    )}
                     <button
                         className="file-viewer__btn file-viewer__btn--close"
                         onClick={onClose}
@@ -153,19 +194,39 @@ export function FileViewer({files, activeIndex, onSwitch, onClose}: FileViewerPr
                 </div>
             </div>
             <div className="file-viewer__body" style={{display: 'flex', gap: 0, height: '100%'}}>
-                {/* Code pane */}
-                <div style={{flex: 1, overflow: 'auto', borderRight: isFrontend && showPreview ? '1px solid var(--border)' : 'none'}}>
-                    {loading ? (
-                        <div className="file-viewer__loading">
-                            <Loader2 size={16} className="file-viewer__spinner"/>
-                            <span>Loading file content...</span>
-                        </div>
-                    ) : error ? (
-                        <div className="file-viewer__error">
-                            <span>Failed to load: {error}</span>
-                        </div>
-                    ) : (
-                        <>
+                {isPdf ? (
+                    <div style={{flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: '400px', background: '#18181b'}}>
+                        <iframe
+                            src={`/v1/workspace/raw?path=${encodeURIComponent(active.path)}`}
+                            style={{flex: 1, width: '100%', height: '100%', border: 'none'}}
+                            title={active.name}
+                        />
+                    </div>
+                ) : isVideo ? (
+                    <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '400px', background: '#09090b', padding: '24px'}}>
+                        <video
+                            src={`/v1/workspace/raw?path=${encodeURIComponent(active.path)}`}
+                            controls
+                            playsInline
+                            autoPlay
+                            style={{maxWidth: '100%', maxHeight: '80vh', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)'}}
+                        />
+                    </div>
+                ) : (
+                    <>
+                        {/* Code pane */}
+                        <div style={{flex: 1, overflow: 'auto', borderRight: isFrontend && showPreview ? '1px solid var(--border)' : 'none'}}>
+                            {loading ? (
+                                <div className="file-viewer__loading">
+                                    <Loader2 size={16} className="file-viewer__spinner"/>
+                                    <span>Loading file content...</span>
+                                </div>
+                            ) : error ? (
+                                <div className="file-viewer__error">
+                                    <span>Failed to load: {error}</span>
+                                </div>
+                            ) : (
+                                <>
                             <pre className="file-viewer__code">
                                 {lines.map((line, i) => {
                                     const lineNum = i + 1
@@ -332,6 +393,8 @@ export function FileViewer({files, activeIndex, onSwitch, onClose}: FileViewerPr
                             title="HTML Preview"
                         />
                     </div>
+                )}
+                </>
                 )}
             </div>
             {files.length > 1 ? (

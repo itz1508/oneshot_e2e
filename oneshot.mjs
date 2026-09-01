@@ -520,6 +520,18 @@ ${C.bold}Mode:${C.reset}     ${mode.toUpperCase()}
 ${C.bold}Provider:${C.reset} ${providerDisplay}
 ${C.bold}Health:${C.reset}   http://localhost:${port}/api/health
 ${C.bold}Graph:${C.reset}    http://localhost:${port}/api/graphs/adk
+
+${C.bold}${C.cyan}╔══════════════════════════════════════════════════════════════════════════════════════╗${C.reset}
+${C.bold}${C.cyan}║                   📚 ONESHOT ARCHITECTURE & VERIFICATION DOCS INDEX                  ║${C.reset}
+${C.bold}${C.cyan}╠══════════════════════════════════════════════════════════════════════════════════════╣${C.reset}
+${C.cyan}║${C.reset}  ${C.bold}Master Index:${C.reset}     docs/INDEX.md                                                  ${C.cyan}║${C.reset}
+${C.cyan}║${C.reset}  ${C.bold}Workflow Tree:${C.reset}    docs/WORKFLOW_TREE & docs/WORKFLOW_TREE.pdf                    ${C.cyan}║${C.reset}
+${C.cyan}║${C.reset}  ${C.bold}Canonical Spec:${C.reset}   docs/source/OneShot_Canonical_Contract_and_Verification.txt    ${C.cyan}║${C.reset}
+${C.cyan}║${C.reset}  ${C.bold}ADK & Task Graph:${C.reset} docs/TASK_MANAGEMENT_AND_ADK_GRAPH.md                        ${C.cyan}║${C.reset}
+${C.cyan}║${C.reset}  ${C.bold}Visual Map:${C.reset}       docs/Workflow_Processing.pdf                                   ${C.cyan}║${C.reset}
+${C.cyan}║${C.reset}  ${C.bold}Judge Guide:${C.reset}      JUDGE_README.md                                                ${C.cyan}║${C.reset}
+${C.cyan}║${C.reset}  ${C.bold}Web IDE Center:${C.reset}   http://localhost:${port} (Click "Docs & Architecture" in top bar)  ${C.cyan}║${C.reset}
+${C.bold}${C.cyan}╚══════════════════════════════════════════════════════════════════════════════════════╝${C.reset}
 ${C.dim}Press Ctrl+C to stop the services.${C.reset}
 `);
 

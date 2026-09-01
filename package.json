@@ -21,7 +21,8 @@
     "preflight:ollama": "python scripts/ollama_preflight.py",
     "verify:adk-live": "python scripts/verify_adk_live.py",
     "build:backend": "tsc -p tsconfig.json",
-    "build:ui": "npm --prefix web run build"
+    "build:ui": "npm --prefix web run build",
+    "view:video": "node scripts/view_video.mjs"
   },
   "devDependencies": {
     "@types/node": "file:vendor/npm/types-node-24.0.4.tgz",

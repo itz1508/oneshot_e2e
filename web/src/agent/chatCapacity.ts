@@ -7,6 +7,8 @@
  * provider-reported IN/OUT usage shown as evidence on completed turns.
  */
 
+import {fetchAuthed} from './authApi'
+
 export interface ChatHistoryEntry {
     role: 'user' | 'assistant'
     content: string
@@ -75,7 +77,7 @@ export async function fetchChatEstimate(
     payload: ChatEstimatePayload,
     signal: AbortSignal,
 ): Promise<ChatEstimateResponse> {
-    const response = await fetch('/v1/usage/estimate', {
+    const response = await fetchAuthed('/v1/usage/estimate', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

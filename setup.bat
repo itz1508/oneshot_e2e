@@ -146,11 +146,21 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo.
+echo.
 echo  ============================================================
 echo   SETUP COMPLETE - All 98 tests passed!
 echo  ============================================================
 echo.
+echo   Documentation and Architecture Index:
+echo     docs/INDEX.md                                                  (Master Hub)
+echo     docs/WORKFLOW_TREE and docs/WORKFLOW_TREE.pdf                  (Workflow Tree)
+echo     docs/source/OneShot_Canonical_Contract_and_Verification.txt    (Canonical Contracts)
+echo     docs/TASK_MANAGEMENT_AND_ADK_GRAPH.md                          (Task & ADK Graphs)
+echo     docs/Workflow_Processing.pdf                                   (Visual Processing Map)
+echo     JUDGE_README.md                                                (Judge Quick-Start)
+echo.
 echo   Next steps:
+echo     npm run oneshot    Build, verify, start and open IDE
 echo     npm run demo       Launch OneShot for Demonstration
 echo     npm start          Start the full server on http://localhost:8787
 echo.
