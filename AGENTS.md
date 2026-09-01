@@ -64,14 +64,17 @@ $$\text{ROLE} \neq \text{SKILL} \neq \text{TOOL} \neq \text{WORKFLOW}$$
 
 ---
 
-## 2. Canonical Workflow & Detailed Implementation Trace
+## 2. Canonical Workflow & 27-Step End-to-End Implementation Trace
 
-The pipeline executes through 27 deterministic phases from initial chat message to completed sandbox execution:
+The end-to-end execution path consists of:
+1. **Pre-canonical Chat / Intent Support** (conversational turn ingestion and sufficiency gating)
+2. **Canonical Workflow** (`Prompt(id)` → `DONE`, governed by [`CANONICAL_WORKFLOW.md`](CANONICAL_WORKFLOW.md))
+3. **External Execution Verification Boundary** (isolated Sandbox admission and execution)
 
 ```text
-Chat / Multi-turn Intent Collection
+Chat / Multi-turn Intent Collection (Pre-canonical Support)
  └── Intent(id) revision
-      └── Prompt_id
+      └── Prompt_id (Canonical Workflow Entry)
            └── Researcher
                 └── Researcher(id)
                      └── Planner
@@ -98,13 +101,13 @@ Chat / Multi-turn Intent Collection
                                                                                           HASH
                                                                                             │
                                                                                             v
-                                                                                          DONE
+                                                                                          DONE (Canonical Terminal State)
                                                                                             │
                                                                                             v
-                                                                                    Sandbox Execution
+                                                                                    Sandbox Execution (External Boundary)
 ```
 
-### Detailed 27-Phase Implementation Trace Table
+### Detailed 27-Step End-to-End Implementation Trace Table
 
 | Phase | Phase Name | Primary File / Handler | Input Artifacts | Output Artifacts / Invariants |
 | :---: | :--- | :--- | :--- | :--- |
