@@ -12,7 +12,7 @@
 1. **Image Verified:** `oneshot:1.3.0` (`sha256:e21849702a433900ac58174d3a5abc4d97bed64939328a9af2bd463d9a156865`)
 2. **Archive Created:** `oneshot-1.3.0.tar` (107 MB)
 3. **Checksum:** `78755420d16dbbafeba847390f540ee3e0e6e8de00cf2f7a0867f8677e8d3f0a`
-4. **Repository Independence Proven:** Entire E2E ran from isolated `D:\Temp` directory
+4. **Repository Independence Proven:** Entire E2E ran from isolated temporary test directory
 5. **Judge Package Complete:**
    - `docker-compose.judge.yml` (no `build:` section)
    - `.env.example` (template only)
@@ -43,7 +43,7 @@
 
 ## Judge Distribution Package Location
 
-**`D:\Temp\oneshot-judge-test/`**
+**`dist/oneshot-judge.zip` (standalone bundle)**
 
 ### Files Ready
 
@@ -76,7 +76,7 @@
 
 If resuming later:
 
-1. **Archive Distribution:** `oneshot-1.3.0.tar` is in `D:\Temp\oneshot-judge-test`
+1. **Archive Distribution:** `oneshot-1.3.0.tar` packaged in `dist/oneshot-judge.zip`
 2. **Registry Publication:** Not yet authorized (awaiting explicit approval)
 3. **Repository Changes:** None staged/committed (as instructed)
 4. **Verification:** All 19 phases logged in `JUDGE_DISTRIBUTION_REPORT.md`
@@ -85,14 +85,10 @@ If resuming later:
 
 ```powershell
 # Check package contents
-ls D:\Temp\oneshot-judge-test
-
-# Verify checksum
-certUtil -hashfile D:\Temp\oneshot-judge-test\oneshot-1.3.0.tar SHA256
-# Expected: 78755420d16dbbafeba847390f540ee3e0e6e8de00cf2f7a0867f8677e8d3f0a
+ls deploy/judge
 
 # Load and start fresh
-cd D:\Temp\oneshot-judge-test
+cd deploy/judge
 docker load < oneshot-1.3.0.tar
 docker compose -f docker-compose.judge.yml up -d
 docker compose -f docker-compose.judge.yml ps  # should show healthy

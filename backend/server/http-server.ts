@@ -19,6 +19,7 @@ import type { TaskManagement } from "../task/task-management.js";
 import { projectAdkGraph } from "../graph/adk-graph.js";
 import { projectAuthorityGraph } from "../graph/authority-graph.js";
 import { projectIntentGraph } from "../graph/intent-graph.js";
+import { projectWorkflowGraph } from "../graph/workflow-graph.js";
 import type { IntentCollectionService } from "../intent/intent-collection.js";
 import type { SandboxService } from "../sandbox/sandbox-service.js";
 import { projectSandboxGraph } from "../sandbox/graph/sandbox-graph.js";
@@ -396,6 +397,9 @@ export async function startHttpServer(
         if (req.method === "GET" && url.pathname === "/api/graphs/adk") {
           return json(res, 200, projectAdkGraph());
         }
+        if (req.method === "GET" && (url.pathname === "/api/graphs/workflow" || url.pathname === "/api/graphs/adk-workflow")) {
+          return json(res, 200, projectWorkflowGraph());
+        }
         if (req.method === "GET" && url.pathname === "/api/graphs/authority") {
           return json(res, 200, projectAuthorityGraph());
         }
@@ -600,6 +604,20 @@ export async function startHttpServer(
           const r = runs.get(graphMatch[1]);
           if (!r) return json(res, 404, { error: "run not found" });
           return json(res, 200, projectAdkGraph(events.list(graphMatch[1])));
+        }
+
+        // GET /api/runs/:id/workflow-graph — ADK 2.0 workflow graph for a specific run
+        const workflowGraphMatch = url.pathname.match(
+          /^\/api\/runs\/([^/]+)\/(?:workflow-graph|adk-workflow-graph)$/,
+        );
+        if (req.method === "GET" && workflowGraphMatch) {
+          const r = runs.get(workflowGraphMatch[1]);
+          if (!r) return json(res, 404, { error: "run not found" });
+          return json(
+            res,
+            200,
+            projectWorkflowGraph(events.list(workflowGraphMatch[1])),
+          );
         }
 
         // GET /api/runs/:id/authority-graph — authority graph for a specific run

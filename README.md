@@ -1,22 +1,9 @@
 # OneShot Production E2E 1.3.0
 
-Deterministic AI execution platform combining strict Draft 2020-12 schema validation, multi-turn conversational intent collection, verifiable AI research providers (Google ADK & Featherless), multi-stage planning, refactoring, triple validation (Schema, Fixture, Goal), RFC 8785 canonicalization, cryptographic SHA-256 hashing, isolated sandbox execution, and a standalone FastAPI Workspace API control plane.
+Deterministic AI execution platform that transforms natural language intent into a provably correct, cryptographically verified execution plan using strict Draft 2020-12 schema contracts, verifiable AI research engines (Google ADK & Gemma 2), triple validation gates (Schema, Fixture, Goal), RFC 8785 canonicalization, SHA-256 cryptographic proofs, and an interactive React IDE.
 
-Licensed under the **Apache License, Version 2.0** for all workflow processing components.
-
-> **📋 Hackathon judges:** See [JUDGE_README.md](JUDGE_README.md) for a focused quick-start guide.
-
----
-
-## 🖥️ Modern Product Interface & Visual Overview
-
-| Continuous Conversational Session & Task Drawer | Welcome Hub with Embedded Video Walkthrough |
-| --- | --- |
-| ![OneShot Continuous Conversational Session](docs/screenshots/live_oneshot_completed_clean_session.png) | ![OneShot Welcome Hub](docs/screenshots/live_oneshot_welcome_with_video.png) |
-
-| Interactive Code Fix & Diff Editor | Native Draft 2020-12 Contract Specification |
-| --- | --- |
-| ![OneShot Code Fix Editor](docs/screenshots/live_oneshot_code_fix_editor.png) | ![OneShot Contract Spec](docs/screenshots/live_oneshot_canonical_contract_spec.png) |
+> [!IMPORTANT]
+> **📋 Hackathon Judges:** For the standalone zero-dependency evaluation guide (under 60 seconds with prebuilt Docker image), please refer directly to [**`JUDGE_README.md`**](JUDGE_README.md).
 
 ---
 
@@ -34,53 +21,51 @@ Review the full end-to-end execution, task drawer telemetry, live activity discl
 
 ---
 
-<details>
+<details open>
 <summary><b>📖 Table of Contents</b> (click to expand / collapse)</summary>
 
-- [🖥️ Modern Product Interface & Visual Overview](#️-modern-product-interface--visual-overview)
-- [🎬 Instant Video Demonstration & Walkthrough](#-instant-video-demonstration--walkthrough)
-- [⚡ 60-Second Start](#-60-second-start)
+- [⚡ Simple Installation & Quick Start](#-simple-installation--quick-start)
   - [Prerequisites](#prerequisites)
-  - [Setup and launch (one command)](#setup-and-launch-one-command)
-  - [Run Tests](#run-tests)
-  - [Start the Server](#start-the-server-without-demo-launcher)
-- [📚 Key Architecture & Verification Documentation](#-key-architecture--verification-documentation)
-- [🏛️ Repository Architecture](#️-repository-architecture)
-- [1. Canonical Workflow Pipeline](#1-canonical-workflow-pipeline)
-- [2. Multi-Tier Subsystem Ownership](#2-multi-tier-subsystem-ownership)
-- [3. Installation & Dependency Bootstrap](#3-installation--dependency-bootstrap)
-  - [System Requirements](#system-requirements)
-  - [Step 1: Clone Repository](#step-1-clone-repository)
-  - [Step 2: Bootstrap Dependencies](#step-2-bootstrap-dependencies)
-    - [Option A: Base Environment](#option-a-base-environment-standard-local-workflow)
-    - [Option B: With Google ADK + Local Gemma 2 Provider](#option-b-with-google-adk--local-gemma-2-provider)
-    - [Option C: With Featherless Cloud Provider](#option-c-with-featherless-cloud-provider)
-    - [Option D: With Workspace API Sidecar Control Plane](#option-d-with-workspace-api-sidecar-control-plane)
-- [4. Running the Platform](#4-running-the-platform)
-  - [Start the OneShot IDE & HTTP Server](#start-the-oneshot-ide--http-server)
-  - [Research Provider Configuration Modes](#research-provider-configuration-modes)
-    - [1. Sample Mode (Default / Deterministic Benchmark)](#1-sample-mode-default--deterministic-benchmark)
-    - [2. Local AI Production Mode (Google ADK + Ollama Gemma 2 + Redis)](#2-local-ai-production-mode-google-adk--ollama-gemma-2--redis)
-    - [3. Cloud Production Mode (Featherless Gemma 4)](#3-cloud-production-mode-featherless-gemma-4)
-  - [Starting the FastAPI Workspace API Sidecar](#starting-the-fastapi-workspace-api-sidecar)
-- [5. Comprehensive Verification](#5-comprehensive-verification)
-  - [Specialized Verification Commands](#specialized-verification-commands)
-- [6. Durable State & Storage Layout](#6-durable-state--storage-layout)
-- [7. Reusable Skills & Tools](#7-reusable-skills--tools)
-- [8. License](#8-license)
+  - [Option A: 1-Click Fast-Path (Recommended)](#option-a-1-click-fast-path-recommended)
+  - [Option B: One-Command Source Launch](#option-b-one-command-source-launch)
+  - [Run Verification Suite](#run-verification-suite)
+- [✨ Product Features & Interface](#-product-features--interface)
+  - [Key Capabilities](#key-capabilities)
+  - [Visual Product Tour](#visual-product-tour)
+- [🗺️ Google ADK 2.0 Workflow Graph](#️-google-adk-20-workflow-graph)
+  - [Canonical State Machine Flow](#canonical-state-machine-flow)
+  - [Triple Validation Nested Workflow](#triple-validation-nested-workflow)
+- [🛡️ Product Details & Verification Matrix](#️-product-details--verification-matrix)
+  - [Multi-Tier Ownership Architecture](#multi-tier-ownership-architecture)
+  - [Master Verification Gate Results](#master-verification-gate-results)
+- [📚 Key Architecture & Documentation Links](#-key-architecture--documentation-links)
 
 </details>
 
 ---
 
-## ⚡ 60-Second Start
+## ⚡ Simple Installation & Quick Start
 
 ### Prerequisites
 
-- **Node.js 20+** — [nodejs.org](https://nodejs.org)
-- **Python 3.11+** — [python.org](https://www.python.org)
+- **Docker Desktop** (for Option A) **OR** **Node.js $\ge 20$ + Python $\ge 3.11$** (for Option B).
 
-### Setup and launch (one command)
+---
+
+### Option A: 1-Click Fast-Path (Recommended)
+
+No repository cloning, Python setup, or local compilation is required:
+
+- **Windows**: `.\start-oneshot.ps1`
+- **macOS / Linux**: `chmod +x ./start-oneshot.sh && ./start-oneshot.sh`
+
+The launcher loads the prebuilt image, generates a local session token in `.env`, starts Docker Compose (non-root, resource-limited), waits for the container healthcheck, and automatically opens **`http://localhost:8787`**.
+
+---
+
+### Option B: One-Command Source Launch
+
+If running directly from repository source code:
 
 ```bash
 git clone https://github.com/itz1508/oneshot_e2e.git
@@ -88,297 +73,196 @@ cd oneshot_e2e
 npm run oneshot
 ```
 
-`npm run oneshot` detects Windows, macOS, or Linux; checks Node.js and Python; creates `.venv`; installs the required Python, root Node, and `web/` dependency profiles; builds the backend and React IDE; verifies canonical contracts and `MANIFEST.sha256`; runs all 49 Python and 49 TypeScript tests; starts the real backend; waits for `/api/health`; and opens `http://localhost:8787` in the default browser.
-
-### Run Tests
-
-```bash
-npm test          # 49 TypeScript tests
-npm run verify    # Full 98-test suite (Python + TypeScript)
-```
-
-### Start the Server (without demo launcher)
-
-```bash
-npm run build
-npm start
-```
-
-Open `http://localhost:8787` for the real-time IDE.
+`npm run oneshot` creates `.venv`, installs locked dependencies, compiles the strict TypeScript backend and Vite frontend, verifies canonical contracts and `MANIFEST.sha256`, runs the full test suite, starts the HTTP server, and opens `http://localhost:8787`.
 
 ---
 
-## 📚 Key Architecture & Verification Documentation
+### Run Verification Suite
+
+```bash
+# Run all 49 Python and 51 TypeScript tests
+npm run verify
+
+# Run React IDE Vitest unit tests (104 tests)
+npm --prefix web test
+
+# Verify source hash manifest integrity (471 files)
+python scripts/verify_manifest.py
+```
+
+---
+
+## ✨ Product Features & Interface
+
+### Key Capabilities
+
+- **Deterministic AI State Machine**: 27-phase monotonic state machine with rigid stage ownership and immutable artifacts.
+- **Strict Schema Contracts**: 21 JSON Schema Draft 2020-12 contracts governing all payloads, events, and validation results.
+- **Verifiable AI Research**: Integrated Google ADK with Ollama (`gemma2:9b`) and Featherless (`google/gemma-4-31B-it`).
+- **Triple Validation Gates**: Parallel evaluation of Schema, Fixture, and Goal validation barriers before package confirmation.
+- **Cryptographic Hash Verification**: RFC 8785 canonicalization (JCS) with SHA-256 equality proof (`created_hash == recomputed_hash`).
+- **Isolated Sandbox Execution**: Resource-constrained, network-isolated execution sandbox with deterministic evidence capture.
+- **Modern Event-Driven IDE**: Real-time Server-Sent Events (SSE) streaming, collapsible task drawer telemetry, live activity disclosures, and integrated documentation viewer.
+
+### Visual Product Tour
+
+| Continuous Conversational Session & Task Drawer | Welcome Hub with Embedded Video Walkthrough |
+| --- | --- |
+| ![OneShot Continuous Conversational Session](docs/screenshots/live_oneshot_completed_clean_session.png) | ![OneShot Welcome Hub](docs/screenshots/live_oneshot_welcome_with_video.png) |
+
+| Interactive Code Fix & Diff Editor | Native Draft 2020-12 Contract Specification |
+| --- | --- |
+| ![OneShot Code Fix Editor](docs/screenshots/live_oneshot_code_fix_editor.png) | ![OneShot Contract Spec](docs/screenshots/live_oneshot_canonical_contract_spec.png) |
+
+---
+
+## 🗺️ Google ADK 2.0 Workflow Graph
+
+### Canonical State Machine Flow
+
+The OneShot execution engine coordinates Google ADK 2.0 graph routing with deterministic Python validation gates, RFC 8785 canonicalization, and SHA-256 cryptographic proofs:
+
+```text
+START
+  ↓
+USER
+  ↓
+CHAT
+  ↓
+INTENT READY
+  ↓
+GENERATOR
+  ↓
+Prompt_id  (recorded under JOB_ID)
+  ↓
+RESEARCHER
+  ↓
+Researcher(id)
+  ├─ plan_id
+  ├─ schema_id
+  ├─ fixture_id
+  ├─ goal_id
+  └─ validation_id
+  ↓
+PLANNER
+  ├─ input: plan_id
+  └─ output: audit_id
+  ↓
+REFACTOR / REFINEMENT
+  ├─ input: plan_id + audit_id
+  └─ output: SAME plan_id with revision/evidence update
+  ↓
+GAP ANALYSIS
+  ├─ inspect updated plan_id
+  ├─ correct gaps
+  ├─ fresh recheck
+  └─ gap_0 + FINAL plan_id
+  ↓
+EVALUATION
+  └─ PASSED | ROOT_CAUSE
+  ↓
+TRIPLE VALIDATION (Google ADK Workflow + JoinNode)
+  ├─ Schema Validation:   FINAL plan_id + schema_id  → VALID | NOT_VALID
+  ├─ Fixture Validation:  FINAL plan_id + fixture_id → VALID | NOT_VALID
+  └─ Goal Validation:     FINAL plan_id + goal_id    → VALID | NOT_VALID
+  ↓
+all_valid = (schema == VALID) AND (fixture == VALID) AND (goal == VALID)
+  ↓
+CONFIRMED
+  ↓
+confirmed_package.core
+  ↓
+CREATE HASH
+  ├─ RFC 8785 JCS Canonicalization
+  └─ SHA-256 → created_hash
+  ↓
+PROMOTE  (Researcher(id) FINAL → Job confirmed)
+  ↓
+BUILDER
+  ├─ exact confirmed immutable package
+  └─ created_hash
+  ↓
+BUILD RESULT / SANDBOX EXECUTION
+  ↓
+RECOMPUTE HASH
+  ├─ same confirmed_package.core definition
+  ├─ RFC 8785 JCS
+  └─ SHA-256 → recomputed_hash
+  ↓
+HASH VERIFICATION (created_hash == recomputed_hash)
+  ↓
+DONE → PASSED
+```
+
+### Triple Validation Nested Workflow
+
+```text
+Evaluation
+    │
+    ▼
+Triple Validation Workflow
+    ├───────────────┬───────────────┐
+    ▼               ▼               ▼
+Schema           Fixture          Goal
+Validation       Validation       Validation
+    │               │               │
+    └───────────────┼───────────────┘
+                    ▼
+                 JoinNode (Fan-In Barrier)
+                    │
+                    ▼
+           deterministic all_valid
+                    │
+          all 3 results == VALID
+                    │
+                    ▼
+                CONFIRMED
+```
+
+---
+
+## 🛡️ Product Details & Verification Matrix
+
+### Multi-Tier Ownership Architecture
+
+- **`schema/`**: 21 Draft 2020-12 schemas defining canonical contracts.
+- **`validation/`**: Python canonicalization (RFC 8785), SHA-256 hashing, and fixture execution.
+- **`workflow/`**: Google ADK 2.0 workflow graph topology and JoinNode fan-in barrier specifications.
+- **`backend/`**: Strict TypeScript runtime, append-only event store, and HTTP/SSE server.
+- **`web/`**: Event-driven React IDE with real-time SSE stream consumption.
+
+### Master Verification Gate Results
+
+```text
+======================================================================
+ONE-SHOT PRODUCTION E2E 1.3.0 - MASTER VERIFICATION SUMMARY
+======================================================================
+  [PASS] Python Unit Suite:            49 / 49 tests passed
+  [PASS] TypeScript E2E Suite:         51 / 51 tests passed
+  [PASS] React IDE Vitest Suite:       104 / 104 tests passed
+  [PASS] Checksum Manifest Integrity:  471 / 471 files verified
+  [PASS] Docker Packaging & Runtime:   5 / 5 container tests passed
+======================================================================
+  STATUS: ONESHOT_PRODUCTION_E2E_VERIFIED (100% PASS)
+======================================================================
+```
+
+---
+
+## 📚 Key Architecture & Documentation Links
 
 | Document | Format | Description |
 | --- | --- | --- |
-| [`docs/INDEX.md`](docs/INDEX.md) | Markdown | **Master Documentation Index**: Complete hub for all specifications and guides. |
+| [**`JUDGE_README.md`**](JUDGE_README.md) | Guide | **Hackathon Judge Evaluation Guide**: Fast-path demonstration and zero-install Docker instructions. |
+| [`workflow/WorkflowGraph_corrected_optimized.txt`](workflow/WorkflowGraph_corrected_optimized.txt) | Spec | **Google ADK 2.0 Workflow Graph**: Canonical ADK graph topology, JoinNode fan-in, and triple validation gate. |
+| [`docs/INDEX.md`](docs/INDEX.md) | Markdown | **Master Documentation Index**: Complete catalog of all specifications and guides. |
 | [`docs/WORKFLOW_TREE`](docs/WORKFLOW_TREE) | ASCII Tree | **Source of Truth Execution Hierarchy**: Immutable sequence from Intent → Triple Validation → Hash → Sandbox. |
 | [`docs/WORKFLOW_TREE.pdf`](docs/WORKFLOW_TREE.pdf) | PDF Diagram | **Visual Workflow Architecture**: Visual diagram of canonical stages and validation gates. |
 | [`docs/source/OneShot_Canonical_Contract_and_Verification.txt`](docs/source/OneShot_Canonical_Contract_and_Verification.txt) | Draft 2020-12 Spec | **Canonical Contracts & Verification**: Schemas, audit IDs, triple validation, and hash proof definitions. |
-| [`docs/TASK_MANAGEMENT_AND_ADK_GRAPH.md`](docs/TASK_MANAGEMENT_AND_ADK_GRAPH.md) | Runtime Spec | **Task Management & ADK Graphs**: Monotonic append-only events, Google ADK Gemma 2 and Authority graphs. |
-| [`docs/Workflow_Processing.pdf`](docs/Workflow_Processing.pdf) | PDF Map | **Workflow Processing Map**: Full end-to-end visual state machine diagram. |
-| [`JUDGE_README.md`](JUDGE_README.md) | Guide | **Judge Demonstration Guide**: Under 3-minute interactive evaluation walkthrough for hackathon judges. |
 | [`CANONICAL_WORKFLOW.md`](CANONICAL_WORKFLOW.md) | Workflow Spec | **Canonical Workflow Order**: Role separation (`ROLE != SKILL != TOOL != WORKFLOW`) and proof requirements. |
 
 ---
 
-## 🏛️ Repository Architecture
+## 📄 License
 
-```text
-oneshot_e2e/
-├── backend/        OneShot backend/runtime authority
-├── schema/         OneShot canonical contracts
-├── validation/     OneShot deterministic proof
-├── workspace_api/  OneShot workspace/control-plane support
-├── web/            OneShot React IDE
-└── ui/             legacy OneShot standalone UI
-```
-
----
-
-## 1. Canonical Workflow Pipeline
-
-The OneShot execution engine follows an immutable, deterministic pipeline:
-
-```text
-Chat / Multi-turn Intent Collection
- └── Intent(id) revision
-      └── Prompt_id
-           └── Researcher
-                └── Researcher(id)
-                     └── Planner
-                          └── audit_id
-                               └── Refactor
-                                    └── same plan_id
-                                         └── Gap Analysis
-                                              └── gap_0 + plan_id
-                                                   └── Evaluation
-                                                        └── plan_id
-                                                             ├── Schema Validation ──┐
-                                                             ├── Fixture Validation ──┼─ Triple Validation
-                                                             └── Goal Validation ────┘      │
-                                                                                            v
-                                                                                       all VALID
-                                                                                            │
-                                                                                            v
-                                                                                        CONFIRMED
-                                                                                            │
-                                                                                            v
-                                                                                       CREATE HASH
-                                                                                            │
-                                                                                            v
-                                                                                          HASH
-                                                                                            │
-                                                                                            v
-                                                                                          DONE
-                                                                                            │
-                                                                                            v
-                                                                                    Sandbox Execution
-```
-
-For the complete detailed hierarchy and source-of-truth specification, see [`docs/WORKFLOW_TREE`](docs/WORKFLOW_TREE) and [`CANONICAL_WORKFLOW.md`](CANONICAL_WORKFLOW.md).
-
----
-
-## 2. Multi-Tier Subsystem Ownership
-
-- **JSON Schema Draft 2020-12 (`schema/`)**: Single structural source of truth for all 21 artifact, event, and validation payload contracts.
-- **Python Canonical Engine (`validation/`)**: Strict Pydantic model validation, reference resolution, fixture assertion execution, schema parity proof, RFC 8785 canonicalization (JCS), and SHA-256 verification.
-- **TypeScript Runtime (`backend/`)**: Multi-turn Intent collection, Role workflow orchestration, provider resolution, append-only Task Management event store, W3C trace propagation, checkpoint projections, and fast HTTP/SSE server.
-- **Workspace API Control Plane (`workspace_api/`)**: FastAPI control plane providing multi-tenant workspaces, encrypted API keys, provider routing, rate limiting, and token analytics.
-- **OneShot React IDE (`web/`)**: Event-driven React frontend providing user interaction, live workflow visualization, task state tracking, artifact inspection, and sandbox execution proofs.
-
----
-
-## 3. Installation & Dependency Bootstrap
-
-### System Requirements
-
-- **Node.js**: $\ge 20.0.0$
-- **Python**: $\ge 3.11$ (Python 3.12 recommended)
-- **Git**
-
-### Step 1: Clone Repository
-
-```bash
-git clone https://github.com/itz1508/oneshot_e2e.git
-cd oneshot_e2e
-```
-
-### Step 2: Bootstrap Dependencies
-
-#### Option A: Base Environment (Standard Local Workflow)
-
-Installs base Python requirements and locked, offline npm packages from `vendor/npm/`:
-
-```bash
-python scripts/bootstrap.py
-```
-
-Manual install alternative:
-
-```bash
-npm ci --offline --ignore-scripts --no-audit --no-fund
-pip install -r requirements.txt
-```
-
-#### Option B: With Google ADK + Local Gemma 2 Provider
-
-Installs Google ADK, LiteLLM, and Ollama bridge dependencies:
-
-```bash
-python scripts/bootstrap.py --with-adk
-```
-
-Or manually: `pip install -r requirements-adk.txt`
-
-#### Option C: With Featherless Cloud Provider
-
-Installs OpenAI-compatible client libraries for Featherless API (`google/gemma-4-31B-it`):
-
-```bash
-python scripts/bootstrap.py --with-featherless
-```
-
-Or manually: `pip install -r requirements-featherless.txt`
-
-#### Option D: With Workspace API Sidecar Control Plane
-
-Installs FastAPI, SQLAlchemy, Redis, JWT, and security libraries:
-
-```bash
-python scripts/bootstrap.py --with-workspace-api
-```
-
-Or manually: `pip install -r requirements-workspace-api.txt`
-
----
-
-## 4. Running the Platform
-
-### Start the OneShot IDE & HTTP Server
-
-Copy `.env.example` to `.env` to configure the Node runtime. On Node.js 20.12+, the launchers and compiled backend load it automatically; variables already set by the parent process take precedence. With an earlier Node.js 20 release, set the variables in the parent process instead.
-
-```bash
-npm run build
-npm start
-```
-
-Open your browser at `http://localhost:8787`.
-
-The Node server binds to `127.0.0.1` by default. External binding is an explicit authenticated mode:
-
-```bash
-ONESHOT_BIND_HOST=0.0.0.0 ONESHOT_API_TOKEN="replace-with-a-secret" npm start
-```
-
-When `ONESHOT_API_TOKEN` is configured, every `/api`, `/api/*`, `/v1`, and `/v1/*` request—including `/api/health`—must send `Authorization: Bearer <token>`. Static UI assets remain public. The browser bundle never embeds the server token, so token-enabled operation is intended for authenticated launchers, probes, and API clients.
-
-Use `.env.workspace.example` for the FastAPI sidecar and `web/env.example` for Vite development-proxy settings. Real `.env*`, credentials, private keys, secrets, and `data/` are ignored and excluded from source archives.
-
-### Research Provider Configuration Modes
-
-#### 1. Sample Mode (Default / Deterministic Benchmark)
-
-```bash
-export ONESHOT_MODE=sample
-npm start
-```
-
-#### 2. Local AI Production Mode (Google ADK + Ollama Gemma 2 + Redis)
-
-Start the local AI containers and run:
-
-```bash
-docker compose -f deploy/docker/docker-compose.local-ai.yml up -d
-export ONESHOT_MODE=production
-export ONESHOT_RESEARCH_PROVIDER=adk_gemma2
-npm start
-```
-
-#### 3. Cloud Production Mode (Featherless Gemma 4)
-
-```bash
-export ONESHOT_MODE=production
-export ONESHOT_RESEARCH_PROVIDER=featherless
-export FEATHERLESS_API_KEY="your_api_key_here"
-npm start
-```
-
-### Starting the FastAPI Workspace API Sidecar
-
-```bash
-python scripts/verify_workspace_api.py
-uvicorn workspace_api.main:app --host 0.0.0.0 --port 8080
-```
-
----
-
-## 5. Comprehensive Verification
-
-Run the full end-to-end multi-tier verification suite:
-
-```bash
-python scripts/verify_all.py
-```
-
-This master script verifies:
-
-1. **Dependency Versions**: Exact pinned versions across Python and Node.
-2. **Python Canonical Engine**: 49 unit tests including schema validator, model parity, graph validator, fixture assertions, JCS canonicalization, Workspace API, path portability, and archive secret-selection parity.
-3. **TypeScript Compilation**: `tsc -p tsconfig.json`.
-4. **TypeScript E2E Test Suite**: 50 E2E integration tests including ADK adapter, Featherless adapter, intent collection, runtime path relocation, sandbox boundary, SSE server, task management, and workspace filesystem security.
-
-### Specialized Verification Commands
-
-```bash
-# Verify checksum manifest integrity
-python scripts/verify_manifest.py
-
-# Verify Workspace API endpoints & OpenAPI schema
-python scripts/verify_workspace_api.py
-
-# Live test for Google ADK + Ollama (requires Ollama running)
-python scripts/verify_adk_live.py
-
-# Live test for Featherless API (requires FEATHERLESS_API_KEY)
-node scripts/verify_featherless_live.mjs
-
-# Ollama preflight check
-python scripts/ollama_preflight.py
-```
-
----
-
-## 6. Durable State & Storage Layout
-
-- `data/conversations/`: Multi-turn conversational history and intent revisions.
-- `data/run-state/`: Run snapshots and active execution state.
-- `data/runs/`: Canonical workflow artifacts (`prompt.json`, `researcher.json`, `plan.gap.json`, `audit.json`, `evaluation.json`, `triple-validation.json`, `confirmed.json`, `hash-proof.json`).
-- `data/task-events/`: Append-only monotonic event logs (`<run_id>.jsonl`).
-- `data/checkpoints/`: Milestone execution checkpoints.
-- `data/sandbox-workspaces/`: Ephemeral isolated sandbox workspaces.
-
----
-
-## 7. Reusable Skills & Tools
-
-The platform provides 5 built-in skills with 26 callable tools:
-
-1. **`oneshot-canonical-contracts`** (Python): `validate_schema`, `validate_artifact`, `validate_references`, `validate_parity`, `validate_registry`, `validate_graph`, `resolve_artifact`, `trace_artifact`, `run_fixture`, `canonicalize`, `create_hash`, `verify_hash`.
-2. **`oneshot-task-runtime`** (TypeScript): `project_run`, `audit_run`, `project_adk_graph`, `project_authority_graph`.
-3. **`oneshot-intent-collection`** (TypeScript): `get_intent`, `project_intent_graph`.
-4. **`oneshot-sandbox-runtime`** (TypeScript): `verify_admission`, `execute_sandbox`, `audit_sandbox`, `project_sandbox_graph`.
-5. **`oneshot-init`** (TypeScript): `init_workspace`, `check_preflight`.
-
-For reusable-skill vs. role placement rules, see [`.agents/rules/oneshot-skill-architecture.md`](.agents/rules/oneshot-skill-architecture.md); for canonical workflow ordering, see [`CANONICAL_WORKFLOW.md`](CANONICAL_WORKFLOW.md). Contributor guidelines live in [`AGENTS.md`](AGENTS.md).
-
----
-
-## 8. License
-
-All workflow processing code, contracts, runtime engines, validation frameworks, and tooling in this repository are open-source software licensed under the **Apache License, Version 2.0**.
-
-See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE) for full terms.
+Licensed under the **Apache License, Version 2.0**. See [`LICENSE`](LICENSE) for details.

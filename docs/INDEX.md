@@ -8,6 +8,7 @@ This index organizes the definitive architectural specifications, execution tree
 
 | Document | Format | Description | Primary Audience |
 |---|---|---|---|
+| [`workflow/WorkflowGraph_corrected_optimized.txt`](../workflow/WorkflowGraph_corrected_optimized.txt) | Specification | **Google ADK 2.0 Workflow Graph**: Canonical ADK graph topology, JoinNode fan-in, and triple validation gate. | AI Engineers & Architects |
 | [`docs/WORKFLOW_TREE`](WORKFLOW_TREE) | Text / ASCII | **Source of Truth Execution Hierarchy**: Complete pipeline flow from Chat/Intent → Prompt → Researcher → Planner → Refactor → Gap Analysis → Evaluation → Triple Validation → Confirmation → SHA-256 Hash → Isolated Sandbox Execution. | All Engineers & Judges |
 | [`docs/WORKFLOW_TREE.pdf`](WORKFLOW_TREE.pdf) | PDF Diagram | **Visual Workflow Hierarchy**: Rendered tree diagram of the OneShot canonical execution flow. | Judges & Architects |
 | [`docs/source/OneShot_Canonical_Contract_and_Verification.txt`](source/OneShot_Canonical_Contract_and_Verification.txt) | Specification | **Canonical Contract & Verification Specification**: Complete Draft 2020-12 schemas, audit IDs, gap verification, evaluation evidence, canonicalization bytes, and contract registry. | Protocol & Contract Reviewers |
