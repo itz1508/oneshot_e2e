@@ -1,0 +1,495 @@
+/* ─── CodeFixEditor layout & styling ─── */
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--sidebar);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.fileMeta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fileName {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+.fileSelect {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--muted);
+    color: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.fileSelect:hover {
+    border-color: var(--primary);
+}
+
+.fileSelectChevron {
+    opacity: 0.5;
+    transition: transform 0.15s ease;
+}
+
+.fileMenuItemActive {
+    background: var(--accent) !important;
+    font-weight: 600;
+}
+
+.diffStat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: ui-monospace, monospace;
+}
+
+.statAdd {
+    color: #4ade80;
+}
+
+.statDel {
+    color: #f87171;
+}
+
+.statusBadge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.statusPending {
+    background: #f59e0b22;
+    color: #fbbf24;
+    border: 1px solid #f59e0b44;
+}
+
+.statusApplied {
+    background: #22c55e22;
+    color: #4ade80;
+    border: 1px solid #22c55e44;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    border: 1px solid var(--border);
+    background: var(--secondary);
+    color: var(--secondary-foreground);
+}
+
+.btn:hover {
+    background: var(--accent);
+    color: var(--accent-foreground);
+}
+
+.btnPrimary {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #3b82f6;
+}
+
+.btnPrimary:hover {
+    background: #1d4ed8;
+}
+
+.btnActive {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.editorBody {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* ── 2-Panel Split View: Left Column (Stacked Code Panes) | Right Column (Rootcause, Decision, Recommendation) ── */
+
+.splitView {
+    flex: 1;
+    display: grid;
+    overflow: hidden;
+}
+
+.codeCol {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+}
+
+.pane {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+}
+
+.pane:last-child {
+    border-bottom: none;
+}
+
+.paneHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--sidebar);
+    border-bottom: 1px solid var(--border);
+    color: var(--muted-foreground);
+    flex-shrink: 0;
+}
+
+.codeScroll {
+    flex: 1;
+    overflow: auto;
+    padding: 8px 0;
+    font-size: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    line-height: 1.6;
+}
+
+.line {
+    display: flex;
+    min-height: 20px;
+    padding: 0 12px;
+}
+
+.lineNo {
+    width: 32px;
+    flex-shrink: 0;
+    color: var(--muted-foreground);
+    opacity: 0.5;
+    user-select: none;
+    text-align: right;
+    padding-right: 12px;
+}
+
+.lineContent {
+    flex: 1;
+    white-space: pre;
+}
+
+.lineAdd {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+}
+
+.lineDel {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}
+
+.lineSame {
+    color: var(--foreground);
+}
+
+.banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: rgba(34, 197, 94, 0.1);
+    border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    font-size: 12px;
+}
+
+/* ── Unified View: Single Panel (Unified Diff on top, Divider, Rootcause / Decision / Recommendation below) ── */
+
+.unifiedContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    background: var(--background);
+}
+
+.unifiedPane {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.dividerSection {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--sidebar);
+    border-bottom: 1px solid var(--border);
+}
+
+.dividerLine {
+    height: 1px;
+    flex: 1;
+    background: var(--border);
+}
+
+.dividerText {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted-foreground);
+    padding: 0 12px;
+}
+
+.unifiedAnalysis {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 14px;
+    background: var(--sidebar);
+}
+
+/* ── Analysis Panel & Section Cards ── */
+
+.analysisPane {
+    display: flex;
+    flex-direction: column;
+    background: var(--sidebar);
+    overflow-y: auto;
+    padding: 14px;
+    gap: 14px;
+    font-size: 13px;
+    height: 100%;
+}
+
+.sectionCard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.cardHeaderRoot {
+    color: #ef4444;
+}
+
+.cardHeaderDecision {
+    color: #3b82f6;
+}
+
+.cardHeaderRec {
+    color: #10b981;
+}
+
+.cardBody {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--foreground);
+    opacity: 0.9;
+}
+
+.stepList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.stepItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.stepNumber {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #3b82f622;
+    color: #60a5fa;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.recList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.recItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--foreground);
+}
+
+.recBullet {
+    color: #34d399;
+    font-weight: bold;
+}
+
+/* ── Resize Handles ── */
+
+.resizeHandleV {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 6px;
+    cursor: col-resize;
+    background: var(--border);
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+}
+
+.resizeHandleV:hover,
+.resizeHandleV:active {
+    background: var(--primary);
+}
+
+.resizeHandleH {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 6px;
+    cursor: row-resize;
+    background: var(--border);
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+}
+
+.resizeHandleH:hover,
+.resizeHandleH:active {
+    background: var(--primary);
+}
+
+.resizeGripIcon {
+    opacity: 0.4;
+    transition: opacity 0.15s ease;
+}
+
+.resizeHandleV:hover .resizeGripIcon,
+.resizeHandleH:hover .resizeGripIcon {
+    opacity: 0.8;
+}
+
+/* ── Clickable Card Header (Rootcause drawer/collapse trigger) ── */
+
+.cardHeaderClickable {
+    cursor: pointer;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    text-align: left;
+    border-radius: 4px;
+    transition: opacity 0.15s ease;
+}
+
+.cardHeaderClickable:hover {
+    opacity: 0.75;
+}
+
+.cardHeaderChevron {
+    margin-left: auto;
+    opacity: 0.5;
+    transition: transform 0.2s ease, opacity 0.15s ease;
+}
+
+.cardHeaderClickable:hover .cardHeaderChevron {
+    opacity: 0.9;
+}
+
+/* ── Collapsible Divider (Unified View) ── */
+
+.dividerClickable {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
+}
+
+.dividerClickable:hover {
+    background: var(--accent);
+}
+
+.dividerChevron {
+    opacity: 0.5;
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+    color: var(--muted-foreground);
+}
+
+.dividerChevronCollapsed {
+    transform: rotate(-90deg);
+}

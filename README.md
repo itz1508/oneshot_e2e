@@ -14,28 +14,15 @@ Licensed under the **Apache License, Version 2.0** for all workflow processing c
 - **Node.js 20+** — [nodejs.org](https://nodejs.org)
 - **Python 3.11+** — [python.org](https://www.python.org)
 
-### Setup (one command)
+### Setup and launch (one command)
 
-**Windows:**
-```cmd
-git clone https://github.com/itz1508/oneshot_e2e.git
-cd oneshot_e2e
-setup.bat
-```
-
-**macOS / Linux:**
 ```bash
 git clone https://github.com/itz1508/oneshot_e2e.git
 cd oneshot_e2e
-chmod +x setup.sh && ./setup.sh
+npm run oneshot
 ```
 
-### Launch OneShot for Demonstration
-```bash
-npm run demo
-```
-
-Clean-builds from current source, starts the **real OneShot backend**, and opens the real OneShot IDE in your browser at `http://localhost:8787`. Click **"💡 Try example prompt"**, then **Send** — watch the canonical 27-phase pipeline execute live with real Server-Sent Events, Triple Validation proofs, and cryptographic SHA-256 hash verification.
+`npm run oneshot` detects Windows, macOS, or Linux; checks Node.js and Python; creates `.venv`; installs the required Python, root Node, and `web/` dependency profiles; builds the backend and React IDE; verifies canonical contracts and `MANIFEST.sha256`; runs all 46 Python and 46 TypeScript tests; starts the real backend; waits for `/api/health`; and opens `http://localhost:8787` in the default browser.
 
 ### Run Tests
 ```bash
@@ -49,6 +36,20 @@ npm run build
 npm start
 ```
 Open **http://localhost:8787** for the real-time IDE.
+
+---
+
+## 🏛️ Repository Architecture
+
+```text
+oneshot_e2e/
+├─ backend/        OneShot backend/runtime authority
+├─ schema/         OneShot canonical contracts
+├─ validation/     OneShot deterministic proof
+├─ workspace_api/  OneShot workspace/control-plane support
+├─ web/            OneShot React IDE
+└─ ui/             legacy OneShot standalone UI
+```
 
 ---
 

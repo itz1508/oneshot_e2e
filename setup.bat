@@ -71,7 +71,13 @@ echo.
 echo [3/6] Installing Python dependencies...
 pip install -q -r requirements.txt
 if %ERRORLEVEL% neq 0 (
-    echo  ERROR: Python dependency installation failed.
+    echo  ERROR: Core Python dependency installation failed.
+    exit /b 1
+)
+
+pip install -q -r requirements-workspace-api.txt
+if %ERRORLEVEL% neq 0 (
+    echo  ERROR: Workspace API dependency installation failed.
     exit /b 1
 )
 echo        Python deps installed
@@ -84,6 +90,7 @@ if %ERRORLEVEL% neq 0 (
     echo        Retrying with network...
     call npm install --no-audit --no-fund >nul 2>&1
 )
+call npm --prefix web install --no-audit --no-fund >nul 2>&1
 echo        Node deps installed
 
 REM ── Build ──────────────────────────────────────────────────────

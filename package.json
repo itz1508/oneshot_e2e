@@ -8,7 +8,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "oneshot": "node oneshot.mjs",
+    "build": "tsc -p tsconfig.json && npm --prefix web run build",
     "start": "node dist/backend/index.js",
     "test": "npm run build && node --test dist/tests_ts/*.test.js",
     "demo": "node demo.mjs",
@@ -18,7 +19,9 @@
     "verify:featherless-adapter": "npm run build && node --test --test-force-exit dist/tests_ts/featherless-provider.test.js",
     "verify:featherless-live": "npm run build && node scripts/verify_featherless_live.mjs",
     "preflight:ollama": "python scripts/ollama_preflight.py",
-    "verify:adk-live": "python scripts/verify_adk_live.py"
+    "verify:adk-live": "python scripts/verify_adk_live.py",
+    "build:backend": "tsc -p tsconfig.json",
+    "build:ui": "npm --prefix web run build"
   },
   "devDependencies": {
     "@types/node": "file:vendor/npm/types-node-24.0.4.tgz",

@@ -1,0 +1,8 @@
+.container { display: flex; flex-direction: column; height: 100%; background: var(--background); color: var(--foreground); }
+
+.tabBar { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 1rem; flex-shrink: 0; }
+.tab { padding: 0.6rem 1.2rem; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted-foreground); cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: color 0.15s, border-color 0.15s; }
+.tab:hover { color: var(--foreground); }
+.tabActive { color: var(--primary); border-bottom-color: var(--primary); }
+
+.content { flex: 1; overflow: hidden; }

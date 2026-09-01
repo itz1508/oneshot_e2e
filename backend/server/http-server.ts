@@ -3,8 +3,15 @@ import {
   type IncomingMessage,
   type ServerResponse,
 } from "node:http";
-import { readFile } from "node:fs/promises";
-import { extname, join, normalize } from "node:path";
+import { readFile, writeFile, readdir } from "node:fs/promises";
+import {
+  extname,
+  isAbsolute,
+  join,
+  normalize,
+  relative,
+  resolve,
+} from "node:path";
 import type { Prompt } from "../contract/types.js";
 import { id, newRunId } from "../core/id.js";
 import { RunRepository } from "../runtime/run-repository.js";
@@ -54,6 +61,87 @@ const MIME: Record<string, string> = {
   ".webp": "image/webp",
 };
 const mime = (p: string) => MIME[extname(p)] || "application/octet-stream";
+function resolveWorkspacePath(
+  workspaceRoot: string,
+  requestedPath: string,
+): string {
+  const root = resolve(workspaceRoot);
+  const target = resolve(root, requestedPath);
+  const fromRoot = relative(root, target);
+  if (fromRoot.startsWith("..") || isAbsolute(fromRoot)) {
+    throw new Error("path must stay within the workspace root");
+  }
+  return target;
+}
+
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Workspace Filesystem Inspection Helpers
+// ---------------------------------------------------------------------------
+
+interface TreeNode {
+  name: string;
+  path: string;
+  type: "file" | "folder";
+  children?: TreeNode[];
+}
+
+const IGNORE_DIRS = new Set([
+  ".git",
+  ".venv",
+  "node_modules",
+  "dist",
+  ".ollama",
+  ".pytest_cache",
+  "__pycache__",
+]);
+
+async function buildFileTree(
+  dir: string,
+  basePath = "",
+  currentDepth = 0,
+  maxDepth?: number,
+): Promise<TreeNode[]> {
+  if (maxDepth !== undefined && currentDepth >= maxDepth) return [];
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
+    const nodes: TreeNode[] = [];
+
+    for (const entry of entries) {
+      if (IGNORE_DIRS.has(entry.name)) continue;
+      const relPath = basePath ? `${basePath}/${entry.name}` : entry.name;
+      const fullPath = join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        const children = await buildFileTree(
+          fullPath,
+          relPath,
+          currentDepth + 1,
+          maxDepth,
+        );
+        nodes.push({
+          name: entry.name,
+          path: relPath,
+          type: "folder",
+          children,
+        });
+      } else if (entry.isFile()) {
+        nodes.push({
+          name: entry.name,
+          path: relPath,
+          type: "file",
+        });
+      }
+    }
+    return nodes.sort((a, b) => {
+      if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+  } catch {
+    return [];
+  }
+}
 
 // ---------------------------------------------------------------------------
 // HTTP server
@@ -62,6 +150,10 @@ const mime = (p: string) => MIME[extname(p)] || "application/octet-stream";
 export interface RuntimeInfo {
   mode: string;
   provider: string;
+}
+
+export interface HttpServerOptions {
+  workspaceRoot?: string;
 }
 
 export function startHttpServer(
@@ -74,8 +166,12 @@ export function startHttpServer(
   intent?: IntentCollectionService,
   sandbox?: SandboxService,
   runtimeInfo?: RuntimeInfo,
+  options: HttpServerOptions = {},
 ): Promise<ReturnType<typeof createServer>> {
   const security = new HttpSecurity();
+  const workspaceRoot = resolve(
+    options.workspaceRoot || process.env.ONESHOT_WORKSPACE_ROOT || process.cwd(),
+  );
 
   const server = createServer(
     async (req: IncomingMessage, res: ServerResponse) => {
@@ -84,6 +180,99 @@ export function startHttpServer(
 
       try {
         const url = new URL(req.url || "/", "http://localhost");
+
+
+        // ---------------------------------------------------------------
+        // Workspace Tree & File Endpoints (for OneShot IDE Explorer & Viewer)
+        // ---------------------------------------------------------------
+        if (
+          req.method === "GET" &&
+          (url.pathname === "/v1/workspace/tree" ||
+            url.pathname === "/api/workspace/tree")
+        ) {
+          const reqPath = url.searchParams.get("path") || ".";
+          const depthParam = url.searchParams.get("depth");
+          const maxDepth = depthParam === null ? undefined : Number(depthParam);
+          if (
+            maxDepth !== undefined &&
+            (!Number.isInteger(maxDepth) || maxDepth < 1 || maxDepth > 100)
+          ) {
+            return json(res, 400, {
+              error: "depth must be an integer from 1 to 100",
+            });
+          }
+          let targetDir: string;
+          try {
+            targetDir = resolveWorkspacePath(workspaceRoot, reqPath);
+          } catch (error) {
+            return json(res, 400, {
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+          const nodes = await buildFileTree(targetDir, "", 0, maxDepth);
+          return json(res, 200, {
+            root: reqPath,
+            path: reqPath,
+            depth: maxDepth ?? null,
+            nodes,
+          });
+        }
+
+        if (
+          req.method === "GET" &&
+          (url.pathname === "/v1/workspace/file" ||
+            url.pathname === "/api/workspace/file")
+        ) {
+          const reqPath = url.searchParams.get("path") || "";
+          if (!reqPath) return json(res, 400, { error: "path parameter required" });
+          let targetFile: string;
+          try {
+            targetFile = resolveWorkspacePath(workspaceRoot, reqPath);
+          } catch (error) {
+            return json(res, 400, {
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+          try {
+            const data = await readFile(targetFile, "utf-8");
+            return json(res, 200, { path: reqPath, content: data });
+          } catch (err) {
+            return json(res, 404, { error: `File not found: ${reqPath}` });
+          }
+        }
+
+        if (
+          req.method === "POST" &&
+          (url.pathname === "/v1/workspace/file" ||
+            url.pathname === "/api/workspace/file")
+        ) {
+          const b = await body(req);
+          const filePath = String(b.path || "");
+          const content = String(b.content ?? "");
+          if (!filePath) return json(res, 400, { error: "path parameter required" });
+          let targetFile: string;
+          try {
+            targetFile = resolveWorkspacePath(workspaceRoot, filePath);
+          } catch (error) {
+            return json(res, 400, {
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+          await writeFile(targetFile, content, "utf-8");
+          return json(res, 200, { ok: true, path: filePath });
+        }
+
+        if (
+          req.method === "GET" &&
+          (url.pathname === "/v1/status" || url.pathname === "/api/status")
+        ) {
+          return json(res, 200, {
+            statuses: [],
+            total: 0,
+            color_summary: {},
+            cached: false,
+          });
+        }
 
         // ---------------------------------------------------------------
         // Health
@@ -463,7 +652,19 @@ export function startHttpServer(
             });
             return res.end(data);
           } catch {
-            /* fall through to 404 */
+            const acceptsHtml = (req.headers.accept || "").includes("text/html");
+            if (url.pathname !== "/" && acceptsHtml) {
+              try {
+                const index = await readFile(join(uiRoot, "index.html"));
+                res.writeHead(200, {
+                  "content-type": "text/html; charset=utf-8",
+                  "cache-control": "no-store",
+                });
+                return res.end(index);
+              } catch {
+                /* fall through to 404 */
+              }
+            }
           }
         }
 

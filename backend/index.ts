@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { ProcessingEventBus } from "./runtime/event-bus.js";
 import { RunRepository } from "./runtime/run-repository.js";
@@ -94,16 +95,23 @@ const sandbox = new SandboxService(
 );
 
 // --- HTTP Server ---
+const webDistPath = resolve(projectRoot, "web/dist");
+const uiRoot = existsSync(webDistPath) ? webDistPath : resolve(projectRoot, "ui");
+const workspaceRoot = resolve(
+  process.env.ONESHOT_WORKSPACE_ROOT || projectRoot,
+);
+
 const server = await startHttpServer(
   runtime,
   runs,
   events,
-  resolve(projectRoot, "ui"),
+  uiRoot,
   Number(process.env.PORT || 8787),
   task,
   intent,
   sandbox,
   runtimeInfo,
+  { workspaceRoot },
 );
 
 const address = server.address();

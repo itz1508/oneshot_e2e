@@ -8,7 +8,7 @@ This is the continuation record for the OneShot IDE frontend build. It separates
 
 ## Current request
 
-Build a full-viewport IDE in `D:\oneshot_e2e` with this visible operating surface:
+Build a full-viewport IDE in the repository root (`oneshot_e2e/`) with this visible operating surface:
 
 1. repository files
 2. multi-turn chat
@@ -16,15 +16,15 @@ Build a full-viewport IDE in `D:\oneshot_e2e` with this visible operating surfac
 4. terminal/event stream
 5. a bottom evidence bar containing run, model/framework/runtime, authentication mode, and hash status
 
-The visual/source reference is `D:\Dev\Theoneshot\web`. It is reference-only; the implementation target is the existing static app in `D:\oneshot_e2e\ui`.
+The visual/source reference was an external local workspace outside this repository. It is reference-only; the implementation target at the time was the existing static app in `ui/`.
 
 ## Authority and scope
 
-- Active target: `D:\oneshot_e2e\ui\index.html`, `app.css`, and `app.js`.
-- Backend API authority: `D:\oneshot_e2e\backend\server\http-server.ts`.
-- Reference UI: `D:\Dev\Theoneshot\web`.
-- Requirements source supplied by the user: `C:\Users\itz15\.codex\attachments\759b0540-42f4-4a9b-9860-5907b446b059\pasted-text.txt`.
-- Design brief for this run: `C:\Users\itz15\AppData\Local\Temp\oneshot-ide-2khhbzx2.ckp\brief.md`.
+- Active target: `ui/index.html`, `app.css`, and `app.js`.
+- Backend API authority: `backend/server/http-server.ts`.
+- Reference UI: external local workspace, reference-only (not part of this repository).
+- Requirements source supplied by the user: local session scratch checkpoint (not preserved in the repository).
+- Design brief for this run: local session scratch checkpoint (not preserved in the repository).
 - The current folder is not a Git repository. Do not report Git cleanliness or create commits unless repository state changes.
 - Do not implement Gemini, Vertex AI, Cloud Run, or a new provider as part of the UI redesign. Those remain separate backend/deployment tasks.
 
@@ -84,7 +84,7 @@ Status at the timestamp above: **COMPLETE — UI IDE scope**.
 - Local gcloud/ADC presence checked without secret output: complete.
 - Design brief written: complete.
 - UI implementation: complete in the existing plain HTML/CSS/JavaScript stack.
-- Reference extraction: complete; the compact shell, surface palette, thin rails, dense headers, and status treatment from `D:\Dev\Theoneshot\web` were translated into the target stack.
+- Reference extraction: complete; the compact shell, surface palette, thin rails, dense headers, and status treatment from the external local reference workspace were translated into the target stack.
 - Delegated design evaluation: superseded by the user's instruction not to use subagents for this coupled task. Direct rendered desktop/mobile inspection and browser QA completed.
 - Build/tests: complete, 42 tests passed and 0 failed.
 - Live browser verification and screenshots: complete.
@@ -94,7 +94,7 @@ Status at the timestamp above: **COMPLETE — UI IDE scope**.
 
 ## Required verification before marking complete
 
-Run from `D:\oneshot_e2e`:
+Run from the repository root:
 
 ```powershell
 npm run build
@@ -113,10 +113,10 @@ Then start the real server with an appropriate verified configuration and inspec
 - Artifacts, Sandbox, and Graphs remain reachable and functional.
 - desktop and mobile layouts have no obstructed controls or horizontal overflow.
 
-Expected screenshot outputs for this design run:
+Expected screenshot outputs for this design run (local session scratch checkpoint, not preserved in the repository):
 
-- `C:\Users\itz15\AppData\Local\Temp\oneshot-ide-2khhbzx2.ckp\oneshot-ide-desktop.png`
-- `C:\Users\itz15\AppData\Local\Temp\oneshot-ide-2khhbzx2.ckp\oneshot-ide-mobile.png`
+- `oneshot-ide-desktop.png`
+- `oneshot-ide-mobile.png`
 
 ## Continuation procedure
 
@@ -167,11 +167,11 @@ Live browser verification at `http://127.0.0.1:8787`:
 - Browser console/page-error check returned no errors.
 - Automated WCAG A/AA scan reported 0 violations and 0 incomplete checks.
 
-Screenshots:
+Screenshots (local session scratch checkpoint, not preserved in the repository):
 
-- `C:\Users\itz15\AppData\Local\Temp\oneshot-ide-2khhbzx2.ckp\oneshot-ide-desktop.png`
-- `C:\Users\itz15\AppData\Local\Temp\oneshot-ide-2khhbzx2.ckp\oneshot-ide-mobile.png`
-- `C:\Users\itz15\AppData\Local\Temp\oneshot-ide-2khhbzx2.ckp\oneshot-ide-live-run.png`
-- `C:\Users\itz15\AppData\Local\Temp\oneshot-ide-2khhbzx2.ckp\oneshot-ide-chat-run.png`
+- `oneshot-ide-desktop.png`
+- `oneshot-ide-mobile.png`
+- `oneshot-ide-live-run.png`
+- `oneshot-ide-chat-run.png`
 
 Known boundary: the active repository still does not contain a Gemini/Vertex provider or Cloud Run deployment. The UI therefore labels Gemini 3.7 Flash as `TARGET`, ADK as `NOT OBSERVED` until ADK events arrive, ADC as `SERVER SIDE`, and the current runtime as local. This is intentional and prevents the demo from claiming unproved infrastructure.

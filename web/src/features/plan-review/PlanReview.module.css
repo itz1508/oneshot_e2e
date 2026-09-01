@@ -1,0 +1,262 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px 24px;
+    gap: 20px;
+    background: var(--background);
+    color: var(--foreground);
+}
+
+.loading,
+.error,
+.empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 13px;
+    color: var(--muted-foreground);
+}
+
+.error {
+    color: var(--destructive, #ef4444);
+}
+
+/* Header */
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.headerRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+}
+
+.statusBadge {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 10px;
+    border-radius: var(--radius-xl);
+    border: 1px solid;
+}
+
+.description {
+    font-size: 13px;
+    color: var(--muted-foreground);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.metaItem {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.metaLabel {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+}
+
+.metaValue {
+    font-size: 11px;
+    font-family: var(--font-mono, monospace);
+    color: var(--foreground);
+}
+
+.metaValueMono {
+    font-size: 10px;
+    font-family: var(--font-mono, monospace);
+    color: var(--muted-foreground);
+}
+
+/* Section */
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sectionTitle {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted-foreground);
+    margin: 0;
+}
+
+.emptySection {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    padding: 12px;
+    text-align: center;
+}
+
+/* Task grid */
+.taskGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.taskCard {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--card, var(--background));
+}
+
+.taskHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.taskIndex {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-foreground);
+    flex-shrink: 0;
+}
+
+.taskTitle {
+    font-size: 13px;
+    font-weight: 500;
+    flex: 1;
+}
+
+.taskId {
+    font-size: 10px;
+    font-family: var(--font-mono, monospace);
+    color: var(--muted-foreground);
+}
+
+.taskDesc {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.taskField {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fieldLabel {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted-foreground);
+}
+
+.fieldValue {
+    font-size: 11px;
+    color: var(--foreground);
+}
+
+.fieldValueMono {
+    font-size: 10px;
+    font-family: var(--font-mono, monospace);
+    color: var(--foreground);
+    word-break: break-all;
+}
+
+.criteriaList {
+    margin: 0;
+    padding-left: 14px;
+    font-size: 11px;
+    color: var(--foreground);
+    line-height: 1.5;
+}
+
+/* Build Handoff */
+.handoff {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.submitBtn {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 20px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: var(--accent);
+    color: var(--accent-foreground);
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.submitBtn:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+
+.submitBtn:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+.submitBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.handoffError {
+    font-size: 11px;
+    color: var(--destructive, #ef4444);
+}
+
+.handoffHint {
+    font-size: 11px;
+    color: var(--muted-foreground);
+}
+
+/* Plan status badge colors */
+.badgeDraft { color: #6b7280; border-color: #6b7280; }
+.badgeSubmitted { color: #3b82f6; border-color: #3b82f6; }
+.badgeExecuting { color: #f59e0b; border-color: #f59e0b; }
+.badgeCompleted { color: #22c55e; border-color: #22c55e; }
+.badgeFailed { color: #ef4444; border-color: #ef4444; }
+.badgeCancelled { color: #9ca3af; border-color: #9ca3af; }

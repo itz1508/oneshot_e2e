@@ -1,0 +1,132 @@
+.container {
+    padding: 4px 0;
+}
+
+.planGroup {
+    margin-bottom: 2px;
+}
+
+.planRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--foreground);
+    border-radius: 4px;
+    transition: background 0.12s ease;
+}
+
+.planRow:hover {
+    background: var(--accent);
+}
+
+.planRowActive {
+    background: var(--accent);
+}
+
+.chevron {
+    flex-shrink: 0;
+    color: var(--muted-foreground);
+    transition: transform 0.15s ease;
+}
+
+.chevronOpen {
+    transform: rotate(90deg);
+}
+
+.statusDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.planTitle {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.taskCount {
+    font-size: 10px;
+    color: var(--muted-foreground);
+    background: var(--muted);
+    padding: 1px 5px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.taskList {
+    padding-left: 24px;
+}
+
+.taskRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    font-size: 11px;
+    color: var(--muted-foreground);
+}
+
+.taskIcon {
+    flex-shrink: 0;
+    opacity: 0.6;
+}
+
+.taskTitle {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.taskId {
+    font-size: 9px;
+    font-family: var(--font-mono, monospace);
+    color: var(--muted-foreground);
+    opacity: 0.6;
+}
+
+.status,
+.error {
+    padding: 12px;
+    font-size: 11px;
+    color: var(--muted-foreground);
+    text-align: center;
+}
+
+.error {
+    color: var(--destructive, #ef4444);
+}
+
+.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 20px 12px;
+    color: var(--muted-foreground);
+    font-size: 11px;
+    text-align: center;
+}
+
+.emptyIcon {
+    opacity: 0.4;
+}
+
+.emptyHint {
+    font-size: 10px;
+    opacity: 0.6;
+}
+
+/* Status dot colors — semantic status indicators */
+.statusDraft { background: #6b7280; }
+.statusSubmitted { background: #3b82f6; }
+.statusExecuting { background: #f59e0b; }
+.statusCompleted { background: #22c55e; }
+.statusFailed { background: #ef4444; }
+.statusCancelled { background: #9ca3af; }

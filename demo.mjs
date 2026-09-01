@@ -58,16 +58,23 @@ if (existsSync(distPath)) {
   rmSync(distPath, { recursive: true, force: true });
 }
 
-// ── Step 2: Compile real TypeScript source ──────────────────────
-log("Compiling real TypeScript source...");
+// ── Step 2: Compile real TypeScript source & OneShot React IDE ───
+log("Compiling real TypeScript backend and OneShot React IDE...");
 try {
   execSync("npx tsc -p tsconfig.json", {
     cwd: ROOT,
     stdio: ["ignore", "pipe", "pipe"],
   });
+  if (!existsSync(resolve(ROOT, "web/dist"))) {
+    log("Building OneShot React UI bundle...");
+    execSync("npm --prefix web run build", {
+      cwd: ROOT,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  }
   log(`${C.green}✓${C.reset} Build complete`);
 } catch (err) {
-  console.error(`${C.red}✗ TypeScript compilation failed${C.reset}`);
+  console.error(`${C.red}✗ Build failed${C.reset}`);
   if (err.stderr) console.error(err.stderr.toString());
   process.exit(1);
 }
@@ -78,7 +85,7 @@ log("Starting real OneShot backend...");
 const port = process.env.PORT || "8787";
 const child = spawn("node", ["dist/backend/index.js"], {
   cwd: ROOT,
-  stdio: ["ignore", "pipe", "inherit"],
+  stdio: ["ignore", "pipe", "pipe"],
   env: { ...process.env, PORT: port },
 });
 
@@ -89,6 +96,17 @@ const shutdown = () => {
 };
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
+
+child.stderr.on("data", (data) => {
+  const errText = data.toString();
+  process.stderr.write(errText);
+  if (errText.includes("EADDRINUSE")) {
+    console.log(`\n${C.yellow}${C.bold}[PORT CONFLICT]${C.reset} Port ${port} is already in use by another process.`);
+    console.log(`To run OneShot on a different port, set the PORT environment variable:`);
+    console.log(`  ${C.cyan}Windows (PowerShell):${C.reset}  $env:PORT="8788"; npm run demo`);
+    console.log(`  ${C.cyan}Linux / macOS:${C.reset}        PORT=8788 npm run demo\n`);
+  }
+});
 
 child.on("exit", (code, signal) => {
   if (signal) {

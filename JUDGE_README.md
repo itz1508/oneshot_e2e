@@ -8,7 +8,7 @@
 
 **OneShot** is an enterprise-grade deterministic AI execution platform that transforms natural language intent into a provably correct, cryptographically hash-verified execution plan.
 
-Every run executes through an immutable 27-phase canonical pipeline:
+Every run executes through the canonical workflow state machine (defined by `CANONICAL_WORKFLOW.md`), traced across 27 discrete operational implementation steps:
 1. **Multi-Turn Intent Collection** — Collects conversational intent and validates requirements
 2. **Canonical Prompt Creation** — Emits `Prompt(id)` with goal, context, and research direction
 3. **Research & Evidence Gathering** — Resolves provider (`Sample`, `Google ADK + Gemma 2`, or `Featherless Gemma 4`) and creates verifiable draft artifacts
@@ -34,42 +34,37 @@ If any validation or contract fails, OneShot produces a structured **`ROOT_CAUSE
 - **Node.js 20+** — [nodejs.org](https://nodejs.org)
 - **Python 3.11+** — [python.org](https://www.python.org)
 
-### Windows
-```cmd
-git clone https://github.com/itz1508/oneshot_e2e.git
-cd oneshot_e2e
-setup.bat
-```
-
-### macOS / Linux
+### Windows, macOS, or Linux
 ```bash
 git clone https://github.com/itz1508/oneshot_e2e.git
 cd oneshot_e2e
-chmod +x setup.sh && ./setup.sh
+npm run oneshot
 ```
 
-**What the setup script does:**
+**What `npm run oneshot` does:**
 - ✅ Verifies Node.js (≥20) and Python (≥3.11)
-- ✅ Creates a clean Python virtual environment (`.venv`)
-- ✅ Installs Python dependencies (`requirements.txt`)
-- ✅ Installs Node.js dependencies offline from vendored packages (`vendor/npm/`)
-- ✅ Compiles TypeScript source (`tsc -p tsconfig.json`)
+- ✅ Creates `.venv` when it is missing and verifies pinned Python profiles
+- ✅ Installs root and `web/` Node dependencies from their lockfiles
+- ✅ Builds the TypeScript backend and OneShot React IDE
+- ✅ Verifies canonical contracts and `MANIFEST.sha256`
 - ✅ Runs the entire 92-test verification suite (46 Python + 46 TypeScript)
+- ✅ Starts the runtime, waits for `/api/health`, and opens `http://localhost:8787`
 
 ---
 
 ## 3. Run the OneShot Demonstration
 
 ```bash
-npm run demo
+npm run oneshot
 ```
 
 ### What Happens:
 
-1. **Build Verification** — Cleans stale `dist/` and compiles current TypeScript source
-2. **Backend Startup** — Boots the real OneShot HTTP & Server-Sent Events (SSE) backend on port 8787
-3. **IDE Launch** — Opens your default browser at `http://localhost:8787`
-4. **Status Verification** — Status bar displays active `MODE` and `PROVIDER`
+1. **Bootstrap & Build** — Verifies the environment and compiles current backend and web source
+2. **Proof Gates** — Verifies contracts, manifest integrity, and all 92 tests
+3. **Backend Startup** — Boots the real OneShot HTTP & Server-Sent Events (SSE) backend on port 8787
+4. **IDE Launch** — Waits for health and opens your default browser at `http://localhost:8787`
+5. **Status Verification** — Status bar displays active `MODE` and `PROVIDER`
 
 ### Real Demonstration Path:
 
@@ -194,3 +189,12 @@ npm test
 ## 8. License
 
 Apache License, Version 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE) for details.
+
+
+### Mode C: Docker Container (Single Command Release)
+
+```bash
+docker build -t oneshot:latest .
+docker run -d -p 8787:8787 --name oneshot-runner oneshot:latest
+```
+Open **http://localhost:8787** in your browser. The multi-stage container compiles the TypeScript backend and React IDE bundle, installs Python validation engines, and serves the live platform.

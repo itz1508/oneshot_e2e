@@ -21,3 +21,6 @@ dist/
 .venv/
 .ollama/
 .pytest_cache/
+
+web/node_modules/
+web/dist/

@@ -1,0 +1,250 @@
+/* ─── AppSidebar layout: icon rail + explorer panel ─── */
+
+/* Root container: holds rail and panel side-by-side */
+.app-sidebar-root {
+    display: flex;
+    flex-shrink: 0;
+    height: 100%;
+}
+
+/* ── Icon Rail ── */
+
+.app-sidebar-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 48px;
+    min-width: 48px;
+    background: var(--sidebar);
+    border-right: 1px solid var(--sidebar-border);
+    padding-top: 8px;
+    gap: 4px;
+    z-index: 2;
+}
+
+.app-sidebar-rail__tabs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    width: 100%;
+    padding: 0 6px;
+}
+
+.app-sidebar-rail__btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    color: var(--sidebar-foreground);
+    opacity: 0.55;
+    transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.app-sidebar-rail__btn:hover {
+    opacity: 0.85;
+    background: var(--sidebar-accent);
+}
+
+.app-sidebar-rail__btn--active {
+    opacity: 1;
+    background: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
+}
+
+.app-sidebar-rail__btn--active::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 25%;
+    bottom: 25%;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--sidebar-primary);
+}
+
+.app-sidebar-rail__icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+/* ── Explorer Panel ── */
+
+.app-sidebar-panel {
+    position: relative;
+    width: 0;
+    overflow: hidden;
+    background: var(--sidebar);
+    border-right: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.2s ease, border-color 0.2s ease;
+    z-index: 1;
+}
+
+.app-sidebar-panel--open {
+    border-right-color: var(--sidebar-border);
+}
+
+.app-sidebar-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 36px;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--sidebar-border);
+    flex-shrink: 0;
+}
+
+.app-sidebar-panel__subtabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.app-sidebar-panel__subtab-btn {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sidebar-foreground);
+    opacity: 0.5;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: opacity 0.15s ease, background 0.15s ease;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.app-sidebar-panel__subtab-btn:hover {
+    opacity: 0.85;
+    background: var(--sidebar-accent);
+}
+
+.app-sidebar-panel__subtab-btn--active {
+    opacity: 1;
+    color: var(--sidebar-foreground);
+    background: var(--sidebar-accent);
+}
+
+.app-sidebar-panel__subtab-sep {
+    font-size: 10px;
+    color: var(--sidebar-border);
+    user-select: none;
+}
+
+.app-sidebar-panel__collapse {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    color: var(--muted-foreground);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.app-sidebar-panel__collapse:hover {
+    background: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
+}
+
+/* Drag-resize handle on the panel's right edge */
+.app-sidebar-panel__resize {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    cursor: col-resize;
+    background: transparent;
+    transition: background 0.15s ease;
+    z-index: 3;
+}
+
+.app-sidebar-panel__resize:hover {
+    background: var(--sidebar-primary);
+}
+
+/* ── Document Outline tree view ── */
+
+.app-sidebar-outline {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 4px;
+    gap: 2px;
+}
+
+.app-sidebar-outline__group-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+    padding: 6px 8px 2px 8px;
+}
+
+.app-sidebar-outline__item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--sidebar-foreground);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-decoration: none;
+}
+
+.app-sidebar-outline__item:hover {
+    background: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
+}
+
+.app-sidebar-outline__badge {
+    font-size: 9px;
+    font-weight: 600;
+    font-family: monospace;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: var(--muted);
+    color: var(--muted-foreground);
+    margin-left: auto;
+}
+
+.app-sidebar-panel__body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+}
+
+.app-sidebar-panel__add-folder {
+    flex-shrink: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 0;
+    border-top: 1px solid var(--sidebar-border);
+    color: var(--muted-foreground);
+    font-size: 12px;
+    transition: background 0.15s ease;
+}
+
+.app-sidebar-panel__add-folder:hover {
+    background: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
+}

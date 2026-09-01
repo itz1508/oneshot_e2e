@@ -60,6 +60,7 @@ source .venv/bin/activate
 echo ""
 echo "[3/6] Installing Python dependencies..."
 pip install -q -r requirements.txt
+pip install -q -r requirements-workspace-api.txt
 echo "       Python deps installed"
 
 # ── Node dependencies ────────────────────────────────────────────
@@ -69,6 +70,7 @@ npm ci --offline --ignore-scripts --no-audit --no-fund 2>/dev/null || {
     echo "       Retrying with network..."
     npm install --no-audit --no-fund 2>/dev/null
 }
+npm --prefix web install --no-audit --no-fund 2>/dev/null
 echo "       Node deps installed"
 
 # ── Build ────────────────────────────────────────────────────────

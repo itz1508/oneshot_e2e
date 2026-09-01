@@ -2,12 +2,18 @@
 FROM node:20-slim AS node-builder
 WORKDIR /app
 
+# Install root dependencies
 COPY package*.json tsconfig.json ./
 COPY vendor ./vendor
 RUN npm ci --offline --ignore-scripts --no-audit --no-fund
 
+# Copy backend source and compile
 COPY backend ./backend
-RUN npm run build
+RUN npx tsc -p tsconfig.json
+
+# Copy and build OneShot React IDE
+COPY web ./web
+RUN cd web && npm ci --no-audit --no-fund && npm run build
 
 FROM python:3.12-slim-bookworm AS runner
 WORKDIR /app
@@ -22,9 +28,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy compiled backend and frontend assets
+# Copy compiled backend and React IDE assets
 COPY package*.json ./
 COPY --from=node-builder /app/dist ./dist
+COPY --from=node-builder /app/web/dist ./web/dist
 COPY schema ./schema
 COPY validation ./validation
 COPY skill ./skill

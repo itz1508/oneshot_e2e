@@ -34,5 +34,5 @@ run(["npm", "run", "build"])
 compiled = sorted((ROOT / "dist/tests_ts").glob("*.test.js"))
 if not compiled:
     raise SystemExit("compiled TypeScript tests missing")
-run(["node", "--test", "--test-force-exit", *map(str, compiled)])
+run(["node", "--test", "--test-concurrency=1", "--test-force-exit", *map(str, compiled)])
 print("ONESHOT_PRODUCTION_E2E_VERIFIED")

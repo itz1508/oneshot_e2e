@@ -1,0 +1,46 @@
+.container { display: flex; flex-direction: column; height: 100%; background: var(--background); color: var(--foreground); padding: 1rem 1.25rem; overflow: hidden; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+.header h3 { margin: 0; font-size: 0.95rem; font-weight: 600; }
+.countBadge { padding: 0.15rem 0.5rem; background: var(--muted); color: var(--foreground); border-radius: 0.6rem; font-size: 0.7rem; }
+
+.filters { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; align-items: center; flex-wrap: wrap; }
+.filterInput { flex: 1; min-width: 120px; padding: 0.35rem 0.5rem; background: var(--muted); color: var(--foreground); border: 1px solid var(--border); border-radius: 0.25rem; font-size: 0.75rem; }
+.limitSelect { padding: 0.35rem 0.5rem; background: var(--muted); color: var(--foreground); border: 1px solid var(--border); border-radius: 0.25rem; font-size: 0.75rem; }
+.refreshBtn { padding: 0.35rem 0.7rem; background: var(--muted); color: var(--foreground); border: 1px solid var(--border); border-radius: 0.25rem; cursor: pointer; font-size: 0.75rem; }
+
+.immutabilityNotice { padding: 0.4rem 0.6rem; background: color-mix(in srgb, var(--primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent); border-radius: 0.25rem; font-size: 0.7rem; color: var(--muted-foreground); margin-bottom: 0.75rem; }
+
+.error { margin-bottom: 0.75rem; padding: 0.6rem 0.8rem; background: var(--destructive); color: var(--destructive-foreground); border-radius: 0.25rem; font-size: 0.8rem; }
+.loading, .empty { padding: 2rem; text-align: center; color: var(--muted-foreground); font-size: 0.85rem; }
+
+.entryList { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+.entry { border: 1px solid var(--border); border-radius: 0.375rem; margin-bottom: 0.35rem; overflow: hidden; }
+.entryExpanded { border-color: var(--primary); }
+
+.entryHeader { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.7rem; cursor: pointer; transition: background 0.15s; font-size: 0.8rem; }
+.entryHeader:hover { background: var(--muted); }
+.expandIcon { font-size: 0.65rem; color: var(--muted-foreground); width: 0.8rem; flex-shrink: 0; }
+.eventDot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.eventType { font-weight: 500; white-space: nowrap; min-width: 120px; }
+.entryMessage { flex: 1; color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; }
+.entryTime { font-size: 0.7rem; color: var(--muted-foreground); white-space: nowrap; }
+.annotationBadge { padding: 0.1rem 0.4rem; background: #a855f7; color: #fff; border-radius: 0.5rem; font-size: 0.6rem; font-weight: 500; white-space: nowrap; }
+
+.entryDetail { padding: 0.75rem; border-top: 1px solid var(--border); background: color-mix(in srgb, var(--muted) 30%, transparent); }
+.detailGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.4rem; margin-bottom: 0.75rem; }
+.detailRow { display: flex; flex-direction: column; gap: 0.1rem; font-size: 0.8rem; }
+.detailLabel { font-size: 0.65rem; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.05em; }
+.mono { font-family: monospace; font-size: 0.75rem; }
+
+.metadataSection { margin-top: 0.5rem; }
+.metadataSection h5 { margin: 0 0 0.3rem; font-size: 0.75rem; font-weight: 600; }
+.metadataJson { padding: 0.5rem 0.7rem; background: var(--background); border: 1px solid var(--border); border-radius: 0.25rem; font-family: monospace; font-size: 0.7rem; overflow-x: auto; white-space: pre; margin: 0; max-height: 200px; overflow-y: auto; }
+
+.annotationSection { margin-top: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.5rem; }
+.annotationSection h5 { margin: 0 0 0.4rem; font-size: 0.75rem; font-weight: 600; }
+.annotationCard { padding: 0.5rem 0.7rem; background: color-mix(in srgb, #a855f7 8%, transparent); border: 1px solid color-mix(in srgb, #a855f7 25%, transparent); border-radius: 0.25rem; }
+.annotationLabel { font-weight: 600; font-size: 0.8rem; }
+.annotationNote { font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.15rem; }
+.annotationActions { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
+.annotateBtn { padding: 0.25rem 0.5rem; background: #a855f7; color: #fff; border: none; border-radius: 0.2rem; cursor: pointer; font-size: 0.7rem; }
+.removeAnnotationBtn { padding: 0.25rem 0.5rem; background: transparent; color: var(--destructive); border: 1px solid var(--destructive); border-radius: 0.2rem; cursor: pointer; font-size: 0.7rem; }
