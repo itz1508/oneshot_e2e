@@ -22,8 +22,8 @@ Review the full end-to-end execution, task drawer telemetry, live activity discl
 
 - [⚡ Option 1: Judge Fast-Path (Prebuilt Docker Image — Recommended)](#-option-1-judge-fast-path-prebuilt-docker-image--recommended)
   - [Prerequisites](#prerequisites)
-  - [1-Click Launch (Windows)](#1-click-launch-windows)
-  - [1-Click Launch (macOS / Linux)](#1-click-launch-macos--linux)
+  - [Method A: Automated 1-Click Launch (Recommended)](#method-a-automated-1-click-launch-recommended)
+  - [Method B: Manual Step-by-Step Launch](#method-b-manual-step-by-step-launch)
   - [Stop the Platform](#stop-the-platform)
 - [🛠️ Option 2: Developer & Source Build Verification Path](#️-option-2-developer--source-build-verification-path)
   - [Source Prerequisites](#source-prerequisites)
@@ -46,48 +46,65 @@ The fastest way to evaluate OneShot. No repository cloning, Node.js, Python, npm
 
 - **Docker Desktop** (or Docker Engine) running on Windows (WSL 2 or Hyper-V), macOS, or Linux.
 
-### 1-Click Launch (Windows)
+### Method A: Automated 1-Click Launch (Recommended)
 
-Open PowerShell in the `oneshot-judge` package (or repository root) and run:
+1. **Windows**: Run `.\start-oneshot.ps1`
+2. **macOS / Linux**: Run `./start-oneshot.sh`
 
-```powershell
-.\start-oneshot.ps1
-```
+The startup script automatically loads `oneshot-1.3.0.tar` (if present), generates a secure local access token in `.env`, starts Docker Compose, polls for healthy status, displays your access token, and opens `http://localhost:8787` in your browser.
 
-### 1-Click Launch (macOS / Linux)
+---
 
-Open terminal and run:
+### Method B: Manual Step-by-Step Launch
+
+If you prefer running standard Docker CLI commands manually:
+
+#### Step 1: Load Prebuilt Image
 
 ```bash
-chmod +x ./start-oneshot.sh ./stop-oneshot.sh
-./start-oneshot.sh
+docker load < oneshot-1.3.0.tar
 ```
 
-### What Happens Automatically
+#### Step 2: Configure Local Access Token
 
-1. **Token Generation**: Generates a secure, cryptographically random 32-byte access token and saves it to your local `.env`.
-2. **Container Orchestration**: Launches the prebuilt production image (`oneshot:1.3.0`) via Docker Compose with root-less user execution (`10001:10001`), resource limits (2 CPUs, 1GB RAM), and persistent volume mounts.
-3. **Healthcheck Verification**: Polls `/api/health` until the service is healthy.
-4. **Browser Launch**: Automatically opens `http://localhost:8787` in your default browser.
+Copy the environment template:
 
-```text
-=================================================================
-  OneShot Platform is Running and Ready for Evaluation!
-=================================================================
+- **Windows PowerShell**: `Copy-Item .env.example -Destination .env`
+- **macOS / Linux**: `cp .env.example .env`
 
-  IDE URL:      http://localhost:8787
-  Access Token: <automatically-generated-token>
+Edit `.env` and set `ONESHOT_API_TOKEN` to any local secret string:
 
-  * The token has been saved to your local .env file.
-  * To stop the container, run: .\stop-oneshot.ps1 (or docker compose down)
-=================================================================
+```env
+ONESHOT_BIND_HOST=0.0.0.0
+PORT=8787
+ONESHOT_API_TOKEN=oneshot-judge-2026-random-secret
 ```
+
+> [!IMPORTANT]
+> `ONESHOT_API_TOKEN` is **NOT** an external third-party API key. It is simply a local secret token securing your OneShot container session. Both the container and the browser use this token for authenticated access.
+
+#### Step 3: Start the Container
+
+```bash
+docker compose -f docker-compose.judge.yml up -d
+```
+
+*(Or `docker compose up -d`)*
+
+#### Step 4: Open the IDE
+
+Wait 20–25 seconds for the healthcheck to reach healthy status, then open:
+**`http://localhost:8787`**
+
+When prompted for access in the browser, enter the token you set in `.env` (e.g. `oneshot-judge-2026-random-secret`).
+
+---
 
 ### Stop the Platform
 
 - **Windows**: `.\stop-oneshot.ps1`
 - **macOS / Linux**: `./stop-oneshot.sh`
-- **Docker Compose**: `docker compose down`
+- **Docker Compose**: `docker compose -f docker-compose.judge.yml down`
 
 ---
 
@@ -120,7 +137,7 @@ npm run verify
 # Run React IDE Vitest unit tests (104 tests)
 npm --prefix web test
 
-# Verify source hash manifest integrity (458 files)
+# Verify source hash manifest integrity (470 files)
 python scripts/verify_manifest.py
 ```
 
@@ -136,7 +153,7 @@ All settings are configured via environment variables or `.env` and map directly
 | `ONESHOT_RESEARCH_PROVIDER` | `adk_gemma2` | **AI Research Engine**: Provider used for automated intent analysis (`adk_gemma2`, `featherless`, or `mock`). | Reflected in live stage drawer under `Research Engine: Google ADK / Gemma 2`. |
 | `PORT` | `8787` | **HTTP Server Port**: The network port where the backend and React IDE are served. | Reflected in browser URL `http://localhost:8787`. |
 | `ONESHOT_BIND_HOST` | `127.0.0.1` | **Network Interface Binding**: `127.0.0.1` (loopback only) or `0.0.0.0` (container / network). Non-loopback binding requires `ONESHOT_API_TOKEN`. | Gated by network security boundary; enforces authentication outside localhost. |
-| `ONESHOT_API_TOKEN` | *Auto-generated* | **Security Gate Token**: Required when binding to `0.0.0.0`. Validated via HTTP header `Authorization: Bearer <token>` or session cookies. | Login prompt displayed on unauthenticated sessions. |
+| `ONESHOT_API_TOKEN` | *Local Secret* | **Local Container Token**: Secret string (e.g. `oneshot-judge-2026-random-secret`) required when binding to `0.0.0.0`. Validated via HTTP header `Authorization: Bearer <token>` or session cookies. Not an external key. | Login prompt displayed on unauthenticated sessions. |
 | `ONESHOT_SANDBOX_TIMEOUT_MS` | `30000` | **Sandbox Execution Timeout**: Maximum allowable runtime (ms) for sandboxed command execution. | Progress bar in sandbox execution panel. |
 | `ONESHOT_SANDBOX_MAX_BYTES` | `1048576` (1MB) | **Execution Output Cap**: Buffer limit protecting client from runaway stdout/stderr. | Output truncated indicator in sandbox logs. |
 | `FEATHERLESS_API_KEY` | *(Optional)* | **Cloud Inference Key**: API key used when `ONESHOT_RESEARCH_PROVIDER=featherless` (`google/gemma-4-31B-it`). | Configured in provider settings modal. |
@@ -185,7 +202,7 @@ ONE-SHOT PRODUCTION E2E 1.3.0 - MASTER VERIFICATION SUMMARY
   [PASS] Python Unit Suite:            49 / 49 tests passed
   [PASS] TypeScript E2E Suite:         50 / 50 tests passed
   [PASS] React IDE Vitest Suite:       104 / 104 tests passed
-  [PASS] Checksum Manifest Integrity:  458 / 458 files verified
+  [PASS] Checksum Manifest Integrity:  470 / 470 files verified
   [PASS] Docker Packaging & Runtime:   5 / 5 container tests passed
 ======================================================================
   STATUS: ONESHOT_PRODUCTION_E2E_VERIFIED (100% PASS)
@@ -213,5 +230,5 @@ Pass the `Port` parameter to the startup script:
 <details>
 <summary><b>Q: How do I inspect container logs?</b></summary>
 
-Run `docker compose logs -f oneshot` or `docker logs -f oneshot-app`.
+Run `docker compose -f docker-compose.judge.yml logs -f oneshot` or `docker logs -f oneshot-app`.
 </details>

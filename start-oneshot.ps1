@@ -60,15 +60,23 @@ $env:ONESHOT_API_TOKEN = $token
 $env:PORT = $Port
 
 # 4. Check for local image tarball (if distributed offline)
-$tarPath = Join-Path $PSScriptRoot "oneshot-1.3.0.tar.gz"
+$tarPath = Join-Path $PSScriptRoot "oneshot-1.3.0.tar"
+$tarGzPath = Join-Path $PSScriptRoot "oneshot-1.3.0.tar.gz"
 if (Test-Path $tarPath) {
-    Write-Host "[INFO] Loading offline prebuilt Docker image: oneshot:1.3.0..." -ForegroundColor Yellow
+    Write-Host "[INFO] Loading offline prebuilt Docker image: oneshot-1.3.0.tar..." -ForegroundColor Yellow
     docker load -i $tarPath
+} elseif (Test-Path $tarGzPath) {
+    Write-Host "[INFO] Loading offline prebuilt Docker image: oneshot-1.3.0.tar.gz..." -ForegroundColor Yellow
+    docker load -i $tarGzPath
 }
 
 # 5. Start Container via Docker Compose
-Write-Host "[INFO] Launching OneShot via Docker Compose..." -ForegroundColor Yellow
-docker compose up -d
+$composeFile = "docker-compose.yml"
+if (Test-Path (Join-Path $PSScriptRoot "docker-compose.judge.yml")) {
+    $composeFile = "docker-compose.judge.yml"
+}
+Write-Host "[INFO] Launching OneShot via Docker Compose ($composeFile)..." -ForegroundColor Yellow
+docker compose -f $composeFile up -d
 
 # 6. Wait for container healthcheck
 $url = "http://localhost:$Port"
@@ -94,7 +102,7 @@ Write-Host ""
 
 if (-not $healthy) {
     Write-Host "[WARNING] Healthcheck timed out. Checking container logs:" -ForegroundColor Yellow
-    docker compose logs --tail 20
+    docker compose -f $composeFile logs --tail 20
 }
 
 # 7. Print Completion Banner
@@ -109,7 +117,7 @@ Write-Host "  Access Token: " -NoNewline
 Write-Host "$token" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "  * The token has been saved to your local .env file." -ForegroundColor Gray
-Write-Host "  * To stop the container, run: .\stop-oneshot.ps1 (or docker compose down)" -ForegroundColor Gray
+Write-Host "  * To stop the container, run: .\stop-oneshot.ps1 (or docker compose -f $composeFile down)" -ForegroundColor Gray
 Write-Host "=================================================================" -ForegroundColor Green
 Write-Host ""
 

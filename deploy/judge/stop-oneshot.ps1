@@ -4,6 +4,11 @@
 [CmdletBinding()]
 param()
 
-Write-Host "[INFO] Stopping OneShot container and freeing resources..." -ForegroundColor Yellow
-docker compose down
+$composeFile = "docker-compose.yml"
+if (Test-Path (Join-Path $PSScriptRoot "docker-compose.judge.yml")) {
+    $composeFile = "docker-compose.judge.yml"
+}
+
+Write-Host "[INFO] Stopping OneShot container ($composeFile) and freeing resources..." -ForegroundColor Yellow
+docker compose -f $composeFile down
 Write-Host "[OK] OneShot stopped successfully." -ForegroundColor Green

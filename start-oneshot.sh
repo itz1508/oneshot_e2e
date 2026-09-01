@@ -30,7 +30,7 @@ fi
 # 3. Generate or load token
 TOKEN=""
 if [ -f "$ENV_FILE" ]; then
-    TOKEN=$(grep -E '^\s*ONESHOT_API_TOKEN\s*=' "$ENV_FILE" | cut -d '=' -f2- | tr -d ' "')
+    TOKEN=$(grep -E '^\s*ONESHOT_API_TOKEN\s*=' "$ENV_FILE" | cut -d '=' -f2- | tr -d ' "\r')
 fi
 
 if [ -z "$TOKEN" ]; then
@@ -56,15 +56,24 @@ export ONESHOT_API_TOKEN="$TOKEN"
 export PORT="$PORT"
 
 # 4. Check for local image tarball
-TAR_PATH="$SCRIPT_DIR/oneshot-1.3.0.tar.gz"
+TAR_PATH="$SCRIPT_DIR/oneshot-1.3.0.tar"
+TAR_GZ_PATH="$SCRIPT_DIR/oneshot-1.3.0.tar.gz"
 if [ -f "$TAR_PATH" ]; then
-    echo "[INFO] Loading offline prebuilt Docker image: oneshot:1.3.0..."
+    echo "[INFO] Loading offline prebuilt Docker image: oneshot-1.3.0.tar..."
     docker load -i "$TAR_PATH"
+elif [ -f "$TAR_GZ_PATH" ]; then
+    echo "[INFO] Loading offline prebuilt Docker image: oneshot-1.3.0.tar.gz..."
+    docker load -i "$TAR_GZ_PATH"
 fi
 
 # 5. Launch Container via Docker Compose
-echo "[INFO] Launching OneShot via Docker Compose..."
-docker compose up -d
+COMPOSE_FILE="docker-compose.yml"
+if [ -f "$SCRIPT_DIR/docker-compose.judge.yml" ]; then
+    COMPOSE_FILE="docker-compose.judge.yml"
+fi
+
+echo "[INFO] Launching OneShot via Docker Compose ($COMPOSE_FILE)..."
+docker compose -f "$COMPOSE_FILE" up -d
 
 # 6. Wait for healthcheck
 URL="http://localhost:$PORT"
@@ -85,7 +94,7 @@ echo ""
 
 if [ "$HEALTHY" != "true" ]; then
     echo "[WARNING] Healthcheck timed out. Displaying recent logs:"
-    docker compose logs --tail 20
+    docker compose -f "$COMPOSE_FILE" logs --tail 20
 fi
 
 # 7. Print Completion Banner
@@ -98,7 +107,7 @@ echo "  IDE URL:      $URL"
 echo "  Access Token: $TOKEN"
 echo ""
 echo "  * The token has been saved to your local .env file."
-echo "  * To stop the container, run: ./stop-oneshot.sh (or docker compose down)"
+echo "  * To stop the container, run: ./stop-oneshot.sh (or docker compose -f $COMPOSE_FILE down)"
 echo "================================================================="
 echo ""
 

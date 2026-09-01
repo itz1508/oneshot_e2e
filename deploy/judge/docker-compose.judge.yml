@@ -1,0 +1,49 @@
+services:
+  oneshot:
+    image: oneshot:1.3.0
+    container_name: oneshot-app
+    ports:
+      - "8787:8787"
+    environment:
+      NODE_ENV: production
+      ONESHOT_ROOT: /app
+      ONESHOT_WORKSPACE_ROOT: /app
+      ONESHOT_BIND_HOST: 0.0.0.0
+      PORT: 8787
+      ONESHOT_API_TOKEN: ${ONESHOT_API_TOKEN:?ONESHOT_API_TOKEN must be set}
+    volumes:
+      - data_runs:/app/data/runs
+      - data_runstate:/app/data/run-state
+      - data_taskevents:/app/data/task-events
+      - data_checkpoints:/app/data/checkpoints
+      - data_conversations:/app/data/conversations
+      - data_sandboxws:/app/data/sandbox-workspaces
+    healthcheck:
+      test: ["CMD", "node", "-e", "const h=process.env.ONESHOT_API_TOKEN?{Authorization:'Bearer '+process.env.ONESHOT_API_TOKEN}:{};fetch('http://127.0.0.1:'+process.env.PORT+'/api/health',{headers:h}).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    restart: unless-stopped
+    user: "10001:10001"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  data_runs:
+  data_runstate:
+  data_taskevents:
+  data_checkpoints:
+  data_conversations:
+  data_sandboxws:
