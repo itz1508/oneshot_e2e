@@ -14,13 +14,7 @@ import { ValidationLanePool } from "./validation/validation-lane-pool.js";
 import { DeterministicValidationRuntime } from "./validation/deterministic-validation.js";
 import { CanonicalContractSkill } from "./skill/canonical-contract-skill.js";
 import { createSkillSystem } from "./skill/bootstrap.js";
-import { resolveResearchProvider } from "./role/researcher/provider-resolver.js";
-import { ResearcherWorkflow } from "./role/researcher/workflow.js";
-import { PlannerWorkflow } from "./role/planner/workflow.js";
-import { RefactorWorkflow } from "./role/refactor/workflow.js";
-import { GapAnalysisWorkflow } from "./role/gap-analysis/workflow.js";
-import { EvaluationWorkflow } from "./role/evaluation/workflow.js";
-import { BuilderWorkflow } from "./role/builder/workflow.js";
+import { createRolePipeline } from "./pipeline/bootstrap.js";
 import { TripleValidationWorkflow } from "./workflow/triple-validation.js";
 import { ConfirmationWorkflow } from "./workflow/confirmation.js";
 import { HashWorkflow } from "./workflow/hash.js";
@@ -82,12 +76,15 @@ if (!(contracts instanceof CanonicalContractSkill)) {
 }
 await contracts.verifyStatic();
 
-// --- Research Provider (with event bus for provider-scoped ADK events) ---
-const provider = await resolveResearchProvider(projectRoot, events);
-
-// --- Runtime Info (mode + provider name for health endpoint / UI) ---
+// --- Runtime Info ---
+// Provider/model readiness is deliberately NOT claimed at bootstrap. Researcher
+// resolves and probes its configured provider only when that Role is activated.
 const runtimeMode = (process.env.ONESHOT_MODE || "sample").toLowerCase();
-const providerName = provider.constructor?.name || "UnknownProvider";
+const providerName =
+  runtimeMode === "sample"
+    ? "fixture"
+    : (process.env.ONESHOT_RESEARCH_PROVIDER ||
+        (process.env.ONESHOT_RESEARCH_PROVIDER_MODULE ? "module" : "unconfigured"));
 const runtimeInfo: RuntimeInfo = { mode: runtimeMode, provider: providerName };
 
 // --- Deterministic Triple Validation ---
@@ -103,22 +100,25 @@ const sandbox = new SandboxService(
   resolve(projectRoot, "data/sandbox-workspaces"),
 );
 
+// --- Explicit Role Pipeline ---
+// Bootstrap registers factories only. ADK stages activate Roles manually at the
+// moment their canonical responsibility is reached.
+const rolePipeline = createRolePipeline({
+  projectRoot,
+  events,
+  contracts,
+  sandbox,
+});
+
 // --- Canonical ADK Workflow Runtime ---
-// Builder is now part of the same canonical workflow and uses the exact same
-// SandboxService instance exposed to sandbox Skills / explicit debug APIs.
 const runtime = new WorkflowRuntime(
   events,
   runs,
   new FileArtifactStore(resolve(projectRoot, "data/runs")),
-  new ResearcherWorkflow(provider, contracts),
-  new PlannerWorkflow(contracts),
-  new RefactorWorkflow(contracts),
-  new GapAnalysisWorkflow(contracts),
-  new EvaluationWorkflow(contracts),
+  rolePipeline,
   new TripleValidationWorkflow(deterministic, contracts),
   new ConfirmationWorkflow(contracts),
   new HashWorkflow(contracts),
-  new BuilderWorkflow(sandbox),
 );
 
 // --- Bind the remaining production Skills to live runtime services ---
@@ -159,7 +159,6 @@ console.log(
 // --- Graceful shutdown ---
 const shutdown = () => {
   server.close(() => {
-    provider.close?.();
     validationLanes.close();
     bridge.close();
     process.exit(0);
