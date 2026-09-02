@@ -9,10 +9,10 @@ OneShot is a governed AI engineering workflow that turns user intent into resear
 
 ## Prompt to Agent — Review & Validate OneShot
 
-Copy this single prompt into your coding/repository agent.
+**Perform a complete technical review and validation of the OneShot repository for the evaluator.**
 
 <details>
-<summary><strong>Copy review and validation prompt</strong></summary>
+<summary><strong>Copy full prompt</strong> · Install, run, validate, review, then answer follow-up questions</summary>
 
 ```text
 Perform a complete technical review and validation of the OneShot repository for the evaluator.
