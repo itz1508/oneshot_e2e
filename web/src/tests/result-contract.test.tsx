@@ -15,11 +15,13 @@
  * 11. The demonstration correction_required entry satisfies the complete contract
  */
 
-import {describe, it, expect, beforeEach} from 'vitest'
-import {render, screen} from '@testing-library/react'
+import {describe, it, expect, beforeEach, vi} from 'vitest'
+import {render, screen, fireEvent} from '@testing-library/react'
 import {validateRecordEntry} from '../agent/validation'
 import {useAppStore} from '../store/taskStore'
 import {TaskRecord} from '../components/TaskRecord'
+import {HelpRequestCard} from '../components/HelpRequestCard'
+import {LiveActivity} from '../components/LiveActivity'
 import type {CorrectionRecordEntry, FailedRecordEntry, SuccessfulRecordEntry} from '../agent/types'
 
 // ─── Helpers ───
@@ -531,5 +533,245 @@ describe('Conversational help handoff', () => {
 
         expect(useAppStore.getState().task.status).toBe('failed')
         useAppStore.getState().reset()
+    })
+})
+
+// ─── Run halt resolution: help requests, verbatim root causes, artifact refs ───
+
+describe('Run halt resolution', () => {
+    class FakeEventSource {
+        static instances: FakeEventSource[] = []
+        onmessage: ((event: MessageEvent) => void) | null = null
+        onerror: (() => void) | null = null
+        readonly url: string
+        closed = false
+
+        constructor(url: string) {
+            this.url = url
+            FakeEventSource.instances.push(this)
+        }
+
+        close() {
+            this.closed = true
+        }
+
+        send(payload: Record<string, unknown>) {
+            this.onmessage?.(new MessageEvent('message', {data: JSON.stringify(payload)}))
+        }
+    }
+
+    function stubReadyRunFetches(snapshot: Record<string, unknown>) {
+        return vi.spyOn(globalThis, 'fetch')
+            .mockResolvedValueOnce(new Response(JSON.stringify({
+                conversation_id: 'conv-halt',
+                intent: {ready_for_prompt: true},
+            }), {status: 201, headers: {'content-type': 'application/json'}}))
+            .mockResolvedValueOnce(new Response(JSON.stringify({run_id: 'run-halt'}), {
+                status: 202,
+                headers: {'content-type': 'application/json'},
+            }))
+            .mockResolvedValueOnce(new Response(JSON.stringify(snapshot), {
+                status: 200,
+                headers: {'content-type': 'application/json'},
+            }))
+    }
+
+    it('surfaces a run help request as task.help_required instead of task.failed', async () => {
+        vi.stubGlobal('EventSource', FakeEventSource)
+        FakeEventSource.instances = []
+        const fetchSpy = stubReadyRunFetches({
+            run_id: 'run-halt',
+            result: 'ROOT_CAUSE',
+            help_request: {
+                request_id: 'help:run',
+                reason: 'target environment missing',
+                question: 'Which target environment should this run use?',
+                required_information: ['target_environment'],
+                source_processor: 'Researcher',
+                prompt_revision_required: true,
+            },
+        })
+
+        const {BackendChatSource} = await import('../agent/BackendChatSource')
+        const source = new BackendChatSource()
+        const events: Array<{eventType: string; message: string; metadata?: Record<string, unknown>}> = []
+        source.subscribe((event) => events.push(event))
+
+        source.start('Deploy the service', 'ws-test', [])
+        await vi.waitFor(() => expect(FakeEventSource.instances).toHaveLength(1))
+        const stream = FakeEventSource.instances[0]
+        stream.send({
+            event_id: 'evt-1', sequence: 1, run_id: 'run-halt', processor: 'Researcher',
+            state: 'RUNNING', created_at: '2026-09-01T00:00:00.000Z',
+        })
+        stream.send({
+            event_id: 'evt-2', sequence: 2, run_id: 'run-halt', processor: 'Done',
+            state: 'COMPLETE', result: 'ROOT_CAUSE',
+            message: 'Target environment was not supplied',
+            created_at: '2026-09-01T00:00:01.000Z',
+        })
+
+        await vi.waitFor(() => expect(events.some((e) => e.eventType === 'task.help_required')).toBe(true))
+        const help = events.find((e) => e.eventType === 'task.help_required')
+        const helpRequest = help!.metadata?.helpRequest as Record<string, unknown>
+        expect(helpRequest.question).toBe('Which target environment should this run use?')
+        expect(helpRequest.required_information).toEqual(['target_environment'])
+        expect(helpRequest.source_processor).toBe('Researcher')
+        // A help request is a question to answer, not a failure — anchor for appends
+        expect(events.some((e) => e.eventType === 'task.failed')).toBe(false)
+
+        source.dispose()
+        fetchSpy.mockRestore()
+        vi.unstubAllGlobals()
+    })
+
+    it('quotes RootCause fields verbatim on a genuine ROOT_CAUSE halt', async () => {
+        vi.stubGlobal('EventSource', FakeEventSource)
+        FakeEventSource.instances = []
+        const rootCause = {
+            issue: 'Sandbox integrity hash mismatch',
+            expected: 'h1-value',
+            actual: 'h2-value',
+            evidence_ids: ['hash-proof'],
+            required_correction: 'Recompute the sandbox integrity hash from the exact confirmed immutable core',
+            recheck_target: 'plan:001',
+        }
+        const fetchSpy = stubReadyRunFetches({
+            run_id: 'run-halt',
+            result: 'ROOT_CAUSE',
+            root_cause: rootCause,
+        })
+
+        const {BackendChatSource} = await import('../agent/BackendChatSource')
+        const source = new BackendChatSource()
+        const events: Array<{eventType: string; message: string; metadata?: Record<string, unknown>}> = []
+        source.subscribe((event) => events.push(event))
+
+        source.start('Deploy the service', 'ws-test', [])
+        await vi.waitFor(() => expect(FakeEventSource.instances).toHaveLength(1))
+        const stream = FakeEventSource.instances[0]
+        stream.send({
+            event_id: 'evt-1', sequence: 1, run_id: 'run-halt', processor: 'Done',
+            state: 'COMPLETE', result: 'ROOT_CAUSE', message: 'h2-value',
+            created_at: '2026-09-01T00:00:01.000Z',
+        })
+
+        await vi.waitFor(() => expect(events.some((e) => e.eventType === 'task.failed')).toBe(true))
+        const terminal = events.find((e) => e.eventType === 'task.failed')
+        expect(terminal!.metadata?.rootCause).toEqual(rootCause)
+        expect(terminal!.message).toContain('Sandbox integrity hash mismatch')
+        // Fields are carried verbatim for the verbatim-quote contract — append anchor
+        expect(terminal!.metadata?.result).toBe('ROOT_CAUSE')
+
+        source.dispose()
+        fetchSpy.mockRestore()
+        vi.unstubAllGlobals()
+    })
+
+    it('maps unknown future processors to the working stage without registry changes', async () => {
+        vi.stubGlobal('EventSource', FakeEventSource)
+        FakeEventSource.instances = []
+        const fetchSpy = stubReadyRunFetches({run_id: 'run-halt', result: 'PASSED'})
+
+        const {BackendChatSource} = await import('../agent/BackendChatSource')
+        const source = new BackendChatSource()
+        const events: Array<{eventType: string; stage: string}> = []
+        source.subscribe((event) => events.push(event))
+
+        source.start('Deploy the service', 'ws-test', [])
+        await vi.waitFor(() => expect(FakeEventSource.instances).toHaveLength(1))
+        const stream = FakeEventSource.instances[0]
+        stream.send({
+            event_id: 'evt-1', sequence: 1, run_id: 'run-halt', processor: 'FutureProcessor',
+            state: 'RUNNING', created_at: '2026-09-01T00:00:00.000Z',
+        })
+
+        expect(events).toContainEqual(expect.objectContaining({
+            eventType: 'stage.changed',
+            stage: 'working',
+        }))
+
+        source.dispose()
+        fetchSpy.mockRestore()
+        vi.unstubAllGlobals()
+    })
+})
+
+describe('Run help request store contract', () => {
+    it('stores the pending help request and returns the turn to the operator', () => {
+        useAppStore.getState().reset()
+        useAppStore.setState({loading: true, turn: 'agent'})
+
+        useAppStore.getState().handleEvent({
+            eventId: 'evt-run-help',
+            sequence: 3,
+            taskId: 'task-run-help',
+            eventType: 'task.help_required',
+            stage: 'waiting',
+            message: 'Which target environment should this run use?',
+            timestamp: '2026-09-01T00:00:00.000Z',
+            metadata: {
+                helpRequest: {
+                    request_id: 'help:run',
+                    reason: 'target environment missing',
+                    question: 'Which target environment should this run use?',
+                    required_information: ['target_environment'],
+                    source_processor: 'Researcher',
+                },
+            },
+        })
+
+        const state = useAppStore.getState()
+        expect(state.pendingHelpRequest?.request_id).toBe('help:run')
+        expect(state.pendingHelpRequest?.required_information).toEqual(['target_environment'])
+        expect(state.messages[state.messages.length - 1]?.content).toBe('Which target environment should this run use?')
+        expect(state.loading).toBe(false)
+        expect(state.turn).toBe('user')
+
+        state.clearPendingHelpRequest()
+        expect(useAppStore.getState().pendingHelpRequest).toBeNull()
+        useAppStore.getState().reset()
+    })
+})
+
+describe('HelpRequestCard', () => {
+    const helpRequest = {
+        request_id: 'help:run',
+        reason: 'target environment missing',
+        question: 'Which target environment should this run use?',
+        required_information: ['target_environment'],
+        source_processor: 'Researcher',
+    }
+
+    it('renders the question and required information verbatim', () => {
+        render(<HelpRequestCard helpRequest={helpRequest} onAnswer={() => {}}/>)
+        expect(screen.getByText('Which target environment should this run use?')).toBeDefined()
+        expect(screen.getByText('target_environment')).toBeDefined()
+        expect(screen.getByText('asked by Researcher')).toBeDefined()
+    })
+
+    it('submits the operator answer exactly as typed', () => {
+        const onAnswer = vi.fn()
+        render(<HelpRequestCard helpRequest={helpRequest} onAnswer={onAnswer}/>)
+        fireEvent.change(screen.getByLabelText('Answer'), {target: {value: 'staging'}})
+        fireEvent.click(screen.getByText('Answer'))
+        expect(onAnswer).toHaveBeenCalledTimes(1)
+        expect(onAnswer).toHaveBeenCalledWith('staging')
+    })
+})
+
+describe('Artifact reference surface', () => {
+    it('renders an artifact reference when an activity update carries one', () => {
+        render(<LiveActivity messages={[
+            {id: 'a1', text: 'Researcher: PASSED', timestamp: '2026-09-01T00:00:00.000Z', artifactId: 'researcher-1'},
+        ]}/>)
+        expect(screen.getByText('researcher-1')).toBeDefined()
+    })
+
+    it('renders no artifact reference when the update carries none', () => {
+        render(<LiveActivity messages={[
+            {id: 'a2', text: 'Planner: PASSED', timestamp: '2026-09-01T00:00:00.000Z'},
+        ]}/>)
+        expect(screen.queryByText('researcher-1')).toBeNull()
     })
 })

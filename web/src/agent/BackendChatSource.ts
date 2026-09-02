@@ -14,8 +14,10 @@
 
 import type {
     AgentEvent,
+    HelpRequestPayload,
     Stage,
     ToolCallEvent,
+    WorkflowRootCauseDetail,
 } from './types'
 import type {TaskEventSource, EventListener, StartOptions} from './TaskEventSource'
 import {FrontendToolExecutor} from './toolExecutor'
@@ -24,6 +26,27 @@ let nextId = 0
 
 function uid(): string {
     return `evt-${Date.now()}-${nextId++}`
+}
+
+/**
+ * Table-driven canonical processor → IDE stage mapping. Supporting a new
+ * processor or support event kind is a single registry entry; unknown
+ * processors fall back to 'working' with no code changes.
+ */
+export const SUPPORT_EVENT_REGISTRY: Record<string, Stage> = {
+    Researcher: 'reading',
+    Planner: 'planning',
+    Refactor: 'planning',
+    GapAnalysis: 'reviewing',
+    Evaluation: 'reviewing',
+    TripleValidation: 'testing',
+    SchemaValidation: 'testing',
+    FixtureValidation: 'testing',
+    GoalValidation: 'testing',
+    Confirmed: 'completed',
+    CreateHash: 'completed',
+    Hash: 'completed',
+    Done: 'completed',
 }
 
 /** Approval resolver — placeholder for frontend tool execution. */
@@ -307,17 +330,10 @@ export class BackendChatSource implements TaskEventSource {
                             metadata: {runId, hash: hashProof},
                         })
                     } else {
-                        const issue = e.message || 'Execution halted at ROOT CAUSE'
-                        this.emit({
-                            eventId: uid(),
-                            sequence: seq++,
-                            taskId,
-                            eventType: 'task.failed',
-                            stage: 'blocked',
-                            message: `### Execution Halted (ROOT CAUSE)\n\n${issue}`,
-                            timestamp: e.created_at || new Date().toISOString(),
-                            metadata: {runId, result: e.result},
-                        })
+                        // Halt resolution is async (run snapshot fetch): mark
+                        // terminal and close the stream first so stream
+                        // semantics hold while the snapshot is resolved.
+                        void this._handleRootCauseHalt(runId, taskId, e, () => seq++)
                     }
                 } else if (e.state === 'COMPLETE' && e.processor !== 'Done') {
                     const stage = this._mapStage(e.processor)
@@ -361,28 +377,62 @@ export class BackendChatSource implements TaskEventSource {
         }
     }
 
-    private _mapStage(oneShotStage: string): Stage {
-        switch (oneShotStage) {
-            case 'Researcher':
-                return 'reading'
-            case 'Planner':
-            case 'Refactor':
-                return 'planning'
-            case 'GapAnalysis':
-            case 'Evaluation':
-                return 'reviewing'
-            case 'TripleValidation':
-            case 'SchemaValidation':
-            case 'FixtureValidation':
-            case 'GoalValidation':
-                return 'testing'
-            case 'Confirmed':
-            case 'CreateHash':
-            case 'Hash':
-            case 'Done':
-                return 'completed'
-            default:
-                return 'working' as Stage
+    /**
+     * Resolve a ROOT_CAUSE halt against the durable run snapshot. A
+     * help_request re-enters through Intent revision (the operator answers in
+     * chat); everything else surfaces the backend RootCause fields verbatim.
+     * No auto-retry, no fabricated answers.
+     */
+    private async _handleRootCauseHalt(
+        runId: string,
+        taskId: string,
+        doneEvent: BackendProcessingEvent,
+        nextSeq: () => number,
+    ): Promise<void> {
+        const snapshot = await fetch(`/api/runs/${encodeURIComponent(runId)}`)
+            .then((res) => (res.ok ? res.json() : null))
+            .catch(() => null)
+
+        const timestamp = doneEvent.created_at || new Date().toISOString()
+        const helpRequest = (snapshot?.help_request ?? null) as HelpRequestPayload | null
+
+        if (helpRequest) {
+            this.emit({
+                eventId: uid(),
+                sequence: nextSeq(),
+                taskId,
+                eventType: 'task.help_required',
+                stage: 'waiting',
+                message: helpRequest.question,
+                timestamp,
+                metadata: {runId, helpRequest},
+            })
+            this.emit({
+                eventId: uid(),
+                sequence: nextSeq(),
+                taskId,
+                eventType: 'stage.changed',
+                stage: 'waiting',
+                message: 'Waiting for operator answer...',
+                timestamp,
+            })
+            return
         }
+
+        const rootCause = (snapshot?.root_cause ?? null) as WorkflowRootCauseDetail | null
+        this.emit({
+            eventId: uid(),
+            sequence: nextSeq(),
+            taskId,
+            eventType: 'task.failed',
+            stage: 'blocked',
+            message: `### Execution Halted (ROOT CAUSE)\n\n${rootCause ? rootCause.issue : (doneEvent.message || 'Execution halted at ROOT CAUSE')}`,
+            timestamp,
+            metadata: {runId, result: doneEvent.result, rootCause: rootCause ?? undefined},
+        })
+    }
+
+    private _mapStage(oneShotStage: string): Stage {
+        return SUPPORT_EVENT_REGISTRY[oneShotStage] ?? ('working' as Stage)
     }
 }

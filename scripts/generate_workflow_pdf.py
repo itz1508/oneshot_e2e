@@ -50,7 +50,7 @@ class NumberedCanvas(canvas.Canvas):
         # Footer
         footer_text = f"Page {self._pageNumber} of {page_count}"
         self.drawRightString(558, 36, footer_text)
-        self.drawString(54, 36, "CONFIDENTIAL & PROPRIETARY • ALL RIGHTS RESERVED • SHA-256 VERIFIED")
+        self.drawString(54, 36, "CONFIDENTIAL & PROPRIETARY • APACHE LICENSE 2.0 • SHA-256 VERIFIED")
         self.setStrokeColor(colors.HexColor("#2d333b"))
         self.setLineWidth(0.5)
         self.line(54, 48, 558, 48)
@@ -291,7 +291,7 @@ BUILDER / SANDBOX EXECUTION (backend/sandbox/sandbox-service.ts)
     story.append(Spacer(1, 10))
     story.append(Paragraph("6. Software License & Governance", h1_style))
     story.append(Paragraph(
-        "The OneShot Production E2E platform and all associated workflow processing engines, contracts, skills, and tools are <b>proprietary and confidential</b>. This product is not offered to users and is not licensed for use, reproduction, or distribution. See LICENSE for full terms.",
+        "The OneShot Production E2E platform and all associated workflow processing engines, contracts, skills, and tools are licensed under the <b>Apache License, Version 2.0</b>. See LICENSE and NOTICE for full terms.",
         body_style
     ))
 

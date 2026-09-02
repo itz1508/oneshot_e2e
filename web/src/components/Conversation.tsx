@@ -6,7 +6,8 @@
  * useMessageScrollerVisibility.
  */
 
-import type {ChatMessage} from '../agent/types'
+import type {ChatMessage, HelpRequestPayload} from '../agent/types'
+import {HelpRequestCard} from './HelpRequestCard'
 import {UserMessage} from './UserMessage'
 import {AgentMessage} from './AgentMessage'
 import {AgentLoadingState} from './AgentLoadingState'
@@ -22,9 +23,11 @@ interface ConversationProps {
     messages: ChatMessage[]
     loading: boolean
     anchorMode: AnchorMode
+    pendingHelpRequest?: HelpRequestPayload | null
+    onAnswerHelp?: (answer: string) => void
 }
 
-export function Conversation({messages, loading, anchorMode}: ConversationProps) {
+export function Conversation({messages, loading, anchorMode, pendingHelpRequest, onAnswerHelp}: ConversationProps) {
     const anchorRole: ChatMessage['role'] = anchorMode === 'assistant' ? 'agent' : 'user'
 
     return (
@@ -44,6 +47,12 @@ export function Conversation({messages, loading, anchorMode}: ConversationProps)
                             )}
                         </MessageScrollerItem>
                     ))}
+                    {pendingHelpRequest && onAnswerHelp && (
+                        <HelpRequestCard
+                            helpRequest={pendingHelpRequest}
+                            onAnswer={onAnswerHelp}
+                        />
+                    )}
                     {loading && <AgentLoadingState/>}
                 </div>
             </MessageScrollerViewport>

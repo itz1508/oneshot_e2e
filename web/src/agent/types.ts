@@ -81,6 +81,8 @@ export interface ActivityUpdate {
     id: string
     text: string
     timestamp: string
+    /** Backend artifact reference carried by the originating stage event. */
+    artifactId?: string
 }
 
 export interface TaskActivity {
@@ -96,6 +98,36 @@ export interface TaskActivity {
 export interface RootCause {
     summary: string
     evidence: string[]
+}
+
+/**
+ * Backend workflow RootCause wire contract
+ * (docs/INTENT_AUTHORITY_AND_HELP.md). Quoted verbatim in the UI — never
+ * paraphrased or enriched.
+ */
+export interface WorkflowRootCauseDetail {
+    issue: string
+    expected: string
+    actual: string
+    evidence_ids: string[]
+    required_correction: string
+    recheck_target: string
+}
+
+/**
+ * Backend help_request payload (docs/INTENT_AUTHORITY_AND_HELP.md). A
+ * targeted question for user-owned missing information; answers re-enter
+ * through Intent revision via the regular chat pipeline.
+ */
+export interface HelpRequestPayload {
+    request_id: string
+    reason: string
+    question: string
+    required_information: string[]
+    source_processor: string
+    prompt_revision_required?: boolean
+    intent_id?: string | null
+    conversation_id?: string | null
 }
 
 export interface Resolution {
@@ -168,6 +200,7 @@ export type EventType =
     | 'task.cancelled'
     | 'task.failed'
     | 'task.completed'
+    | 'task.help_required'
     | 'participant.activated'
     | 'participant.activity_update'
     | 'participant.outcome_recorded'

@@ -385,9 +385,9 @@ if (skipTests) {
   const pythonCount = pythonMatch
     ? Number.parseInt(pythonMatch[1], 10)
     : Number.NaN;
-  if (pythonCount !== 47 || typeScriptCount !== 47) {
+  if (pythonCount !== 47 || typeScriptCount !== 51) {
     fail(
-      `Expected 47 Python and 47 TypeScript tests; observed Python=${pythonCount}, TypeScript=${typeScriptCount}`,
+      `Expected 47 Python and 51 TypeScript tests; observed Python=${pythonCount}, TypeScript=${typeScriptCount}`,
     );
   }
   if (!testOutput.includes("ONESHOT_PRODUCTION_E2E_VERIFIED")) {
@@ -459,7 +459,7 @@ function pollHealth(targetPort, timeoutMs = 15_000) {
       if (Date.now() >= deadline) {
         rejectHealth(
           new Error(
-            `Timed out waiting for http://localhost:${targetPort}/api/health`,
+            `Timed out waiting for http://${probeHost}:${targetPort}/api/health`,
           ),
         );
         return;
@@ -510,23 +510,23 @@ function pollHealth(targetPort, timeoutMs = 15_000) {
 }
 
 const health = await pollHealth(port);
-pass(`http://localhost:${port}/api/health reports status='${health.status}'`);
+pass(`http://${probeHost}:${port}/api/health reports status='${health.status}'`);
 
 header("9. OneShot React IDE ready");
 console.log(`
 ${C.bold}${C.green}OneShot React IDE is running.${C.reset}
-${C.bold}URL:${C.reset}      http://localhost:${port}
+${C.bold}URL:${C.reset}      http://${probeHost}:${port}
 ${C.bold}Mode:${C.reset}     ${mode.toUpperCase()}
 ${C.bold}Provider:${C.reset} ${providerDisplay}
-${C.bold}Health:${C.reset}   http://localhost:${port}/api/health
-${C.bold}Graph:${C.reset}    http://localhost:${port}/api/graphs/adk
+${C.bold}Health:${C.reset}   http://${probeHost}:${port}/api/health
+${C.bold}Graph:${C.reset}    http://${probeHost}:${port}/api/graphs/adk
 ${C.dim}Press Ctrl+C to stop the services.${C.reset}
 `);
 
 if (!skipBrowser) {
   info("Opening OneShot in your default browser...");
   const opener = isWindows ? "start" : process.platform === "darwin" ? "open" : "xdg-open";
-  spawn(opener, [`http://localhost:${port}`], {
+  spawn(opener, [`http://${probeHost}:${port}`], {
     shell: true,
     detached: true,
     stdio: "ignore",

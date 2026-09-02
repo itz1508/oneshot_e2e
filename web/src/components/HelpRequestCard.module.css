@@ -1,0 +1,95 @@
+/* HelpRequestCard — backend help_request rendered as an answerable question */
+
+.card {
+    border: 1px solid #2d333b;
+    border-radius: 8px;
+    background: #161b22;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: #3b82f6;
+    border: 1px solid #2d333b;
+    border-radius: 999px;
+    padding: 2px 8px;
+}
+
+.source {
+    font-size: 11px;
+    color: #8b949e;
+}
+
+.question {
+    margin: 0;
+    font-size: 13px;
+    color: #e6edf3;
+    line-height: 1.5;
+}
+
+.requiredList {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.requiredItem {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    color: #d4d4d8;
+    background: #21262d;
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+
+.composer {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.input {
+    flex: 1;
+    min-height: 44px;
+    resize: vertical;
+    background: #0d1117;
+    border: 1px solid #2d333b;
+    border-radius: 6px;
+    color: #e6edf3;
+    font-size: 12px;
+    padding: 8px;
+}
+
+.input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.submit {
+    background: #1f6feb;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

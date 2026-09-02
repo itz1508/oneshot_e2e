@@ -10,7 +10,9 @@ import {create} from 'zustand'
 import type {
     AgentEvent,
     ChatMessage,
+    HelpRequestPayload,
     MessageTokenUsage,
+    WorkflowRootCauseDetail,
     ActivityUpdate,
     Stage,
     TaskActivity,
@@ -70,6 +72,9 @@ export interface AppState {
     // Validation
     lastValidationFailure: ValidationFailure | null
 
+    // Help request awaiting an operator answer (docs/INTENT_AUTHORITY_AND_HELP.md)
+    pendingHelpRequest: HelpRequestPayload | null
+
     // Explorer contextual mode
     explorerMode: ExplorerMode
     activePlanId: string | null
@@ -85,6 +90,7 @@ export interface AppState {
     _scheduleEstimate: () => void
     sendMessage: (text: string) => void
     cancelTask: () => void
+    clearPendingHelpRequest: () => void
     toggleDrawer: () => void
     openDrawerForWorkspace: (workspaceId: string) => void
     handleEvent: (event: AgentEvent) => void
@@ -173,6 +179,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     runnerMode: 'Connecting · OneShot backend',
     currentOperationId: null,
     lastValidationFailure: null,
+    pendingHelpRequest: null,
     explorerMode: 'code' as ExplorerMode,
     activePlanId: null,
     activeBuildId: null,
@@ -267,6 +274,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             draft: '',
             loading: true,
             turn: 'agent',
+            pendingHelpRequest: null,
             drawerOpen: true,
             task: {
                 ...initialTask,
@@ -291,6 +299,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         const {_eventSource} = get()
         _eventSource?.cancel()
     },
+
+    clearPendingHelpRequest: () => set({pendingHelpRequest: null}),
 
     toggleDrawer: () => set((s) => ({drawerOpen: !s.drawerOpen})),
 
@@ -328,6 +338,31 @@ export const useAppStore = create<AppState>((set, get) => ({
                 },
             }))
             if (event.stage === 'waiting') get()._scheduleEstimate()
+            return
+        }
+
+        if (event.eventType === 'task.help_required') {
+            const helpRequest = event.metadata?.helpRequest as HelpRequestPayload | undefined
+            if (!helpRequest) return
+            const agentMsg: ChatMessage = {
+                id: `msg-${Date.now()}-agent`,
+                role: 'agent',
+                content: helpRequest.question,
+                timestamp: event.timestamp ?? new Date().toISOString(),
+            }
+            set((s) => ({
+                messages: [...s.messages, agentMsg],
+                loading: false,
+                turn: 'user' as const,
+                pendingHelpRequest: helpRequest,
+                task: {
+                    ...s.task,
+                    status: 'idle' as TaskStatus,
+                    currentStage: 'waiting' as Stage,
+                    currentAction: helpRequest.question,
+                },
+            }))
+            get()._scheduleEstimate()
             return
         }
 
@@ -388,10 +423,14 @@ export const useAppStore = create<AppState>((set, get) => ({
             if (event.eventType === 'participant.activity_update') {
                 const activity = s.task.activeActivity
                 if (!activity) return {}
+                const artifactId = typeof event.metadata?.artifactId === 'string'
+                    ? event.metadata.artifactId
+                    : undefined
                 const msg: ActivityUpdate = {
                     id: event.eventId,
                     text: event.message,
                     timestamp: event.timestamp,
+                    ...(artifactId && {artifactId}),
                 }
                 return {
                     task: {
@@ -474,6 +513,17 @@ export const useAppStore = create<AppState>((set, get) => ({
                     }
                     : undefined
 
+                // Backend RootCause fields are quoted verbatim
+                // (docs/INTENT_AUTHORITY_AND_HELP.md) — never paraphrased.
+                const rootCauseDetail = event.metadata?.rootCause as WorkflowRootCauseDetail | undefined
+                const rootCauseActivities = rootCauseDetail
+                    ? [
+                        {id: `act-${Date.now()}-exp`, label: 'Expected', detail: rootCauseDetail.expected, status: 'completed' as const},
+                        {id: `act-${Date.now()}-actual`, label: 'Actual', detail: rootCauseDetail.actual, status: 'completed' as const},
+                        {id: `act-${Date.now()}-corr`, label: 'Required correction', detail: rootCauseDetail.required_correction, status: 'completed' as const},
+                        {id: `act-${Date.now()}-recheck`, label: 'Recheck target', detail: rootCauseDetail.recheck_target, status: 'completed' as const},
+                    ]
+                    : []
                 const agentMsg: ChatMessage = {
                     id: `msg-${Date.now()}-agent`,
                     role: 'agent',
@@ -484,7 +534,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                         label: 'Task result',
                         detail: `Stage: ${event.stage}. Files touched: ${task.filesTouched.join(', ') || 'none'}`,
                         status: 'completed',
-                    }],
+                    }, ...rootCauseActivities],
                     ...(tokens && {tokens}),
                 }
                 messages = [...messages, agentMsg]
@@ -555,6 +605,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             turn: 'user',
             currentOperationId: null,
             lastValidationFailure: null,
+            pendingHelpRequest: null,
             explorerMode: 'code' as ExplorerMode,
             activePlanId: null,
             activeBuildId: null,

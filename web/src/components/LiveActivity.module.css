@@ -31,6 +31,17 @@
     line-height: 1.5;
 }
 
+.artifactRef {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    color: #8b949e;
+    border: 1px solid #2d333b;
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

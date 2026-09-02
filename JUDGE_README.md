@@ -171,7 +171,7 @@ npm test
 
 ## 8. License
 
-Proprietary — All Rights Reserved. This product is not offered to users and is not licensed for use, reproduction, or distribution. See [`LICENSE`](LICENSE) for details; third-party dependency attributions are in [`NOTICE`](NOTICE).
+Apache License, Version 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE) for details.
 
 
 ### Mode C: Docker Container (Single Command Release)

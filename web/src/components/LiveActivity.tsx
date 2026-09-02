@@ -31,6 +31,11 @@ export function LiveActivity({messages}: LiveActivityProps) {
                 <div key={msg.id} className={styles.entry}>
                     <span className={styles.dot} aria-hidden="true"/>
                     <span className={styles.text}>{msg.text}</span>
+                    {msg.artifactId && (
+                        <span className={styles.artifactRef} title="Artifact reference">
+                            {msg.artifactId}
+                        </span>
+                    )}
                 </div>
             ))}
         </div>

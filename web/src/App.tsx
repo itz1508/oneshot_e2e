@@ -49,6 +49,15 @@ function App() {
     const activePlanId = useAppStore((state) => state.activePlanId)
     const activeBuildId = useAppStore((state) => state.activeBuildId)
     const fetchRealWorkspaces = useAppStore((state) => state.fetchRealWorkspaces)
+    const pendingHelpRequest = useAppStore((state) => state.pendingHelpRequest)
+    const clearPendingHelpRequest = useAppStore((state) => state.clearPendingHelpRequest)
+
+    // Help-request answers re-enter through the regular chat pipeline:
+    // POST /api/conversations/:id/messages → Intent revision → Prompt gate.
+    const handleHelpAnswer = (answer: string) => {
+        clearPendingHelpRequest()
+        sendMessage(answer)
+    }
 
     useEffect(() => {
         bindEventSource(eventSource)
@@ -131,7 +140,13 @@ function App() {
                                 />
                             ) : (
                                 <>
-                                    <Conversation messages={messages} loading={loading} anchorMode={anchorMode}/>
+                                    <Conversation
+                                        messages={messages}
+                                        loading={loading}
+                                        anchorMode={anchorMode}
+                                        pendingHelpRequest={pendingHelpRequest}
+                                        onAnswerHelp={handleHelpAnswer}
+                                    />
                                     <TurnIndicator turn={turn}/>
                                     <MessageComposer
                                         onSend={sendMessage}
