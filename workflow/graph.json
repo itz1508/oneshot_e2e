@@ -2,10 +2,7 @@
   "artifact_ownership": [
     {
       "artifact": "Researcher(id)",
-      "consumers": [
-        "Planner",
-        "TripleValidation"
-      ],
+      "consumers": ["Planner", "TripleValidation"],
       "owner": "Researcher"
     },
     {
@@ -14,6 +11,9 @@
         "Planner",
         "Refactor",
         "GapAnalysis",
+        "GapCheck",
+        "GapFix",
+        "GapRecheck",
         "Evaluation",
         "SchemaValidation",
         "FixtureValidation",
@@ -23,264 +23,175 @@
     },
     {
       "artifact": "schema_id",
-      "consumers": [
-        "SchemaValidation"
-      ],
+      "consumers": ["SchemaValidation"],
       "owner": "Researcher"
     },
     {
       "artifact": "fixture_id",
-      "consumers": [
-        "FixtureValidation"
-      ],
+      "consumers": ["FixtureValidation"],
       "owner": "Researcher"
     },
     {
       "artifact": "goal_id",
-      "consumers": [
-        "GoalValidation"
-      ],
+      "consumers": ["GoalValidation"],
       "owner": "Researcher"
     },
     {
       "artifact": "validation_id",
-      "consumers": [
-        "TripleValidation"
-      ],
+      "consumers": ["TripleValidation"],
       "owner": "Researcher"
     },
     {
       "artifact": "audit_id",
-      "consumers": [
-        "Refactor"
-      ],
+      "consumers": ["Refactor"],
       "owner": "Planner"
     },
     {
       "artifact": "gap_0",
-      "consumers": [
-        "Evaluation"
-      ],
+      "consumers": ["Evaluation"],
       "owner": "GapAnalysis"
     },
     {
       "artifact": "evaluation",
-      "consumers": [
-        "SchemaValidation",
-        "FixtureValidation",
-        "GoalValidation"
-      ],
+      "consumers": ["SchemaValidation", "FixtureValidation", "GoalValidation"],
       "owner": "Evaluation"
     },
     {
       "artifact": "schema_validation_result",
-      "consumers": [
-        "TripleValidation"
-      ],
+      "consumers": ["TripleValidation"],
       "owner": "SchemaValidation"
     },
     {
       "artifact": "fixture_validation_result",
-      "consumers": [
-        "TripleValidation"
-      ],
+      "consumers": ["TripleValidation"],
       "owner": "FixtureValidation"
     },
     {
       "artifact": "goal_validation_result",
-      "consumers": [
-        "TripleValidation"
-      ],
+      "consumers": ["TripleValidation"],
       "owner": "GoalValidation"
     },
     {
       "artifact": "confirmed_package",
-      "consumers": [
-        "CreateHash"
-      ],
+      "consumers": ["CreateHash", "Builder"],
       "owner": "Confirmed"
     },
     {
       "artifact": "HASH",
-      "consumers": [
-        "Hash"
-      ],
+      "consumers": ["Builder", "Hash"],
       "owner": "CreateHash"
     },
     {
+      "artifact": "build_result",
+      "consumers": ["Hash", "Done"],
+      "owner": "Builder"
+    },
+    {
+      "artifact": "execution_evidence",
+      "consumers": ["Hash", "Done"],
+      "owner": "Builder"
+    },
+    {
+      "artifact": "hash_sandbox",
+      "consumers": ["Hash"],
+      "owner": "Builder"
+    },
+    {
       "artifact": "hash_proof",
-      "consumers": [
-        "Done"
-      ],
+      "consumers": ["Done"],
       "owner": "Hash"
     }
   ],
   "edges": [
-    {
-      "artifact": "Prompt_id",
-      "from": "Prompt",
-      "to": "Researcher"
-    },
-    {
-      "artifact": "plan_id",
-      "from": "Researcher",
-      "to": "Planner"
-    },
-    {
-      "artifact": "audit_id",
-      "from": "Planner",
-      "to": "Refactor"
-    },
-    {
-      "artifact": "plan_id",
-      "from": "Refactor",
-      "to": "GapAnalysis"
-    },
-    {
-      "artifact": "gap_0+plan_id",
-      "from": "GapAnalysis",
-      "to": "Evaluation"
-    },
-    {
-      "artifact": "plan_id",
-      "from": "Evaluation",
-      "to": "SchemaValidation"
-    },
-    {
-      "artifact": "plan_id",
-      "from": "Evaluation",
-      "to": "FixtureValidation"
-    },
-    {
-      "artifact": "plan_id",
-      "from": "Evaluation",
-      "to": "GoalValidation"
-    },
-    {
-      "artifact": "schema_id",
-      "from": "Researcher",
-      "to": "SchemaValidation"
-    },
-    {
-      "artifact": "fixture_id",
-      "from": "Researcher",
-      "to": "FixtureValidation"
-    },
-    {
-      "artifact": "goal_id",
-      "from": "Researcher",
-      "to": "GoalValidation"
-    },
-    {
-      "artifact": "validation_id",
-      "from": "Researcher",
-      "to": "TripleValidation"
-    },
-    {
-      "artifact": "schema_validation_result",
-      "from": "SchemaValidation",
-      "to": "TripleValidation"
-    },
-    {
-      "artifact": "fixture_validation_result",
-      "from": "FixtureValidation",
-      "to": "TripleValidation"
-    },
-    {
-      "artifact": "goal_validation_result",
-      "from": "GoalValidation",
-      "to": "TripleValidation"
-    },
-    {
-      "artifact": "triple_validation",
-      "from": "TripleValidation",
-      "to": "Confirmed"
-    },
-    {
-      "artifact": "confirmed_package",
-      "from": "Confirmed",
-      "to": "CreateHash"
-    },
-    {
-      "artifact": "HASH",
-      "from": "CreateHash",
-      "to": "Hash"
-    },
-    {
-      "artifact": "verified_HASH",
-      "from": "Hash",
-      "to": "Done"
-    }
+    {"artifact": "Prompt_id", "from": "Prompt", "to": "Researcher"},
+    {"artifact": "plan_id", "from": "Researcher", "to": "Planner"},
+    {"artifact": "audit_id", "from": "Planner", "to": "Refactor"},
+    {"artifact": "plan_id", "from": "Refactor", "to": "GapAnalysis"},
+    {"artifact": "plan_id", "from": "GapAnalysis", "to": "GapCheck"},
+    {"artifact": "gaps_found", "from": "GapCheck", "to": "GapFix"},
+    {"artifact": "gap_0+plan_id", "from": "GapCheck", "to": "GapAnalysisComplete"},
+    {"artifact": "plan_id", "from": "GapFix", "to": "GapRecheck"},
+    {"artifact": "gaps_remaining", "from": "GapRecheck", "to": "GapCheck"},
+    {"artifact": "gap_0+plan_id", "from": "GapRecheck", "to": "GapAnalysisComplete"},
+    {"artifact": "gap_0+plan_id", "from": "GapAnalysisComplete", "to": "Evaluation"},
+    {"artifact": "plan_id", "from": "Evaluation", "to": "SchemaValidation"},
+    {"artifact": "plan_id", "from": "Evaluation", "to": "FixtureValidation"},
+    {"artifact": "plan_id", "from": "Evaluation", "to": "GoalValidation"},
+    {"artifact": "schema_id", "from": "Researcher", "to": "SchemaValidation"},
+    {"artifact": "fixture_id", "from": "Researcher", "to": "FixtureValidation"},
+    {"artifact": "goal_id", "from": "Researcher", "to": "GoalValidation"},
+    {"artifact": "validation_id", "from": "Researcher", "to": "TripleValidation"},
+    {"artifact": "schema_validation_result", "from": "SchemaValidation", "to": "TripleValidation"},
+    {"artifact": "fixture_validation_result", "from": "FixtureValidation", "to": "TripleValidation"},
+    {"artifact": "goal_validation_result", "from": "GoalValidation", "to": "TripleValidation"},
+    {"artifact": "triple_validation", "from": "TripleValidation", "to": "Confirmed"},
+    {"artifact": "confirmed_package", "from": "Confirmed", "to": "CreateHash"},
+    {"artifact": "confirmed_package", "from": "Confirmed", "to": "Builder"},
+    {"artifact": "HASH", "from": "CreateHash", "to": "Builder"},
+    {"artifact": "HASH", "from": "CreateHash", "to": "Hash"},
+    {"artifact": "hash_sandbox", "from": "Builder", "to": "Hash"},
+    {"artifact": "build_result", "from": "Builder", "to": "Hash"},
+    {"artifact": "verified_HASH", "from": "Hash", "to": "Done"}
   ],
   "nodes": [
-    {
-      "id": "Prompt",
-      "kind": "source"
-    },
-    {
-      "id": "Researcher",
-      "kind": "processor"
-    },
-    {
-      "id": "Planner",
-      "kind": "processor"
-    },
-    {
-      "id": "Refactor",
-      "kind": "processor"
-    },
-    {
-      "id": "GapAnalysis",
-      "kind": "processor"
-    },
-    {
-      "id": "Evaluation",
-      "kind": "processor"
-    },
-    {
-      "id": "SchemaValidation",
-      "kind": "validator"
-    },
-    {
-      "id": "FixtureValidation",
-      "kind": "validator"
-    },
-    {
-      "id": "GoalValidation",
-      "kind": "validator"
-    },
-    {
-      "id": "TripleValidation",
-      "kind": "gate"
-    },
-    {
-      "id": "Confirmed",
-      "kind": "gate"
-    },
-    {
-      "id": "CreateHash",
-      "kind": "proof"
-    },
-    {
-      "id": "Hash",
-      "kind": "proof"
-    },
-    {
-      "id": "Done",
-      "kind": "terminal"
-    }
+    {"id": "Prompt", "kind": "source"},
+    {"id": "Researcher", "kind": "processor"},
+    {"id": "Planner", "kind": "processor"},
+    {"id": "Refactor", "kind": "processor"},
+    {"id": "GapAnalysis", "kind": "processor"},
+    {"id": "GapCheck", "kind": "processor"},
+    {"id": "GapFix", "kind": "processor"},
+    {"id": "GapRecheck", "kind": "processor"},
+    {"id": "GapAnalysisComplete", "kind": "processor"},
+    {"id": "Evaluation", "kind": "processor"},
+    {"id": "SchemaValidation", "kind": "validator"},
+    {"id": "FixtureValidation", "kind": "validator"},
+    {"id": "GoalValidation", "kind": "validator"},
+    {"id": "TripleValidation", "kind": "gate"},
+    {"id": "Confirmed", "kind": "gate"},
+    {"id": "CreateHash", "kind": "proof"},
+    {"id": "Builder", "kind": "processor"},
+    {"id": "Hash", "kind": "proof"},
+    {"id": "Done", "kind": "terminal"}
   ],
   "parallel_groups": [
     {
       "group_id": "TripleValidation",
       "join": "TripleValidation",
-      "members": [
-        "SchemaValidation",
-        "FixtureValidation",
-        "GoalValidation"
-      ]
+      "members": ["SchemaValidation", "FixtureValidation", "GoalValidation"]
     }
   ],
-  "version": "1",
+  "workflow_agents": [
+    {
+      "id": "OneShotCanonicalWorkflow",
+      "type": "SequentialAgent",
+      "members": [
+        "Researcher",
+        "Planner",
+        "Refactor",
+        "GapAnalysis",
+        "Evaluation",
+        "TripleValidation",
+        "Confirmed",
+        "CreateHash",
+        "Builder",
+        "Hash",
+        "Done"
+      ]
+    },
+    {
+      "id": "GapAnalysisLoop",
+      "type": "LoopAgent",
+      "members": ["GapCheck", "GapFix", "GapRecheck"],
+      "exit": "GapAnalysisComplete"
+    },
+    {
+      "id": "TripleValidationParallel",
+      "type": "ParallelAgent",
+      "members": ["SchemaValidation", "FixtureValidation", "GoalValidation"],
+      "join": "TripleValidation"
+    }
+  ],
+  "version": "2",
   "workflow_id": "oneshot-canonical-workflow"
 }
