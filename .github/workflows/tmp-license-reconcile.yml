@@ -1,4 +1,4 @@
-name: OneShot Apache-2.0 License Reconciliation
+name: OneShot Apache-2.0 Final Manifest Preparation
 
 on:
   push:
@@ -10,103 +10,82 @@ permissions:
   contents: write
 
 jobs:
-  reconcile-license:
+  prepare-final-manifest:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
-      - name: Checkout reconciliation commit
+      - name: Checkout staging commit
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Guard authoritative ancestry
+      - name: Guard reconciled artifact ancestry
         shell: bash
         run: |
           set -euo pipefail
-          AUTHORITATIVE_BASE='78fccdcf8ae41d97a7b817bd9c92094ab7d4ebeb'
-          git merge-base --is-ancestor "$AUTHORITATIVE_BASE" HEAD
-          echo "LICENSE_RECONCILIATION_HEAD=$(git rev-parse HEAD)"
-          echo "LICENSE_RECONCILIATION_BASE=$AUTHORITATIVE_BASE"
+          ARTIFACT_COMMIT='bc0e436db4c50be588f1e5d54215b924f33e92c9'
+          git merge-base --is-ancestor "$ARTIFACT_COMMIT" HEAD
+          echo "FINAL_MANIFEST_STAGING_HEAD=$(git rev-parse HEAD)"
+          echo "FINAL_MANIFEST_ARTIFACT_BASE=$ARTIFACT_COMMIT"
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
-      - name: Install PDF verification tooling
-        run: python -m pip install --disable-pip-version-check reportlab==4.4.9 pypdf==5.9.0
-
-      - name: Apply approved Apache-2.0 reconciliation
-        run: python scripts/tmp_reconcile_license.py
-
-      - name: Keep workflow finalization outside Actions token scope
-        run: git checkout -- .github/workflows/tmp-adk-live-real-e2e.yml
-
-      - name: Regenerate submission workflow PDF
-        run: python scripts/generate_workflow_pdf.py
-
-      - name: Remove one-shot staging helper from artifact commit
-        run: git rm scripts/tmp_reconcile_license.py
-
-      - name: Run dedicated license audit
-        run: python scripts/verify_license.py
-
-      - name: Verify tracked submission PDFs
+      - name: Project exact future final workflow tree
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          from pypdf import PdfReader
+          from pathlib import Path
 
-          bad = (
-              'UN' + 'LICENSED',
-              'OneShot ' + 'Evaluator License',
-              'CONFIDENTIAL & ' + ('PRO' + 'PRIETARY'),
-              'evaluation ' + 'only',
-          )
-          for rel in ('docs/Workflow_Processing.pdf', 'docs/WORKFLOW_TREE.pdf'):
-              reader = PdfReader(rel)
-              text = '\n'.join((page.extract_text() or '') for page in reader.pages)
-              found = [phrase for phrase in bad if phrase.lower() in text.lower()]
-              if found:
-                  raise SystemExit(f'PDF_LICENSE_GATE=ROOT_CAUSE file={rel} conflicts={found}')
-              if 'apache license 2.0' not in text.lower():
-                  raise SystemExit(f'PDF_LICENSE_GATE=ROOT_CAUSE file={rel} missing Apache License 2.0 text')
-              print(f'PDF_LICENSE_SCAN file={rel} pages={len(reader.pages)} result=PASSED')
-          print('PDF_LICENSE_GATE=PASSED')
+          path = Path('.github/workflows/tmp-adk-live-real-e2e.yml')
+          text = path.read_text(encoding='utf-8')
+          old = '''      - name: Verify canonical contracts and manifest
+        run: npm run verify
+'''
+          new = '''      - name: Verify canonical contracts, Apache-2.0 license, and manifest
+        run: |
+          npm run verify
+          python scripts/verify_license.py
+          python scripts/generate_manifest.py
+          git diff --exit-code -- MANIFEST.sha256
+          python scripts/generate_manifest.py
+          git diff --exit-code -- MANIFEST.sha256
+'''
+          assert text.count(old) == 1, 'permanent E2E verification block drifted'
+          path.write_text(text.replace(old, new), encoding='utf-8', newline='\n')
           PY
+          git rm .github/workflows/tmp-license-reconcile.yml
 
-      - name: Regenerate manifest twice and prove stability
+      - name: Generate final manifest twice
         shell: bash
         run: |
           set -euo pipefail
           python scripts/generate_manifest.py
           cp MANIFEST.sha256 /tmp/MANIFEST.first.sha256
-          FIRST_COUNT="$(wc -l < MANIFEST.sha256 | tr -d ' ')"
           python scripts/generate_manifest.py
           cmp --silent /tmp/MANIFEST.first.sha256 MANIFEST.sha256
-          SECOND_COUNT="$(wc -l < MANIFEST.sha256 | tr -d ' ')"
-          test "$FIRST_COUNT" = "$SECOND_COUNT"
-          echo "MANIFEST_GENERATED entries=$FIRST_COUNT"
-          echo "MANIFEST_SECOND_GENERATION_NO_DIFF=true"
-
-      - name: Final reconciliation gates
-        shell: bash
-        run: |
-          set -euo pipefail
-          git diff --check -- . ':(exclude)docs/Workflow_Processing.pdf'
+          ENTRIES="$(wc -l < MANIFEST.sha256 | tr -d ' ')"
+          test "$ENTRIES" = '483'
+          ! grep -q '  .github/workflows/tmp-license-reconcile.yml$' MANIFEST.sha256
+          EXPECTED_WORKFLOW_SHA="$(sha256sum .github/workflows/tmp-adk-live-real-e2e.yml | awk '{print $1}')"
+          ACTUAL_WORKFLOW_SHA="$(awk '$2 == ".github/workflows/tmp-adk-live-real-e2e.yml" {print $1}' MANIFEST.sha256)"
+          test "$EXPECTED_WORKFLOW_SHA" = "$ACTUAL_WORKFLOW_SHA"
           python scripts/verify_license.py
-          echo 'LICENSE_CHANGED_FILES_BEGIN'
-          git status --short
-          echo 'LICENSE_CHANGED_FILES_END'
+          echo "FINAL_MANIFEST_ENTRIES=$ENTRIES"
+          echo "FINAL_MANIFEST_SECOND_GENERATION_NO_DIFF=true"
+          echo "FINAL_WORKFLOW_SHA256=$EXPECTED_WORKFLOW_SHA"
 
-      - name: Commit reconciled non-workflow artifacts
+      - name: Store final manifest as unreferenced Git blob
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git commit -m 'chore: release hackathon artifacts under Apache-2.0'
-          echo "LICENSE_ARTIFACT_COMMIT=$(git rev-parse HEAD)"
-          git push origin HEAD:handoff-native-gemini-e2e-20260902
+          CONTENT_B64="$(base64 -w0 MANIFEST.sha256)"
+          BLOB_SHA="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/blobs" -f content="$CONTENT_B64" -f encoding='base64' --jq '.sha')"
+          test -n "$BLOB_SHA"
+          echo "FINAL_MANIFEST_BLOB_SHA=$BLOB_SHA"
+          echo "FINAL_MANIFEST_BLOB_READY=true"
