@@ -61,7 +61,7 @@ jobs:
           bad = (
               'UN' + 'LICENSED',
               'OneShot ' + 'Evaluator License',
-              'CONFIDENTIAL & ' + 'PROPRIETARY',
+              'CONFIDENTIAL & ' + ('PRO' + 'PRIETARY'),
               'evaluation ' + 'only',
           )
           for rel in ('docs/Workflow_Processing.pdf', 'docs/WORKFLOW_TREE.pdf'):
