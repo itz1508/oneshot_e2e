@@ -20,27 +20,30 @@ function configuredModel(name: string): string {
   return (process.env[name] || "").trim();
 }
 
+function envTrue(name: string): boolean {
+  return /^(?:1|true|yes)$/i.test((process.env[name] || "").trim());
+}
+
 export function loadAdkGemmaConfig(projectRoot: string): AdkGemmaConfig {
   const testDraftFile = process.env.ONESHOT_ADK_TEST_DRAFT_FILE
     ? resolve(projectRoot, process.env.ONESHOT_ADK_TEST_DRAFT_FILE)
     : undefined;
-  const legacyTestModel = (process.env.GEMMA2_LOCAL_MODEL || "gemma2:9b").trim();
 
   const distributionModel =
-    configuredModel("GEMMA2_DISTRIBUTION_MODEL") ||
-    (testDraftFile ? legacyTestModel : "");
+    configuredModel("GEMINI_DISTRIBUTION_MODEL") ||
+    (testDraftFile ? "test-distribution" : "");
   const researchModel =
-    configuredModel("GEMMA2_RESEARCH_MODEL") ||
-    (testDraftFile ? legacyTestModel : "");
+    configuredModel("GEMINI_RESEARCH_MODEL") ||
+    (testDraftFile ? "test-research" : "");
   const synthesisModel =
-    configuredModel("GEMMA2_SYNTHESIS_MODEL") ||
-    (testDraftFile ? legacyTestModel : "");
+    configuredModel("GEMINI_SYNTHESIS_MODEL") ||
+    (testDraftFile ? "test-synthesis" : "");
 
   if (!testDraftFile) {
     const missing = [
-      ["GEMMA2_DISTRIBUTION_MODEL", distributionModel],
-      ["GEMMA2_RESEARCH_MODEL", researchModel],
-      ["GEMMA2_SYNTHESIS_MODEL", synthesisModel],
+      ["GEMINI_DISTRIBUTION_MODEL", distributionModel],
+      ["GEMINI_RESEARCH_MODEL", researchModel],
+      ["GEMINI_SYNTHESIS_MODEL", synthesisModel],
     ]
       .filter(([, value]) => !value)
       .map(([name]) => name);
@@ -51,7 +54,7 @@ export function loadAdkGemmaConfig(projectRoot: string): AdkGemmaConfig {
     }
     if (new Set([distributionModel, researchModel, synthesisModel]).size !== 3) {
       throw new Error(
-        "Google ADK Researcher pipeline requires three distinct model bindings: distribution, research, synthesis",
+        "Google ADK Researcher pipeline requires three distinct Gemini model bindings: distribution, research, synthesis",
       );
     }
   }
@@ -60,15 +63,14 @@ export function loadAdkGemmaConfig(projectRoot: string): AdkGemmaConfig {
     distributionModel,
     researchModel,
     synthesisModel,
-    ollamaBaseUrl:
-      process.env.OLLAMA_API_BASE ||
-      `http://${process.env.GEMMA2_LOCAL_HOST || "localhost"}:${process.env.GEMMA2_LOCAL_PORT || "11434"}`,
-    workerPoolSize: positiveInt(process.env.GEMMA2_NUM_PARALLEL, 2),
+    googleCloudProject: (process.env.GOOGLE_CLOUD_PROJECT || "").trim() || undefined,
+    googleCloudLocation:
+      (process.env.GOOGLE_CLOUD_LOCATION || "global").trim() || "global",
+    useVertexAi: envTrue("GOOGLE_GENAI_USE_VERTEXAI"),
+    workerPoolSize: positiveInt(process.env.GEMINI_NUM_PARALLEL, 2),
     cacheUrl: process.env.REDIS_URL || process.env.CACHE_URL || undefined,
     cacheTtlSeconds: positiveInt(process.env.CACHE_TTL, 3600),
-    autoPull:
-      (process.env.GEMMA2_AUTO_PULL || "false").toLowerCase() === "true",
-    timeoutSeconds: positiveInt(process.env.GEMMA2_TIMEOUT_SECONDS, 300),
+    timeoutSeconds: positiveInt(process.env.GEMINI_TIMEOUT_SECONDS, 300),
     testDraftFile,
   };
 }
@@ -106,7 +108,7 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
         ready: false,
         provider: "google-adk",
         models: [],
-        detail: "ADK Gemma worker pool is empty",
+        detail: "ADK Gemini worker pool is empty",
       };
     }
     try {
@@ -115,7 +117,7 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
         ready: health.ready,
         provider: health.provider,
         models: health.models,
-        detail: health.detail || health.ollama_api_base,
+        detail: health.detail || `${health.backend}:${health.google_cloud_location || ""}`,
       };
     } catch (error) {
       return {
@@ -137,7 +139,7 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
     evidence: Awaited<ReturnType<ResearchEvidenceCollector["collect"]>>,
   ) {
     if (!this.workers.length)
-      throw new Error("ADK Gemma worker pool is empty");
+      throw new Error("ADK Gemini worker pool is empty");
     const worker = this.workers[this.cursor++ % this.workers.length];
     return await worker.research({ prompt, run_id: runId, evidence });
   }
@@ -155,7 +157,7 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
         actual: error instanceof Error ? error.message : String(error),
         evidence_ids: [],
         required_correction:
-          "Correct the three model bindings, Ollama readiness, ADK runtime, or structured model response",
+          "Correct the three GEMINI_* model bindings, Google authentication/Vertex configuration, ADK runtime, or structured model response",
         recheck_target: runId,
       });
     }
@@ -172,7 +174,9 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
       draft: d,
       gathered,
       providerSource: `google-adk-pipeline:${models.join("->")}`,
-      providerProvenance: "local-three-model-ollama",
+      providerProvenance: this.config.useVertexAi
+        ? "vertex-ai-native-adk"
+        : "gemini-api-native-adk",
       incompleteIssue: "ADK research draft incomplete",
       incompleteCorrection:
         "Correct Researcher ADK pipeline instructions or model response",
