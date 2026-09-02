@@ -53,6 +53,8 @@ SYNTHESIS_MODEL = os.getenv("GEMMA2_SYNTHESIS_MODEL", "").strip()
 BASE = os.getenv("OLLAMA_API_BASE", "http://localhost:11434").rstrip("/")
 TTL = max(1, int(os.getenv("CACHE_TTL", "3600")))
 TIMEOUT = max(1, int(os.getenv("GEMMA2_TIMEOUT_SECONDS", "300")))
+REFINEMENT_ATTEMPTS = max(1, int(os.getenv("GEMMA2_REFINEMENT_ATTEMPTS", "3")))
+MAX_OUTPUT_TOKENS = max(512, int(os.getenv("GEMMA2_MAX_OUTPUT_TOKENS", "3072")))
 AUTO_PULL = os.getenv("GEMMA2_AUTO_PULL", "false").lower() == "true"
 TEST_DRAFT = os.getenv("ONESHOT_ADK_TEST_DRAFT_FILE", "").strip()
 EMIT_EVENTS = os.getenv("ONESHOT_ADK_EMIT_EVENTS", "false").lower() == "true"
@@ -85,6 +87,113 @@ def _pipeline_models() -> list[str]:
             "Researcher model pipeline requires three distinct model bindings"
         )
     return models
+
+
+def _prompt_text(prompt: dict[str, Any]) -> str:
+    parts = [
+        str(prompt.get("intent", "")),
+        str(prompt.get("requested_outcome", "")),
+    ]
+    parts.extend(
+        str(item.get("statement", ""))
+        for item in prompt.get("context", [])
+        if isinstance(item, dict)
+    )
+    parts.extend(
+        str(item)
+        for item in prompt.get("research_direction", [])
+        if isinstance(item, str)
+    )
+    return "\n".join(part for part in parts if part).strip()
+
+
+def _draft_semantic_issues(
+    prompt: dict[str, Any], draft: ResearchDraft
+) -> list[str]:
+    issues: list[str] = []
+    requirement_count = len(draft.requirements)
+
+    def validate_indexes(label: str, indexes: list[int]):
+        invalid = sorted(
+            {
+                index
+                for index in indexes
+                if index < 0 or index >= requirement_count
+            }
+        )
+        if invalid:
+            issues.append(
+                f"{label} contains requirement indexes outside 0..{requirement_count - 1}: {invalid}"
+            )
+
+    for index, dependency in enumerate(draft.dependencies):
+        validate_indexes(f"dependencies[{index}].required_by", dependency.required_by)
+    for index, step in enumerate(draft.plan_steps):
+        validate_indexes(
+            f"plan_steps[{index}].requirement_indexes", step.requirement_indexes
+        )
+    for index, criterion in enumerate(draft.success_criteria):
+        validate_indexes(
+            f"success_criteria[{index}].requirement_indexes",
+            criterion.requirement_indexes,
+        )
+
+    prompt_text = _prompt_text(prompt)
+    lower = prompt_text.lower()
+    requires_node_commands = (
+        "every plan step description" in lower
+        and (
+            "beginning with node" in lower
+            or "direct shell command" in lower
+        )
+    )
+    if requires_node_commands:
+        for index, step in enumerate(draft.plan_steps):
+            command = step.description.strip()
+            if not (command == "node" or command.startswith("node ")):
+                issues.append(
+                    f"plan_steps[{index}].description reduced explicit executable requirement; expected command beginning with node"
+                )
+
+    literal_markers = [
+        "BEFORE_VERIFY target_files_absent=true",
+        "PRODUCT_VERIFY mp4=true mp3=true wav=false",
+    ]
+    for marker in literal_markers:
+        if marker in prompt_text and not any(
+            marker in step.description for step in draft.plan_steps
+        ):
+            issues.append(
+                f"plan_steps omitted explicit verification marker: {marker}"
+            )
+
+    if (
+        "final step must run node verify.js" in lower
+        and draft.plan_steps[-1].description.strip() != "node verify.js"
+    ):
+        issues.append(
+            "final plan step reduced explicit requirement; expected exactly node verify.js"
+        )
+
+    return issues
+
+
+def _refinement_feedback(error: Exception) -> str:
+    detail = _preview(str(error), 900)
+    return (
+        "NOT_VALID refinement required for the same Prompt(id). "
+        "The previous synthesis was malformed or reduced explicit user value. "
+        "Do not remove, weaken, summarize away, or replace any explicit requested behavior or constraint. "
+        "Return one concise valid ResearchDraft. "
+        "All required_by and requirement_indexes values are zero-based positions in the actual requirements array; "
+        "use only indexes that exist and never enumerate indexes beyond that array. "
+        "If the Prompt(id) explicitly requires executable plan-step commands or literal verification markers, preserve them exactly in plan_steps.description. "
+        f"Previous issue: {detail}"
+    )
+
+
+def _refinable_draft_error(error: Exception) -> bool:
+    return str(error).startswith("NOT_VALID ")
 
 
 def _key(prompt: dict[str, Any], evidence: list[dict[str, Any]]) -> str:
@@ -147,6 +256,15 @@ async def _cache_set(key: str, value: str):
         except Exception:
             pass
     _cache[key] = (time.time() + TTL, value)
+
+
+async def _cache_delete(key: str):
+    if _redis:
+        try:
+            await _redis.delete(key)
+        except Exception:
+            pass
+    _cache.pop(key, None)
 
 
 def _ollama_tags() -> list[str]:
@@ -241,7 +359,9 @@ async def _build_runner():
         ),
         instruction=(
             "You are the distribution stage of the OneShot Researcher pipeline. "
-            "Read the user request and supplied repository evidence. In at most 8 short bullets, identify exactly what the research stage must preserve: requested behavior, evidence, constraints, executable steps, and measurable success. "
+            "Read the user request, supplied repository evidence, and any refinement_feedback. "
+            "In at most 8 short bullets, identify exactly what the research stage must preserve: requested behavior, evidence, constraints, executable steps, and measurable success. "
+            "If refinement_feedback exists, explicitly correct that prior defect without reducing any user requirement. "
             "Do not produce the final ResearchDraft, do not add architecture, and do not invent repository facts. Be concise."
         ),
         generate_content_config=types.GenerateContentConfig(
@@ -259,9 +379,12 @@ async def _build_runner():
         ),
         instruction=(
             "You are the research stage of the OneShot Researcher pipeline. "
-            "Use the user request, supplied evidence, and preceding distribution analysis. Return a concise candidate with requirements, dependencies, executable plan steps, and measurable criteria. "
-            "Requirements and success criteria must be grounded in supplied evidence. Dependency required_by indexes refer to requirement indexes, not plan-step indexes. "
-            "If the request asks for executable sandbox implementation steps, preserve the exact requested commands/verification strings and propose direct commands without Markdown fences. "
+            "Use the user request, supplied evidence, preceding distribution analysis, and any refinement_feedback. "
+            "Return a concise candidate with requirements, dependencies, executable plan steps, and measurable criteria. "
+            "Requirements and success criteria must be grounded in supplied evidence. "
+            "Dependency required_by indexes refer to zero-based requirement indexes, not plan-step indexes, and may only reference indexes that exist. "
+            "If the request asks for executable sandbox implementation steps, preserve the exact requested commands and verification strings and propose direct commands without Markdown fences. "
+            "If refinement_feedback exists, correct the prior defect while preserving all previously requested value. "
             "Do not invent deployment, provider, database, security, or workflow requirements that are not requested. Keep the response under 700 words."
         ),
         generate_content_config=types.GenerateContentConfig(
@@ -279,14 +402,18 @@ async def _build_runner():
         ),
         instruction=(
             "You are the synthesis stage of the OneShot Researcher pipeline. "
-            "Review the original request, evidence, distribution analysis, and research candidate. Return one final ResearchDraft only. "
+            "Review the original request, evidence, distribution analysis, research candidate, and any refinement_feedback. "
+            "Return one final ResearchDraft only. "
             "Keep only evidence-backed requirements, dependencies, implementation steps, success meaning, and measurable success criteria. "
-            "When the user explicitly asks for executable sandbox implementation, every plan_steps.description must be a directly executable command beginning with node, sh, bash, python, or echo; never use Markdown or explanatory prose. "
-            "Preserve literal verification strings requested by the user so execution evidence can prove behavior. Correct inconsistencies without inventing unsupported facts."
+            "Every required_by and requirement_indexes value is a zero-based index into the final requirements array and must be less than the number of final requirements; never enumerate indexes beyond the actual requirements. "
+            "When the user explicitly asks for executable sandbox implementation, every plan_steps.description must be a directly executable command beginning with the exact command prefix requested by the user; never use Markdown or explanatory prose. "
+            "Preserve literal verification strings requested by the user so execution evidence can prove behavior. "
+            "If refinement_feedback exists, correct that prior NOT_VALID defect and preserve all explicit user value. "
+            "Correct inconsistencies without inventing unsupported facts."
         ),
         generate_content_config=types.GenerateContentConfig(
             temperature=0.0,
-            max_output_tokens=1536,
+            max_output_tokens=MAX_OUTPUT_TOKENS,
         ),
         output_schema=ResearchDraft,
         output_key="research_final",
@@ -302,7 +429,10 @@ async def _build_runner():
 
 
 async def _adk(
-    prompt: dict[str, Any], evidence: list[dict[str, Any]], req_id: int | None
+    prompt: dict[str, Any],
+    evidence: list[dict[str, Any]],
+    req_id: int | None,
+    refinement_feedback: str = "",
 ) -> ResearchDraft:
     emit(req_id, "researcher-pipeline", "RUNNING", "distribution -> research -> synthesis")
     emit(req_id, "distribution-model", "RUNNING", DISTRIBUTION_MODEL)
@@ -318,7 +448,12 @@ async def _adk(
         parts=[
             types.Part.from_text(
                 text=json.dumps(
-                    {"prompt": prompt, "evidence": evidence}, ensure_ascii=False
+                    {
+                        "prompt": prompt,
+                        "evidence": evidence,
+                        "refinement_feedback": refinement_feedback,
+                    },
+                    ensure_ascii=False,
                 )
             )
         ],
@@ -375,8 +510,23 @@ async def _adk(
         )
 
     final_text = stage_outputs["ResearcherSynthesis"]
-    emit(req_id, "researcher-pipeline", "COMPLETE", "three live model responses observed and structured synthesis returned")
-    return ResearchDraft.model_validate_json(final_text)
+    emit(
+        req_id,
+        "researcher-pipeline",
+        "COMPLETE",
+        "three live model responses observed and structured synthesis returned",
+    )
+    try:
+        draft = ResearchDraft.model_validate_json(final_text)
+    except Exception as error:
+        raise RuntimeError(
+            f"NOT_VALID structured synthesis: {type(error).__name__}: {error}"
+        ) from error
+
+    issues = _draft_semantic_issues(prompt, draft)
+    if issues:
+        raise RuntimeError("NOT_VALID research draft: " + "; ".join(issues))
+    return draft
 
 
 async def research(
@@ -395,18 +545,75 @@ async def research(
     emit(req_id, "cache", "RUNNING", "lookup research draft")
     cached = await _cache_get(key)
     if cached:
-        emit(req_id, "cache", "COMPLETE", "hit")
-        emit(req_id, "research-draft", "COMPLETE", "loaded from non-canonical cache")
-        emit(req_id, "researcher-provider", "COMPLETE")
-        return ResearchDraft.model_validate_json(cached).model_dump()
-    emit(req_id, "cache", "COMPLETE", "miss")
+        try:
+            cached_draft = ResearchDraft.model_validate_json(cached)
+            cached_issues = _draft_semantic_issues(prompt, cached_draft)
+        except Exception as error:
+            cached_draft = None
+            cached_issues = [f"cached draft invalid: {type(error).__name__}: {error}"]
+        if cached_draft is not None and not cached_issues:
+            emit(req_id, "cache", "COMPLETE", "hit")
+            emit(req_id, "research-draft", "COMPLETE", "loaded from non-canonical cache")
+            emit(req_id, "researcher-provider", "COMPLETE")
+            return cached_draft.model_dump()
+        await _cache_delete(key)
+        emit(
+            req_id,
+            "cache",
+            "COMPLETE",
+            "discarded cached draft because explicit Prompt(id) value was not preserved",
+        )
+    else:
+        emit(req_id, "cache", "COMPLETE", "miss")
 
     if TEST_DRAFT:
         draft = ResearchDraft.model_validate_json(
             Path(TEST_DRAFT).read_text(encoding="utf-8")
         )
+        issues = _draft_semantic_issues(prompt, draft)
+        if issues:
+            raise RuntimeError(
+                "NOT_VALID deterministic adapter draft: " + "; ".join(issues)
+            )
     else:
-        draft = await asyncio.wait_for(_adk(prompt, evidence, req_id), timeout=TIMEOUT)
+        refinement_feedback = ""
+        last_error: Exception | None = None
+        for attempt in range(1, REFINEMENT_ATTEMPTS + 1):
+            try:
+                draft = await asyncio.wait_for(
+                    _adk(
+                        prompt,
+                        evidence,
+                        req_id,
+                        refinement_feedback=refinement_feedback,
+                    ),
+                    timeout=TIMEOUT,
+                )
+                if attempt > 1:
+                    emit(
+                        req_id,
+                        "research-draft-refinement",
+                        "COMPLETE",
+                        f"VALID after attempt={attempt}; same Prompt(id) preserved",
+                    )
+                break
+            except Exception as error:
+                last_error = error
+                if (
+                    attempt >= REFINEMENT_ATTEMPTS
+                    or not _refinable_draft_error(error)
+                ):
+                    raise
+                refinement_feedback = _refinement_feedback(error)
+                emit(
+                    req_id,
+                    "research-draft-refinement",
+                    "RUNNING",
+                    f"NOT_VALID attempt={attempt}; retrying same Prompt(id): {_preview(str(error), 700)}",
+                )
+        else:
+            assert last_error is not None
+            raise last_error
 
     raw = draft.model_dump_json()
     await _cache_set(key, raw)
