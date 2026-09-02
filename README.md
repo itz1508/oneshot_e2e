@@ -9,7 +9,7 @@ OneShot is a governed AI engineering workflow that turns user intent into resear
 
 ## Prompt to Agent
 
-The evaluator only needs to copy and paste this into a repository-capable agent:
+**This is the only prompt the evaluator needs to use. Copy the complete prompt below and paste it into a repository-capable agent. The agent will handle the rest.**
 
 ```text
 You are the OneShot technical review agent.
