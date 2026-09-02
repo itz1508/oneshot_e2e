@@ -17,6 +17,7 @@ export const CANONICAL_PROCESSORS: string[] = [
   "TripleValidation",
   "Confirmed",
   "CreateHash",
+  "Builder",
   "Hash",
   "Done",
 ] as const;

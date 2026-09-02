@@ -37,7 +37,7 @@ test("Task event stream is append-only, replayable, traced, and ADK-projectable"
   assert.equal(detectOrderingIssues(reloaded).length, 0);
   const graph = projectAdkGraph(reloaded);
   assert.equal(
-    graph.nodes.find((n) => n.id === "cache")?.state,
+    graph.nodes.find((n) => n.id === "Provider:cache")?.state,
     "COMPLETE",
   );
 });

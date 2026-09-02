@@ -14,6 +14,14 @@ test("negative 1: Hash mismatch halts execution before sandbox workspace or runn
   const out = await h.runtime.run(runId, prompt(runId));
   const confirmed = await h.store.load<any>(runId, "confirmed");
 
+  // The canonical chain above executes Builder in the sandbox, so its
+  // successful run already emitted ExecutionStarted events. The tampered
+  // execution below must not add any new ones.
+  const executionStartedBefore = h.events
+    .list(runId)
+    .filter((e) => e.scope === "SANDBOX" && e.processor === "ExecutionStarted")
+    .length;
+
   const sandbox = new SandboxService(h.contracts, h.events);
   const tamperedInput: SandboxExecutionInput = {
     confirmed_package: confirmed,
@@ -29,7 +37,11 @@ test("negative 1: Hash mismatch halts execution before sandbox workspace or runn
 
   const events = h.events.list(runId).filter((e) => e.scope === "SANDBOX");
   assert.ok(events.some((e) => e.processor === "SandboxAdmissionVerified" && e.result === "ROOT_CAUSE"));
-  assert.equal(events.some((e) => e.processor === "ExecutionStarted"), false);
+  assert.equal(
+    events.filter((e) => e.processor === "ExecutionStarted").length,
+    executionStartedBefore,
+    "tampered execution must not start the runner",
+  );
 
   h.bridge.close();
 });

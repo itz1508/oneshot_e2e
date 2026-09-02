@@ -237,7 +237,7 @@
       "version": "1",
       "artifact_type": "workflow-graph",
       "schema_path": "schema/workflow-graph.schema.json",
-      "schema_digest": "346a912f19a9d6f7b3c83a9abad03b77a9e9986ffaa0330f20947ac88c168a85",
+      "schema_digest": "54194e81a54940fbd1809f27f7be0cab502a0fe3317f7c6d5a3d570972a2cb9c",
       "producer": "WorkflowDefinition",
       "consumers": [
         "WorkflowVerifier"
