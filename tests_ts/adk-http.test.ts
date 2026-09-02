@@ -50,7 +50,7 @@ test("HTTP/UI path reaches DONE through canonical ADK workflow and Researcher pr
     assert.equal(snap.result, "PASSED");
     assert.equal(snap.hash_proof.equal, true);
     const researcher = await h.store.load<any>(start.run_id, "researcher");
-    assert.match(researcher.evidence[0].source, /google-adk:gemma2:9b/);
+    assert.match(researcher.evidence[0].source, /google-adk-pipeline:/);
     assert.equal(
       snap.events.find(
         (e: any) => e.processor === "Builder" && e.state === "COMPLETE",
@@ -67,13 +67,14 @@ test("HTTP/UI path reaches DONE through canonical ADK workflow and Researcher pr
     const graph = (await fetch(
       `${base}/api/runs/${start.run_id}/adk-graph`,
     ).then((r) => r.json())) as any;
-    assert.equal(graph.graph_id, "oneshot-adk-workflow-v2");
+    assert.equal(graph.graph_id, "oneshot-adk-dynamic-workflow-v3");
     assert.equal(graph.authority, "projection-only");
     assert.equal(graph.execution_authority, "@google/adk");
-    assert.equal(graph.root_agent.type, "SequentialAgent");
-    assert.equal(graph.workflow_agents.gap_analysis, "LoopAgent");
-    assert.equal(graph.workflow_agents.triple_validation, "ParallelAgent");
-    assert.equal(graph.provider_subgraph.attached_to, "ResearcherStage");
+    assert.equal(graph.root_agent.type, "Workflow");
+    assert.equal(graph.workflow_agents.pipeline, "node+ctx.runNode");
+    assert.equal(graph.workflow_agents.gap_analysis, "dynamic ctx.runNode loop");
+    assert.equal(graph.workflow_agents.triple_validation, "Promise.all(ctx.runNode)");
+    assert.equal(graph.provider_subgraph.attached_to, "Researcher");
     assert.equal(
       graph.nodes.find((n: any) => n.id === "Provider:cache")?.state,
       "COMPLETE",
@@ -81,6 +82,16 @@ test("HTTP/UI path reaches DONE through canonical ADK workflow and Researcher pr
     assert.equal(
       graph.nodes.find((n: any) => n.id === "Provider:research-draft")?.state,
       "COMPLETE",
+    );
+    console.log(
+      "HTTP_WORKFLOW_RESPONSE_JSON=" +
+        JSON.stringify({
+          run_id: start.run_id,
+          result: snap.result,
+          researcher_source: researcher.evidence[0].source,
+          graph_id: graph.graph_id,
+          root_type: graph.root_agent.type,
+        }),
     );
   } finally {
     server.closeAllConnections();
