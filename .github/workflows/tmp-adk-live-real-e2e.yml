@@ -81,8 +81,14 @@ jobs:
       - name: Run all compiled TypeScript tests
         run: node --test dist/tests_ts/*.test.js
 
-      - name: Verify canonical contracts and manifest
-        run: npm run verify
+      - name: Verify canonical contracts, Apache-2.0 license, and manifest
+        run: |
+          npm run verify
+          python scripts/verify_license.py
+          python scripts/generate_manifest.py
+          git diff --exit-code -- MANIFEST.sha256
+          python scripts/generate_manifest.py
+          git diff --exit-code -- MANIFEST.sha256
 
       - name: Print focused PromptGenerator and complete session transcript
         run: |
