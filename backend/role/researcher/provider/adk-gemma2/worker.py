@@ -70,6 +70,10 @@ def emit(req_id: int | None, node: str, state: str, message: str | None = None):
     print(json.dumps(payload, separators=(",", ":")), flush=True)
 
 
+def _preview(text: str, limit: int = 700) -> str:
+    return " ".join(text.split())[:limit]
+
+
 def _pipeline_models() -> list[str]:
     models = [DISTRIBUTION_MODEL, RESEARCH_MODEL, SYNTHESIS_MODEL]
     if any(not model for model in models):
@@ -251,12 +255,12 @@ async def _build_runner():
         ),
         instruction=(
             "You are the research stage of the OneShot Researcher pipeline. "
-            "Use the user request, supplied evidence, and the preceding distribution analysis to create an evidence-backed structured ResearchDraft. "
+            "Use the user request, supplied evidence, and the preceding distribution analysis to prepare an evidence-backed candidate for the final ResearchDraft. "
             "Requirements and success criteria must be grounded in supplied evidence. "
             "Dependency required_by indexes refer to requirement indexes, not plan-step indexes. "
+            "If the request asks for executable sandbox implementation steps, preserve that requirement and propose directly executable commands without Markdown fences. "
             "Do not invent deployment, provider, database, security, or workflow requirements that are not requested."
         ),
-        output_schema=ResearchDraft,
         output_key="research_candidate",
     )
 
@@ -270,6 +274,8 @@ async def _build_runner():
             "You are the synthesis stage of the OneShot Researcher pipeline. "
             "Review the original request, evidence, distribution analysis, and research candidate. "
             "Return one final ResearchDraft that preserves evidence-backed requirements, dependencies, implementation steps, success meaning, and measurable success criteria. "
+            "When the user explicitly asks for executable sandbox implementation, each plan_steps.description must be a directly executable command beginning with node, sh, bash, python, or echo; never wrap commands in Markdown or explanatory prose. "
+            "Preserve literal verification strings requested by the user so execution evidence can prove the product behavior. "
             "Correct inconsistencies without inventing unsupported facts."
         ),
         output_schema=ResearchDraft,
@@ -290,8 +296,6 @@ async def _adk(
 ) -> ResearchDraft:
     emit(req_id, "researcher-pipeline", "RUNNING", "distribution -> research -> synthesis")
     emit(req_id, "distribution-model", "RUNNING", DISTRIBUTION_MODEL)
-    emit(req_id, "research-model", "RUNNING", RESEARCH_MODEL)
-    emit(req_id, "synthesis-model", "RUNNING", SYNTHESIS_MODEL)
 
     runner = await _build_runner()
     session = await runner.session_service.create_session(
@@ -310,8 +314,14 @@ async def _adk(
         ],
     )
 
-    synthesis_text: str | None = None
-    last_final_text: str | None = None
+    stage_outputs: dict[str, str] = {}
+    stage_nodes = {
+        "ResearcherDistribution": ("distribution-model", DISTRIBUTION_MODEL),
+        "ResearcherResearch": ("research-model", RESEARCH_MODEL),
+        "ResearcherSynthesis": ("synthesis-model", SYNTHESIS_MODEL),
+    }
+    started = {"ResearcherDistribution"}
+
     async for event in runner.run_async(
         user_id="oneshot", session_id=session.id, new_message=message
     ):
@@ -327,18 +337,35 @@ async def _adk(
         ).strip()
         if not text:
             continue
-        last_final_text = text
-        if getattr(event, "author", None) == "ResearcherSynthesis":
-            synthesis_text = text
 
-    final_text = synthesis_text or last_final_text
-    if not final_text:
-        raise RuntimeError("Google ADK Researcher pipeline returned no final synthesis response")
+        author = getattr(event, "author", None)
+        if author not in stage_nodes:
+            continue
+        stage_outputs[author] = text
+        node_name, model_name = stage_nodes[author]
+        emit(
+            req_id,
+            node_name,
+            "COMPLETE",
+            f"model={model_name} response={_preview(text)}",
+        )
 
-    emit(req_id, "distribution-model", "COMPLETE", DISTRIBUTION_MODEL)
-    emit(req_id, "research-model", "COMPLETE", RESEARCH_MODEL)
-    emit(req_id, "synthesis-model", "COMPLETE", SYNTHESIS_MODEL)
-    emit(req_id, "researcher-pipeline", "COMPLETE", "structured synthesis returned")
+        if author == "ResearcherDistribution" and "ResearcherResearch" not in started:
+            started.add("ResearcherResearch")
+            emit(req_id, "research-model", "RUNNING", RESEARCH_MODEL)
+        if author == "ResearcherResearch" and "ResearcherSynthesis" not in started:
+            started.add("ResearcherSynthesis")
+            emit(req_id, "synthesis-model", "RUNNING", SYNTHESIS_MODEL)
+
+    missing = [name for name in stage_nodes if name not in stage_outputs]
+    if missing:
+        raise RuntimeError(
+            "Google ADK Researcher pipeline did not return final responses for: "
+            + ", ".join(missing)
+        )
+
+    final_text = stage_outputs["ResearcherSynthesis"]
+    emit(req_id, "researcher-pipeline", "COMPLETE", "three live model responses observed and structured synthesis returned")
     return ResearchDraft.model_validate_json(final_text)
 
 
