@@ -1,9 +1,10 @@
 import type { ProcessingEvent } from "../contract/types.js";
-import { ResearcherRole } from "../role/researcher/role.js";
+import { BuilderRole } from "../role/builder/role.js";
+import { EvaluationRole } from "../role/evaluation/role.js";
+import { GapAnalysisRole } from "../role/gap-analysis/role.js";
 import { PlannerRole } from "../role/planner/role.js";
 import { RefactorRole } from "../role/refactor/role.js";
-import { GapAnalysisRole } from "../role/gap-analysis/role.js";
-import { EvaluationRole } from "../role/evaluation/role.js";
+import { ResearcherRole } from "../role/researcher/role.js";
 
 export interface AuthorityNode {
   id: string;
@@ -15,16 +16,10 @@ export interface AuthorityNode {
   capability?: string;
   input?: string;
   output?: string;
-  /** Canonical artifact/state ownership declared by the role boundary. */
   owns?: readonly string[];
   state: "PENDING" | "RUNNING" | "COMPLETE";
   artifact_id?: string;
 }
-
-// ---------------------------------------------------------------------------
-// Responsibility catalog — maps every processor (including ADK sub-nodes) to
-// its authority, responsibility, skill, tool, capability, and I/O boundaries.
-// ---------------------------------------------------------------------------
 
 const CATALOG: Record<
   string,
@@ -61,9 +56,10 @@ const CATALOG: Record<
   GapAnalysis: {
     authority: GapAnalysisRole.id,
     owns: GapAnalysisRole.owns,
-    responsibility: "identify/correct remaining plan gaps",
+    responsibility: "identify/correct remaining plan gaps through ADK LoopAgent",
     skill: "gap-analysis",
     tool: "coverage",
+    capability: "Google ADK LoopAgent",
     input: "plan_id",
     output: "gap_0 + plan_id",
   },
@@ -78,32 +74,36 @@ const CATALOG: Record<
   },
   SchemaValidation: {
     authority: "Validator",
-    responsibility: "schema proof",
+    responsibility: "deterministic schema proof",
     skill: "canonical-contracts",
     tool: "validate_schema",
+    capability: "ParallelAgent branch",
     input: "schema_id + plan_id",
     output: "VALID | NOT_VALID",
   },
   FixtureValidation: {
     authority: "Validator",
-    responsibility: "fixture proof",
+    responsibility: "deterministic fixture proof",
     skill: "canonical-contracts",
     tool: "run_fixture",
+    capability: "ParallelAgent branch",
     input: "fixture_id + plan_id",
     output: "VALID | NOT_VALID",
   },
   GoalValidation: {
     authority: "Validator",
-    responsibility: "goal proof",
+    responsibility: "deterministic goal proof",
     skill: "canonical-contracts",
     tool: "validate_references",
+    capability: "ParallelAgent branch",
     input: "goal_id + plan_id",
     output: "VALID | NOT_VALID",
   },
   TripleValidation: {
     authority: "Validator",
-    responsibility: "aggregate independent validation proofs",
+    responsibility: "join independent Schema, Fixture, and Goal proofs",
     skill: "canonical-contracts",
+    capability: "Google ADK ParallelAgent + deterministic gate",
     input: "Schema + Fixture + Goal validation results",
     output: "VALID | NOT_VALID",
   },
@@ -116,28 +116,38 @@ const CATALOG: Record<
   },
   CreateHash: {
     authority: "CanonicalWorkflow",
-    responsibility: "canonicalize confirmed core and create SHA-256",
+    responsibility: "canonicalize confirmed core and create H1",
     skill: "canonical-contracts",
     tool: "create_hash",
     input: "confirmed_package.core",
     output: "HASH",
   },
+  Builder: {
+    authority: BuilderRole.id,
+    owns: BuilderRole.owns,
+    responsibility: "execute the exact confirmed package through the governed sandbox",
+    skill: "sandbox-runtime",
+    tool: "execute_sandbox",
+    input: "confirmed_package + HASH + execution_authorization",
+    output: "build_result + execution_evidence + hash_sandbox",
+  },
   Hash: {
     authority: "CanonicalWorkflow",
-    responsibility: "recompute and compare hash",
+    responsibility: "compare confirmation H1 with sandbox-side confirmed-core H2",
     skill: "canonical-contracts",
     tool: "verify_hash",
-    input: "confirmed_package.core + HASH",
+    input: "HASH + hash_sandbox",
     output: "verified HASH",
   },
   Done: {
     authority: "CanonicalWorkflow",
     responsibility: "terminal result projection",
-    input: "verified HASH",
-    output: "PASSED | ROOT CAUSE",
+    input: "build_result + verified HASH",
+    output: "PASSED | ROOT_CAUSE",
   },
 
-  // ADK sub-nodes (projection-only — attached to Researcher boundary)
+  // Researcher provider ADK subgraph. This remains distinct from the new
+  // top-level canonical ADK workflow authority.
   "ADK:researcher-provider": {
     authority: "Researcher",
     responsibility: "provider invocation",
@@ -189,10 +199,10 @@ const CATALOG: Record<
     output: "research draft",
   },
 
-  // External Sandbox execution boundary nodes (projection-only)
+  // Sandbox execution is part of Builder's canonical execution responsibility.
   "ExternalSandbox:admission": {
     authority: "SandboxWorker",
-    responsibility: "package structure and canonical hash admission proof",
+    responsibility: "package structure and H1 admission proof",
     skill: "sandbox-runtime",
     tool: "verify_admission",
     input: "confirmed_package + HASH",
@@ -208,7 +218,7 @@ const CATALOG: Record<
   },
   "ExternalSandbox:evidence": {
     authority: "SandboxWorker",
-    responsibility: "execution evidence recording (stdout/err refs, metrics, file changes)",
+    responsibility: "execution evidence recording",
     skill: "sandbox-runtime",
     tool: "audit_sandbox",
     input: "execution output",
@@ -216,41 +226,33 @@ const CATALOG: Record<
   },
   "ExternalSandbox:hash-verification": {
     authority: "SandboxWorker",
-    responsibility: "recompute and verify sandbox canonical hash (HASH == hash_sandbox)",
+    responsibility: "recompute H2 from the same immutable confirmed core",
     skill: "sandbox-runtime",
-    tool: "verify_hash",
-    input: "confirmed_package.core + HASH",
-    output: "verified hash_sandbox",
+    tool: "create_hash",
+    input: "confirmed_package.core",
+    output: "hash_sandbox",
   },
 };
 
-/**
- * Project the authority / responsibility / skill / tool / capability graph.
- *
- * This is projection-only metadata — it never authorizes canonical workflow
- * transitions.  The graph is derived from the responsibility catalog plus
- * runtime event state.
- */
+/** Projection-only authority/responsibility graph. */
 export function projectAuthorityGraph(events: ProcessingEvent[] = []) {
-  // Resolve latest event per processor
   const latest = new Map<string, ProcessingEvent>();
-  for (const e of events) latest.set(e.processor, e);
+  for (const event of events) latest.set(event.processor, event);
 
-  // Build nodes from the catalog, overlaying runtime state
-  const nodes = Object.entries(CATALOG).map(([id, c]) => {
-    const e = latest.get(id);
+  const nodes = Object.entries(CATALOG).map(([id, catalog]) => {
+    const event = latest.get(id);
     return {
       id,
-      label: id.replace(/^ADK:/, "ADK / ").replace(/^ExternalSandbox:/, "Sandbox / "),
-      ...c,
-      state: (e?.state ?? "PENDING") as AuthorityNode["state"],
-      artifact_id: e?.artifact_id,
+      label: id
+        .replace(/^ADK:/, "ADK / ")
+        .replace(/^ExternalSandbox:/, "Sandbox / "),
+      ...catalog,
+      state: (event?.state ?? "PENDING") as AuthorityNode["state"],
+      artifact_id: event?.artifact_id,
     };
   });
 
-  const ids = new Set(nodes.map((n) => n.id));
-
-  // Canonical workflow edges
+  const ids = new Set(nodes.map((node) => node.id));
   const edges: string[][] = [
     ["Researcher", "Planner"],
     ["Planner", "Refactor"],
@@ -264,17 +266,16 @@ export function projectAuthorityGraph(events: ProcessingEvent[] = []) {
     ["GoalValidation", "TripleValidation"],
     ["TripleValidation", "Confirmed"],
     ["Confirmed", "CreateHash"],
-    ["CreateHash", "Hash"],
-    ["Hash", "Done"],
-    // Sandbox external handoff chain
-    ["Done", "ExternalSandbox:admission"],
+    ["CreateHash", "Builder"],
+    ["Builder", "ExternalSandbox:admission"],
     ["ExternalSandbox:admission", "ExternalSandbox:runner"],
     ["ExternalSandbox:runner", "ExternalSandbox:evidence"],
     ["ExternalSandbox:evidence", "ExternalSandbox:hash-verification"],
+    ["ExternalSandbox:hash-verification", "Hash"],
+    ["Hash", "Done"],
   ];
 
-  // ADK sub-chain
-  const adk = [
+  const researcherProvider = [
     "ADK:researcher-provider",
     "ADK:cache",
     "ADK:adk-runner",
@@ -283,15 +284,14 @@ export function projectAuthorityGraph(events: ProcessingEvent[] = []) {
     "ADK:gemma2",
     "ADK:research-draft",
   ];
-  for (let i = 0; i < adk.length - 1; i++) {
-    edges.push([adk[i], adk[i + 1]]);
+  for (let i = 0; i < researcherProvider.length - 1; i += 1) {
+    edges.push([researcherProvider[i], researcherProvider[i + 1]]);
   }
 
-  // Validate traceability — every edge endpoint must resolve
-  const unresolved = edges.flat().filter((x) => !ids.has(x));
+  const unresolved = [...new Set(edges.flat().filter((id) => !ids.has(id)))];
 
   return {
-    graph_id: "oneshot-authority-trace-v1",
+    graph_id: "oneshot-authority-trace-v2",
     authority: "projection-only",
     traceability: { valid: unresolved.length === 0, unresolved },
     nodes,

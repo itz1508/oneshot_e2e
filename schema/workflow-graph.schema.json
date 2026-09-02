@@ -117,6 +117,98 @@
       },
       "type": "array"
     },
+    "workflow_agents": {
+      "items": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "SequentialAgent"
+                }
+              },
+              "required": ["type"]
+            },
+            "then": {
+              "not": {
+                "anyOf": [
+                  {"required": ["exit"]},
+                  {"required": ["join"]}
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "LoopAgent"
+                }
+              },
+              "required": ["type"]
+            },
+            "then": {
+              "required": ["exit"],
+              "not": {"required": ["join"]}
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "ParallelAgent"
+                }
+              },
+              "required": ["type"]
+            },
+            "then": {
+              "required": ["join"],
+              "not": {"required": ["exit"]}
+            }
+          }
+        ],
+        "properties": {
+          "exit": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "join": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "type": {
+            "enum": [
+              "SequentialAgent",
+              "LoopAgent",
+              "ParallelAgent"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "members"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
     "version": {
       "minLength": 1,
       "type": "string"
@@ -132,7 +224,8 @@
     "nodes",
     "edges",
     "artifact_ownership",
-    "parallel_groups"
+    "parallel_groups",
+    "workflow_agents"
   ],
   "type": "object"
 }
