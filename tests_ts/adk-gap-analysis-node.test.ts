@@ -33,11 +33,7 @@ test("ADK runs Refactor then existing Gap Analysis until fresh gap_0", async () 
       );
       const research = researchResult.output as ResearchBundle;
 
-      // Planner/Refactor correct one branch first. Leave a separate schema gap
-      // for Gap Analysis so this test proves check -> fix -> fresh recheck.
       research.plan.steps[0].goal_refs = [];
-      research.plan.steps[0].schema_refs = [];
-
       const auditResult = await ctx.runNode(
         plannerNode,
         { job_id: jobId, research },
@@ -52,9 +48,7 @@ test("ADK runs Refactor then existing Gap Analysis until fresh gap_0", async () 
       );
       const refactored = refactorResult.output as Plan;
 
-      // Force one remaining deterministic gap after Refactor so Gap Analysis
-      // must improve the same plan and recheck it.
-      refactored.schema_refs;
+      // Leave one real missing traceability edge for Gap Analysis itself.
       refactored.steps[0].schema_refs = [];
 
       const gapResult = await ctx.runNode(
@@ -64,13 +58,7 @@ test("ADK runs Refactor then existing Gap Analysis until fresh gap_0", async () 
       );
       const out = gapResult.output as { plan: Plan; gap: GapAnalysis };
 
-      return {
-        research,
-        audit,
-        refactored,
-        gapPlan: out.plan,
-        gap: out.gap,
-      };
+      return { research, audit, refactored, gapPlan: out.plan, gap: out.gap };
     },
     { name: "refactor_gap_probe", rerunOnResume: true },
   );
