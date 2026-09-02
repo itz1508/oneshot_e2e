@@ -15,7 +15,19 @@ export interface TripleValidationNodeInput {
   plan: Plan;
 }
 
-export function createTripleValidationNode(triple: TripleValidationWorkflow) {
+export interface TripleValidationNodeEffects {
+  event?(
+    jobId: string,
+    processor: "SchemaValidation" | "FixtureValidation" | "GoalValidation",
+    state: "RUNNING" | "COMPLETE",
+    data?: Record<string, unknown>,
+  ): void;
+}
+
+export function createTripleValidationNode(
+  triple: TripleValidationWorkflow,
+  effects: TripleValidationNodeEffects = {},
+) {
   const admissionNode = node(
     async (_ctx: NodeContext, input: { research: ResearchBundle; plan: Plan }) => {
       await triple.assertRouting(input.research, input.plan);
@@ -69,37 +81,45 @@ export function createTripleValidationNode(triple: TripleValidationWorkflow) {
         { runId: `${input.job_id}-validation-admission` },
       )).output as { research: ResearchBundle; plan: Plan };
 
+      effects.event?.(input.job_id, "SchemaValidation", "RUNNING");
+      effects.event?.(input.job_id, "FixtureValidation", "RUNNING");
+      effects.event?.(input.job_id, "GoalValidation", "RUNNING");
+
       // Start all three before awaiting any one: real ADK dynamic parallel fan-out.
-      const schemaTask = ctx.runNode(
-        schemaNode,
-        admitted,
-        { runId: `${input.job_id}-schema` },
-      );
-      const fixtureTask = ctx.runNode(
-        fixtureNode,
-        admitted,
-        { runId: `${input.job_id}-fixture` },
-      );
-      const goalTask = ctx.runNode(
-        goalNode,
-        admitted,
-        { runId: `${input.job_id}-goal` },
-      );
+      const schemaTask = ctx.runNode(schemaNode, admitted, { runId: `${input.job_id}-schema` });
+      const fixtureTask = ctx.runNode(fixtureNode, admitted, { runId: `${input.job_id}-fixture` });
+      const goalTask = ctx.runNode(goalNode, admitted, { runId: `${input.job_id}-goal` });
 
       const [schemaResult, fixtureResult, goalResult] = await Promise.all([
         schemaTask,
         fixtureTask,
         goalTask,
       ]);
+      const schema = schemaResult.output as SchemaValidationResult;
+      const fixture = fixtureResult.output as FixtureValidationResult;
+      const goal = goalResult.output as GoalValidationResult;
+
+      effects.event?.(input.job_id, "SchemaValidation", "COMPLETE", {
+        result: schema.result,
+        artifact_id: schema.schema_id,
+      });
+      effects.event?.(input.job_id, "FixtureValidation", "COMPLETE", {
+        result: fixture.result,
+        artifact_id: fixture.fixture_id,
+      });
+      effects.event?.(input.job_id, "GoalValidation", "COMPLETE", {
+        result: goal.result,
+        artifact_id: goal.goal_id,
+      });
 
       return (await ctx.runNode(
         joinNode,
         {
           research: admitted.research,
           plan: admitted.plan,
-          schema: schemaResult.output as SchemaValidationResult,
-          fixture: fixtureResult.output as FixtureValidationResult,
-          goal: goalResult.output as GoalValidationResult,
+          schema,
+          fixture,
+          goal,
         },
         { runId: `${input.job_id}-validation-join` },
       )).output as TripleValidation;
