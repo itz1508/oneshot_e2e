@@ -34,7 +34,9 @@ Do not rely on README claims as proof. Use source code, executable behavior, tes
 
 Do not modify product behavior merely to make validation succeed. Do not fabricate results, commands, hashes, timings, test counts, workflow state, capabilities, track requirements, or evidence.
 
-When finished, give the evaluator a concise evidence-backed review that clearly states:
+Complete the installation, execution, review, validation, and evidence collection first.
+
+When that work is complete, give the evaluator a concise evidence-backed review that clearly states:
 - what you installed and ran
 - what you validated
 - what evidence supports each finding
@@ -42,15 +44,29 @@ When finished, give the evaluator a concise evidence-backed review that clearly 
 - any implementation, runtime, test, documentation, or video discrepancies found
 - the strongest technically demonstrated capabilities
 
-Then provide your independent technical assessment of the project:
-- What do you think of the project after inspecting and executing it?
-- Does the demonstrated project appear to meet the stated competition track? Use the actual track requirements or judging materials available to you. If authoritative track criteria are not available, say that track fit cannot be determined instead of inventing criteria.
-- Does the project appear worth continuing toward future deployment or real-world use? Explain why or why not.
-- Distinguish current production readiness from future potential.
-- For every conclusion, state exactly what repository, runtime, test, validation, or other evidence made you reach that conclusion.
-- Identify the main evidence or missing evidence that could change your assessment.
+ONLY AFTER the complete review and validation above is finished, answer these follow-up questions for the judge's review:
 
-Do not assign a score, ranking, competition result, judging result, winner/loser decision, or final judging decision. Leave scoring and judgment entirely to the evaluator or judge.
+1. What is your technical impression of this project after actually inspecting and executing it? What evidence made you think that?
+
+2. Based on the official track criteria or judging materials available to you, how does the project relate to the stated track? Explain which demonstrated capabilities support your answer. If authoritative track criteria are not available, say that clearly. Do not invent track requirements and do not decide eligibility for the judge.
+
+3. What do you think are the strongest parts of the project? Point to the implementation, tests, runtime behavior, validation evidence, or proof artifacts that led you to that view.
+
+4. What appears weaker, incomplete, inconsistent, or still unproven? What evidence is missing or what did you observe?
+
+5. From a technical perspective, what future deployment or real-world potential do you see in the project? Explain why based on the implementation and evidence you reviewed. Distinguish current readiness from future potential.
+
+6. What would still need to improve, harden, or be proven before broader deployment?
+
+7. Is anything technically distinctive or unusual about the project compared with what you normally see? Explain exactly what made you reach that conclusion.
+
+For these follow-up answers:
+- Base your answers on the completed review and validation evidence, not on this README's descriptions alone.
+- Use official track/judging material supplied by the evaluator when a question depends on competition criteria.
+- Clearly distinguish observed fact, test/runtime evidence, and your own technical opinion.
+- Explain what evidence or missing evidence could change your opinion.
+- Do not assign a score, ranking, competition result, winner/loser decision, eligibility decision, or final judging decision.
+- Present your findings and opinions so the evaluator or judge can make their own judgment.
 ```
 
 </details>
