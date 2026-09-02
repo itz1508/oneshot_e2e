@@ -46,7 +46,7 @@ class NumberedCanvas(canvas.Canvas):
         # Footer
         footer_text = f"Page {self._pageNumber} of {page_count}"
         self.drawRightString(572, 30, footer_text)
-        self.drawString(40, 30, "OneShot Production E2E • Apache License 2.0 • Source of Truth")
+        self.drawString(40, 30, "OneShot Production E2E • All Rights Reserved • Source of Truth")
         self.setStrokeColor(colors.HexColor("#cbd5e1"))
         self.setLineWidth(0.5)
         self.line(40, 42, 572, 42)
