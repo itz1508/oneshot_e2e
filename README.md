@@ -1,6 +1,6 @@
-# OneShot Production E2E 1.3.0
+# OneShot E2E 1.3.0
 
-OneShot is a governed AI engineering workflow that turns user intent into researched, planned, validated, executed, and cryptographically verified work.
+OneShot is a governed AI engineering workflow for turning user intent into research, planning, deterministic validation, sandboxed execution, and hash-verified workflow evidence.
 
 **Repository:** https://github.com/itz1508/oneshot_e2e  
 **Download Source ZIP:** https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip  
@@ -62,7 +62,14 @@ PHASE 4 — COMPLETE THE TECHNICAL REVIEW
 - Inspect implementation, workflow behavior, schemas, fixtures, generated artifacts, execution evidence, and cryptographic proof material needed to understand what the project actually demonstrates.
 - Record the commands or repository paths used for important findings where useful.
 - Record failures, discrepancies, and anything that could not be verified.
-- Distinguish executed/runtime evidence, test evidence, implementation evidence, documentation/video context, and technical interpretation.
+- For material capability claims, classify the evidence precisely:
+  - EXECUTED — directly exercised during this review.
+  - TESTED — demonstrated by tests that you actually executed.
+  - IMPLEMENTED — present in source but not exercised during this review.
+  - DOCUMENTED — described in documentation, diagrams, or video only.
+  - UNVERIFIED — available evidence is insufficient to establish the claim.
+- Do not infer runtime behavior from documentation, diagrams, intended architecture, or the demonstration video.
+- Report discrepancies between claims, implementation, tests, and runtime behavior.
 - Use the Judge View / Demo Video only as visual context, not as technical proof.
 - After the technical review is complete, answer the Judge Evaluation questions displayed by `readme.ts` from the evidence you collected.
 
@@ -132,39 +139,53 @@ The evaluator does not need to manually repeat the agent's installation, test, v
 
 ---
 
-## OneShot Workflow Overview
+## OneShot Workflow
+
+The backend implementation composes the canonical workflow with the official Google ADK TypeScript workflow agents. Runtime/test status must still be determined from executed evidence rather than this diagram alone.
 
 ```text
+OneShotCanonicalWorkflow — SequentialAgent
+        ↓
 Researcher(Job_id)
-   ↓
+        ↓
 Planner
-   ↓
+        ↓
 Refactor
-   ↓
-Gap Analysis
-   ├─ gaps found → Gap Fix → Recheck ↺
-   └─ gap_0
+        ↓
+Gap Analysis — LoopAgent
+   ├─ Gap Check
+   ├─ gaps found → Gap Fix → Gap Recheck ↺
+   └─ gap_0 → continue
         ↓
 Evaluation
-   ├─ ROOT_CAUSE
+   ├─ ROOT_CAUSE → Done
    └─ PASSED
         ↓
-Schema ─┐
-Fixture ├─ Triple Validation
-Goal ───┘
+Triple Validation Admission
         ↓
-Validation Gate
-   ├─ NOT_VALID → ROOT CAUSE
-   └─ VALID
+Triple Validation — ParallelAgent
+   ├─ Schema Validation
+   ├─ Fixture Validation
+   └─ Goal Validation
         ↓
-Confirmed
-   ↓
+Triple Validation Gate
+   ├─ any NOT_VALID → ROOT_CAUSE
+   └─ all VALID
+        ↓
+Confirmed immutable core
+        ↓
+Create H1
+        ↓
 Builder / Sandbox Execution
-   ↓
+   ├─ execution evidence
+   └─ hash_sandbox = H2 from the same confirmed core
+        ↓
 Hash Verification
-   ├─ MATCH → DONE
-   └─ MISMATCH → ROOT CAUSE
+   ├─ H1 != H2 → ROOT_CAUSE
+   └─ H1 == H2 → DONE
 ```
+
+`H1 == H2` is the immutable confirmed-core handoff integrity check. Builder execution success is established separately by sandbox execution evidence such as command results, exit codes, file-change evidence, resource evidence, timeout evidence, and cleanup evidence.
 
 ---
 
