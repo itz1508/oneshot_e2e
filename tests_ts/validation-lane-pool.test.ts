@@ -17,7 +17,7 @@ test("Schema Fixture and Goal can enter three independent Python lanes before re
       super("python");
     }
 
-    override async call<T>(command: string): Promise<T> {
+    override async call<T>(command: string, _payload: unknown): Promise<T> {
       entered.add(this.lane);
       if (entered.size === 3) release();
       await barrier;
@@ -28,7 +28,7 @@ test("Schema Fixture and Goal can enter three independent Python lanes before re
           ...common,
           schema_id: "schema:test",
           result: "VALID",
-        } as T;
+        } as unknown as T;
       }
       if (command === "fixture-validation") {
         return {
@@ -36,7 +36,7 @@ test("Schema Fixture and Goal can enter three independent Python lanes before re
           fixture_id: "fixture:test",
           assertion_results: [],
           result: "VALID",
-        } as T;
+        } as unknown as T;
       }
       if (command === "goal-validation") {
         return {
@@ -44,9 +44,9 @@ test("Schema Fixture and Goal can enter three independent Python lanes before re
           goal_id: "goal:test",
           criterion_results: [],
           result: "VALID",
-        } as T;
+        } as unknown as T;
       }
-      return { valid: true } as T;
+      return { valid: true } as unknown as T;
     }
 
     override close(): void {}
