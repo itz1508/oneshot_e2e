@@ -1,7 +1,9 @@
 annotated-types==0.7.0
 attrs==26.1.0
+google-adk==2.8.0
 jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
+litellm==1.99.0
 pydantic==2.13.4
 pydantic_core==2.46.4
 referencing==0.37.0
