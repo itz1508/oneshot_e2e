@@ -10,7 +10,7 @@ OneShot is a governed AI engineering workflow that turns user intent into resear
 
 ## Prompt to Agent
 
-**This is the only prompt the evaluator needs to use. While viewing this GitHub repository, copy the complete prompt below and paste it into a repository-capable agent. The agent obtains/imports the project, runs the review flow, performs the technical work, and returns the final report.**
+**This is the only prompt the evaluator needs to use. While viewing this GitHub repository, copy the complete prompt below and paste it into a repository-capable agent. The agent obtains/imports the project, runs `readme.ts`, performs the full technical review, and returns the final report.**
 
 ```text
 You are the OneShot technical review agent.
@@ -28,11 +28,12 @@ PHASE 2 — PREPARE
 - Install the dependencies required by the repository-supported path if they are not already available.
 - Keep the acquired source unchanged except for normal generated build/runtime output required to execute the review.
 
-PHASE 3 — RUN THE TWO-PROMPT REVIEW FLOW
-- From the OneShot project root, run `npm run agent:review`.
-- Read Prompt 1 completely.
+PHASE 3 — RUN `readme.ts`
+- Run the OneShot review entrypoint: `readme.ts`.
+- Use the repository-supported command `npm run agent:review`; this compiles and executes `readme.ts`.
+- Read Prompt 1 completely when `readme.ts` displays it.
 - Allow the automatic 3-second transition.
-- Read and follow Prompt 2.
+- Read and follow Prompt 2 when it appears.
 
 PHASE 4 — COMPLETE THE TECHNICAL REVIEW
 - Perform the full repository and runtime review yourself.
@@ -55,7 +56,7 @@ PHASE 5 — RETURN THE REPORT
 - Open the OneShot GitHub repository page.
 - Copy the **Prompt to Agent** above.
 - Paste it into a repository-capable agent.
-- The agent handles repository import/acquisition, preparation, execution, validation, evidence collection, and reporting.
+- The agent handles repository import/acquisition, preparation, `readme.ts` execution, validation, evidence collection, and reporting.
 
 ### Agent flow
 
@@ -64,8 +65,12 @@ PHASE 5 — RETURN THE REPORT
   - Git clone is an equivalent acquisition method when available.
   - Open the project root containing `package.json` and `readme.ts`.
 
+- **Run `readme.ts`**
+  - `readme.ts` is the review entrypoint.
+  - Execute it through `npm run agent:review`.
+
 - **Prompt 1 — Agent Review Instruction**
-  - Run `npm run agent:review`.
+  - `readme.ts` displays Prompt 1 first.
   - Prompt 1 defines the technical-review responsibility and evidence areas.
   - Prompt 1 remains visible in the output.
 
@@ -74,6 +79,7 @@ PHASE 5 — RETURN THE REPORT
   - No screen clear, restart, second command, or manual continue step.
 
 - **Prompt 2 — Start Review**
+  - `readme.ts` displays Prompt 2 after the 3-second transition.
   - Prompt 2 starts the complete technical review.
   - The agent performs the work itself from beginning to end.
   - The technical review completes before Judge Evaluation.
@@ -90,7 +96,8 @@ Agent opens OneShot project root
             ↓
 Agent prepares required dependencies
             ↓
-    npm run agent:review
+Run readme.ts
+(`npm run agent:review`)
             ↓
 Prompt 1 — Agent Review Instruction
             ↓
