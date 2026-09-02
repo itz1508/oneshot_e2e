@@ -4,134 +4,135 @@ OneShot is a governed AI engineering workflow that turns user intent into resear
 
 **Repository:** https://github.com/itz1508/oneshot_e2e  
 **Download Source ZIP:** https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip  
-**Video:** https://www.youtube.com/watch?v=RQTxYwcNx_0  
+**Judge View / Demo Video:** https://www.youtube.com/watch?v=RQTxYwcNx_0  
 **Local UI:** `http://localhost:8787`
 
-### Available package paths
+---
 
-- **Source ZIP:** available from the direct download link above.
-- **Git clone/import:** use `https://github.com/itz1508/oneshot_e2e` when the agent environment supports GitHub repository access.
-- **Docker:** the repository contains a `Dockerfile` for building OneShot locally from source.
-- **GitHub Release package:** not published yet.
-- **npm package:** not published as a public npm package.
+## For Evaluators — One Prompt Only
+
+**This is the only prompt the evaluator needs to use.**
+
+1. Copy the complete **Prompt to Agent** below.
+2. Paste it into a repository-capable agent.
+3. The agent acquires OneShot, prepares the environment, runs `readme.ts`, performs the complete technical review and validation, and returns one evidence-backed report.
+4. No second start prompt is required from the evaluator.
+
+While the agent is working, the evaluator can watch the **Judge View / Demo Video** above to see the demonstrated OneShot experience. The video is orientation/reference material; the technical report is based on repository and runtime evidence gathered by the agent.
 
 ---
 
 ## Prompt to Agent
 
-**This is the only prompt the evaluator needs to use. While viewing this GitHub repository, copy the complete prompt below and paste it into a repository-capable agent. The agent obtains/imports the project, runs `readme.ts`, performs the full technical review, and returns the final report.**
-
 ```text
 You are the OneShot technical review agent.
 
-PHASE 1 — IMPORT ONESHOT
+Your task is to acquire OneShot, run its complete technical review workflow, collect evidence, complete Judge Evaluation from that evidence, and return one final report.
+
+PHASE 1 — ACQUIRE ONESHOT
 - Source repository: https://github.com/itz1508/oneshot_e2e
 - Source ZIP: https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip
-- Obtain the project yourself.
-- If your environment supports opening or importing the GitHub repository directly, use the source repository URL.
-- Otherwise, download the Source ZIP above, extract it, and open the extracted OneShot folder.
-- Git clone is also acceptable when your environment supports Git.
-- Work from the project root containing `package.json` and `readme.ts`.
+- Acquire the project yourself using the method supported by your environment:
+  - open/import the GitHub repository directly, or
+  - git clone the repository, or
+  - download the Source ZIP, extract it, and open the extracted folder.
+- Work from the OneShot project root containing `package.json` and `readme.ts`.
 
-PHASE 2 — PREPARE
-- Inspect the repository's actual dependency and runtime definitions.
-- Install the dependencies required by the repository-supported path if they are not already available.
-- Keep the acquired source unchanged except for normal generated build/runtime output required to execute the review.
+PHASE 2 — PREPARE THE ENVIRONMENT
+- Inspect `package.json`, the lockfile, runtime configuration, dependency definitions, and repository-supported scripts.
+- Install only the dependencies required by the repository-supported execution path.
+- Verify that the project root and review entrypoint are available.
+- Keep product source unchanged except for normal generated build, test, runtime, cache, or evidence output required by the review.
+- Continue automatically to Phase 3 when preparation is complete.
 
 PHASE 3 — RUN `readme.ts`
-- Run the OneShot review entrypoint: `readme.ts`.
-- Use the repository-supported command `npm run agent:review`; this compiles and executes `readme.ts`.
-- Read Prompt 1 completely when `readme.ts` displays it.
-- Allow the automatic 3-second transition.
-- Read and follow Prompt 2 when it appears.
+- Run the OneShot review entrypoint through the repository-supported command:
+  `npm run agent:review`
+- `readme.ts` displays Prompt 1 first.
+- Read Prompt 1 completely.
+- Keep the same process running during the automatic 3-second transition.
+- Read Prompt 2 when it appears and follow it completely.
+- Do not require another start message from the evaluator.
 
 PHASE 4 — COMPLETE THE TECHNICAL REVIEW
-- Perform the full repository and runtime review yourself.
-- Run the relevant tests and validation.
-- Exercise the product where the environment permits.
-- Inspect implementation and proof evidence.
-- Collect evidence throughout the review.
-- Complete Judge Evaluation after the technical review.
+- Perform the repository and runtime review yourself.
+- Discover and use the repository's actual supported build, launch, test, validation, proof, packaging, and runtime paths.
+- Launch and exercise the product where the environment permits.
+- Run the relevant tests and deterministic validation.
+- Inspect implementation, workflow behavior, schemas, fixtures, generated artifacts, execution evidence, and cryptographic proof material needed to understand what the project actually demonstrates.
+- Record the commands or repository paths used for important findings where useful.
+- Record failures, discrepancies, and anything that could not be verified.
+- Distinguish executed/runtime evidence, test evidence, implementation evidence, documentation/video context, and technical interpretation.
+- Use the Judge View / Demo Video only as visual context, not as technical proof.
+- After the technical review is complete, answer the Judge Evaluation questions displayed by `readme.ts` from the evidence you collected.
 
-PHASE 5 — RETURN THE REPORT
-- Continue through the entire workflow without requiring another start prompt.
-- When complete, return the complete evidence-backed technical review results and Judge Evaluation report.
+PHASE 5 — RETURN ONE COMPLETE REPORT
+Return one final evidence-backed report containing:
+- what you acquired, prepared, executed, inspected, and validated;
+- build, runtime, test, validation, workflow, and proof results that were actually observed;
+- commands or repository paths supporting important findings where useful;
+- failures, discrepancies, incomplete areas, and anything that could not be verified;
+- the strongest technically demonstrated capabilities;
+- the Judge Evaluation questions and evidence-backed answers;
+- any review/evidence artifacts actually generated during execution, with their paths when available.
+
+Continue through all phases automatically unless the environment itself requires an external permission or capability that you cannot provide. Return the report only after the complete review workflow is finished.
 ```
-
-<details>
-<summary><strong>Click for review flow in full</strong></summary>
-
-### Evaluator flow
-
-- Open the OneShot GitHub repository page.
-- Copy the **Prompt to Agent** above.
-- Paste it into a repository-capable agent.
-- The agent handles repository import/acquisition, preparation, `readme.ts` execution, validation, evidence collection, and reporting.
-
-### Agent flow
-
-- **Import / acquire OneShot**
-  - Import the GitHub repository directly when supported, or use the Source ZIP link above and extract it.
-  - Git clone is an equivalent acquisition method when available.
-  - Open the project root containing `package.json` and `readme.ts`.
-
-- **Run `readme.ts`**
-  - `readme.ts` is the review entrypoint.
-  - Execute it through `npm run agent:review`.
-
-- **Prompt 1 — Agent Review Instruction**
-  - `readme.ts` displays Prompt 1 first.
-  - Prompt 1 defines the technical-review responsibility and evidence areas.
-  - Prompt 1 remains visible in the output.
-
-- **Automatic transition — 3 seconds**
-  - Same `readme.ts` process.
-  - No screen clear, restart, second command, or manual continue step.
-
-- **Prompt 2 — Start Review**
-  - `readme.ts` displays Prompt 2 after the 3-second transition.
-  - Prompt 2 starts the complete technical review.
-  - The agent performs the work itself from beginning to end.
-  - The technical review completes before Judge Evaluation.
-  - The agent returns one complete evidence-backed report.
-
-```text
-Evaluator opens GitHub repository
-            ↓
-Copies the one Prompt to Agent
-            ↓
-Agent imports repo OR downloads Source ZIP
-            ↓
-Agent extracts/opens OneShot project root
-            ↓
-Agent prepares required dependencies
-            ↓
-Run readme.ts
-(`npm run agent:review`)
-            ↓
-Prompt 1 — Agent Review Instruction
-            ↓
-        wait 3s
-            ↓
-Prompt 2 — Start Review
-            ↓
-Repository / runtime review
-            ↓
-Tests + validation + evidence
-            ↓
-Judge Evaluation
-            ↓
-Complete results / report
-```
-
-</details>
 
 ---
 
-## Sample Workflow
+## Evaluator Flow
 
-<details>
-<summary><strong>Review workflow</strong></summary>
+```text
+Open OneShot GitHub repository
+        ↓
+Copy the one Prompt to Agent
+        ↓
+Paste it into a repository-capable agent
+        ↓
+Agent acquires/imports/clones/downloads OneShot
+        ↓
+Agent prepares required dependencies
+        ↓
+Agent runs readme.ts
+(`npm run agent:review`)
+        ↓
+Prompt 1 — Agent Review Instruction
+        ↓
+Automatic 3-second transition
+        ↓
+Prompt 2 — Start Review
+        ↓
+Full repository + runtime review
+        ↓
+Tests + validation + evidence collection
+        ↓
+Judge Evaluation
+        ↓
+One complete evidence-backed report
+```
+
+### While the agent runs
+
+The evaluator can use the waiting time to watch the **Judge View / Demo Video**:
+
+https://www.youtube.com/watch?v=RQTxYwcNx_0
+
+The evaluator does not need to manually repeat the agent's installation, test, validation, or evidence-collection work.
+
+---
+
+## Package / Acquisition Paths
+
+- **GitHub repository:** use `https://github.com/itz1508/oneshot_e2e` for direct import or Git clone.
+- **Source ZIP:** use the direct Source ZIP link at the top of this README.
+- **Docker:** the repository contains a `Dockerfile` for building OneShot locally from source.
+- **GitHub Release package:** not published yet.
+- **Public npm package:** not published.
+
+---
+
+## OneShot Workflow Overview
 
 ```text
 Researcher(Job_id)
@@ -149,7 +150,7 @@ Evaluation
    └─ PASSED
         ↓
 Schema ─┐
-Fixture ├─ JoinNode
+Fixture ├─ Triple Validation
 Goal ───┘
         ↓
 Validation Gate
@@ -158,14 +159,12 @@ Validation Gate
         ↓
 Confirmed
    ↓
-Builder
+Builder / Sandbox Execution
    ↓
 Hash Verification
    ├─ MATCH → DONE
    └─ MISMATCH → ROOT CAUSE
 ```
-
-</details>
 
 ---
 
