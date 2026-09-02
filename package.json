@@ -5,7 +5,8 @@
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=24.13.0",
+    "npm": ">=11.8.0"
   },
   "scripts": {
     "oneshot": "node oneshot.mjs",
@@ -23,6 +24,9 @@
     "verify:adk-live": "python scripts/verify_adk_live.py",
     "build:backend": "tsc -p tsconfig.json",
     "build:ui": "npm --prefix web run build"
+  },
+  "dependencies": {
+    "@google/adk": "2.0.0"
   },
   "devDependencies": {
     "@types/node": "file:vendor/npm/types-node-24.0.4.tgz",
