@@ -11,10 +11,14 @@ OneShot is a governed AI engineering workflow that turns user intent into resear
 
 ```text
 Perform a complete technical review and validation of the OneShot repository for the evaluator.
+
+Do the work yourself. Do not ask the evaluator to manually install dependencies, launch services, run commands, inspect files, or execute tests unless an external permission or unavailable capability makes that impossible.
+
+Install and run OneShot using the repository's actual supported installation and launch paths.
 ```
 
 <details>
-<summary><strong>Full evaluation workflow</strong> · Install, run, validate, review, then answer follow-up questions</summary>
+<summary><strong>Click for review in full</strong></summary>
 
 ```text
 Perform a complete technical review and validation of the OneShot repository for the evaluator.
