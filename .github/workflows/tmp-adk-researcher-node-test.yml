@@ -37,22 +37,10 @@ jobs:
       - name: Install Python dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
 
-      - name: Regenerate canonical contract registry for verification
-        shell: bash
-        run: |
-          python - <<'PY'
-          import base64, json
-          from pathlib import Path
-          from validation.registry import build_registry
-          raw = json.dumps(build_registry('schema'), indent=2) + '\n'
-          Path('schema/contract-registry.json').write_text(raw, encoding='utf-8')
-          print('REGISTRY_B64=' + base64.b64encode(raw.encode()).decode())
-          PY
-
       - name: Build backend and tests
         run: npm run build:backend
 
       - name: Run ADK Researcher connector test
         run: node --test --test-force-exit dist/tests_ts/adk-researcher-node.test.js
 
-# attempt: regenerated-registry
+# attempt: repository-truth
