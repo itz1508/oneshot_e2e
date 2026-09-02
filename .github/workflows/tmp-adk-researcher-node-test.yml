@@ -36,4 +36,4 @@ jobs:
       - name: Run all backend TypeScript tests
         run: node --test --test-force-exit dist/tests_ts/*.test.js
 
-# scope: dynamic production runtime integration + complete backend TypeScript suite
+# scope: dynamic production runtime integration + complete backend TypeScript suite + response evidence
