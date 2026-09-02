@@ -102,12 +102,12 @@ test("Prompt(id) carries explicit requirements and constraints into structured r
   assert.equal(result.prompt.context[0].statement, userMessage);
   assert.ok(
     result.prompt.research_direction.includes(
-      "User requirement: It must support audio and video",
+      "User requirement: It must support audio and video.",
     ),
   );
   assert.ok(
     result.prompt.research_direction.includes(
-      "User constraint: It must run offline",
+      "User constraint: It must run offline.",
     ),
   );
   assert.equal(result.prompt.research_direction.includes("requirements"), false);
