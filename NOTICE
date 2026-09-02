@@ -3,7 +3,7 @@ Copyright 2026 OneShot Authors. All rights reserved.
 
 OneShot-owned source code and materials are governed by the OneShot Evaluator
 License in the repository root LICENSE file. OneShot-owned material is not
-licensed under Apache-2.0.
+licensed under any third-party license.
 
 ========================================================================
 Third-Party Software Notice
@@ -15,9 +15,8 @@ Those licenses do not apply to OneShot-owned material.
 1. Google ADK for TypeScript (@google/adk)
    - Copyright Google LLC
    - Licensed under the Apache License, Version 2.0
-   - Used by the canonical workflow orchestration, including SequentialAgent,
-     LoopAgent, ParallelAgent, and Runner integration.
-   - Apache-2.0 license copy:
+   - Used by OneShot workflow orchestration.
+   - License copy:
      THIRD_PARTY_LICENSES/Google-ADK-Apache-2.0.txt
 
 2. Google ADK research-provider dependencies
