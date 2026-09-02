@@ -6,65 +6,32 @@ import type {
   RunSnapshot,
 } from "../contract/types.js";
 import { WorkflowInformationRequiredError } from "../core/information-required-error.js";
-import { WorkflowRootCauseError } from "../core/root-cause-error.js";
 import type { HelpRequest } from "../intent/types.js";
-import type { RolePipeline } from "../pipeline/role-pipeline.js";
-import type { ConfirmationWorkflow } from "../workflow/confirmation.js";
-import { createOneShotRootAgent } from "../workflow/adk/root-agent.js";
-import { ADK_STATE } from "../workflow/adk/state.js";
-import type { HashWorkflow } from "../workflow/hash.js";
-import type { TripleValidationWorkflow } from "../workflow/triple-validation.js";
+import type { BoundDynamicDependencies } from "../workflow/adk/dynamic-dependencies.js";
+import {
+  createOneShotDynamicWorkflow,
+  toDynamicRootCause,
+  type OneShotDynamicResult,
+} from "../workflow/adk/dynamic-root-agent.js";
 import type { ArtifactStore } from "./artifact-store.js";
 import type { ProcessingEventBus } from "./event-bus.js";
 import type { RunRepository } from "./run-repository.js";
 
-const APP_NAME = "oneshot-canonical-workflow";
+const APP_NAME = "oneshot-dynamic-workflow";
+export type DynamicDependencyFactory = (runId: string) => Promise<BoundDynamicDependencies>;
 
 /**
- * External runtime facade for the canonical OneShot workflow.
- *
- * Google ADK owns stage composition and ordering. RolePipeline owns explicit
- * per-run Role activation/binding. OneShot EventBus, ArtifactStore, and
- * RunRepository remain the durable product evidence path.
+ * External runtime facade for the canonical OneShot Google ADK dynamic Workflow.
+ * Existing OneShot Roles are imported by connector nodes and invoked through
+ * ctx.runNode(); their typed outputs are passed directly to downstream nodes.
  */
 export class WorkflowRuntime {
-  private readonly sessionService: InMemorySessionService;
-  private readonly runner: Runner;
-
   constructor(
     private events: ProcessingEventBus,
     private runs: RunRepository,
     readonly store: ArtifactStore,
-    private pipeline: RolePipeline,
-    triple: TripleValidationWorkflow,
-    confirmation: ConfirmationWorkflow,
-    hash: HashWorkflow,
-  ) {
-    const rootAgent = createOneShotRootAgent({
-      pipeline,
-      triple,
-      confirmation,
-      hash,
-      effects: {
-        event: (runId, processor, state, data = {}) =>
-          this.ev(runId, processor, state, data),
-        save: (runId, name, value) => this.save(runId, name, value),
-        finishPassed: (runId, proof) => {
-          this.finishPassed(runId, proof);
-        },
-        finishRoot: (runId, rootCause, proof) => {
-          this.finishRoot(runId, rootCause, proof);
-        },
-      },
-    });
-
-    this.sessionService = new InMemorySessionService();
-    this.runner = new Runner({
-      appName: APP_NAME,
-      agent: rootAgent,
-      sessionService: this.sessionService,
-    });
-  }
+    private bindDependencies: DynamicDependencyFactory,
+  ) {}
 
   private ev(
     runId: string,
@@ -130,7 +97,7 @@ export class WorkflowRuntime {
     return this.runs.finish(runId, "PASSED", proof);
   }
 
-  /** Execute one complete canonical workflow invocation through Google ADK. */
+  /** Execute one complete canonical job through ADK Workflow + ctx.runNode(). */
   async run(runId: string, prompt: Prompt): Promise<RunSnapshot> {
     const order = [
       "Researcher",
@@ -150,61 +117,64 @@ export class WorkflowRuntime {
     ];
     for (const processor of order) this.ev(runId, processor, "PENDING");
 
+    let bound: BoundDynamicDependencies | undefined;
     try {
-      const session = await this.sessionService.createSession({
+      bound = await this.bindDependencies(runId);
+      const rootAgent = createOneShotDynamicWorkflow(bound, {
+        event: (jobId, processor, state, data = {}) =>
+          this.ev(jobId, processor, state, data),
+        save: (jobId, name, value) => this.save(jobId, name, value),
+      });
+      const sessionService = new InMemorySessionService();
+      const runner = new Runner({
+        appName: APP_NAME,
+        agent: rootAgent,
+        sessionService,
+      });
+      const session = await sessionService.createSession({
         appName: APP_NAME,
         userId: runId,
         sessionId: runId,
-        state: {
-          [ADK_STATE.runId]: runId,
-          [ADK_STATE.prompt]: prompt,
-        },
       });
 
-      for await (const _event of this.runner.runAsync({
+      let terminal: OneShotDynamicResult | undefined;
+      for await (const event of runner.runAsync({
         userId: runId,
         sessionId: session.id,
         newMessage: {
           role: "user",
-          parts: [{ text: `Execute OneShot job ${runId}` }],
+          parts: [{ text: JSON.stringify({ job_id: runId, prompt }) }],
         },
       })) {
-        // ADK owns orchestration. Activated Role adapters emit canonical
-        // OneShot events and artifacts through the existing durable services.
+        if ("output" in event && event.output !== undefined) {
+          terminal = event.output as OneShotDynamicResult;
+        }
       }
 
-      const snapshot = this.runs.require(runId);
-      if (!snapshot.result) {
-        throw new Error("ADK workflow completed without a terminal OneShot result");
+      if (!terminal) {
+        throw new Error("ADK dynamic Workflow completed without terminal output");
       }
-      return snapshot;
+      if (terminal.result === "PASSED") {
+        return this.finishPassed(runId, terminal.hash_proof);
+      }
+      return this.finishRoot(
+        runId,
+        terminal.root_cause,
+        terminal.hash_proof,
+      );
     } catch (error) {
       const current = this.runs.require(runId);
       if (current.result) return current;
-
-      const rootCause: RootCause =
-        error instanceof WorkflowRootCauseError
-          ? error.rootCause
-          : {
-              issue: "Workflow execution failed",
-              expected: "Canonical ADK workflow reaches DONE",
-              actual: error instanceof Error ? error.message : String(error),
-              evidence_ids: [],
-              required_correction:
-                "Correct the reported execution, Role binding, provider, or contract failure",
-              recheck_target: runId,
-            };
-
       return this.finishRoot(
         runId,
-        rootCause,
+        toDynamicRootCause(error, runId),
         undefined,
         error instanceof WorkflowInformationRequiredError
           ? error.helpRequest
           : undefined,
       );
     } finally {
-      await this.pipeline.release(runId);
+      await bound?.release();
     }
   }
 }
