@@ -1,0 +1,168 @@
+name: OneShot Apache-2.0 License Reconciliation
+
+on:
+  push:
+    branches: [handoff-native-gemini-e2e-20260902]
+    paths:
+      - '.github/workflows/tmp-license-reconcile.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile-license:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout reconciliation commit
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Guard authoritative parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE='78fccdcf8ae41d97a7b817bd9c92094ab7d4ebeb'
+          ACTUAL_PARENT="$(git rev-parse HEAD^)"
+          echo "LICENSE_RECONCILIATION_HEAD=$(git rev-parse HEAD)"
+          echo "LICENSE_RECONCILIATION_PARENT=$ACTUAL_PARENT"
+          test "$ACTUAL_PARENT" = "$EXPECTED_BASE"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install PDF verification tooling
+        run: python -m pip install --disable-pip-version-check reportlab==4.4.9 pypdf==5.9.0
+
+      - name: Apply Apache-2.0 licensing reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path('.')
+
+          # Root LICENSE: preserve the repository's existing canonical Apache-2.0
+          # terms used for Google ADK, then add the standard application appendix.
+          third_party_license = root / 'THIRD_PARTY_LICENSES' / 'Google-ADK-Apache-2.0.txt'
+          license_text = third_party_license.read_text(encoding='utf-8').rstrip() + '\n\n'
+          if 'APPENDIX: How to apply the Apache License to your work.' not in license_text:
+              license_text += '''APPENDIX: How to apply the Apache License to your work.\n\n   To apply the Apache License to your work, attach the following\n   boilerplate notice, with the fields enclosed by brackets "[]"\n   replaced with your own identifying information. (Don't include\n   the brackets!)  The text should be enclosed in the appropriate\n   comment syntax for the file format. We also recommend that a\n   file or class name and description of purpose be included on the\n   same "printed page" as the copyright notice for easier\n   identification within third-party archives.\n\nCopyright [yyyy] [name of copyright owner]\n\nLicensed under the Apache License, Version 2.0 (the "License");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an "AS IS" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.\n'''
+          (root / 'LICENSE').write_text(license_text, encoding='utf-8', newline='\n')
+
+          package_path = root / 'package.json'
+          package_text = package_path.read_text(encoding='utf-8')
+          old_license = '"license": "UNLICENSED"'
+          assert package_text.count(old_license) == 1, 'unexpected package.json license state'
+          package_path.write_text(
+              package_text.replace(old_license, '"license": "Apache-2.0"'),
+              encoding='utf-8', newline='\n'
+          )
+
+          notice = '''OneShot E2E\nCopyright 2026 OneShot Authors\n\nOneShot-owned source code and materials in this repository are licensed under\nthe Apache License, Version 2.0. See the repository root LICENSE file.\n\n========================================================================\nThird-Party Software Notice\n========================================================================\n\nThird-party software remains governed by its own upstream license terms.\nThe OneShot Apache-2.0 license applies to OneShot-owned material and does not\nreplace or override applicable third-party licenses.\n\n1. Google ADK for TypeScript (@google/adk)\n   - Copyright Google LLC\n   - Licensed under the Apache License, Version 2.0\n   - Used by OneShot workflow orchestration.\n   - License copy:\n     THIRD_PARTY_LICENSES/Google-ADK-Apache-2.0.txt\n\n2. Google ADK research-provider dependencies\n   - Used by the isolated researcher provider adapter under\n     backend/role/researcher/provider/adk-gemma2/\n   - Governed by their respective upstream licenses.\n   - Manifest: requirements-adk.txt\n\n3. LiteLLM (litellm)\n   - Copyright (c) BerriAI\n   - Governed by its applicable upstream license.\n   - Manifest: requirements-adk.txt\n\n4. Redis Client (redis-py)\n   - Copyright (c) Redis Ltd.\n   - Governed by its applicable upstream license.\n   - Manifest: requirements-adk.txt\n'''
+          (root / 'NOTICE').write_text(notice, encoding='utf-8', newline='\n')
+
+          readme_path = root / 'README.md'
+          readme = readme_path.read_text(encoding='utf-8')
+          old = 'OneShot-owned source is provided under the [OneShot Evaluator License](LICENSE). Third-party software remains under its own upstream licenses; see [NOTICE](NOTICE) and [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES/).'
+          new = 'OneShot-owned source is licensed under the [Apache License 2.0](LICENSE). Third-party software remains under its applicable upstream licenses; see [NOTICE](NOTICE) and [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES/).'
+          assert readme.count(old) == 1, 'README license statement drifted'
+          readme_path.write_text(readme.replace(old, new), encoding='utf-8', newline='\n')
+
+          judge_path = root / 'docs' / 'JUDGE_README.md'
+          judge = judge_path.read_text(encoding='utf-8')
+          old = 'Apache License, Version 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE) for details.'
+          new = 'Apache License, Version 2.0. See [`LICENSE`](../LICENSE), [`NOTICE`](../NOTICE), and [`THIRD_PARTY_LICENSES`](../THIRD_PARTY_LICENSES/) for details.'
+          assert judge.count(old) == 1, 'JUDGE_README license links drifted'
+          judge_path.write_text(judge.replace(old, new), encoding='utf-8', newline='\n')
+
+          pdf_script_path = root / 'scripts' / 'generate_workflow_pdf.py'
+          pdf_script = pdf_script_path.read_text(encoding='utf-8')
+          old = 'CONFIDENTIAL & PROPRIETARY • APACHE LICENSE 2.0 • SHA-256 VERIFIED'
+          new = 'ONESHOT • APACHE LICENSE 2.0 • SHA-256 VERIFIED'
+          assert pdf_script.count(old) == 1, 'workflow PDF footer drifted'
+          pdf_script_path.write_text(pdf_script.replace(old, new), encoding='utf-8', newline='\n')
+
+          workflow_path = root / '.github' / 'workflows' / 'tmp-adk-live-real-e2e.yml'
+          workflow = workflow_path.read_text(encoding='utf-8')
+          old = '''      - name: Verify canonical contracts and manifest\n        run: npm run verify\n'''
+          new = '''      - name: Verify canonical contracts, Apache-2.0 license, and manifest\n        run: |\n          npm run verify\n          python scripts/verify_license.py\n          python scripts/generate_manifest.py\n          git diff --exit-code -- MANIFEST.sha256\n          python scripts/generate_manifest.py\n          git diff --exit-code -- MANIFEST.sha256\n'''
+          assert workflow.count(old) == 1, 'E2E verification step drifted'
+          workflow_path.write_text(workflow.replace(old, new), encoding='utf-8', newline='\n')
+
+          verifier = r'''#!/usr/bin/env python3\n"""Verify the OneShot hackathon repository Apache-2.0 licensing state."""\n\nfrom __future__ import annotations\n\nimport json\nimport subprocess\nfrom pathlib import Path\n\nROOT = Path(__file__).resolve().parent.parent\n\n\ndef fail(message: str) -> None:\n    raise SystemExit(f"LICENSE_GATE=ROOT_CAUSE {message}")\n\ndef require(condition: bool, message: str) -> None:\n    if not condition:\n        fail(message)\n\nlicense_text = (ROOT / "LICENSE").read_text(encoding="utf-8")\nfor required in (\n    "Apache License",\n    "Version 2.0, January 2004",\n    "END OF TERMS AND CONDITIONS",\n    "APPENDIX: How to apply the Apache License to your work.",\n):\n    require(required in license_text, f"LICENSE missing required text: {required}")\n\npackage = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))\nrequire(package.get("license") == "Apache-2.0", "package.json license is not Apache-2.0")\n\nnotice = (ROOT / "NOTICE").read_text(encoding="utf-8")\nrequire("OneShot-owned source code and materials in this repository are licensed under" in notice, "NOTICE missing OneShot license statement")\nrequire("Apache License, Version 2.0" in notice, "NOTICE missing Apache-2.0")\nrequire("THIRD_PARTY_LICENSES/Google-ADK-Apache-2.0.txt" in notice, "NOTICE missing Google ADK license pointer")\n\nrequire((ROOT / "THIRD_PARTY_LICENSES" / "Google-ADK-Apache-2.0.txt").is_file(), "Google ADK Apache-2.0 license copy missing")\nrequire((ROOT / "backend" / "role" / "researcher" / "provider" / "adk-gemma2" / "NOTICE.md").is_file(), "ADK provider notice missing")\n\nreadme = (ROOT / "README.md").read_text(encoding="utf-8")\nrequire("[Apache License 2.0](LICENSE)" in readme, "README Apache-2.0 link missing")\njudge = (ROOT / "docs" / "JUDGE_README.md").read_text(encoding="utf-8")\nrequire("[`LICENSE`](../LICENSE)" in judge, "JUDGE_README LICENSE link is not repository-relative")\nrequire("[`NOTICE`](../NOTICE)" in judge, "JUDGE_README NOTICE link is not repository-relative")\nrequire("[`THIRD_PARTY_LICENSES`](../THIRD_PARTY_LICENSES/)" in judge, "JUDGE_README third-party license link missing")\n\ntracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).split(b"\\0")\ntext_suffixes = {"", ".md", ".txt", ".json", ".jsonl", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".py", ".sh", ".ps1", ".yml", ".yaml", ".toml", ".ini", ".cfg"}\nskip_prefixes = ("THIRD_PARTY_LICENSES/", "vendor/")\nskip_files = {"scripts/verify_license.py"}\nprohibited = (\n    "UN" + "LICENSED",\n    "OneShot " + "Evaluator License",\n    "evaluation " + "only",\n    "CONFIDENTIAL & " + "PROPRIETARY",\n    "All rights " + "reserved",\n    "All Rights " + "Reserved",\n)\nconflicts: list[tuple[str, str]] = []\nproprietary_mentions: list[str] = []\nscanned = 0\nfor raw in tracked:\n    if not raw:\n        continue\n    rel = raw.decode("utf-8")\n    if rel in skip_files or rel.startswith(skip_prefixes):\n        continue\n    path = ROOT / rel\n    if not path.is_file() or path.suffix.lower() not in text_suffixes:\n        continue\n    try:\n        text = path.read_text(encoding="utf-8")\n    except UnicodeDecodeError:\n        continue\n    scanned += 1\n    lowered = text.lower()\n    if "proprietary" in lowered:\n        proprietary_mentions.append(rel)\n    for phrase in prohibited:\n        if phrase.lower() in lowered:\n            conflicts.append((rel, phrase))\n\nprint(f"LICENSE_SCAN_FILES={scanned}")\nprint("LICENSE_SCAN_PROPRIETARY_MATCHES=" + (",".join(sorted(proprietary_mentions)) if proprietary_mentions else "NONE"))\nif conflicts:\n    for rel, phrase in conflicts:\n        print(f"LICENSE_CONFLICT file={rel} phrase={phrase}")\n    fail(f"{len(conflicts)} conflicting licensing statements remain")\n\n# A generic proprietary mention outside known third-party material is evidence\n# requiring review; fail rather than silently classifying it as legitimate.\nif proprietary_mentions:\n    fail("generic proprietary wording remains outside third-party license material")\n\nprint("LICENSE_ROOT=Apache-2.0")\nprint("PACKAGE_LICENSE=Apache-2.0")\nprint("GOOGLE_ADK_LICENSE=PRESERVED")\nprint("LICENSE_GATE=PASSED")\n'''
+          (root / 'scripts' / 'verify_license.py').write_text(verifier, encoding='utf-8', newline='\n')
+          PY
+
+      - name: Regenerate submission workflow PDF
+        run: python scripts/generate_workflow_pdf.py
+
+      - name: Remove one-shot reconciliation workflow from final tree
+        run: git rm .github/workflows/tmp-license-reconcile.yml
+
+      - name: Run dedicated license audit
+        run: python scripts/verify_license.py
+
+      - name: Verify tracked submission PDFs contain no obsolete licensing claim
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          from pypdf import PdfReader
+
+          bad = (
+              'UN' + 'LICENSED',
+              'OneShot ' + 'Evaluator License',
+              'CONFIDENTIAL & ' + 'PROPRIETARY',
+              'evaluation ' + 'only',
+          )
+          for rel in ('docs/Workflow_Processing.pdf', 'docs/WORKFLOW_TREE.pdf'):
+              text = '\n'.join((page.extract_text() or '') for page in PdfReader(rel).pages)
+              found = [phrase for phrase in bad if phrase.lower() in text.lower()]
+              if found:
+                  raise SystemExit(f'PDF_LICENSE_GATE=ROOT_CAUSE file={rel} conflicts={found}')
+              if 'apache license 2.0' not in text.lower():
+                  raise SystemExit(f'PDF_LICENSE_GATE=ROOT_CAUSE file={rel} missing Apache License 2.0 text')
+              print(f'PDF_LICENSE_SCAN file={rel} pages={len(PdfReader(rel).pages)} result=PASSED')
+          print('PDF_LICENSE_GATE=PASSED')
+          PY
+
+      - name: Regenerate manifest twice and prove stability
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/generate_manifest.py
+          cp MANIFEST.sha256 /tmp/MANIFEST.first.sha256
+          FIRST_COUNT="$(wc -l < MANIFEST.sha256 | tr -d ' ')"
+          python scripts/generate_manifest.py
+          cmp --silent /tmp/MANIFEST.first.sha256 MANIFEST.sha256
+          SECOND_COUNT="$(wc -l < MANIFEST.sha256 | tr -d ' ')"
+          test "$FIRST_COUNT" = "$SECOND_COUNT"
+          echo "MANIFEST_GENERATED entries=$FIRST_COUNT"
+          echo "MANIFEST_SECOND_GENERATION_NO_DIFF=true"
+
+      - name: Final reconciliation diff gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          echo 'LICENSE_CHANGED_FILES_BEGIN'
+          git status --short
+          echo 'LICENSE_CHANGED_FILES_END'
+          python scripts/verify_license.py
+
+      - name: Commit reconciled Apache-2.0 state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore: release hackathon branch under Apache-2.0'
+          echo "LICENSE_RECONCILIATION_COMMIT=$(git rev-parse HEAD)"
+          git push origin HEAD:handoff-native-gemini-e2e-20260902
