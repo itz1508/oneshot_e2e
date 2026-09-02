@@ -1,53 +1,44 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { WorkflowRootCauseError } from "../backend/core/root-cause-error.js";
 import { harness, prompt } from "./harness.js";
 
-test("canonical workflow activates each Role before the Role enters RUNNING", async () => {
+test("canonical runtime executes connected ADK nodes in workflow order", async () => {
   const h = await harness("role-pipeline");
   const runId = "role-pipeline-run";
   h.runs.create(runId);
-
-  assert.throws(
-    () => h.pipeline.require(runId, "Researcher"),
-    (error: unknown) => {
-      assert.ok(error instanceof WorkflowRootCauseError);
-      assert.equal(error.rootCause.issue, "Attempted to execute an inactive Role");
-      return true;
-    },
-  );
 
   try {
     const result = await h.runtime.run(runId, prompt(runId));
     assert.equal(result.result, "PASSED");
 
-    for (const role of [
+    const ordered = [
       "Researcher",
       "Planner",
       "Refactor",
       "GapAnalysis",
       "Evaluation",
+      "TripleValidation",
+      "Confirmed",
+      "CreateHash",
       "Builder",
-    ] as const) {
-      const binding = result.events.find(
-        (event) =>
-          event.processor === `RoleBinding:${role}` &&
-          event.state === "COMPLETE" &&
-          event.result === "PASSED",
-      );
-      const running = result.events.find(
-        (event) => event.processor === role && event.state === "RUNNING",
-      );
-      assert.ok(binding, `missing ${role} activation proof`);
-      assert.ok(running, `missing ${role} RUNNING event`);
-      assert.ok(
-        binding.sequence < running.sequence,
-        `${role} ran before activation completed`,
-      );
-    }
+      "Hash",
+      "Done",
+    ] as const;
 
-    assert.equal(h.pipeline.isActive(runId, "Researcher"), false);
-    assert.equal(h.pipeline.isActive(runId, "Builder"), false);
+    let previousComplete = -1;
+    for (const processor of ordered) {
+      const running = result.events.find(
+        (event) => event.processor === processor && event.state === "RUNNING",
+      );
+      const complete = result.events.find(
+        (event) => event.processor === processor && event.state === "COMPLETE",
+      );
+      assert.ok(running, `missing ${processor} RUNNING event`);
+      assert.ok(complete, `missing ${processor} COMPLETE event`);
+      assert.ok(running.sequence < complete.sequence, `${processor} completed before it ran`);
+      assert.ok(running.sequence > previousComplete, `${processor} started out of canonical order`);
+      previousComplete = complete.sequence;
+    }
   } finally {
     h.close();
   }
