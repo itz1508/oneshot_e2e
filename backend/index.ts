@@ -10,6 +10,7 @@ import { TaskManagement } from "./task/task-management.js";
 import { ConversationStore } from "./intent/conversation-store.js";
 import { IntentCollectionService } from "./intent/intent-collection.js";
 import { PythonBridge } from "./validation/python-bridge.js";
+import { ValidationLanePool } from "./validation/validation-lane-pool.js";
 import { DeterministicValidationRuntime } from "./validation/deterministic-validation.js";
 import { CanonicalContractSkill } from "./skill/canonical-contract-skill.js";
 import { createSkillSystem } from "./skill/bootstrap.js";
@@ -19,6 +20,7 @@ import { PlannerWorkflow } from "./role/planner/workflow.js";
 import { RefactorWorkflow } from "./role/refactor/workflow.js";
 import { GapAnalysisWorkflow } from "./role/gap-analysis/workflow.js";
 import { EvaluationWorkflow } from "./role/evaluation/workflow.js";
+import { BuilderWorkflow } from "./role/builder/workflow.js";
 import { TripleValidationWorkflow } from "./workflow/triple-validation.js";
 import { ConfirmationWorkflow } from "./workflow/confirmation.js";
 import { HashWorkflow } from "./workflow/hash.js";
@@ -59,7 +61,10 @@ events.observe((e) => {
 });
 
 // --- Validation & Contracts (composed through the Reusable Skill subsystem) ---
+// Canonical contract operations keep their own bridge. Triple Validation has
+// three separate Python lanes so ADK ParallelAgent performs real fan-out.
 const bridge = new PythonBridge();
+const validationLanes = new ValidationLanePool();
 const skills = createSkillSystem();
 const runtimeCtx = {
   caller_id: "backend/runtime",
@@ -77,7 +82,7 @@ if (!(contracts instanceof CanonicalContractSkill)) {
 }
 await contracts.verifyStatic();
 
-// --- Research Provider (with event bus for ADK-scoped events) ---
+// --- Research Provider (with event bus for provider-scoped ADK events) ---
 const provider = await resolveResearchProvider(projectRoot, events);
 
 // --- Runtime Info (mode + provider name for health endpoint / UI) ---
@@ -85,10 +90,22 @@ const runtimeMode = (process.env.ONESHOT_MODE || "sample").toLowerCase();
 const providerName = provider.constructor?.name || "UnknownProvider";
 const runtimeInfo: RuntimeInfo = { mode: runtimeMode, provider: providerName };
 
-// --- Deterministic Validation ---
-const deterministic = new DeterministicValidationRuntime(bridge);
+// --- Deterministic Triple Validation ---
+const deterministic = new DeterministicValidationRuntime(validationLanes);
 
-// --- Workflow Runtime ---
+// --- Sandbox Infrastructure (runner selectable via ONESHOT_SANDBOX_RUNNER) ---
+const sandbox = new SandboxService(
+  contracts,
+  events,
+  process.env.ONESHOT_SANDBOX_RUNNER === "container"
+    ? new ContainerSandboxRunner()
+    : new HardenedProcessRunner(),
+  resolve(projectRoot, "data/sandbox-workspaces"),
+);
+
+// --- Canonical ADK Workflow Runtime ---
+// Builder is now part of the same canonical workflow and uses the exact same
+// SandboxService instance exposed to sandbox Skills / explicit debug APIs.
 const runtime = new WorkflowRuntime(
   events,
   runs,
@@ -101,16 +118,7 @@ const runtime = new WorkflowRuntime(
   new TripleValidationWorkflow(deterministic, contracts),
   new ConfirmationWorkflow(contracts),
   new HashWorkflow(contracts),
-);
-
-// --- Sandbox Infrastructure (runner selectable via ONESHOT_SANDBOX_RUNNER) ---
-const sandbox = new SandboxService(
-  contracts,
-  events,
-  process.env.ONESHOT_SANDBOX_RUNNER === "container"
-    ? new ContainerSandboxRunner()
-    : new HardenedProcessRunner(),
-  resolve(projectRoot, "data/sandbox-workspaces"),
+  new BuilderWorkflow(sandbox),
 );
 
 // --- Bind the remaining production Skills to live runtime services ---
@@ -144,12 +152,15 @@ const server = await startHttpServer(
 const address = server.address();
 const port =
   typeof address === "object" && address ? address.port : process.env.PORT;
-console.log(`ONESHOT_SERVER_READY port=${port} mode=${runtimeInfo.mode} provider=${runtimeInfo.provider}`);
+console.log(
+  `ONESHOT_SERVER_READY port=${port} mode=${runtimeInfo.mode} provider=${runtimeInfo.provider}`,
+);
 
 // --- Graceful shutdown ---
 const shutdown = () => {
   server.close(() => {
     provider.close?.();
+    validationLanes.close();
     bridge.close();
     process.exit(0);
   });
