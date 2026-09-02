@@ -39,13 +39,14 @@ jobs:
       - name: Apply approved Apache-2.0 reconciliation
         run: python scripts/tmp_reconcile_license.py
 
+      - name: Keep workflow finalization outside Actions token scope
+        run: git checkout -- .github/workflows/tmp-adk-live-real-e2e.yml
+
       - name: Regenerate submission workflow PDF
         run: python scripts/generate_workflow_pdf.py
 
-      - name: Remove one-shot staging helpers from final tree
-        run: |
-          git rm .github/workflows/tmp-license-reconcile.yml
-          git rm scripts/tmp_reconcile_license.py
+      - name: Remove one-shot staging helper from artifact commit
+        run: git rm scripts/tmp_reconcile_license.py
 
       - name: Run dedicated license audit
         run: python scripts/verify_license.py
@@ -99,13 +100,13 @@ jobs:
           git status --short
           echo 'LICENSE_CHANGED_FILES_END'
 
-      - name: Commit reconciled Apache-2.0 state
+      - name: Commit reconciled non-workflow artifacts
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'chore: release hackathon branch under Apache-2.0'
-          echo "LICENSE_RECONCILIATION_COMMIT=$(git rev-parse HEAD)"
+          git commit -m 'chore: release hackathon artifacts under Apache-2.0'
+          echo "LICENSE_ARTIFACT_COMMIT=$(git rev-parse HEAD)"
           git push origin HEAD:handoff-native-gemini-e2e-20260902
