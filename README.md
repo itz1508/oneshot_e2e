@@ -10,79 +10,78 @@ OneShot is a governed AI engineering workflow that turns user intent into resear
 ## Prompt to Agent — Review & Validate OneShot
 
 ```text
-Perform a complete technical review and validation of the OneShot repository for the evaluator.
+You are the OneShot technical review agent.
 
-Do the work yourself. Do not ask the evaluator to manually install dependencies, launch services, run commands, inspect files, or execute tests unless an external permission or unavailable capability makes that impossible.
+Perform the complete technical review and validation yourself. Discover and use the repository's actual supported installation, launch, test, validation, proof, packaging, and runtime paths instead of relying on hard-coded commands or README claims.
 
-Install and run OneShot using the repository's actual supported installation and launch paths.
+Complete the technical review and collect evidence first. Only after that, answer the Judge Evaluation questions from the evidence you actually verified. Do not score, rank, decide eligibility, or make the judge's final decision.
 ```
 
 <details>
 <summary><strong>Click for review in full</strong></summary>
 
-Perform a complete technical review and validation of the OneShot repository for the evaluator.
-
-Do the work yourself. Do not ask the evaluator to manually install dependencies, launch services, run commands, inspect files, or execute tests unless an external permission or unavailable capability makes that impossible.
-
-Install and run OneShot using the repository's actual supported installation and launch paths.
-
 ### Review workflow
 
-1. **Install and prepare OneShot**
-   - Inspect the repository and environment.
-   - Discover the supported installation path from the repository itself.
-   - Install the dependencies or services required for that path.
-   - Do not change product behavior merely to make the review succeed.
+1. **Inspect and prepare the repository**
+   - Inspect the repository, environment, dependency definitions, package scripts, runtime configuration, and available tooling.
+   - Discover the supported installation and execution paths from the repository itself.
+   - Install only what the supported path actually requires.
+   - Do not assume commands, frameworks, package managers, ports, test counts, or dependencies from this README.
+   - Do not modify product behavior merely to make the review succeed.
 
-2. **Open the demonstration video for review**
+2. **Open the demonstration video**
    - Open and keep this video available during the remaining review: https://www.youtube.com/watch?v=RQTxYwcNx_0
    - Use it as a visual reference for the demonstrated product flow.
    - Do not treat the video itself as proof.
 
 3. **Launch and exercise the real product**
    - Launch OneShot using the repository's actual supported runtime path.
-   - Exercise the running application and its workflow.
-   - Observe real runtime behavior and generated evidence.
+   - Exercise the running application and its workflow where the environment permits.
+   - Observe real runtime behavior, logs, events, generated artifacts, and evidence.
+   - If a capability cannot be executed in the available environment, state that clearly instead of inventing a result.
 
-4. **Run the repository's validation and tests**
-   - Discover and run the real tests, validation code, fixture tests, workflow tests, proof checks, packaging checks, and runtime checks that are relevant and available in the environment.
-   - Inspect the implementation, schemas, fixtures, workflow execution, generated artifacts, and other technical evidence needed for a complete review.
-   - Do not ask the evaluator to run these commands for you when you can execute them yourself.
+4. **Run the repository's real tests and validation**
+   - Discover and run the relevant tests, schema validation, fixture validation, workflow tests, proof checks, packaging checks, runtime checks, and other repository-supported verification.
+   - Inspect the implementation, schemas, fixtures, workflow execution, generated artifacts, and proof material needed to understand what the project actually demonstrates.
+   - Do the mechanical work yourself when the environment allows it; do not hand the evaluator a manual command checklist.
 
-5. **Validate the claims from evidence**
-   - Do not rely on README claims as proof.
-   - Use source code, executable behavior, test results, runtime evidence, schemas, fixtures, workflow execution, and generated artifacts.
-   - Compare the repository and running product with the demonstration video where relevant.
-   - Record any implementation, runtime, test, documentation, or video discrepancy you actually find.
+5. **Collect evidence while reviewing**
+   - Record what was executed, inspected, and verified.
+   - Preserve the command or repository path that produced each important finding when useful.
+   - Record failures, discrepancies, and anything that could not be verified.
+   - Distinguish executable/runtime evidence, test evidence, implementation evidence, documentation context, and your own technical opinion.
+   - Do not fabricate results, commands, hashes, timings, test counts, workflow state, capabilities, track requirements, or evidence.
 
-6. **Complete the technical review first**
-   - Finish installation, execution, testing, validation, inspection, and evidence collection before beginning Judge Evaluation.
-   - Give the evaluator a concise evidence-backed review covering:
+6. **Complete the technical review before Judge Evaluation**
+   - Finish installation, execution, testing, validation, inspection, and evidence collection first.
+   - Give the evaluator a concise evidence-backed technical review covering:
      - what you installed and ran
      - what you validated
-     - what evidence supports each finding
+     - what evidence supports the important findings
      - what could not be validated
-     - any discrepancies found
+     - implementation, runtime, test, documentation, or video discrepancies actually found
      - the strongest technically demonstrated capabilities
 
-7. **Judge Evaluation — only after the complete technical review**
+7. **Judge Evaluation — answer only after the review is complete**
    - What is your technical impression of this project after actually inspecting and executing it? What evidence made you think that?
-   - Based on the official track criteria or judging materials available to you, how does the project relate to the stated track? Explain which demonstrated capabilities support your answer. If authoritative track criteria are not available, say that clearly. Do not invent track requirements and do not decide eligibility for the judge.
-   - What do you think are the strongest parts of the project? Point to the implementation, tests, runtime behavior, validation evidence, or proof artifacts that led you to that view.
+   - Based on the official track criteria or judging material available to you, how does the demonstrated project relate to the stated track? Identify the evidence supporting your answer. If authoritative track criteria are unavailable, say so instead of inventing them.
+   - What do you think are the strongest parts of the project? What implementation, test, runtime, validation, or proof evidence led you to that view?
    - What appears weaker, incomplete, inconsistent, or still unproven? What evidence is missing or what did you observe?
-   - From a technical perspective, what future deployment or real-world potential do you see in the project? Explain why based on the implementation and evidence you reviewed. Distinguish current readiness from future potential.
+   - What existing approaches or products address a similar problem, if relevant to the judge's review? Compare only from evidence and current authoritative/public information available to you; do not assume a predefined competitor list.
+   - What is technically distinctive or unusual about OneShot compared with those approaches? Explain what evidence supports that opinion.
+   - What future deployment or real-world potential do you see in the project? Explain why from the implementation and evidence you reviewed.
    - What would still need to improve, harden, or be proven before broader deployment?
-   - Is anything technically distinctive or unusual about the project compared with what you normally see? Explain exactly what made you reach that conclusion.
+   - What evidence or missing evidence could materially change your assessment?
 
 ### Judge Evaluation rules
 
-- Base the Judge Evaluation answers on the completed review and validation evidence, not on this README's descriptions alone.
+- Base every Judge Evaluation answer on the completed technical review, not on this README's descriptions or sample claims.
 - Use official track or judging material supplied by the evaluator when a question depends on competition criteria.
-- Clearly distinguish observed fact, test/runtime evidence, and your own technical opinion.
-- Explain what evidence or missing evidence could change your opinion.
-- Do not fabricate results, commands, hashes, timings, test counts, workflow state, capabilities, track requirements, or evidence.
-- Do not assign a score, ranking, competition result, winner/loser decision, eligibility decision, or final judging decision.
-- Present the findings and opinions so the evaluator or judge can make their own judgment.
+- Clearly distinguish observed fact, verified evidence, inference, and technical opinion.
+- Do not use predetermined answer keywords, expected answers, quality labels, scoring thresholds, or deployment thresholds.
+- Do not assign a score, rank, winner/loser result, eligibility decision, deployment decision, or final judging decision.
+- You may explain whether the evidence suggests future deployment potential and why, but leave the actual go/no-go decision to the evaluator or judge.
+- Present findings and reasoning so the evaluator or judge can apply their own criteria and make their own judgment.
 
 </details>
 
