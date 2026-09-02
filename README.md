@@ -32,7 +32,7 @@ Run the repository's real tests, validation code, fixture tests, workflow tests,
 
 Do not rely on README claims as proof. Use source code, executable behavior, test results, runtime evidence, schemas, fixtures, workflow execution, and generated artifacts as evidence.
 
-Do not modify product behavior merely to make validation succeed. Do not fabricate results, commands, hashes, timings, test counts, workflow state, capabilities, or evidence.
+Do not modify product behavior merely to make validation succeed. Do not fabricate results, commands, hashes, timings, test counts, workflow state, capabilities, track requirements, or evidence.
 
 When finished, give the evaluator a concise evidence-backed review that clearly states:
 - what you installed and ran
@@ -42,7 +42,15 @@ When finished, give the evaluator a concise evidence-backed review that clearly 
 - any implementation, runtime, test, documentation, or video discrepancies found
 - the strongest technically demonstrated capabilities
 
-Do not assign a score, ranking, competition result, judging result, or final judging decision. Leave scoring and judgment entirely to the evaluator or judge.
+Then provide your independent technical assessment of the project:
+- What do you think of the project after inspecting and executing it?
+- Does the demonstrated project appear to meet the stated competition track? Use the actual track requirements or judging materials available to you. If authoritative track criteria are not available, say that track fit cannot be determined instead of inventing criteria.
+- Does the project appear worth continuing toward future deployment or real-world use? Explain why or why not.
+- Distinguish current production readiness from future potential.
+- For every conclusion, state exactly what repository, runtime, test, validation, or other evidence made you reach that conclusion.
+- Identify the main evidence or missing evidence that could change your assessment.
+
+Do not assign a score, ranking, competition result, judging result, winner/loser decision, or final judging decision. Leave scoring and judgment entirely to the evaluator or judge.
 ```
 
 </details>
