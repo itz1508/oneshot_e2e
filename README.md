@@ -7,99 +7,60 @@ OneShot is a governed AI engineering workflow that turns user intent into resear
 
 ---
 
-## Prompt to Agent — Review & Validate OneShot
+## Prompt to Agent
 
-The evaluator only needs to copy and paste the prompt below into a repository-capable agent. The agent does the review work itself from start to finish and returns one complete report.
+The evaluator only needs to copy and paste this into a repository-capable agent:
 
 ```text
 You are the OneShot technical review agent.
 
-Perform the complete technical review and validation yourself from beginning to end. Discover and use the repository's actual supported installation, launch, test, validation, proof, packaging, and runtime paths instead of relying on hard-coded commands or README claims.
+Run `npm run agent:review` in this repository.
 
-Do not ask the evaluator to manually install dependencies, launch services, run commands, inspect files, execute tests, or perform validation when you can do that work yourself. Ask the evaluator only when an external permission, unavailable capability, or judge-supplied material is genuinely required.
+Read Prompt 1 completely. After the automatic 3-second transition, follow Prompt 2 and complete the full technical review, validation, evidence collection, and Judge Evaluation workflow.
 
-Run the complete review continuously through installation, execution, testing, validation, evidence collection, technical review, and Judge Evaluation. Do not stop between phases merely to ask the evaluator to continue.
-
-Complete the technical review and collect evidence first. Only after that, answer the Judge Evaluation questions from the evidence you actually verified.
-
-When everything is complete, return one complete evidence-backed final report containing the review results, what was and was not verified, discrepancies and root causes found, supporting evidence, and the Judge Evaluation answers.
-
-Do not score, rank, decide eligibility, make a deployment decision, or make the judge's final decision.
+When the workflow is complete, return the complete evidence-backed results and report.
 ```
 
 <details>
-<summary><strong>Click for review in full</strong></summary>
+<summary><strong>Click for review flow in full</strong></summary>
 
-### Review workflow
+### `readme.ts` flow
 
-1. **Inspect and prepare the repository**
-   - Inspect the repository, environment, dependency definitions, package scripts, runtime configuration, and available tooling.
-   - Discover the supported installation and execution paths from the repository itself.
-   - Install only what the supported path actually requires.
-   - Do not assume commands, frameworks, package managers, ports, test counts, or dependencies from this README.
-   - Do not modify product behavior merely to make the review succeed.
+- **Prompt 1 — Agent Review Instruction**
+  - Defines the review responsibility.
+  - Tells the agent what repository, runtime, test, validation, workflow, proof, packaging, and evidence areas to inspect.
+  - Defines the Judge Evaluation questions that are answered after the technical review.
+  - Remains visible in the output.
 
-2. **Open the demonstration video**
-   - Open and keep this video available during the remaining review: https://www.youtube.com/watch?v=RQTxYwcNx_0
-   - Use it as a visual reference for the demonstrated product flow.
-   - Do not treat the video itself as proof.
+- **Automatic transition — 3 seconds**
+  - Same `readme.ts` process.
+  - No screen clear, restart, second command, or manual continue step.
 
-3. **Launch and exercise the real product**
-   - Launch OneShot using the repository's actual supported runtime path.
-   - Exercise the running application and its workflow where the environment permits.
-   - Observe real runtime behavior, logs, events, generated artifacts, and evidence.
-   - If a capability cannot be executed in the available environment, state that clearly instead of inventing a result.
+- **Prompt 2 — Start Review**
+  - Starts the complete technical review.
+  - The agent performs the work itself from beginning to end.
+  - The technical review completes before Judge Evaluation.
+  - The agent then returns one complete evidence-backed report.
 
-4. **Run the repository's real tests and validation**
-   - Discover and run the relevant tests, schema validation, fixture validation, workflow tests, proof checks, packaging checks, runtime checks, and other repository-supported verification.
-   - Inspect the implementation, schemas, fixtures, workflow execution, generated artifacts, and proof material needed to understand what the project actually demonstrates.
-   - Do the mechanical work yourself when the environment allows it; do not hand the evaluator a manual command checklist.
-
-5. **Collect evidence while reviewing**
-   - Record what was executed, inspected, and verified.
-   - Preserve the command or repository path that produced each important finding when useful.
-   - Record failures, discrepancies, and anything that could not be verified.
-   - Distinguish executable/runtime evidence, test evidence, implementation evidence, documentation context, and your own technical opinion.
-   - Do not fabricate results, commands, hashes, timings, test counts, workflow state, capabilities, track requirements, or evidence.
-
-6. **Complete the technical review before Judge Evaluation**
-   - Finish installation, execution, testing, validation, inspection, and evidence collection first.
-   - Continue directly into Judge Evaluation after the technical review is complete; do not require another start prompt from the evaluator.
-
-7. **Judge Evaluation — answer only after the review is complete**
-   - What is your technical impression of this project after actually inspecting and executing it? What evidence made you think that?
-   - Based on the official track criteria or judging material available to you, how does the demonstrated project relate to the stated track? Identify the evidence supporting your answer. If authoritative track criteria are unavailable, say so instead of inventing them.
-   - What do you think are the strongest parts of the project? What implementation, test, runtime, validation, or proof evidence led you to that view?
-   - What appears weaker, incomplete, inconsistent, or still unproven? What evidence is missing or what did you observe?
-   - What existing approaches or products address a similar problem, if relevant to the judge's review? Compare only from evidence and current authoritative/public information available to you; do not assume a predefined competitor list.
-   - What is technically distinctive or unusual about OneShot compared with those approaches? Explain what evidence supports that opinion.
-   - What future deployment or real-world potential do you see in the project? Explain why from the implementation and evidence you reviewed.
-   - What would still need to improve, harden, or be proven before broader deployment?
-   - What evidence or missing evidence could materially change your assessment?
-
-8. **Return one complete final report**
-   - Provide the evaluator with a single complete response after the workflow is finished.
-   - Include:
-     - what you installed and ran
-     - what you validated
-     - what evidence supports the important findings
-     - what could not be validated
-     - discrepancies and root causes actually found
-     - strongest technically demonstrated capabilities
-     - weaker, incomplete, inconsistent, or unproven areas
-     - Judge Evaluation answers
-     - supporting repository, runtime, test, validation, proof, or public-source evidence for the conclusions
-   - Do not fabricate missing evidence to make the report look complete.
-
-### Judge Evaluation rules
-
-- Base every Judge Evaluation answer on the completed technical review, not on this README's descriptions or sample claims.
-- Use official track or judging material supplied by the evaluator when a question depends on competition criteria.
-- Clearly distinguish observed fact, verified evidence, inference, and technical opinion.
-- Do not use predetermined answer keywords, expected answers, quality labels, scoring thresholds, or deployment thresholds.
-- Do not assign a score, rank, winner/loser result, eligibility decision, deployment decision, or final judging decision.
-- You may explain whether the evidence suggests future deployment potential and why, but leave the actual go/no-go decision to the evaluator or judge.
-- Present findings and reasoning so the evaluator or judge can apply their own criteria and make their own judgment.
+```text
+Evaluator copies Prompt to Agent
+            ↓
+    npm run agent:review
+            ↓
+Prompt 1 — Agent Review Instruction
+            ↓
+        wait 3s
+            ↓
+Prompt 2 — Start Review
+            ↓
+Repository / runtime review
+            ↓
+Tests + validation + evidence
+            ↓
+Judge Evaluation questions
+            ↓
+Complete results / report
+```
 
 </details>
 
