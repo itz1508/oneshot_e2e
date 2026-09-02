@@ -1,4 +1,4 @@
-name: Temporary ADK Researcher Node Test
+name: Temporary ADK Role Node Test
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  researcher-node:
+  planner-node:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -40,7 +40,7 @@ jobs:
       - name: Build backend and tests
         run: npm run build:backend
 
-      - name: Run ADK Researcher connector test
-        run: node --test --test-force-exit dist/tests_ts/adk-researcher-node.test.js
+      - name: Run ADK Planner connector test
+        run: node --test --test-force-exit dist/tests_ts/adk-planner-node.test.js
 
-# attempt: repository-truth
+# role-under-test: Planner
