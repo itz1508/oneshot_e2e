@@ -1,0 +1,87 @@
+name: Live ADK Real E2E Proof
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/tmp-adk-live-real-e2e.yml'
+      - 'backend/role/researcher/provider/adk-gemma2/**'
+      - 'tests_ts/adk-live-real-e2e.test.ts'
+      - 'requirements.txt'
+
+permissions:
+  contents: read
+
+env:
+  ONESHOT_LIVE_ADK_E2E: 'true'
+  ONESHOT_MODE: production
+  ONESHOT_RESEARCH_PROVIDER: adk_gemma2
+  OLLAMA_API_BASE: http://127.0.0.1:11434
+  GEMMA2_DISTRIBUTION_MODEL: qwen2.5:0.5b
+  GEMMA2_RESEARCH_MODEL: llama3.2:1b-text-q3_K_M
+  GEMMA2_SYNTHESIS_MODEL: qwen2.5:1.5b
+  GEMMA2_NUM_PARALLEL: '1'
+  GEMMA2_AUTO_PULL: 'false'
+  GEMMA2_TIMEOUT_SECONDS: '900'
+  SANDBOX_TIMEOUT_SECONDS: '120'
+
+jobs:
+  live-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24.13.0'
+          cache: npm
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Set up npm 11.8
+        run: npm install --global npm@11.8.0 --no-audit --no-fund
+
+      - name: Install Node dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Install Python live ADK dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Install and start Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          nohup ollama serve >/tmp/ollama.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:11434/api/tags >/dev/null; then
+              echo "OLLAMA_READY=true"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/ollama.log || true
+          exit 1
+
+      - name: Pull three distinct live models
+        run: |
+          ollama pull "$GEMMA2_DISTRIBUTION_MODEL"
+          ollama pull "$GEMMA2_RESEARCH_MODEL"
+          ollama pull "$GEMMA2_SYNTHESIS_MODEL"
+          ollama list
+
+      - name: Build backend and tests
+        run: npm run build:backend
+
+      - name: Run live end-to-end proof
+        run: node --test --test-force-exit dist/tests_ts/adk-live-real-e2e.test.js
+
+      - name: Print Ollama diagnostics on failure
+        if: failure()
+        run: |
+          ollama list || true
+          tail -n 200 /tmp/ollama.log || true
