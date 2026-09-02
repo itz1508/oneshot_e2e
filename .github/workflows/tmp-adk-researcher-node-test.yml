@@ -42,3 +42,5 @@ jobs:
 
       - name: Run ADK Researcher connector test
         run: node --test --test-force-exit dist/tests_ts/adk-researcher-node.test.js
+
+# attempt: registry-path-fixed
