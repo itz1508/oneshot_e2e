@@ -15,7 +15,9 @@ Copy this single prompt into your coding/repository agent.
 <summary><strong>Copy review and validation prompt</strong></summary>
 
 ```text
-Perform a complete technical review and validation of the OneShot repository.
+Perform a complete technical review and validation of the OneShot repository for the evaluator.
+
+Do the work yourself. Do not ask the evaluator to manually install dependencies, launch services, run commands, inspect files, or execute tests unless an external permission or unavailable capability makes that impossible.
 
 Install and run OneShot using the repository's actual supported installation and launch paths.
 
@@ -26,13 +28,16 @@ Use the video as a visual reference while reviewing the running product and repo
 
 Inspect and exercise the implementation, tests, validation, workflow, execution, proof, packaging, runtime behavior, and any other technical areas necessary to validate what the repository actually demonstrates.
 
+Run the repository's real tests, validation code, fixture tests, workflow tests, proof checks, packaging checks, and runtime checks that are relevant and available in the environment. Discover the correct commands from the repository instead of asking the evaluator to perform them.
+
 Do not rely on README claims as proof. Use source code, executable behavior, test results, runtime evidence, schemas, fixtures, workflow execution, and generated artifacts as evidence.
 
 Do not modify product behavior merely to make validation succeed. Do not fabricate results, commands, hashes, timings, test counts, workflow state, capabilities, or evidence.
 
-Walk the evaluator through what was actually inspected and executed. Clearly report:
-- what was validated
-- what evidence supports it
+When finished, give the evaluator a concise evidence-backed review that clearly states:
+- what you installed and ran
+- what you validated
+- what evidence supports each finding
 - what could not be validated
 - any implementation, runtime, test, documentation, or video discrepancies found
 - the strongest technically demonstrated capabilities
