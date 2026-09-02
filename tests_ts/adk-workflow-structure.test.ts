@@ -18,15 +18,10 @@ test("canonical execution tree is real SequentialAgent + LoopAgent + ParallelAge
   const h = await harness("adk-structure");
   try {
     const root = createOneShotRootAgent({
-      researcher: h.researcher,
-      planner: h.planner,
-      refactor: h.refactor,
-      gapper: h.gapper,
-      evaluator: h.evaluator,
+      pipeline: h.pipeline,
       triple: h.triple,
       confirmation: h.confirmation,
       hash: h.hash,
-      builder: h.builder,
       effects: {
         event() {},
         async save() {
