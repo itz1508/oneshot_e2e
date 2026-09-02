@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  planner-node:
+  refactor-node:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -40,7 +40,7 @@ jobs:
       - name: Build backend and tests
         run: npm run build:backend
 
-      - name: Run ADK Planner connector test
-        run: node --test --test-force-exit dist/tests_ts/adk-planner-node.test.js
+      - name: Run ADK Refactor connector test
+        run: node --test --test-force-exit dist/tests_ts/adk-refactor-node.test.js
 
-# role-under-test: Planner; attempt: typed-output
+# role-under-test: Refactor; attempt: direct-runNode-handoff
