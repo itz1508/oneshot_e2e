@@ -9,7 +9,7 @@ VERIFY=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(VERIFY)
 
 class DependencyVerifierTests(unittest.TestCase):
  def test_adk_provider_selects_adk_pins(self):
-  self.assertEqual([path.name for path in VERIFY.requirement_files('adk_gemma2')],['requirements.txt','requirements-adk.txt'])
+  self.assertEqual([path.name for path in VERIFY.requirement_files('adk_gemma2')],['base.txt','adk.txt'])
  def test_exact_mismatch_and_missing_are_deterministic(self):
   with tempfile.TemporaryDirectory() as directory:
    path=Path(directory)/'requirements.txt';path.write_text('present==1.0\nmismatch==2.0\nmissing==3.0\n',encoding='utf-8')
