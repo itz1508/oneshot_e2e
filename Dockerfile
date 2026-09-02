@@ -29,8 +29,8 @@ RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && npm --version
 
 # Install Python deterministic validation dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements ./requirements
+RUN pip install --no-cache-dir -r requirements/base.txt
 
 # Runtime dependencies are required because the compiled backend imports
 # @google/adk at execution time.

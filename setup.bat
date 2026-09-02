@@ -69,13 +69,13 @@ call .venv\Scripts\activate.bat
 REM ── Python dependencies ────────────────────────────────────────
 echo.
 echo [3/6] Installing Python dependencies...
-pip install -q -r requirements.txt
+pip install -q -r requirements/base.txt
 if %ERRORLEVEL% neq 0 (
     echo  ERROR: Core Python dependency installation failed.
     exit /b 1
 )
 
-pip install -q -r requirements-workspace-api.txt
+pip install -q -r requirements/workspace-api.txt
 if %ERRORLEVEL% neq 0 (
     echo  ERROR: Workspace API dependency installation failed.
     exit /b 1

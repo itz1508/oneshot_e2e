@@ -72,7 +72,7 @@ ADK provider dependencies:
 python scripts/bootstrap.py --with-adk
 ```
 
-The ADK-specific pins are in `requirements-adk.txt`.
+The ADK-specific pins are in `requirements/adk.txt`.
 
 ## Local services
 
@@ -98,7 +98,7 @@ python scripts/ollama_preflight.py
 
 `GEMMA2_TIMEOUT_SECONDS` bounds the complete ADK inference operation through `asyncio.wait_for`. Expiry is returned through the normal provider boundary and becomes workflow `ROOT_CAUSE`.
 
-When `ONESHOT_RESEARCH_PROVIDER=adk_gemma2`, `scripts/verify_dependencies.py` validates every exact pin in both `requirements.txt` and `requirements-adk.txt`.
+When `ONESHOT_RESEARCH_PROVIDER=adk_gemma2`, `scripts/verify_dependencies.py` validates every exact pin in both `requirements/base.txt` and `requirements/adk.txt`.
 
 ## HTTP boundary hardening
 

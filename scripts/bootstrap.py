@@ -16,9 +16,9 @@ def run(cmd):
     subprocess.run(cmd, cwd=ROOT, check=True)
 
 if not a.skip_python:
-    run([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'])
+    run([sys.executable, '-m', 'pip', 'install', '-r', 'requirements/base.txt'])
     if a.with_adk:
-        run([sys.executable, '-m', 'pip', 'install', '-r', 'requirements-adk.txt'])
+        run([sys.executable, '-m', 'pip', 'install', '-r', 'requirements/adk.txt'])
     if a.with_featherless:
         run([
             sys.executable,
@@ -26,7 +26,7 @@ if not a.skip_python:
             'pip',
             'install',
             '-r',
-            'requirements-featherless.txt',
+            'requirements/featherless.txt',
         ])
     if a.with_workspace_api:
         run([
@@ -35,7 +35,7 @@ if not a.skip_python:
             'pip',
             'install',
             '-r',
-            'requirements-workspace-api.txt',
+            'requirements/workspace-api.txt',
         ])
 
 NPM = shutil.which("npm.cmd" if os.name == "nt" else "npm")

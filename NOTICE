@@ -23,14 +23,14 @@ Those licenses do not apply to OneShot-owned material.
    - Used by the isolated researcher provider adapter under
      backend/role/researcher/provider/adk-gemma2/
    - Governed by their respective upstream licenses.
-   - Manifest: requirements-adk.txt
+   - Manifest: requirements/adk.txt
 
 3. LiteLLM (litellm)
    - Copyright (c) BerriAI
    - Governed by its applicable upstream license.
-   - Manifest: requirements-adk.txt
+   - Manifest: requirements/adk.txt
 
 4. Redis Client (redis-py)
    - Copyright (c) Redis Ltd.
    - Governed by its applicable upstream license.
-   - Manifest: requirements-adk.txt
+   - Manifest: requirements/adk.txt

@@ -81,7 +81,7 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
         actual: error instanceof Error ? error.message : String(error),
         evidence_ids: [],
         required_correction:
-          "Start Ollama, ensure Gemma 2 is available, install requirements-adk.txt, and correct the provider/runtime failure",
+          "Start Ollama, ensure Gemma 2 is available, install requirements/adk.txt, and correct the provider/runtime failure",
         recheck_target: runId,
       });
     }
