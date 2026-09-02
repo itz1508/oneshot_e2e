@@ -9,6 +9,7 @@
   },
   "scripts": {
     "oneshot": "node oneshot.mjs",
+    "agent:review": "npm run build:backend && node dist/readme.js",
     "build": "tsc -p tsconfig.json && npm --prefix web run build",
     "start": "node dist/backend/index.js",
     "test": "npm run build && node --test dist/tests_ts/*.test.js",
