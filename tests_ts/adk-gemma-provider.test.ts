@@ -1,11 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolve } from "node:path";
 import { resolveResearchProvider } from "../backend/role/researcher/provider-resolver.js";
 import { AdkGemmaResearchProvider } from "../backend/role/researcher/provider/adk-gemma2/provider.js";
 import { harness, prompt } from "./harness.js";
 
-test("Google ADK + Gemma provider boundary executes canonical chain in deterministic adapter mode", async () => {
+test("Google ADK Researcher pipeline executes canonical chain in deterministic adapter mode", async () => {
   const saved = {
     mode: process.env.ONESHOT_MODE,
     provider: process.env.ONESHOT_RESEARCH_PROVIDER,
@@ -19,6 +18,11 @@ test("Google ADK + Gemma provider boundary executes canonical chain in determini
   process.env.GEMMA2_NUM_PARALLEL = "2";
   const p = await resolveResearchProvider(process.cwd());
   assert.ok(p instanceof AdkGemmaResearchProvider);
+  const readiness = await p.ready("adk-gemma-ready");
+  assert.equal(readiness.ready, true);
+  assert.equal(readiness.provider, "google-adk");
+  assert.equal(readiness.models.length, 3);
+
   const h = await harness("adk-gemma-provider", p);
   const runId = "adk-gemma-provider";
   h.runs.create(runId);
@@ -27,7 +31,7 @@ test("Google ADK + Gemma provider boundary executes canonical chain in determini
     assert.equal(out.result, "PASSED");
     assert.equal(out.hash_proof?.equal, true);
     const research = await h.store.load<any>(runId, "researcher");
-    assert.match(research.evidence[0].source, /google-adk:gemma2:9b/);
+    assert.match(research.evidence[0].source, /google-adk-pipeline:/);
     assert.equal(research.requirement_ids.length, 2);
     const plan = await h.store.load<any>(runId, "plan.researcher");
     assert.equal(
