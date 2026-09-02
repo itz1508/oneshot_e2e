@@ -63,7 +63,19 @@ class GraphNode(StrictModel): id:NonEmptyStr; kind:Literal['source','processor',
 class GraphEdge(StrictModel): from_:NonEmptyStr=Field(alias='from'); to:NonEmptyStr; artifact:NonEmptyStr
 class ArtifactOwnership(StrictModel): artifact:NonEmptyStr; owner:NonEmptyStr; consumers:UniqueStrList
 class ParallelGroup(StrictModel): group_id:NonEmptyStr; members:UniqueStrList; join:NonEmptyStr
-class WorkflowGraph(StrictModel): workflow_id:Literal['oneshot-canonical-workflow']; version:NonEmptyStr; nodes:list[GraphNode]; edges:list[GraphEdge]; artifact_ownership:list[ArtifactOwnership]; parallel_groups:list[ParallelGroup]
+class WorkflowAgent(StrictModel):
+    id:NonEmptyStr
+    type:Literal['SequentialAgent','LoopAgent','ParallelAgent']
+    members:NonEmptyUniqueStrList
+    exit:NonEmptyStr|None=None
+    join:NonEmptyStr|None=None
+    @model_validator(mode='after')
+    def coherent(self):
+        if self.type=='SequentialAgent' and (self.exit is not None or self.join is not None): raise ValueError('SequentialAgent cannot define exit or join')
+        if self.type=='LoopAgent' and (self.exit is None or self.join is not None): raise ValueError('LoopAgent requires exit and cannot define join')
+        if self.type=='ParallelAgent' and (self.join is None or self.exit is not None): raise ValueError('ParallelAgent requires join and cannot define exit')
+        return self
+class WorkflowGraph(StrictModel): workflow_id:Literal['oneshot-canonical-workflow']; version:NonEmptyStr; nodes:list[GraphNode]; edges:list[GraphEdge]; artifact_ownership:list[ArtifactOwnership]; parallel_groups:list[ParallelGroup]; workflow_agents:Annotated[list[WorkflowAgent],Field(min_length=1)]
 class ContractRegistryEntry(StrictModel): contract_id:NonEmptyStr; version:NonEmptyStr; artifact_type:NonEmptyStr; schema_path:NonEmptyStr; schema_digest:Sha256Str; producer:NonEmptyStr; consumers:UniqueStrList
 class ContractRegistry(StrictModel): registry_id:Literal['oneshot-contract-registry']; registry_version:NonEmptyStr; contracts:list[ContractRegistryEntry]
 
