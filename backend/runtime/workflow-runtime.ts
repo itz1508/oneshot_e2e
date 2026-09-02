@@ -8,12 +8,7 @@ import type {
 import { WorkflowInformationRequiredError } from "../core/information-required-error.js";
 import { WorkflowRootCauseError } from "../core/root-cause-error.js";
 import type { HelpRequest } from "../intent/types.js";
-import type { BuilderWorkflow } from "../role/builder/workflow.js";
-import type { EvaluationWorkflow } from "../role/evaluation/workflow.js";
-import type { GapAnalysisWorkflow } from "../role/gap-analysis/workflow.js";
-import type { PlannerWorkflow } from "../role/planner/workflow.js";
-import type { RefactorWorkflow } from "../role/refactor/workflow.js";
-import type { ResearcherWorkflow } from "../role/researcher/workflow.js";
+import type { RolePipeline } from "../pipeline/role-pipeline.js";
 import type { ConfirmationWorkflow } from "../workflow/confirmation.js";
 import { createOneShotRootAgent } from "../workflow/adk/root-agent.js";
 import { ADK_STATE } from "../workflow/adk/state.js";
@@ -28,9 +23,9 @@ const APP_NAME = "oneshot-canonical-workflow";
 /**
  * External runtime facade for the canonical OneShot workflow.
  *
- * Google ADK owns stage composition and ordering. OneShot's existing EventBus,
- * ArtifactStore, and RunRepository remain the durable product evidence path;
- * ADK session state is invocation-scoped orchestration state only.
+ * Google ADK owns stage composition and ordering. RolePipeline owns explicit
+ * per-run Role activation/binding. OneShot EventBus, ArtifactStore, and
+ * RunRepository remain the durable product evidence path.
  */
 export class WorkflowRuntime {
   private readonly sessionService: InMemorySessionService;
@@ -40,26 +35,16 @@ export class WorkflowRuntime {
     private events: ProcessingEventBus,
     private runs: RunRepository,
     readonly store: ArtifactStore,
-    researcher: ResearcherWorkflow,
-    planner: PlannerWorkflow,
-    refactor: RefactorWorkflow,
-    gapper: GapAnalysisWorkflow,
-    evaluator: EvaluationWorkflow,
+    private pipeline: RolePipeline,
     triple: TripleValidationWorkflow,
     confirmation: ConfirmationWorkflow,
     hash: HashWorkflow,
-    builder: BuilderWorkflow,
   ) {
     const rootAgent = createOneShotRootAgent({
-      researcher,
-      planner,
-      refactor,
-      gapper,
-      evaluator,
+      pipeline,
       triple,
       confirmation,
       hash,
-      builder,
       effects: {
         event: (runId, processor, state, data = {}) =>
           this.ev(runId, processor, state, data),
@@ -184,7 +169,7 @@ export class WorkflowRuntime {
           parts: [{ text: `Execute OneShot job ${runId}` }],
         },
       })) {
-        // ADK owns orchestration. Deterministic stage adapters emit canonical
+        // ADK owns orchestration. Activated Role adapters emit canonical
         // OneShot events and artifacts through the existing durable services.
       }
 
@@ -206,7 +191,7 @@ export class WorkflowRuntime {
               actual: error instanceof Error ? error.message : String(error),
               evidence_ids: [],
               required_correction:
-                "Correct the reported execution or contract failure",
+                "Correct the reported execution, Role binding, provider, or contract failure",
               recheck_target: runId,
             };
 
@@ -218,6 +203,8 @@ export class WorkflowRuntime {
           ? error.helpRequest
           : undefined,
       );
+    } finally {
+      await this.pipeline.release(runId);
     }
   }
 }
