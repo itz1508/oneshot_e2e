@@ -191,4 +191,6 @@ Hash Verification
 
 ## License
 
-See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+OneShot-owned source is pre-release software provided under the [OneShot Evaluator License](LICENSE) solely for evaluation, judging, technical review, testing, verification, and demonstration. It is not licensed for continuing development, retained personal or internal use, redistribution, resale, production use, or commercial use without prior written authorization.
+
+Third-party software remains governed by its own upstream licenses. Google ADK is licensed separately under Apache License 2.0; see [NOTICE](NOTICE) and [THIRD_PARTY_LICENSES/Google-ADK-Apache-2.0.txt](THIRD_PARTY_LICENSES/Google-ADK-Apache-2.0.txt). The Google ADK license does not license OneShot-owned material under Apache-2.0.
