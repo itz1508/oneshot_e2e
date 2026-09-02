@@ -16,7 +16,7 @@ The runtime combines a TypeScript orchestration layer, Google ADK graph routing,
 Choose one installation path. Detailed steps stay collapsed until you need them.
 
 <details>
-<summary><strong>Windows — Download ZIP</strong> · Recommended · <strong>Review steps</strong></summary>
+<summary><strong>Windows — Download ZIP</strong> · Recommended</summary>
 
 1. Download the `oneshot-judge-1.3.0.zip` release package.
 2. Extract the ZIP.
@@ -34,7 +34,7 @@ This packaged path does not require Node.js, Python, npm, or Git on the host.
 </details>
 
 <details>
-<summary><strong>CLI</strong> · Terminal installation · <strong>Review steps</strong></summary>
+<summary><strong>CLI</strong> · Terminal installation · Click for <strong>Review steps</strong></summary>
 
 1. Install Node.js 20+, Python 3.11+, and Git.
 2. Clone OneShot:
@@ -55,7 +55,7 @@ This packaged path does not require Node.js, Python, npm, or Git on the host.
 </details>
 
 <details>
-<summary><strong>Developer / Source</strong> · Build from source · <strong>Review steps</strong></summary>
+<summary><strong>Developer / Source</strong> · Build from source · Click for <strong>Review steps</strong></summary>
 
 1. Clone the repository.
 2. Bootstrap dependencies:
