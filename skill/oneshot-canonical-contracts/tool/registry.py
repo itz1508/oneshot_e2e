@@ -41,7 +41,7 @@ def build_tool_registry(root:str|Path)->ToolRegistry:
         errors=validate_references(i['core']);return {'valid':not errors,'errors':errors}
     def validate_parity_tool(i): return prove_case(store,i['contract_id'],i['value'])
     def validate_registry_tool(i):
-        actual=json.loads((root/'contract-registry.json').read_text());expected=build_registry(root/'schema');errors=[] if actual==expected else ['contract registry does not match canonical schema bytes/ownership map'];errors += store.validate('urn:oneshot:schema:contract-registry:1',actual);return {'valid':not errors,'errors':errors}
+        actual=json.loads((root/'schema/contract-registry.json').read_text());expected=build_registry(root/'schema');errors=[] if actual==expected else ['contract registry does not match canonical schema bytes/ownership map'];errors += store.validate('urn:oneshot:schema:contract-registry:1',actual);return {'valid':not errors,'errors':errors}
     def validate_graph_tool(i):
         graph=i.get('graph') or json.loads((root/'workflow/graph.json').read_text());errors=store.validate('urn:oneshot:schema:workflow-graph:1',graph)+validate_graph(graph);return {'valid':not errors,'errors':errors}
     def resolve_artifact_tool(i): return resolve_artifact(i.get('root') or root,i['artifact_id'])
