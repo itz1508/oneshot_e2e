@@ -3,8 +3,17 @@
 OneShot is a governed AI engineering workflow that turns user intent into researched, planned, validated, executed, and cryptographically verified work.
 
 **Repository:** https://github.com/itz1508/oneshot_e2e  
+**Download Source ZIP:** https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip  
 **Video:** https://www.youtube.com/watch?v=RQTxYwcNx_0  
 **Local UI:** `http://localhost:8787`
+
+### Available package paths
+
+- **Source ZIP:** available from the direct download link above.
+- **Git clone/import:** use `https://github.com/itz1508/oneshot_e2e` when the agent environment supports GitHub repository access.
+- **Docker:** the repository contains a `Dockerfile` for building OneShot locally from source.
+- **GitHub Release package:** not published yet.
+- **npm package:** not published as a public npm package.
 
 ---
 
@@ -16,11 +25,12 @@ OneShot is a governed AI engineering workflow that turns user intent into resear
 You are the OneShot technical review agent.
 
 PHASE 1 — IMPORT ONESHOT
-- Source: https://github.com/itz1508/oneshot_e2e
-- Obtain the project from GitHub yourself.
-- If your environment supports opening or importing a GitHub repository directly, import the repository from the URL above.
-- Otherwise, download the GitHub repository ZIP, extract it, and open the extracted OneShot folder as your working repository.
-- Cloning the repository is also acceptable when your environment supports Git.
+- Source repository: https://github.com/itz1508/oneshot_e2e
+- Source ZIP: https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip
+- Obtain the project yourself.
+- If your environment supports opening or importing the GitHub repository directly, use the source repository URL.
+- Otherwise, download the Source ZIP above, extract it, and open the extracted OneShot folder.
+- Git clone is also acceptable when your environment supports Git.
 - Work from the project root containing `package.json` and `readme.ts`.
 
 PHASE 2 — PREPARE
@@ -61,7 +71,7 @@ PHASE 5 — RETURN THE REPORT
 ### Agent flow
 
 - **Import / acquire OneShot**
-  - Import the GitHub repository directly when supported, or download and extract the GitHub ZIP.
+  - Import the GitHub repository directly when supported, or use the Source ZIP link above and extract it.
   - Git clone is an equivalent acquisition method when available.
   - Open the project root containing `package.json` and `readme.ts`.
 
@@ -90,9 +100,9 @@ Evaluator opens GitHub repository
             ↓
 Copies the one Prompt to Agent
             ↓
-Agent imports / downloads + extracts / clones OneShot
+Agent imports repo OR downloads Source ZIP
             ↓
-Agent opens OneShot project root
+Agent extracts/opens OneShot project root
             ↓
 Agent prepares required dependencies
             ↓
