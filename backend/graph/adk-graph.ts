@@ -35,154 +35,122 @@ interface NodeDefinition extends Omit<AdkGraphNode, "state" | "message"> {
 
 const workflowDefs: NodeDefinition[] = [
   {
-    id: "OneShotCanonicalWorkflow",
-    label: "OneShot Canonical Workflow / SequentialAgent",
+    id: "OneShotWorkflow",
+    label: "OneShot / Google ADK Workflow",
     kind: "workflow",
     processor: "Done",
   },
-  { id: "ResearcherStage", label: "Researcher", kind: "stage", processor: "Researcher" },
-  { id: "PlannerStage", label: "Planner", kind: "stage", processor: "Planner" },
-  { id: "RefactorStage", label: "Refactor", kind: "stage", processor: "Refactor" },
   {
-    id: "GapAnalysisWorkflow",
-    label: "Gap Analysis / SequentialAgent",
+    id: "OneShotPipeline",
+    label: "OneShot Pipeline / dynamic node",
+    kind: "workflow",
+    processor: "Done",
+  },
+  { id: "Researcher", label: "Researcher", kind: "stage", processor: "Researcher" },
+  { id: "Planner", label: "Planner", kind: "stage", processor: "Planner" },
+  { id: "Refactor", label: "Refactor", kind: "stage", processor: "Refactor" },
+  {
+    id: "GapAnalysis",
+    label: "Gap Analysis / ctx.runNode loop",
     kind: "workflow",
     processor: "GapAnalysis",
   },
+  { id: "GapAnalysisCheck", label: "Gap Check", kind: "stage", inherit: "GapAnalysis" },
+  { id: "GapAnalysisFix", label: "Gap Improve", kind: "stage", inherit: "GapAnalysis" },
+  { id: "GapAnalysisFinalize", label: "Gap Finalize", kind: "gate", inherit: "GapAnalysis" },
+  { id: "Evaluation", label: "Evaluation", kind: "stage", processor: "Evaluation" },
   {
-    id: "GapAnalysisLoop",
-    label: "Gap Analysis Loop / LoopAgent",
-    kind: "loop",
-    inherit: "GapAnalysis",
-  },
-  { id: "GapCheck", label: "Gap Check", kind: "stage", inherit: "GapAnalysis" },
-  { id: "GapFix", label: "Gap Fix", kind: "stage", inherit: "GapAnalysis" },
-  { id: "GapRecheck", label: "Gap Recheck", kind: "stage", inherit: "GapAnalysis" },
-  {
-    id: "GapAnalysisComplete",
-    label: "Gap Analysis Complete",
-    kind: "gate",
-    inherit: "GapAnalysis",
-  },
-  { id: "EvaluationStage", label: "Evaluation", kind: "stage", processor: "Evaluation" },
-  {
-    id: "TripleValidationWorkflow",
-    label: "Triple Validation / SequentialAgent",
-    kind: "workflow",
+    id: "TripleValidation",
+    label: "Triple Validation / dynamic parallel fan-out",
+    kind: "parallel",
     processor: "TripleValidation",
   },
   {
-    id: "TripleValidationAdmission",
-    label: "Triple Validation Admission",
-    kind: "gate",
-    inherit: "TripleValidation",
-  },
-  {
-    id: "TripleValidationParallel",
-    label: "Triple Validation / ParallelAgent",
-    kind: "parallel",
-    inherit: "TripleValidation",
-  },
-  {
-    id: "SchemaValidationAgent",
+    id: "SchemaValidation",
     label: "Schema Validation",
     kind: "stage",
     processor: "SchemaValidation",
   },
   {
-    id: "FixtureValidationAgent",
+    id: "FixtureValidation",
     label: "Fixture Validation",
     kind: "stage",
     processor: "FixtureValidation",
   },
   {
-    id: "GoalValidationAgent",
+    id: "GoalValidation",
     label: "Goal Validation",
     kind: "stage",
     processor: "GoalValidation",
   },
-  {
-    id: "TripleValidationGate",
-    label: "Triple Validation Gate",
-    kind: "gate",
-    processor: "TripleValidation",
-  },
-  { id: "ConfirmationStage", label: "Confirmed", kind: "gate", processor: "Confirmed" },
-  { id: "CreateHashStage", label: "Create H1", kind: "stage", processor: "CreateHash" },
-  { id: "BuilderStage", label: "Builder / Sandbox Execution", kind: "stage", processor: "Builder" },
-  {
-    id: "HashVerificationStage",
-    label: "H1 = Sandbox H2",
-    kind: "gate",
-    processor: "Hash",
-  },
-  { id: "DoneStage", label: "Done", kind: "gate", processor: "Done" },
+  { id: "Confirmed", label: "Confirmed", kind: "gate", processor: "Confirmed" },
+  { id: "CreateHash", label: "Create H1", kind: "stage", processor: "CreateHash" },
+  { id: "Builder", label: "Builder / Sandbox Execution", kind: "stage", processor: "Builder" },
+  { id: "Hash", label: "H1 = Sandbox H2", kind: "gate", processor: "Hash" },
+  { id: "Done", label: "Done", kind: "gate", processor: "Done" },
 ];
 
 const providerDefs: NodeDefinition[] = [
-  { id: "Provider:researcher", label: "Researcher Provider", kind: "boundary", processor: "ADK:researcher-provider" },
+  {
+    id: "Provider:researcher",
+    label: "Researcher Provider Binding",
+    kind: "boundary",
+    processor: "ProviderBinding:Researcher",
+  },
   { id: "Provider:cache", label: "Research Draft Cache", kind: "cache", processor: "ADK:cache" },
-  { id: "Provider:runner", label: "Google ADK LlmAgent / Runner", kind: "agent", processor: "ADK:adk-runner" },
-  { id: "Provider:litellm", label: "LiteLLM ollama_chat", kind: "model-adapter", processor: "ADK:litellm" },
-  { id: "Provider:ollama", label: "Ollama", kind: "model-server", processor: "ADK:ollama" },
-  { id: "Provider:gemma2", label: "Gemma 2 9B", kind: "model", processor: "ADK:gemma2" },
+  { id: "Provider:runner", label: "Google ADK Researcher Pipeline", kind: "agent", processor: "ADK:researcher-pipeline" },
+  { id: "Provider:distribution", label: "Distribution Model", kind: "model", processor: "ADK:distribution-model" },
+  { id: "Provider:research", label: "Research Model", kind: "model", processor: "ADK:research-model" },
+  { id: "Provider:synthesis", label: "Synthesis Model", kind: "model", processor: "ADK:synthesis-model" },
   { id: "Provider:research-draft", label: "Structured Research Draft", kind: "artifact", processor: "ADK:research-draft" },
 ];
 
 export const ADK_GRAPH_EDGES: AdkGraphEdge[] = [
-  { from: "OneShotCanonicalWorkflow", to: "ResearcherStage", condition: "SequentialAgent" },
-  { from: "ResearcherStage", to: "PlannerStage" },
-  { from: "PlannerStage", to: "RefactorStage" },
-  { from: "RefactorStage", to: "GapAnalysisWorkflow" },
-  { from: "GapAnalysisWorkflow", to: "GapAnalysisLoop", condition: "contains" },
-  { from: "GapAnalysisLoop", to: "GapCheck", condition: "LoopAgent" },
-  { from: "GapCheck", to: "GapFix", condition: "gaps found" },
-  { from: "GapFix", to: "GapRecheck" },
-  { from: "GapRecheck", to: "GapCheck", condition: "gaps remaining" },
-  { from: "GapCheck", to: "GapAnalysisComplete", condition: "gap_0" },
-  { from: "GapRecheck", to: "GapAnalysisComplete", condition: "gap_0" },
-  { from: "GapAnalysisComplete", to: "EvaluationStage" },
-  { from: "EvaluationStage", to: "TripleValidationWorkflow", condition: "PASSED" },
-  { from: "TripleValidationWorkflow", to: "TripleValidationAdmission", condition: "contains" },
-  { from: "TripleValidationAdmission", to: "TripleValidationParallel" },
-  { from: "TripleValidationParallel", to: "SchemaValidationAgent", condition: "parallel" },
-  { from: "TripleValidationParallel", to: "FixtureValidationAgent", condition: "parallel" },
-  { from: "TripleValidationParallel", to: "GoalValidationAgent", condition: "parallel" },
-  { from: "SchemaValidationAgent", to: "TripleValidationGate" },
-  { from: "FixtureValidationAgent", to: "TripleValidationGate" },
-  { from: "GoalValidationAgent", to: "TripleValidationGate" },
-  { from: "TripleValidationGate", to: "ConfirmationStage", condition: "VALID" },
-  { from: "ConfirmationStage", to: "CreateHashStage" },
-  { from: "CreateHashStage", to: "BuilderStage" },
-  { from: "BuilderStage", to: "HashVerificationStage" },
-  { from: "HashVerificationStage", to: "DoneStage", condition: "MATCH" },
+  { from: "OneShotWorkflow", to: "OneShotPipeline", condition: "START" },
+  { from: "OneShotPipeline", to: "Researcher", condition: "ctx.runNode" },
+  { from: "Researcher", to: "Planner" },
+  { from: "Planner", to: "Refactor" },
+  { from: "Refactor", to: "GapAnalysis" },
+  { from: "GapAnalysis", to: "GapAnalysisCheck", condition: "ctx.runNode" },
+  { from: "GapAnalysisCheck", to: "GapAnalysisFix", condition: "gap found" },
+  { from: "GapAnalysisFix", to: "GapAnalysisCheck", condition: "fresh recheck" },
+  { from: "GapAnalysisCheck", to: "GapAnalysisFinalize", condition: "gap_0" },
+  { from: "GapAnalysisFinalize", to: "Evaluation" },
+  { from: "Evaluation", to: "TripleValidation", condition: "PASSED" },
+  { from: "TripleValidation", to: "SchemaValidation", condition: "parallel ctx.runNode" },
+  { from: "TripleValidation", to: "FixtureValidation", condition: "parallel ctx.runNode" },
+  { from: "TripleValidation", to: "GoalValidation", condition: "parallel ctx.runNode" },
+  { from: "SchemaValidation", to: "Confirmed", condition: "VALID with all lanes" },
+  { from: "FixtureValidation", to: "Confirmed", condition: "VALID with all lanes" },
+  { from: "GoalValidation", to: "Confirmed", condition: "VALID with all lanes" },
+  { from: "TripleValidation", to: "GapAnalysis", condition: "NOT_VALID feedback" },
+  { from: "Confirmed", to: "CreateHash" },
+  { from: "CreateHash", to: "Builder" },
+  { from: "Builder", to: "Hash" },
+  { from: "Hash", to: "Done", condition: "MATCH" },
 
-  // Existing Researcher provider ADK subgraph, attached beneath Researcher.
-  { from: "ResearcherStage", to: "Provider:researcher", condition: "provider" },
+  // Researcher provider/model subgraph attached beneath the real Researcher node.
+  { from: "Researcher", to: "Provider:researcher", condition: "provider binding" },
   { from: "Provider:researcher", to: "Provider:cache" },
   { from: "Provider:cache", to: "Provider:research-draft", condition: "cache hit" },
   { from: "Provider:cache", to: "Provider:runner", condition: "cache miss" },
-  { from: "Provider:runner", to: "Provider:litellm" },
-  { from: "Provider:litellm", to: "Provider:ollama" },
-  { from: "Provider:ollama", to: "Provider:gemma2" },
-  { from: "Provider:gemma2", to: "Provider:research-draft" },
+  { from: "Provider:runner", to: "Provider:distribution" },
+  { from: "Provider:distribution", to: "Provider:research" },
+  { from: "Provider:research", to: "Provider:synthesis" },
+  { from: "Provider:synthesis", to: "Provider:research-draft" },
 ];
 
 function rootState(latest: Map<string, ProcessingEvent>): GraphNodeState {
   if (latest.get("Done")?.state === "COMPLETE") return "COMPLETE";
-  if ([...latest.values()].some((event) => event.state === "RUNNING")) {
-    return "RUNNING";
-  }
-  if ([...latest.values()].some((event) => event.state === "COMPLETE")) {
-    return "RUNNING";
-  }
+  if ([...latest.values()].some((event) => event.state === "RUNNING")) return "RUNNING";
+  if ([...latest.values()].some((event) => event.state === "COMPLETE")) return "RUNNING";
   return "PENDING";
 }
 
 /**
- * Project the real canonical ADK workflow structure plus the Researcher
- * provider subgraph. This API is projection-only; execution authority is the
- * actual @google/adk agent object tree created by the backend runtime.
+ * Project the real dynamic @google/adk workflow plus the Researcher provider
+ * subgraph. This API is projection-only; execution authority remains the
+ * actual Workflow/node/ctx.runNode objects executed by WorkflowRuntime.
  */
 export function projectAdkGraph(events: ProcessingEvent[] = []) {
   const latest = new Map<string, ProcessingEvent>();
@@ -190,7 +158,7 @@ export function projectAdkGraph(events: ProcessingEvent[] = []) {
 
   const defs = [...workflowDefs, ...providerDefs];
   const nodes = defs.map((definition) => {
-    if (definition.id === "OneShotCanonicalWorkflow") {
+    if (definition.id === "OneShotWorkflow" || definition.id === "OneShotPipeline") {
       return {
         id: definition.id,
         label: definition.label,
@@ -211,19 +179,20 @@ export function projectAdkGraph(events: ProcessingEvent[] = []) {
   });
 
   return {
-    graph_id: "oneshot-adk-workflow-v2",
+    graph_id: "oneshot-adk-dynamic-workflow-v3",
     authority: "projection-only",
     execution_authority: "@google/adk",
     root_agent: {
-      id: "OneShotCanonicalWorkflow",
-      type: "SequentialAgent",
+      id: "OneShotWorkflow",
+      type: "Workflow",
     },
     workflow_agents: {
-      gap_analysis: "LoopAgent",
-      triple_validation: "ParallelAgent",
+      pipeline: "node+ctx.runNode",
+      gap_analysis: "dynamic ctx.runNode loop",
+      triple_validation: "Promise.all(ctx.runNode)",
     },
     provider_subgraph: {
-      attached_to: "ResearcherStage",
+      attached_to: "Researcher",
       root: "Provider:researcher",
     },
     nodes,
