@@ -4,6 +4,7 @@ import { EvaluationWorkflow } from "../role/evaluation/workflow.js";
 import { GapAnalysisWorkflow } from "../role/gap-analysis/workflow.js";
 import { PlannerWorkflow } from "../role/planner/workflow.js";
 import { RefactorWorkflow } from "../role/refactor/workflow.js";
+import type { ResearchProvider } from "../role/researcher/provider.js";
 import { resolveResearchProvider } from "../role/researcher/provider-resolver.js";
 import { ResearcherWorkflow } from "../role/researcher/workflow.js";
 import type { SandboxService } from "../sandbox/sandbox-service.js";
@@ -32,7 +33,7 @@ export function createRolePipeline(input: RolePipelineBootstrapInput): RolePipel
       message: "resolve and probe ResearchProvider",
     });
 
-    let provider;
+    let provider: ResearchProvider | undefined;
     try {
       provider = await resolveResearchProvider(projectRoot, events);
       const readiness = await provider.ready(runId);
@@ -56,10 +57,11 @@ export function createRolePipeline(input: RolePipelineBootstrapInput): RolePipel
         message: `models=${readiness.models.join(",") || "fixture"}`,
       });
 
+      const boundProvider = provider;
       return {
         role_id: "Researcher" as const,
-        runtime: new ResearcherWorkflow(provider, contracts),
-        deactivate: () => provider?.close?.(),
+        runtime: new ResearcherWorkflow(boundProvider, contracts),
+        deactivate: () => boundProvider.close?.(),
       };
     } catch (error) {
       provider?.close?.();
