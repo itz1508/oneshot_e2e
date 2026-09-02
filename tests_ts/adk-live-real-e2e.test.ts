@@ -99,7 +99,13 @@ async function collectEvents(url: string): Promise<ProcessingEvent[]> {
 
 test(
   "live Google ADK uses three distinct models and Builder mutates + verifies a disposable product",
-  { timeout: 25 * 60_000 },
+  {
+    timeout: 25 * 60_000,
+    skip:
+      process.env.ONESHOT_LIVE_ADK_E2E === "true"
+        ? false
+        : "set ONESHOT_LIVE_ADK_E2E=true to run live Ollama inference",
+  },
   async () => {
     const requiredModels = [
       process.env.GEMMA2_DISTRIBUTION_MODEL || "",
