@@ -16,9 +16,24 @@ Review workflow:
 - Launch and exercise the real product where the environment permits.
 - Run the repository's relevant tests, schema validation, fixture validation, workflow tests, proof checks, packaging checks, runtime checks, and other supported verification.
 - Inspect implementation, schemas, fixtures, workflow execution, generated artifacts, runtime evidence, and proof material.
+- Inspect whether the canonical workflow actually uses the official Google ADK TypeScript package and real SequentialAgent, LoopAgent, and ParallelAgent composition.
+- Verify whether Gap Analysis performs fix → recheck → repeat through LoopAgent until gap_0 or ROOT_CAUSE.
+- Verify whether Schema, Fixture, and Goal validation fan out through ParallelAgent and independent deterministic validator lanes before the Triple Validation gate.
+- Verify whether Builder is in the canonical workflow before final Hash Verification and whether sandbox execution evidence is collected.
+- Verify the cryptographic responsibility precisely: H1 and hash_sandbox/H2 are hashes of the same immutable confirmed core; execution success is a separate sandbox-evidence responsibility.
+- Compare runtime behavior with workflow/graph.json, graph validation, ADK graph projection, and authority projection where available.
 - Collect evidence as you work: commands or paths used, executed results, failures, discrepancies, unverified areas, and supporting artifacts.
-- Base findings on what you actually executed, inspected, or verified.
-- After the technical review is complete, use the collected evidence for Judge Evaluation.
+
+Evidence classification for material capability claims:
+- EXECUTED — directly exercised during this review.
+- TESTED — demonstrated by tests that you actually executed.
+- IMPLEMENTED — found in source but not exercised during this review.
+- DOCUMENTED — described in documentation, diagrams, or video only.
+- UNVERIFIED — available evidence is insufficient to establish the claim.
+
+Do not infer runtime behavior from documentation, diagrams, intended architecture, or the demonstration video. Report discrepancies between claims, implementation, tests, and runtime behavior. Base findings on what you actually executed, inspected, or verified.
+
+After the technical review is complete, use the collected evidence for Judge Evaluation.
 
 Judge Evaluation questions to answer after the technical review:
 - What is your technical impression of the project, and what evidence led you to that view?
