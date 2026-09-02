@@ -1,7 +1,10 @@
 import { resolve } from "node:path";
 import type { Prompt, ResearchBundle } from "../../../../contract/types.js";
 import type { ProcessingEventBus } from "../../../../runtime/event-bus.js";
-import type { ResearchProvider } from "../../provider.js";
+import type {
+  ResearchProvider,
+  ResearchProviderReadiness,
+} from "../../provider.js";
 import { WorkflowRootCauseError } from "../../../../core/root-cause-error.js";
 import { ResearchEvidenceCollector } from "../../tool/evidence/collector.js";
 import { structuredDraftToResearchBundle } from "../structured-draft.js";
@@ -13,9 +16,50 @@ function positiveInt(value: string | undefined, fallback: number) {
   return Number.isInteger(n) && n > 0 ? n : fallback;
 }
 
+function configuredModel(name: string): string {
+  return (process.env[name] || "").trim();
+}
+
 export function loadAdkGemmaConfig(projectRoot: string): AdkGemmaConfig {
+  const testDraftFile = process.env.ONESHOT_ADK_TEST_DRAFT_FILE
+    ? resolve(projectRoot, process.env.ONESHOT_ADK_TEST_DRAFT_FILE)
+    : undefined;
+  const legacyTestModel = (process.env.GEMMA2_LOCAL_MODEL || "gemma2:9b").trim();
+
+  const distributionModel =
+    configuredModel("GEMMA2_DISTRIBUTION_MODEL") ||
+    (testDraftFile ? legacyTestModel : "");
+  const researchModel =
+    configuredModel("GEMMA2_RESEARCH_MODEL") ||
+    (testDraftFile ? legacyTestModel : "");
+  const synthesisModel =
+    configuredModel("GEMMA2_SYNTHESIS_MODEL") ||
+    (testDraftFile ? legacyTestModel : "");
+
+  if (!testDraftFile) {
+    const missing = [
+      ["GEMMA2_DISTRIBUTION_MODEL", distributionModel],
+      ["GEMMA2_RESEARCH_MODEL", researchModel],
+      ["GEMMA2_SYNTHESIS_MODEL", synthesisModel],
+    ]
+      .filter(([, value]) => !value)
+      .map(([name]) => name);
+    if (missing.length) {
+      throw new Error(
+        `Google ADK Researcher pipeline is not bound: missing ${missing.join(", ")}`,
+      );
+    }
+    if (new Set([distributionModel, researchModel, synthesisModel]).size !== 3) {
+      throw new Error(
+        "Google ADK Researcher pipeline requires three distinct model bindings: distribution, research, synthesis",
+      );
+    }
+  }
+
   return {
-    model: process.env.GEMMA2_LOCAL_MODEL || "gemma2:9b",
+    distributionModel,
+    researchModel,
+    synthesisModel,
     ollamaBaseUrl:
       process.env.OLLAMA_API_BASE ||
       `http://${process.env.GEMMA2_LOCAL_HOST || "localhost"}:${process.env.GEMMA2_LOCAL_PORT || "11434"}`,
@@ -23,11 +67,9 @@ export function loadAdkGemmaConfig(projectRoot: string): AdkGemmaConfig {
     cacheUrl: process.env.REDIS_URL || process.env.CACHE_URL || undefined,
     cacheTtlSeconds: positiveInt(process.env.CACHE_TTL, 3600),
     autoPull:
-      (process.env.GEMMA2_AUTO_PULL || "true").toLowerCase() === "true",
+      (process.env.GEMMA2_AUTO_PULL || "false").toLowerCase() === "true",
     timeoutSeconds: positiveInt(process.env.GEMMA2_TIMEOUT_SECONDS, 300),
-    testDraftFile: process.env.ONESHOT_ADK_TEST_DRAFT_FILE
-      ? resolve(projectRoot, process.env.ONESHOT_ADK_TEST_DRAFT_FILE)
-      : undefined,
+    testDraftFile,
   };
 }
 
@@ -58,6 +100,37 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
     this.events = events;
   }
 
+  async ready(runId: string): Promise<ResearchProviderReadiness> {
+    if (!this.workers.length) {
+      return {
+        ready: false,
+        provider: "google-adk",
+        models: [],
+        detail: "ADK Gemma worker pool is empty",
+      };
+    }
+    try {
+      const health = await this.workers[0].health(runId);
+      return {
+        ready: health.ready,
+        provider: health.provider,
+        models: health.models,
+        detail: health.detail || health.ollama_api_base,
+      };
+    } catch (error) {
+      return {
+        ready: false,
+        provider: "google-adk",
+        models: [
+          this.config.distributionModel,
+          this.config.researchModel,
+          this.config.synthesisModel,
+        ],
+        detail: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
   private async draft(
     prompt: Prompt,
     runId: string,
@@ -76,27 +149,33 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
       d = await this.draft(prompt, runId, gathered);
     } catch (error) {
       throw new WorkflowRootCauseError({
-        issue: "ADK Gemma 2 research provider failed",
-        expected: `Google ADK with ollama_chat/${this.config.model} returns a structured research draft within ${this.config.timeoutSeconds}s`,
+        issue: "ADK Researcher model pipeline failed",
+        expected:
+          "Google ADK distribution -> research -> synthesis pipeline returns one structured research draft",
         actual: error instanceof Error ? error.message : String(error),
         evidence_ids: [],
         required_correction:
-          "Start Ollama, ensure Gemma 2 is available, install requirements-adk.txt, and correct the provider/runtime failure",
+          "Correct the three model bindings, Ollama readiness, ADK runtime, or structured model response",
         recheck_target: runId,
       });
     }
 
+    const models = [
+      this.config.distributionModel,
+      this.config.researchModel,
+      this.config.synthesisModel,
+    ];
     return await structuredDraftToResearchBundle({
       projectRoot: this.projectRoot,
       prompt,
       runId,
       draft: d,
       gathered,
-      providerSource: `google-adk:${this.config.model}`,
-      providerProvenance: "local-gemma2-ollama",
+      providerSource: `google-adk-pipeline:${models.join("->")}`,
+      providerProvenance: "local-three-model-ollama",
       incompleteIssue: "ADK research draft incomplete",
       incompleteCorrection:
-        "Correct Researcher ADK instruction or model response",
+        "Correct Researcher ADK pipeline instructions or model response",
     });
   }
 
