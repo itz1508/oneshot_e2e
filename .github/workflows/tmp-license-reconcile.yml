@@ -76,14 +76,18 @@ jobs:
           echo "FINAL_MANIFEST_SECOND_GENERATION_NO_DIFF=true"
           echo "FINAL_WORKFLOW_SHA256=$EXPECTED_WORKFLOW_SHA"
 
-      - name: Store final manifest as unreferenced Git blob
+      - name: Store exact future files as unreferenced Git blobs
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          CONTENT_B64="$(base64 -w0 MANIFEST.sha256)"
-          BLOB_SHA="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/blobs" -f content="$CONTENT_B64" -f encoding='base64' --jq '.sha')"
-          test -n "$BLOB_SHA"
-          echo "FINAL_MANIFEST_BLOB_SHA=$BLOB_SHA"
-          echo "FINAL_MANIFEST_BLOB_READY=true"
+          MANIFEST_B64="$(base64 -w0 MANIFEST.sha256)"
+          MANIFEST_BLOB_SHA="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/blobs" -f content="$MANIFEST_B64" -f encoding='base64' --jq '.sha')"
+          WORKFLOW_B64="$(base64 -w0 .github/workflows/tmp-adk-live-real-e2e.yml)"
+          WORKFLOW_BLOB_SHA="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/blobs" -f content="$WORKFLOW_B64" -f encoding='base64' --jq '.sha')"
+          test -n "$MANIFEST_BLOB_SHA"
+          test -n "$WORKFLOW_BLOB_SHA"
+          echo "FINAL_MANIFEST_BLOB_SHA=$MANIFEST_BLOB_SHA"
+          echo "FINAL_WORKFLOW_BLOB_SHA=$WORKFLOW_BLOB_SHA"
+          echo "FINAL_BLOBS_READY=true"
