@@ -25,27 +25,27 @@ export const ADK_STATE = {
   runId: "oneshot.run_id",
   prompt: "oneshot.prompt",
 
-  bundle: "temp:oneshot.bundle",
-  audit: "temp:oneshot.audit",
-  plan: "temp:oneshot.plan",
+  bundle: "oneshot.bundle",
+  audit: "oneshot.audit",
+  plan: "oneshot.plan",
 
-  gapFindings: "temp:oneshot.gap_findings",
-  resolvedGaps: "temp:oneshot.resolved_gaps",
-  gap: "temp:oneshot.gap",
+  gapFindings: "oneshot.gap_findings",
+  resolvedGaps: "oneshot.resolved_gaps",
+  gap: "oneshot.gap",
 
-  evaluation: "temp:oneshot.evaluation",
+  evaluation: "oneshot.evaluation",
 
-  schemaValidation: "temp:oneshot.schema_validation",
-  fixtureValidation: "temp:oneshot.fixture_validation",
-  goalValidation: "temp:oneshot.goal_validation",
-  tripleValidation: "temp:oneshot.triple_validation",
+  schemaValidation: "oneshot.schema_validation",
+  fixtureValidation: "oneshot.fixture_validation",
+  goalValidation: "oneshot.goal_validation",
+  tripleValidation: "oneshot.triple_validation",
 
-  confirmed: "temp:oneshot.confirmed",
-  createdHash: "temp:oneshot.created_hash",
-  builderResult: "temp:oneshot.builder_result",
-  hashProof: "temp:oneshot.hash_proof",
+  confirmed: "oneshot.confirmed",
+  createdHash: "oneshot.created_hash",
+  builderResult: "oneshot.builder_result",
+  hashProof: "oneshot.hash_proof",
 
-  rootCause: "temp:oneshot.root_cause",
+  rootCause: "oneshot.root_cause",
 } as const;
 
 function required<T>(ctx: InvocationContext, key: string): T {

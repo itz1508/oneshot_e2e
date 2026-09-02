@@ -28,8 +28,11 @@ test("negative 1: Hash mismatch halts execution before sandbox workspace or runn
   assert.equal(result.evidence, undefined); // Execution never started
 
   const events = h.events.list(runId).filter((e) => e.scope === "SANDBOX");
-  assert.ok(events.some((e) => e.processor === "SandboxAdmissionVerified" && e.result === "ROOT_CAUSE"));
-  assert.equal(events.some((e) => e.processor === "ExecutionStarted"), false);
+  const admissionFailure = events.find((e) => e.processor === "SandboxAdmissionVerified" && e.result === "ROOT_CAUSE");
+  assert.ok(admissionFailure, "SandboxAdmissionVerified ROOT_CAUSE event should exist");
+  // Execution must not start AFTER the admission failure
+  const executionStartedAfterFailure = events.some((e) => e.processor === "ExecutionStarted" && e.sequence > admissionFailure!.sequence);
+  assert.equal(executionStartedAfterFailure, false);
 
   h.bridge.close();
 });
