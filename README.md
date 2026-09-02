@@ -15,13 +15,7 @@ OneShot is a governed AI engineering workflow that turns user intent into resear
 
 1. Copy the complete **Prompt to Agent** below.
 2. Paste it into a repository-capable agent.
-3. The agent acquires OneShot, prepares the environment, runs `readme.ts`, performs the complete technical review and validation, and returns one evidence-backed report.
-4. No second start prompt is required from the evaluator.
-
-While the agent is working, the evaluator can watch the **Judge View / Demo Video** above to see the demonstrated OneShot experience. The video is orientation/reference material; the technical report is based on repository and runtime evidence gathered by the agent.
-
 ---
-
 ## Prompt to Agent
 
 ```text
