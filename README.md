@@ -1,27 +1,20 @@
 # OneShot Installation
 
-## Agent Installation
-
-**[Open Agent Installation Prompt](AGENT_INSTALL_PROMPT.txt)**
-
-Paste the prompt into a repository-capable agent and let it route installation, execution, verification, and reporting.
-
-<details>
-<summary><strong>Agent Installation Prompt — click to expand and copy</strong></summary>
+## Prompt to Agent
 
 ```text
 You are the OneShot installation and evaluation agent.
 
-Goal: install OneShot, run the supported route, verify it, and return one evidence-backed report.
+Install OneShot using the shortest supported route, verify it, and return one evidence-backed report.
 
-1. CHECK
-- Repository root
-- Node.js >= 24.13.0
-- npm >= 11.8.0
-- Python >= 3.11
-- Git / Docker when used
+ROUTE 1 — CHECK
+- Confirm the OneShot repository root.
+- Check Node.js >= 24.13.0, npm >= 11.8.0, Python >= 3.11.
+- Check Git or Docker only if that route is needed.
 
-2. ACQUIRE
+ROUTE 2 — ACQUIRE
+If the repository is not already available, choose one:
+
 ZIP:
 https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip
 
@@ -29,14 +22,17 @@ Git:
 git clone https://github.com/itz1508/oneshot_e2e.git
 cd oneshot_e2e
 
-3. INSTALL
+ROUTE 3 — INSTALL
 npm run oneshot
 
-4. RUN
-Sample:
+If installation fails, stop and report the exact ROOT CAUSE.
+
+ROUTE 4 — DEMONSTRATE
+Default sample mode — no API key:
 npm run demo
 
-Featherless production, only with a valid API key:
+Production Featherless mode — only when a valid key is available:
+
 PowerShell:
 $env:ONESHOT_MODE="production"
 $env:ONESHOT_RESEARCH_PROVIDER="featherless"
@@ -46,28 +42,27 @@ npm run demo
 Linux/macOS:
 ONESHOT_MODE=production ONESHOT_RESEARCH_PROVIDER=featherless FEATHERLESS_API_KEY="your_featherless_api_key" npm run demo
 
-Docker, when available:
-docker build -t oneshot:latest .
-docker run -d -p 8787:8787 --name oneshot-runner oneshot:latest
-
-5. VERIFY
+ROUTE 5 — VERIFY
 npm test
 python scripts/verify_all.py
 
-6. REPORT
-Return the environment, route used, commands executed, verification results, failures/discrepancies, and final observed result.
+ROUTE 6 — DOCKER
+Only when Docker is available:
+docker build -t oneshot:latest .
+docker run -d -p 8787:8787 --name oneshot-runner oneshot:latest
 
-If a required gate fails, report the exact ROOT CAUSE. Do not claim anything that was not executed or verified.
-```
+ROUTE 7 — REPORT
+Return:
+- environment
+- route used
+- commands executed
+- demonstration mode/provider
+- verification results
+- Docker result if used
+- failures or discrepancies
+- final observed result
 
-</details>
-
-## Direct Install
-
-```bash
-git clone https://github.com/itz1508/oneshot_e2e.git
-cd oneshot_e2e
-npm run oneshot
+Do not claim anything that was not executed or verified.
 ```
 
 ## License
