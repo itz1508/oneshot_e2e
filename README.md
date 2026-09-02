@@ -7,47 +7,46 @@ OneShot is a governed AI engineering workflow that turns user intent into resear
 
 ---
 
-## Prompt to Agent — Install & Run OneShot
+## Prompt to Agent — Workflow Skill 1: Install & Run OneShot
 
-Copy this prompt into your coding/repository agent.
+Copy this workflow skill into your coding/repository agent.
 
 <details>
-<summary><strong>Copy installation prompt</strong> · Install, launch, and run the sample</summary>
+<summary><strong>Copy installation workflow skill</strong> · Install, launch, and run the sample</summary>
 
 ```text
-You are installing and launching the OneShot repository.
+You are executing the OneShot installation workflow skill.
 
-Work from the repository itself. Inspect the current files and environment before taking action. Do not invent commands or rely on stale README instructions when the repository provides the actual launcher or package scripts.
+Work from the repository itself. Inspect the current files and environment before taking action. Do not invent commands or rely on stale documentation when the repository provides the actual launcher, package, or scripts.
 
-GOAL
-Install OneShot, launch the real application, verify health, and run the deterministic sample flow successfully.
+EXECUTE THIS WORKFLOW IN ORDER.
 
-REQUIREMENTS
-1. Inspect the repository and determine the supported installation path for this environment.
-2. Prefer the packaged Docker/ZIP path when the release package is available and appropriate.
-3. Otherwise use the repository's supported CLI/source installation path.
-4. Do not change application source code merely to make installation succeed.
-5. Do not push, publish, tag, or create a release.
-6. If a required dependency or service is unavailable, report the exact root cause instead of bypassing it.
+STEP 1 — INSPECT ENVIRONMENT
+- Identify the operating system.
+- Inspect the repository and supported installation paths.
+- Check Docker when using the packaged path.
+- Check Node.js, Python, and Git only when the selected source path requires them.
+- Check required environment configuration.
+- Check port 8787 availability.
 
-INSTALLATION CHECKS
-- operating system
-- Docker availability when using the packaged path
-- Node.js/Python/Git only when the selected source path requires them
-- required environment configuration
-- port 8787 availability
+STEP 2 — INSTALL
+- Prefer the packaged Docker/ZIP path when the release package is available and appropriate.
+- Otherwise use the repository's supported CLI/source installation path.
+- Do not change application source code merely to make installation succeed.
+- Do not push, publish, tag, or create a release.
+- If a required dependency or service is unavailable, stop and report the exact root cause instead of bypassing it.
 
-LAUNCH
-Use the repository's real launch path, such as the packaged start script or the supported OneShot CLI/source launcher.
+STEP 3 — LAUNCH
+- Use the repository's real launch path, such as the packaged start script or supported CLI/source launcher.
+- Wait for the real backend health endpoint.
+- Verify `http://localhost:8787` is available.
+- Confirm the frontend is served by the running backend.
 
-VERIFY
-1. Wait for the real backend health endpoint.
-2. Verify `http://localhost:8787` is available.
-3. Confirm the frontend is served by the running backend.
-4. Run the deterministic/sample OneShot job.
-5. Observe the real workflow execution for the Job_id.
-6. Confirm the job reaches its legitimate terminal result.
-7. If successful, confirm the final proof/hash verification is present.
+STEP 4 — RUN SAMPLE
+- Run the deterministic/sample OneShot job.
+- Observe the real workflow execution for the active Job_id.
+- Confirm the job reaches its legitimate terminal result.
+- If successful, confirm the final proof/hash verification is present.
 
 DO NOT fabricate timings, hashes, test counts, health results, or workflow status.
 
@@ -65,38 +64,42 @@ FINAL_RESULT: PASSED | ROOT CAUSE
 
 ---
 
-## Prompt to Agent — Run Full Test & Validation
+## Prompt to Agent — Workflow Skill 2: Technical Evaluation & Validation
 
-Copy this prompt into your coding/repository agent after installation.
+Copy this workflow skill into your coding/repository agent after installation.
 
 <details>
-<summary><strong>Copy test prompt</strong> · Full E2E, validation, fixture, graph, and proof checks</summary>
+<summary><strong>Copy evaluation workflow skill</strong> · Video review, launch verification, tests, validation, graph, and proof</summary>
 
 ```text
-You are performing an independent technical evaluation of the OneShot repository after installation.
+You are executing the OneShot technical evaluation workflow skill after installation.
 
-Do not evaluate the project from README claims. Inspect the actual implementation, tests, schemas, fixtures, workflow graph, runtime evidence, and verification scripts. Run the real commands available in the repository.
+Do not evaluate OneShot from README claims. Inspect and execute the actual implementation, tests, schemas, fixtures, workflow graph, runtime evidence, and verification scripts.
 
-GOAL
-Execute the complete supported verification matrix and identify what OneShot actually proves.
+EXECUTE THIS WORKFLOW IN ORDER.
 
-FIRST
-Inspect:
-- package.json
-- pyproject.toml
-- requirements/
-- scripts/verify_dependencies.py
-- scripts/verify_manifest.py
-- tests/
-- tests_ts/
-- validation/
-- schema/
-- workflow/
-- backend/graph/
-- backend/workflow/
+STEP 1 — CONFIRM INSTALLED STATE
+- Confirm the repository/install from Workflow Skill 1 is available.
+- Inspect package.json, pyproject.toml, requirements/, tests/, tests_ts/, validation/, schema/, workflow/, backend/graph/, backend/workflow/, and the verification scripts.
+- Do not modify product behavior to make evaluation pass.
 
-RUN THE COMPLETE SUPPORTED TEST MATRIX
-At minimum, where supported by the repository/environment, execute:
+STEP 2 — OPEN THE VIDEO FOR REVIEW
+Open and keep the OneShot demonstration video available while you perform the remaining evaluation steps:
+
+https://www.youtube.com/watch?v=RQTxYwcNx_0
+
+Use the video only as a visual reference for the product flow being evaluated. Do not treat it as proof. While executing each later step, compare the demonstrated behavior with the real application, source code, tests, graph, fixtures, schemas, and generated evidence. Record any material difference under the relevant evaluation result.
+
+STEP 3 — CONFIRM / LAUNCH THE REAL APPLICATION
+- If OneShot is already running from Workflow Skill 1, verify its current health instead of starting a duplicate instance.
+- Otherwise launch it through the repository's supported path.
+- Verify the backend health endpoint.
+- Verify `http://localhost:8787`.
+- Run or observe a deterministic/sample Job_id.
+- Confirm the live workflow is driven by backend execution evidence rather than a simulated frontend timer.
+
+STEP 4 — RUN THE COMPLETE TEST MATRIX
+Run the repository's supported verification commands. At minimum, where supported by the environment, execute:
 
 python scripts/verify_dependencies.py --profile all
 python -m unittest discover -s tests -v
@@ -104,15 +107,9 @@ npm run verify
 npm --prefix web test
 python scripts/verify_manifest.py
 
-While the full verification is running, open the OneShot demonstration video for judge review:
+Record the real command, exit status, test count, and important output. Do not substitute expected README values for execution results.
 
-https://www.youtube.com/watch?v=RQTxYwcNx_0
-
-Use the video during the evaluation as a visual reference for the same product flow you are inspecting and executing. Do not treat the video as proof. As you evaluate each area below, compare the demonstrated behavior with the actual implementation, tests, runtime behavior, schemas, fixtures, workflow graph, and generated evidence. Report any material difference in the relevant evaluation section rather than as a separate video-review task.
-
-Also run the focused proof tests below.
-
-FULL E2E SAMPLE
+STEP 5 — RUN THE FULL E2E PROOF
 Inspect and run:
 - tests/test_e2e.py
 - fixtures/e2e/complete-success.json
@@ -120,9 +117,9 @@ Inspect and run:
 Command:
 python -m unittest tests.test_e2e -v
 
-Determine whether the test proves the successful confirmation/hash-equality path and negative mutation/failure cases.
+Determine whether the test proves the successful confirmation/hash-equality path and deliberate negative mutation/failure cases.
 
-SCHEMA VALIDATION
+STEP 6 — RUN SCHEMA VALIDATION
 Inspect:
 - validation/schema_validator.py
 - tests/test_schemas.py
@@ -135,7 +132,7 @@ python -m unittest tests.test_parity -v
 
 Report exactly which artifacts are structurally validated and whether invalid structures are rejected.
 
-FIXTURE VALIDATION
+STEP 7 — RUN FIXTURE VALIDATION
 Inspect:
 - validation/fixture_runner.py
 - validation/triple_validation.py
@@ -147,9 +144,9 @@ Run:
 python -m unittest tests.test_fixture -v
 python -m unittest tests.test_fixture_operators -v
 
-Prove whether fixture assertions are actually executed against the Plan, not merely stored as descriptive JSON. List the supported deterministic fixture operators from implementation.
+Prove whether fixture assertions are actually executed against the Plan rather than merely stored as descriptive JSON. List the supported deterministic fixture operators from implementation and identify positive and negative evidence.
 
-TRIPLE VALIDATION
+STEP 8 — RUN TRIPLE VALIDATION
 Inspect validation/triple_validation.py and its tests.
 
 Verify independently:
@@ -159,7 +156,7 @@ Verify independently:
 
 Confirm `all_valid` becomes true only when all three validator results are `VALID`.
 
-GOOGLE ADK WORKFLOW GRAPH
+STEP 9 — EVALUATE THE GOOGLE ADK WORKFLOW GRAPH
 Inspect:
 - backend/graph/
 - backend/workflow/
@@ -177,7 +174,9 @@ Verify executable evidence for:
 - Builder route
 - hash MATCH/MISMATCH routing
 
-HASH PROOF
+Determine whether Google ADK is the actual workflow execution authority or whether another engine duplicates/replaces it.
+
+STEP 10 — EVALUATE HASH PROOF
 Inspect:
 - validation/canonicalize.py
 - validation/hash_proof.py
@@ -186,32 +185,40 @@ Inspect:
 
 Determine whether the confirmed comparable core is canonicalized using RFC 8785/JCS, hashed with SHA-256, verified against the same comparable representation after execution, and whether meaningful mutation causes mismatch.
 
-DOCKER / CLEAN ROOM
+STEP 11 — EVALUATE DOCKER / CLEAN ROOM
 If Docker and the repository's release verification scripts are available, run the supported Docker audit and clean-room package verification. Do not claim these passed unless they actually execute successfully.
 
-EVALUATION RULE
-For every claimed strength, provide:
+STEP 12 — DETERMINE ACTUAL STRENGTHS AND WEAKNESSES
+For every claimed strength provide:
 - implementation evidence
 - test evidence
 - runtime evidence when available
 - negative/failure evidence when available
 - confidence
 
-Actively identify documentation-only or unproven claims.
+Actively identify:
+- documentation-only claims
+- mocked or unexecuted behavior
+- duplicate workflow authorities
+- stale tests/docs
+- validation bypasses
+- security claims without executable proof
+- video behavior that does not match repository evidence
 
 RETURN
-1. COMPLETE TEST RESULTS
-2. FULL E2E RESULT
-3. SCHEMA VALIDATION RESULT
-4. FIXTURE VALIDATION RESULT
-5. TRIPLE VALIDATION RESULT
-6. GOOGLE ADK GRAPH RESULT
-7. HASH VERIFICATION RESULT
-8. DOCKER / CLEAN-ROOM RESULT
-9. STRONGEST VERIFIED CAPABILITIES
-10. UNPROVEN CLAIMS
-11. EVIDENCE INDEX
-12. FINAL_RESULT: PASSED | ROOT CAUSE
+1. INSTALL / RUNTIME CONFIRMATION
+2. COMPLETE TEST RESULTS
+3. FULL E2E RESULT
+4. SCHEMA VALIDATION RESULT
+5. FIXTURE VALIDATION RESULT
+6. TRIPLE VALIDATION RESULT
+7. GOOGLE ADK GRAPH RESULT
+8. HASH VERIFICATION RESULT
+9. DOCKER / CLEAN-ROOM RESULT
+10. STRONGEST VERIFIED CAPABILITIES
+11. UNPROVEN CLAIMS
+12. EVIDENCE INDEX
+13. FINAL_RESULT: PASSED | ROOT CAUSE
 ```
 
 </details>
