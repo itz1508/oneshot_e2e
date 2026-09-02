@@ -231,6 +231,7 @@ async def _build_runner():
     from google.adk.agents import LlmAgent, SequentialAgent
     from google.adk.models.lite_llm import LiteLlm
     from google.adk.runners import InMemoryRunner
+    from google.genai import types
 
     distribution_agent = LlmAgent(
         name="ResearcherDistribution",
@@ -240,9 +241,12 @@ async def _build_runner():
         ),
         instruction=(
             "You are the distribution stage of the OneShot Researcher pipeline. "
-            "Read the user request and supplied repository evidence. Decide what the research stage must focus on, "
-            "which evidence is relevant, what information is missing, and how success can be measured. "
-            "Do not produce the final ResearchDraft and do not invent repository facts."
+            "Read the user request and supplied repository evidence. In at most 8 short bullets, identify exactly what the research stage must preserve: requested behavior, evidence, constraints, executable steps, and measurable success. "
+            "Do not produce the final ResearchDraft, do not add architecture, and do not invent repository facts. Be concise."
+        ),
+        generate_content_config=types.GenerateContentConfig(
+            temperature=0.0,
+            max_output_tokens=384,
         ),
         output_key="research_distribution",
     )
@@ -255,11 +259,14 @@ async def _build_runner():
         ),
         instruction=(
             "You are the research stage of the OneShot Researcher pipeline. "
-            "Use the user request, supplied evidence, and the preceding distribution analysis to prepare an evidence-backed candidate for the final ResearchDraft. "
-            "Requirements and success criteria must be grounded in supplied evidence. "
-            "Dependency required_by indexes refer to requirement indexes, not plan-step indexes. "
-            "If the request asks for executable sandbox implementation steps, preserve that requirement and propose directly executable commands without Markdown fences. "
-            "Do not invent deployment, provider, database, security, or workflow requirements that are not requested."
+            "Use the user request, supplied evidence, and preceding distribution analysis. Return a concise candidate with requirements, dependencies, executable plan steps, and measurable criteria. "
+            "Requirements and success criteria must be grounded in supplied evidence. Dependency required_by indexes refer to requirement indexes, not plan-step indexes. "
+            "If the request asks for executable sandbox implementation steps, preserve the exact requested commands/verification strings and propose direct commands without Markdown fences. "
+            "Do not invent deployment, provider, database, security, or workflow requirements that are not requested. Keep the response under 700 words."
+        ),
+        generate_content_config=types.GenerateContentConfig(
+            temperature=0.0,
+            max_output_tokens=768,
         ),
         output_key="research_candidate",
     )
@@ -272,11 +279,14 @@ async def _build_runner():
         ),
         instruction=(
             "You are the synthesis stage of the OneShot Researcher pipeline. "
-            "Review the original request, evidence, distribution analysis, and research candidate. "
-            "Return one final ResearchDraft that preserves evidence-backed requirements, dependencies, implementation steps, success meaning, and measurable success criteria. "
-            "When the user explicitly asks for executable sandbox implementation, each plan_steps.description must be a directly executable command beginning with node, sh, bash, python, or echo; never wrap commands in Markdown or explanatory prose. "
-            "Preserve literal verification strings requested by the user so execution evidence can prove the product behavior. "
-            "Correct inconsistencies without inventing unsupported facts."
+            "Review the original request, evidence, distribution analysis, and research candidate. Return one final ResearchDraft only. "
+            "Keep only evidence-backed requirements, dependencies, implementation steps, success meaning, and measurable success criteria. "
+            "When the user explicitly asks for executable sandbox implementation, every plan_steps.description must be a directly executable command beginning with node, sh, bash, python, or echo; never use Markdown or explanatory prose. "
+            "Preserve literal verification strings requested by the user so execution evidence can prove behavior. Correct inconsistencies without inventing unsupported facts."
+        ),
+        generate_content_config=types.GenerateContentConfig(
+            temperature=0.0,
+            max_output_tokens=1536,
         ),
         output_schema=ResearchDraft,
         output_key="research_final",
