@@ -132,31 +132,32 @@ export async function harness(
   );
   const builder = new BuilderWorkflow(sandbox);
 
+  // Kept only for legacy unit tests of the superseded registry itself. The
+  // production/test WorkflowRuntime below executes through ADK dynamic nodes.
   const pipeline = new RolePipeline(events);
-  pipeline.register("Researcher", () => ({
-    role_id: "Researcher",
-    runtime: researcher,
-  }));
+  pipeline.register("Researcher", () => ({ role_id: "Researcher", runtime: researcher }));
   pipeline.register("Planner", () => ({ role_id: "Planner", runtime: planner }));
   pipeline.register("Refactor", () => ({ role_id: "Refactor", runtime: refactor }));
-  pipeline.register("GapAnalysis", () => ({
-    role_id: "GapAnalysis",
-    runtime: gapper,
-  }));
-  pipeline.register("Evaluation", () => ({
-    role_id: "Evaluation",
-    runtime: evaluator,
-  }));
+  pipeline.register("GapAnalysis", () => ({ role_id: "GapAnalysis", runtime: gapper }));
+  pipeline.register("Evaluation", () => ({ role_id: "Evaluation", runtime: evaluator }));
   pipeline.register("Builder", () => ({ role_id: "Builder", runtime: builder }));
 
   const runtime = new WorkflowRuntime(
     events,
     runs,
     store,
-    pipeline,
-    triple,
-    confirmation,
-    hash,
+    async () => ({
+      researcher,
+      planner,
+      refactor,
+      gapper,
+      evaluator,
+      triple,
+      confirmation,
+      hash,
+      builder,
+      release() {},
+    }),
   );
 
   return {
