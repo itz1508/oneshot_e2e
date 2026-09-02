@@ -34,6 +34,18 @@ test("multi-turn Intent keeps identity, asks targeted help, then creates Prompt(
   if (ready.result !== "PASSED") throw new Error("expected prompt");
   assert.equal(ready.prompt.prompt_id, "prompt:test");
   assert.match(ready.prompt.intent, /multimedia player/i);
+  assert.ok(
+    ready.prompt.research_direction.some((x) => x.startsWith("Requirements:")),
+  );
+  assert.ok(
+    ready.prompt.research_direction.some((x) => x.startsWith("Dependencies:")),
+  );
+  assert.ok(
+    ready.prompt.research_direction.some((x) => x.startsWith("Success criteria:")),
+  );
+  assert.ok(
+    ready.prompt.research_direction.some((x) => x.startsWith("Scope control:")),
+  );
   assert.equal(ready.intent.source_turn_ids.length, 2);
   assert.ok(
     ready.intent.statements.some((x) =>
@@ -62,6 +74,43 @@ test("multi-turn Intent keeps identity, asks targeted help, then creates Prompt(
   ).get(a.conversation_id);
   assert.equal(reloaded?.intent.intent_id, sameIntent);
   assert.equal(reloaded?.turns.length, 2);
+});
+
+test("Prompt(id) carries explicit requirements and constraints into structured research directions", async () => {
+  const root = resolve(`data/test-intent-prompt-direction/${process.pid}`);
+  await rm(root, { recursive: true, force: true });
+  const svc = new IntentCollectionService(new ConversationStore(root));
+  const userMessage =
+    "Build a local media catalog. It must support audio and video. It must run offline.";
+  const conversation = svc.start(userMessage);
+
+  const result = svc.createPrompt(
+    conversation.conversation_id,
+    "prompt:structured-direction",
+  );
+  assert.equal(result.result, "PASSED");
+  if (result.result !== "PASSED") throw new Error("expected prompt");
+
+  assert.deepEqual(Object.keys(result.prompt).sort(), [
+    "context",
+    "intent",
+    "prompt_id",
+    "requested_outcome",
+    "research_direction",
+  ]);
+  assert.equal(result.prompt.context.length, 1);
+  assert.equal(result.prompt.context[0].statement, userMessage);
+  assert.ok(
+    result.prompt.research_direction.includes(
+      "User requirement: It must support audio and video",
+    ),
+  );
+  assert.ok(
+    result.prompt.research_direction.includes(
+      "User constraint: It must run offline",
+    ),
+  );
+  assert.equal(result.prompt.research_direction.includes("requirements"), false);
 });
 
 test("Intent accepts the IDE audit command as a concrete goal", async () => {
@@ -111,4 +160,3 @@ test("Intent automatically derives sufficient intent from natural conversational
     assert.equal(prompt3.help_request.required_information[0], "goal");
   }
 });
-
