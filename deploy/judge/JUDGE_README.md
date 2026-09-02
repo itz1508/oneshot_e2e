@@ -156,13 +156,13 @@ npm run oneshot
 ### Run Test Suites
 
 ```bash
-# Run all 49 Python and 50 TypeScript tests
+# Run all 49 Python and 57 TypeScript tests
 npm run verify
 
 # Run React IDE Vitest unit tests (104 tests)
 npm --prefix web test
 
-# Verify source hash manifest integrity (471 files)
+# Verify source hash manifest integrity
 python scripts/verify_manifest.py
 ```
 
@@ -230,9 +230,9 @@ Once the IDE loads at `http://localhost:8787`:
 ONE-SHOT PRODUCTION E2E 1.3.0 - MASTER VERIFICATION SUMMARY
 ======================================================================
   [PASS] Python Unit Suite:            49 / 49 tests passed
-  [PASS] TypeScript E2E Suite:         50 / 50 tests passed
+  [PASS] TypeScript E2E Suite:         57 / 57 tests passed
   [PASS] React IDE Vitest Suite:       104 / 104 tests passed
-  [PASS] Checksum Manifest Integrity:  471 / 471 files verified
+  [PASS] Checksum Manifest Integrity:  Verified (MANIFEST.sha256)
   [PASS] Docker Packaging & Runtime:   5 / 5 container tests passed
 ======================================================================
   STATUS: ONESHOT_PRODUCTION_E2E_VERIFIED (100% PASS)

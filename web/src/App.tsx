@@ -8,6 +8,8 @@ import {MessageComposer, type AnchorMode} from './components/MessageComposer'
 import {TurnIndicator} from './components/TurnIndicator'
 import {FileViewer} from './components/FileViewer'
 import {DocsIndexModal} from './components/DocsIndexModal'
+import {WorkflowGraphModal} from './components/WorkflowGraphModal'
+import {SettingsModal} from './components/SettingsModal'
 import {useAppStore} from './store/taskStore'
 import {BackendChatSource} from './agent/BackendChatSource'
 import {restoreSession, setAuthRequiredHandler} from './agent/authApi'
@@ -40,6 +42,8 @@ function App() {
     const [authReady, setAuthReady] = useState(false)
     const [showLogin, setShowLogin] = useState(false)
     const [docsModalOpen, setDocsModalOpen] = useState(false)
+    const [graphModalOpen, setGraphModalOpen] = useState(false)
+    const [settingsModalOpen, setSettingsModalOpen] = useState(false)
 
     const workspaces = useAppStore((state) => state.workspaces)
     const participatingWorkspaceIds = useAppStore((state) => state.participatingWorkspaceIds)
@@ -128,6 +132,8 @@ function App() {
                     onToggleDrawer={toggleDrawer}
                     onCancelTask={cancelTask}
                     onOpenDocsModal={() => setDocsModalOpen(true)}
+                    onOpenGraphModal={() => setGraphModalOpen(true)}
+                    onOpenSettingsModal={() => setSettingsModalOpen(true)}
                 />
                 <div className={styles.body}>
                     <AppSidebar
@@ -175,6 +181,7 @@ function App() {
                                         onOpenFile={handleFileClick}
                                         onStartPrompt={(p) => sendMessage(p)}
                                         onOpenDocsModal={() => setDocsModalOpen(true)}
+                                        onOpenGraphModal={() => setGraphModalOpen(true)}
                                     />
                                     <TurnIndicator turn={turn}/>
                                     <MessageComposer
@@ -192,6 +199,14 @@ function App() {
                     open={docsModalOpen}
                     onClose={() => setDocsModalOpen(false)}
                     onOpenFile={handleFileClick}
+                />
+                <WorkflowGraphModal
+                    open={graphModalOpen}
+                    onClose={() => setGraphModalOpen(false)}
+                />
+                <SettingsModal
+                    open={settingsModalOpen}
+                    onClose={() => setSettingsModalOpen(false)}
                 />
         </div>
     )

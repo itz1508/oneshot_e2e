@@ -1,4 +1,14 @@
-import type { ProcessingEvent, ProcessingState, ValidationResult, WorkflowResult } from "../contract/types.js";
+/**
+ * Google ADK 2.0 Graph Topology & Event Projection
+ *
+ * Authority:
+ * - https://adk.dev/graphs/
+ * - https://adk.dev/graphs/routes/
+ * - workflow/WorkflowGraph_corrected_optimized.txt
+ * - CANONICAL_WORKFLOW.md
+ */
+
+import type { ProcessingEvent, ValidationResult, WorkflowResult } from "../contract/types.js";
 
 export type GraphNodeState = "PENDING" | "RUNNING" | "COMPLETE";
 
@@ -9,6 +19,7 @@ export interface WorkflowGraphNode {
     | "boundary"
     | "generator"
     | "agent"
+    | "router"
     | "validator"
     | "join"
     | "gate"
@@ -19,6 +30,8 @@ export interface WorkflowGraphNode {
   result?: WorkflowResult | ValidationResult;
   artifactId?: string;
   message?: string;
+  input?: string;
+  output?: string;
 }
 
 export interface WorkflowGraphEdge {
@@ -26,59 +39,82 @@ export interface WorkflowGraphEdge {
   to: string;
   condition?: string;
   description?: string;
+  isBackEdge?: boolean;
 }
 
 /**
- * Static node topology for the Google ADK 2.0 OneShot Workflow Graph.
- *
- * Authority: workflow/WorkflowGraph_corrected_optimized.txt & CANONICAL_WORKFLOW.md
+ * Real Google ADK 2.0 Graph Node Topology with explicit routers, fan-out, JoinNode barrier, and back-edge.
  */
-const CANONICAL_WORKFLOW_NODES: Array<Omit<WorkflowGraphNode, "state" | "message" | "result" | "artifactId">> = [
-  { id: "user-intent", label: "User / Intent Collection", kind: "boundary" },
-  { id: "generator-prompt", label: "Generator (Prompt_id)", kind: "generator" },
-  { id: "researcher", label: "Researcher (plan_id, *_id)", kind: "agent" },
-  { id: "planner", label: "Planner (audit_id)", kind: "agent" },
-  { id: "refactor", label: "Refactor (same plan_id)", kind: "agent" },
-  { id: "gap-analysis", label: "Gap Analysis (gap_0)", kind: "agent" },
-  { id: "evaluation", label: "Evaluation (9-point matrix)", kind: "validator" },
-  { id: "schema-validation", label: "Schema Validation", kind: "validator" },
-  { id: "fixture-validation", label: "Fixture Validation", kind: "validator" },
-  { id: "goal-validation", label: "Goal Validation", kind: "validator" },
-  { id: "triple-join", label: "Triple Validation JoinNode", kind: "join" },
-  { id: "triple-gate", label: "Triple Validation Gate (all_valid)", kind: "gate" },
-  { id: "confirmed", label: "Confirmed (confirmed_package.core)", kind: "gate" },
-  { id: "create-hash", label: "Create Hash (RFC 8785 + SHA-256)", kind: "proof" },
-  { id: "promote", label: "Promote (Researcher FINAL)", kind: "gate" },
-  { id: "builder", label: "Builder / Sandbox Execution", kind: "sandbox" },
-  { id: "recompute-hash", label: "Recompute Hash Proof", kind: "proof" },
-  { id: "hash-verification", label: "Hash Verification (equal: true)", kind: "proof" },
-  { id: "done", label: "Done (PASSED)", kind: "terminal" },
+export const CANONICAL_ADK_NODES: Array<Omit<WorkflowGraphNode, "state" | "message" | "result" | "artifactId">> = [
+  { id: "user-intent", label: "User Intent Collection", kind: "boundary", input: "User message / prompt", output: "intent:id" },
+  { id: "generator-prompt", label: "Generator (Prompt_id)", kind: "generator", input: "intent:id", output: "Prompt_id bound to Job_id" },
+  { id: "researcher", label: "Researcher Agent", kind: "agent", input: "Prompt_id", output: "plan_id, schema_id, fixture_id, goal_id, validation_id" },
+  { id: "planner", label: "Planner Agent", kind: "agent", input: "plan_id", output: "audit_id review findings" },
+  { id: "refactor", label: "Refactor Agent", kind: "agent", input: "audit_id + plan_id", output: "same plan_id preserved" },
+  { id: "gap-check", label: "Gap Check Router", kind: "router", input: "refactored plan", output: "Event(route: GAP_0 | GAPS_FOUND)" },
+  { id: "gap-fix", label: "Gap Fix Node", kind: "agent", input: "unresolved gaps", output: "remediated plan" },
+  { id: "gap-recheck", label: "Gap Recheck Node", kind: "agent", input: "remediated plan", output: "recheck status" },
+  { id: "evaluation", label: "Evaluation Router", kind: "router", input: "gap_0 certified plan", output: "Event(route: PASSED | ROOT_CAUSE)" },
+  { id: "evaluation-root-cause", label: "Evaluation Root Cause Terminal", kind: "terminal", input: "ROOT_CAUSE event", output: "Terminal Root Cause" },
+  { id: "schema-validation", label: "Schema Validator", kind: "validator", input: "schema_id", output: "VALID | NOT_VALID" },
+  { id: "fixture-validation", label: "Fixture Validator", kind: "validator", input: "fixture_id", output: "VALID | NOT_VALID" },
+  { id: "goal-validation", label: "Goal Validator", kind: "validator", input: "goal_id + FINAL plan_id", output: "VALID | NOT_VALID" },
+  { id: "triple-join", label: "Triple Validation JoinNode Barrier", kind: "join", input: "3 validator outputs", output: "Synchronized output map" },
+  { id: "validation-gate", label: "Validation Gate Router", kind: "gate", input: "joined validator map", output: "Event(route: ALL_VALID | NOT_VALID)" },
+  { id: "validation-root-cause", label: "Validation Root Cause Terminal", kind: "terminal", input: "NOT_VALID event", output: "Terminal Root Cause" },
+  { id: "confirmed", label: "Confirmed Core Assembler", kind: "gate", input: "validated artifacts", output: "confirmed_package.core" },
+  { id: "create-hash", label: "Create Hash (RFC 8785 + SHA-256)", kind: "proof", input: "confirmed_package.core", output: "created_hash" },
+  { id: "promote", label: "Promote (Researcher FINAL)", kind: "gate", input: "created_hash", output: "Promote(Researcher FINAL)" },
+  { id: "builder", label: "Builder / Sandbox Execution", kind: "sandbox", input: "promoted package", output: "sandbox evidence logs" },
+  { id: "recompute-hash", label: "Recompute Hash Proof", kind: "proof", input: "sandbox core", output: "recomputed_hash" },
+  { id: "hash-verification", label: "Hash Verification Router", kind: "router", input: "created_hash + recomputed_hash", output: "Event(route: MATCH | MISMATCH)" },
+  { id: "hash-mismatch-root-cause", label: "Hash Mismatch Root Cause Terminal", kind: "terminal", input: "MISMATCH event", output: "Terminal Root Cause" },
+  { id: "done", label: "Done Terminal (PASSED)", kind: "terminal", input: "MATCH event", output: "DONE (PASSED)" },
 ];
 
 /**
- * Static edge definitions representing execution order and fan-out/fan-in barriers.
+ * Explicit Google ADK 2.0 Graph Edges with conditional route maps, parallel fan-out, JoinNode, and back-edges.
  */
-export const WORKFLOW_GRAPH_EDGES: WorkflowGraphEdge[] = [
+export const CANONICAL_ADK_EDGES: WorkflowGraphEdge[] = [
+  // 1. Ingestion sequence
   { from: "user-intent", to: "generator-prompt", description: "intent:id finalized" },
   { from: "generator-prompt", to: "researcher", description: "Prompt_id bound to Job_id" },
   { from: "researcher", to: "planner", description: "Researcher(id) + plan_id" },
   { from: "planner", to: "refactor", description: "audit_id findings" },
-  { from: "refactor", to: "gap-analysis", description: "same plan_id preserved" },
-  { from: "gap-analysis", to: "evaluation", description: "gap_0 verified" },
-  { from: "evaluation", to: "schema-validation", condition: "PASSED", description: "Triple Validation Fan-Out" },
-  { from: "evaluation", to: "fixture-validation", condition: "PASSED", description: "Triple Validation Fan-Out" },
-  { from: "evaluation", to: "goal-validation", condition: "PASSED", description: "Triple Validation Fan-Out" },
+  { from: "refactor", to: "gap-check", description: "same plan_id preserved" },
+
+  // 2. Gap Analysis Loop with explicit back-edge
+  { from: "gap-check", to: "gap-fix", condition: "GAPS_FOUND", description: "route to gap fix" },
+  { from: "gap-fix", to: "gap-recheck", description: "apply remediations" },
+  { from: "gap-recheck", to: "gap-check", isBackEdge: true, description: "EXPLICIT BACK-EDGE: re-evaluate gaps" },
+  { from: "gap-check", to: "evaluation", condition: "GAP_0", description: "0 unresolved gaps exit loop" },
+
+  // 3. Evaluation Router
+  { from: "evaluation", to: "schema-validation", condition: "PASSED", description: "Triple Validation Parallel Fan-Out" },
+  { from: "evaluation", to: "fixture-validation", condition: "PASSED", description: "Triple Validation Parallel Fan-Out" },
+  { from: "evaluation", to: "goal-validation", condition: "PASSED", description: "Triple Validation Parallel Fan-Out" },
+  { from: "evaluation", to: "evaluation-root-cause", condition: "ROOT_CAUSE", description: "evaluation failure halt" },
+
+  // 4. Parallel Fan-In into JoinNode Barrier
   { from: "schema-validation", to: "triple-join", description: "VALID | NOT_VALID" },
   { from: "fixture-validation", to: "triple-join", description: "VALID | NOT_VALID" },
   { from: "goal-validation", to: "triple-join", description: "VALID | NOT_VALID" },
-  { from: "triple-join", to: "triple-gate", description: "Join barrier resolved" },
-  { from: "triple-gate", to: "confirmed", condition: "all_valid == true", description: "confirmed_package.core" },
+
+  // 5. Validation Gate Router
+  { from: "triple-join", to: "validation-gate", description: "all 3 validator outputs resolved" },
+  { from: "validation-gate", to: "confirmed", condition: "ALL_VALID", description: "all 3 validators VALID" },
+  { from: "validation-gate", to: "validation-root-cause", condition: "NOT_VALID", description: "validation failure halt" },
+
+  // 6. Confirmed Core, Create Hash & Promotion
   { from: "confirmed", to: "create-hash", description: "immutable package handoff" },
   { from: "create-hash", to: "promote", description: "created_hash attached" },
   { from: "promote", to: "builder", description: "Job confirmed" },
   { from: "builder", to: "recompute-hash", description: "sandbox evidence collected" },
   { from: "recompute-hash", to: "hash-verification", description: "recomputed_hash generated" },
-  { from: "hash-verification", to: "done", condition: "created_hash == recomputed_hash", description: "proof verified" },
+
+  // 7. Hash Verification Router
+  { from: "hash-verification", to: "done", condition: "MATCH", description: "created_hash == recomputed_hash" },
+  { from: "hash-verification", to: "hash-mismatch-root-cause", condition: "MISMATCH", description: "hash mismatch halt" },
 ];
 
 /** Mapping from runtime processor names to graph node IDs */
@@ -88,12 +124,15 @@ const PROCESSOR_TO_NODE_ID: Record<string, string> = {
   Researcher: "researcher",
   Planner: "planner",
   Refactor: "refactor",
-  GapAnalysis: "gap-analysis",
+  GapAnalysis: "gap-check",
+  GapCheck: "gap-check",
+  GapFix: "gap-fix",
+  GapRecheck: "gap-recheck",
   Evaluation: "evaluation",
   SchemaValidation: "schema-validation",
   FixtureValidation: "fixture-validation",
   GoalValidation: "goal-validation",
-  TripleValidation: "triple-gate",
+  TripleValidation: "validation-gate",
   Confirmed: "confirmed",
   CreateHash: "create-hash",
   Promote: "promote",
@@ -105,9 +144,36 @@ const PROCESSOR_TO_NODE_ID: Record<string, string> = {
 };
 
 /**
+ * Returns the complete Google ADK 2.0 Graph Topology.
+ */
+export function getAdkWorkflowGraphTopology() {
+  return {
+    graph_id: "oneshot-adk-workflow-v2",
+    title: "OneShot Google ADK 2.0 Workflow Graph",
+    specification: "workflow/WorkflowGraph_corrected_optimized.txt",
+    authority: "OneShot Workflow_Tree & CANONICAL_WORKFLOW.md",
+    engine: "@google/adk",
+    fan_in_barrier: "JoinNode",
+    triple_validation: {
+      schema: "schema-validation",
+      fixture: "fixture-validation",
+      goal: "goal-validation",
+      barrier: "triple-join",
+      gate: "validation-gate",
+    },
+    gap_loop: {
+      router: "gap-check",
+      fix: "gap-fix",
+      recheck: "gap-recheck",
+      back_edge: "gap-recheck -> gap-check",
+    },
+    nodes: CANONICAL_ADK_NODES,
+    edges: CANONICAL_ADK_EDGES,
+  };
+}
+
+/**
  * Project the Google ADK 2.0 OneShot Workflow Graph from real runtime events.
- *
- * Driven directly by monotonic Task Management events.
  */
 export function projectWorkflowGraph(events: ProcessingEvent[] = []) {
   const latestByProcessor = new Map<string, ProcessingEvent>();
@@ -115,8 +181,7 @@ export function projectWorkflowGraph(events: ProcessingEvent[] = []) {
     latestByProcessor.set(e.processor, e);
   }
 
-  const nodes: WorkflowGraphNode[] = CANONICAL_WORKFLOW_NODES.map((def) => {
-    // Find matching runtime event if available
+  const nodes: WorkflowGraphNode[] = CANONICAL_ADK_NODES.map((def) => {
     let matchingEvent: ProcessingEvent | undefined;
     for (const [proc, ev] of latestByProcessor.entries()) {
       if (PROCESSOR_TO_NODE_ID[proc] === def.id) {
@@ -125,13 +190,12 @@ export function projectWorkflowGraph(events: ProcessingEvent[] = []) {
       }
     }
 
-    // Default to PENDING unless matched
     let state: GraphNodeState = "PENDING";
     if (matchingEvent) {
       state = matchingEvent.state as GraphNodeState;
     }
 
-    // Special join node follows fan-in completion
+    // JoinNode follows fan-in completion of all 3 parallel validators
     if (def.id === "triple-join") {
       const s = latestByProcessor.get("SchemaValidation")?.state;
       const f = latestByProcessor.get("FixtureValidation")?.state;
@@ -153,20 +217,7 @@ export function projectWorkflowGraph(events: ProcessingEvent[] = []) {
   });
 
   return {
-    graph_id: "oneshot-adk-workflow-v2",
-    title: "OneShot Google ADK 2.0 Workflow Graph",
-    specification: "workflow/WorkflowGraph_corrected_optimized.txt",
-    authority: "OneShot Workflow_Tree & CANONICAL_WORKFLOW.md",
-    engine: "@google/adk",
-    fan_in_barrier: "JoinNode",
-    triple_validation: {
-      schema: "SchemaValidation",
-      fixture: "FixtureValidation",
-      goal: "GoalValidation",
-      barrier: "triple-join",
-      gate: "triple-gate",
-    },
+    ...getAdkWorkflowGraphTopology(),
     nodes,
-    edges: WORKFLOW_GRAPH_EDGES,
   };
 }

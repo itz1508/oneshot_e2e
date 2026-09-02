@@ -72,7 +72,7 @@ ADK provider dependencies:
 python scripts/bootstrap.py --with-adk
 ```
 
-The ADK-specific pins are in `requirements-adk.txt`.
+The ADK-specific pins are in `requirements/provider-adk.txt`.
 
 ## Local services
 
@@ -98,7 +98,7 @@ python scripts/ollama_preflight.py
 
 `GEMMA2_TIMEOUT_SECONDS` bounds the complete ADK inference operation through `asyncio.wait_for`. Expiry is returned through the normal provider boundary and becomes workflow `ROOT_CAUSE`.
 
-When `ONESHOT_RESEARCH_PROVIDER=adk_gemma2`, `scripts/verify_dependencies.py` validates every exact pin in both `requirements.txt` and `requirements-adk.txt`.
+When `ONESHOT_RESEARCH_PROVIDER=adk_gemma2`, `scripts/verify_dependencies.py` validates every exact pin in both `requirements/core.txt` and `requirements/provider-adk.txt`.
 
 ## HTTP boundary hardening
 
@@ -110,7 +110,7 @@ The provided Node cluster and Kubernetes HPA snippets are not active runtime con
 
 ## Official references
 
-- Google ADK: https://google.github.io/adk-docs/
-- Google ADK Python: https://github.com/google/adk-python
-- Ollama API: https://docs.ollama.com/api/chat
-- Ollama runtime/context configuration: https://docs.ollama.com/faq
+- Google ADK: [https://google.github.io/adk-docs/](https://google.github.io/adk-docs/)
+- Google ADK Python: [https://github.com/google/adk-python](https://github.com/google/adk-python)
+- Ollama API: [https://docs.ollama.com/api/chat](https://docs.ollama.com/api/chat)
+- Ollama runtime/context configuration: [https://docs.ollama.com/faq](https://docs.ollama.com/faq)
