@@ -44,56 +44,21 @@ class CapturingHardenedRunner implements SandboxRunner {
   }
 }
 
-async function collectEvents(url: string): Promise<ProcessingEvent[]> {
-  const abort = new AbortController();
-  const timeout = setTimeout(() => abort.abort(), 20 * 60_000);
-  const events: ProcessingEvent[] = [];
-  try {
-    const response = await fetch(url, {
-      headers: { accept: "text/event-stream" },
-      signal: abort.signal,
-    });
+async function waitForTerminal(
+  base: string,
+  runId: string,
+  timeoutMs = 20 * 60_000,
+): Promise<any> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const response = await fetch(`${base}/api/runs/${runId}`);
     assert.equal(response.status, 200);
-    assert.ok(response.body);
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let terminal = false;
-
-    while (!terminal) {
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      buffer += decoder.decode(chunk.value, { stream: true });
-      const blocks = buffer.split(/\r?\n\r?\n/);
-      buffer = blocks.pop() ?? "";
-      for (const block of blocks) {
-        const data = block
-          .split(/\r?\n/)
-          .filter((line) => line.startsWith("data:"))
-          .map((line) => line.slice(5).trim())
-          .join("\n");
-        if (!data) continue;
-        const event = JSON.parse(data) as ProcessingEvent;
-        events.push(event);
-        if (
-          event.scope === "ADK" ||
-          event.state === "COMPLETE" ||
-          event.processor === "Builder"
-        ) {
-          print("LIVE_WORKFLOW_EVENT_JSON", event);
-        }
-        if (event.processor === "Done" && event.state === "COMPLETE") {
-          terminal = true;
-          break;
-        }
-      }
+    const snapshot = await response.json();
+    if (snapshot.result) return snapshot;
+    if (Date.now() >= deadline) {
+      throw new Error(`live run ${runId} did not terminate within ${timeoutMs}ms`);
     }
-
-    await reader.cancel();
-    assert.ok(terminal, "live SSE stream did not reach Done COMPLETE");
-    return events;
-  } finally {
-    clearTimeout(timeout);
+    await new Promise((resolveWait) => setTimeout(resolveWait, 1000));
   }
 }
 
@@ -130,6 +95,17 @@ test(
 
     const runner = new CapturingHardenedRunner();
     const h = await harness("adk-live-real-e2e", provider, runner);
+    const observed: ProcessingEvent[] = [];
+    const stopObserve = h.events.observe((event) => {
+      observed.push(event);
+      if (
+        event.scope === "ADK" ||
+        event.state === "COMPLETE" ||
+        event.processor === "Builder"
+      ) {
+        print("LIVE_WORKFLOW_EVENT_JSON", event);
+      }
+    });
     const intent = new IntentCollectionService(new ConversationStore());
     const server = await startHttpServer(
       h.runtime,
@@ -183,9 +159,13 @@ test(
       };
       print("LIVE_RUN_CREATED_JSON", started);
 
-      const streamEvents = await collectEvents(
-        `${base}/api/runs/${started.run_id}/events`,
-      );
+      const snapshot = await waitForTerminal(base, started.run_id);
+      const runEvents = observed.filter((event) => event.run_id === started.run_id);
+      const persistedEvents = h.events.list(started.run_id);
+      assert.equal(runEvents.length, persistedEvents.length);
+      for (const event of persistedEvents) {
+        print("LIVE_SESSION_EVENT_JSON", event);
+      }
 
       const stageProcessors = [
         "ADK:distribution-model",
@@ -193,7 +173,7 @@ test(
         "ADK:synthesis-model",
       ];
       const stageResponses = stageProcessors.map((processor) => {
-        const event = streamEvents.find(
+        const event = persistedEvents.find(
           (candidate) =>
             candidate.processor === processor && candidate.state === "COMPLETE",
         );
@@ -211,9 +191,6 @@ test(
         assert.match(step.description, /^node\b/i, `non-executable model plan step: ${step.description}`);
       }
 
-      const snapshotResponse = await fetch(`${base}/api/runs/${started.run_id}`);
-      assert.equal(snapshotResponse.status, 200);
-      const snapshot = (await snapshotResponse.json()) as any;
       print("LIVE_FINAL_RUN_JSON", {
         run_id: snapshot.run_id,
         result: snapshot.result,
@@ -256,9 +233,12 @@ test(
       assert.equal(builderResult.hash_matched, true);
 
       print("LIVE_END_TO_END_PROOF_JSON", {
+        conversation_id: conversation.conversation_id,
+        session_id: conversation.session_id,
         run_id: started.run_id,
         models: requiredModels,
         model_response_events: stageResponses.length,
+        workflow_event_count: persistedEvents.length,
         before_verified: true,
         created_files: execution.file_changes.map((change) => change.path),
         bytes_written: execution.bytes_written,
@@ -267,6 +247,7 @@ test(
         final_result: snapshot.result,
       });
     } finally {
+      stopObserve();
       server.closeAllConnections();
       await new Promise<void>((ok, fail) =>
         server.close((error) => (error ? fail(error) : ok())),
