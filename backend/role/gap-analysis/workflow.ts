@@ -15,7 +15,7 @@ export interface GapFixResult {
   rootCause?: RootCause;
 }
 
-/** Deterministic Gap Analysis operations composed by the ADK LoopAgent. */
+/** Deterministic Gap Analysis operations used by the ADK dynamic workflow. */
 export class GapAnalysisWorkflow {
   constructor(private contracts: CanonicalContractSkill) {}
 
@@ -29,7 +29,9 @@ export class GapAnalysisWorkflow {
     gap: GapFinding,
   ): GapFixResult {
     const plan = clone(input);
-    const evidenceIds = bundle.researcher.evidence.map((e) => e.evidence_id);
+    const evidenceIds = gap.evidence_ids?.length
+      ? [...gap.evidence_ids]
+      : bundle.researcher.evidence.map((e) => e.evidence_id);
     const step = gap.target_step_id
       ? plan.steps.find((s) => s.step_id === gap.target_step_id)
       : undefined;
@@ -42,11 +44,18 @@ export class GapAnalysisWorkflow {
           expected: `A plan branch for ${gap.key}`,
           actual: "No deterministic target step",
           evidence_ids: evidenceIds,
-          required_correction: "Provide a target plan branch",
+          required_correction: "Provide the missing information required to identify the correct plan branch",
           recheck_target: plan.plan_id,
         },
       };
     }
+
+    const before = {
+      requirement: step.requirement_refs.length,
+      goal: step.goal_refs.length,
+      fixture: step.fixture_refs.length,
+      schema: step.schema_refs.length,
+    };
 
     if (gap.affected_branch === "requirement") {
       step.requirement_refs = unique([...step.requirement_refs, gap.ref_id]);
@@ -61,6 +70,37 @@ export class GapAnalysisWorkflow {
       step.schema_refs = unique([...step.schema_refs, gap.ref_id]);
     }
 
+    const after = {
+      requirement: step.requirement_refs.length,
+      goal: step.goal_refs.length,
+      fixture: step.fixture_refs.length,
+      schema: step.schema_refs.length,
+    };
+    if (after[gap.affected_branch] <= before[gap.affected_branch]) {
+      return {
+        plan,
+        rootCause: {
+          issue: "Gap correction produced no plan improvement",
+          expected: `${gap.ref_id} adds new validated value to ${gap.affected_branch} traceability`,
+          actual: `${gap.ref_id} was already represented or the proposed correction added no value`,
+          evidence_ids: evidenceIds,
+          required_correction: "Provide additional evidence for a different deterministic improvement",
+          recheck_target: plan.plan_id,
+        },
+      };
+    }
+
+    plan.revision = input.revision + 1;
+    plan.revision_evidence = [
+      ...plan.revision_evidence,
+      {
+        revision: plan.revision,
+        affected_area: gap.affected_branch,
+        reason: `Resolve ${gap.source === "validation" ? "validation-discovered " : ""}gap ${gap.key}`,
+        audit_finding_id: `gap:${gap.key}`,
+      },
+    ];
+
     return {
       plan,
       resolved: {
@@ -70,7 +110,7 @@ export class GapAnalysisWorkflow {
         evidence_ids: evidenceIds,
         required_correction: `Add ${gap.ref_id} to ${gap.affected_branch} traceability`,
         expected_resolved_state: `${gap.key} is represented in plan steps`,
-        resolution_evidence: `${gap.ref_id} added to ${step.step_id}`,
+        resolution_evidence: `${gap.ref_id} added to ${step.step_id}; revision=${plan.revision}`,
       },
     };
   }
@@ -148,7 +188,7 @@ export class GapAnalysisWorkflow {
               (e) => e.evidence_id,
             ),
             required_correction:
-              "Correct the deterministic gap target or fix rule",
+              "Correct the deterministic gap target or provide the missing information",
             recheck_target: plan.plan_id,
           }),
         };
