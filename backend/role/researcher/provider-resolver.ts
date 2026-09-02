@@ -1,6 +1,9 @@
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { ResearchProvider } from "./provider.js";
+import type {
+  ResearchProvider,
+  ResearchProviderReadiness,
+} from "./provider.js";
 import { FixtureResearchProvider } from "./tool/fixture-provider.js";
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
 import { AdkGemmaResearchProvider } from "./provider/adk-gemma2/provider.js";
@@ -8,6 +11,15 @@ import { FeatherlessResearchProvider } from "./provider/featherless/provider.js"
 import type { ProcessingEventBus } from "../../runtime/event-bus.js";
 
 class MissingProductionResearchProvider implements ResearchProvider {
+  async ready(_runId: string): Promise<ResearchProviderReadiness> {
+    return {
+      ready: false,
+      provider: "unconfigured",
+      models: [],
+      detail: "ONESHOT_RESEARCH_PROVIDER is not configured",
+    };
+  }
+
   async research(
     _prompt: Parameters<ResearchProvider["research"]>[0],
     runId: string,
@@ -15,23 +27,17 @@ class MissingProductionResearchProvider implements ResearchProvider {
     throw new WorkflowRootCauseError({
       issue: "ResearchProvider is not configured",
       expected:
-        "adk_gemma2, featherless, or a configured production ResearchProvider module",
-      actual: "No supported production ResearchProvider was selected",
+        "An explicitly selected adk_gemma2, featherless, or custom production ResearchProvider",
+      actual: "No production ResearchProvider was selected",
       evidence_ids: [],
       required_correction:
-        "Select a supported provider or configure a module exporting createResearchProvider() or default ResearchProvider",
+        "Set ONESHOT_RESEARCH_PROVIDER or configure ONESHOT_RESEARCH_PROVIDER_MODULE",
       recheck_target: runId,
     });
   }
 }
 
-/**
- * Resolve the appropriate research provider based on ONESHOT_MODE and
- * ONESHOT_RESEARCH_PROVIDER environment variables.
- *
- * Accepts an optional ProcessingEventBus to wire ADK-scoped event emission
- * through providers that support it.
- */
+/** Resolve the provider requested by the Researcher Role activation pipeline. */
 export async function resolveResearchProvider(
   projectRoot: string,
   events?: ProcessingEventBus,
@@ -51,19 +57,21 @@ export async function resolveResearchProvider(
   const modulePath = process.env.ONESHOT_RESEARCH_PROVIDER_MODULE;
   const selected = (
     process.env.ONESHOT_RESEARCH_PROVIDER ||
-    (modulePath ? "module" : "adk_gemma2")
+    (modulePath ? "module" : "")
   ).toLowerCase();
 
+  if (!selected) return new MissingProductionResearchProvider();
+
   if (selected === "adk_gemma2" || selected === "google_adk_gemma2") {
-    const p = new AdkGemmaResearchProvider(projectRoot);
-    if (events) p.attachEvents(events);
-    return p;
+    const provider = new AdkGemmaResearchProvider(projectRoot);
+    if (events) provider.attachEvents(events);
+    return provider;
   }
 
   if (selected === "featherless" || selected === "featherless_gemma4") {
-    const p = new FeatherlessResearchProvider(projectRoot);
-    if (events) p.attachEvents(events);
-    return p;
+    const provider = new FeatherlessResearchProvider(projectRoot);
+    if (events) provider.attachEvents(events);
+    return provider;
   }
 
   if (!modulePath) return new MissingProductionResearchProvider();
@@ -76,9 +84,13 @@ export async function resolveResearchProvider(
       ? await mod.createResearchProvider()
       : mod.default;
 
-  if (!provider || typeof provider.research !== "function") {
+  if (
+    !provider ||
+    typeof provider.research !== "function" ||
+    typeof provider.ready !== "function"
+  ) {
     throw new Error(
-      "Configured ResearchProvider module does not implement research(prompt, runId)",
+      "Configured ResearchProvider module must implement ready(runId) and research(prompt, runId)",
     );
   }
 
