@@ -10,9 +10,9 @@ permissions:
   contents: read
 
 jobs:
-  dynamic-workflow:
+  dynamic-runtime:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -33,13 +33,7 @@ jobs:
         run: python -m pip install --disable-pip-version-check -r requirements.txt
       - name: Build backend and tests
         run: npm run build:backend
-      - name: Run ADK remaining connector tests
-        run: |
-          node --test --test-force-exit \
-            dist/tests_ts/adk-gap-analysis-node.test.js \
-            dist/tests_ts/adk-evaluation-node.test.js \
-            dist/tests_ts/adk-triple-validation-node.test.js \
-            dist/tests_ts/adk-validation-refinement-loop.test.js \
-            dist/tests_ts/adk-dynamic-workflow.test.js
+      - name: Run all backend TypeScript tests
+        run: node --test --test-force-exit dist/tests_ts/*.test.js
 
-# scope: remaining dynamic connectors + refinement + full workflow
+# scope: dynamic production runtime integration + complete backend TypeScript suite
