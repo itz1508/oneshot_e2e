@@ -7,8 +7,12 @@ import {Conversation} from './components/Conversation'
 import {MessageComposer, type AnchorMode} from './components/MessageComposer'
 import {TurnIndicator} from './components/TurnIndicator'
 import {FileViewer} from './components/FileViewer'
+import {DocsIndexModal} from './components/DocsIndexModal'
+import {WorkflowGraphModal} from './components/WorkflowGraphModal'
+import {SettingsModal} from './components/SettingsModal'
 import {useAppStore} from './store/taskStore'
 import {BackendChatSource} from './agent/BackendChatSource'
+import {restoreSession, setAuthRequiredHandler} from './agent/authApi'
 import styles from './App.module.css'
 
 const CodeFixEditor = lazy(() =>
@@ -24,6 +28,10 @@ const AppShell = lazy(() =>
     import('./features/app-shell/AppShell').then((m) => ({default: m.AppShell})),
 )
 
+const AuthLoginPage = lazy(() =>
+    import('./components/AuthLoginPage').then((m) => ({default: m.AuthLoginPage})),
+)
+
 const eventSource = new BackendChatSource()
 
 function App() {
@@ -31,6 +39,11 @@ function App() {
     const [anchorMode, setAnchorMode] = useState<AnchorMode>('user')
     const [openFiles, setOpenFiles] = useState<{name: string, path: string}[]>([])
     const [activeFileIndex, setActiveFileIndex] = useState(0)
+    const [authReady, setAuthReady] = useState(false)
+    const [showLogin, setShowLogin] = useState(false)
+    const [docsModalOpen, setDocsModalOpen] = useState(false)
+    const [graphModalOpen, setGraphModalOpen] = useState(false)
+    const [settingsModalOpen, setSettingsModalOpen] = useState(false)
 
     const workspaces = useAppStore((state) => state.workspaces)
     const participatingWorkspaceIds = useAppStore((state) => state.participatingWorkspaceIds)
@@ -51,10 +64,23 @@ function App() {
     const fetchRealWorkspaces = useAppStore((state) => state.fetchRealWorkspaces)
 
     useEffect(() => {
+        (window as unknown as { __ONESHOT_STORE__?: typeof useAppStore })
+            .__ONESHOT_STORE__ = useAppStore
+        setAuthRequiredHandler(() => setShowLogin(true))
+        restoreSession()
+            .then((session) => {
+                if (session) setAuthReady(true)
+                else setShowLogin(true)
+            })
+            .catch(() => setShowLogin(true))
+    }, [bindEventSource])
+
+    useEffect(() => {
+        if (!authReady) return
         bindEventSource(eventSource)
         fetchRealWorkspaces()
         return () => eventSource.dispose()
-    }, [bindEventSource])
+    }, [bindEventSource, authReady])
 
     const handleRailSelect = (tab: RailTab) => {
         setRailTab(tab)
@@ -85,6 +111,17 @@ function App() {
         })
     }
 
+    if (showLogin) {
+        return (
+            <Suspense fallback={null}>
+                <AuthLoginPage onAuthenticated={() => setShowLogin(false)} />
+            </Suspense>
+        )
+    }
+    if (!authReady) {
+        return <div style={{padding: '2rem'}}>Loading OneShot…</div>
+    }
+
     return (
         <div className={styles.shell}>
                 <TopMenu
@@ -94,6 +131,9 @@ function App() {
                     drawerOpen={drawerOpen}
                     onToggleDrawer={toggleDrawer}
                     onCancelTask={cancelTask}
+                    onOpenDocsModal={() => setDocsModalOpen(true)}
+                    onOpenGraphModal={() => setGraphModalOpen(true)}
+                    onOpenSettingsModal={() => setSettingsModalOpen(true)}
                 />
                 <div className={styles.body}>
                     <AppSidebar
@@ -131,7 +171,18 @@ function App() {
                                 />
                             ) : (
                                 <>
-                                    <Conversation messages={messages} loading={loading} anchorMode={anchorMode}/>
+                                    <Conversation
+                                        messages={messages}
+                                        loading={loading}
+                                        anchorMode={anchorMode}
+                                        currentStage={task.currentStage}
+                                        currentAction={task.currentAction}
+                                        activeActivity={task.activeActivity}
+                                        onOpenFile={handleFileClick}
+                                        onStartPrompt={(p) => sendMessage(p)}
+                                        onOpenDocsModal={() => setDocsModalOpen(true)}
+                                        onOpenGraphModal={() => setGraphModalOpen(true)}
+                                    />
                                     <TurnIndicator turn={turn}/>
                                     <MessageComposer
                                         onSend={sendMessage}
@@ -144,6 +195,19 @@ function App() {
                         )}
                     </main>
                 </div>
+                <DocsIndexModal
+                    open={docsModalOpen}
+                    onClose={() => setDocsModalOpen(false)}
+                    onOpenFile={handleFileClick}
+                />
+                <WorkflowGraphModal
+                    open={graphModalOpen}
+                    onClose={() => setGraphModalOpen(false)}
+                />
+                <SettingsModal
+                    open={settingsModalOpen}
+                    onClose={() => setSettingsModalOpen(false)}
+                />
         </div>
     )
 }

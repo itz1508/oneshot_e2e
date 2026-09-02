@@ -74,6 +74,15 @@ test("HTTP/UI product runs chain and durable run snapshot reloads", async () => 
       ),
     );
     assert.equal((await fetch(`${base}/`)).status, 200);
+
+    // Verify release zip download endpoint
+    const zipDownload = await fetch(`${base}/api/download/judge-zip`);
+    assert.equal(zipDownload.status, 200);
+    assert.equal(zipDownload.headers.get("content-type"), "application/zip");
+    assert.ok(zipDownload.headers.get("content-disposition")?.includes("oneshot-judge-1.3.0.zip"));
+    const zipBytes = await zipDownload.arrayBuffer();
+    assert.ok(zipBytes.byteLength > 1000, "ZIP buffer must be non-empty valid archive");
+
     const reloaded = new RunRepository(resolve("data/test-state/server"));
     const durable = reloaded.get(start.run_id);
     assert.equal(durable?.result, "PASSED");

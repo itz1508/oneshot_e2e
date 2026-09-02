@@ -1,5 +1,4 @@
-from __future__ import annotations
-
+import os
 from pathlib import Path, PurePosixPath
 from typing import Iterator
 
@@ -14,6 +13,7 @@ EXCLUDED_DIRECTORY_NAMES = frozenset(
         "data",
         "dist",
         "node_modules",
+        "scratch",
     }
 )
 PRIVATE_KEY_SUFFIXES = frozenset({".pem", ".key", ".p12", ".pfx"})
@@ -57,5 +57,11 @@ def source_file_is_eligible(root: Path, path: Path) -> bool:
 
 def iter_source_files(root: Path) -> Iterator[Path]:
     root = root.resolve()
-    files = (path for path in root.rglob("*") if source_file_is_eligible(root, path))
+    files: list[Path] = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d.lower() not in EXCLUDED_DIRECTORY_NAMES]
+        for name in filenames:
+            path = Path(dirpath) / name
+            if source_file_is_eligible(root, path):
+                files.append(path)
     yield from sorted(files, key=lambda path: path.relative_to(root).as_posix())

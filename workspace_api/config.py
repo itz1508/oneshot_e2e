@@ -15,10 +15,18 @@ from __future__ import annotations
 import base64
 import hashlib
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+WORKSPACE_ENV_FILE = PROJECT_ROOT / ".env.workspace"
+DEFAULT_DATABASE_URL = (
+    f"sqlite:///{(PROJECT_ROOT / 'data' / 'oneshot-workspace.db').as_posix()}"
+)
 
 
 class WorkspaceSettings(BaseSettings):
@@ -26,7 +34,7 @@ class WorkspaceSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="ONESHOT_WORKSPACE_",
-        env_file=".env.workspace",
+        env_file=WORKSPACE_ENV_FILE,
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
@@ -35,7 +43,7 @@ class WorkspaceSettings(BaseSettings):
     environment: Literal["development", "test", "production"] = "development"
     app_name: str = "OneShot AI Workspace API"
     api_prefix: str = "/v1"
-    database_url: str = "sqlite:///./data/oneshot-workspace.db"
+    database_url: str = DEFAULT_DATABASE_URL
     database_echo: bool = False
     auto_create_schema: bool = True
 
@@ -62,6 +70,17 @@ class WorkspaceSettings(BaseSettings):
 
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     log_json: bool = True
+
+    @field_validator("database_url")
+    @classmethod
+    def normalize_relative_sqlite_url(cls, value: str) -> str:
+        """Resolve repository-relative SQLite URLs independently of process CWD."""
+
+        prefix = "sqlite:///./"
+        if value.startswith(prefix):
+            database_path = (PROJECT_ROOT / value.removeprefix(prefix)).resolve()
+            return f"sqlite:///{database_path.as_posix()}"
+        return value
 
     @model_validator(mode="after")
     def validate_production_secrets(self) -> "WorkspaceSettings":

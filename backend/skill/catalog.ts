@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
+import { resolveRuntimePaths, type RuntimePaths } from "../runtime-paths.js";
 import type { SkillDescriptor } from "./types.js";
 export type { SkillDescriptor } from "./types.js";
 
@@ -47,100 +48,117 @@ export const INIT_SKILL_TOOLS = [
   "check_preflight",
 ] as const;
 
-const BUILTIN_SKILLS: SkillDescriptor[] = [
-  {
-    skill_id: "oneshot-canonical-contracts",
-    name: "OneShot Canonical Contracts",
-    path: resolve("skill/oneshot-canonical-contracts/SKILL.md"),
-    capabilities: [
-      "canonical-contracts",
-      "contract-validation",
-      "canonicalization",
-      "hash-verification",
-    ],
-    responsibilities: [
-      "contract validation",
-      "runtime parity",
-      "workflow graph proof",
-      "fixture proof",
-      "canonicalization",
-      "hash verification",
-    ],
-    tools: CANONICAL_SKILL_TOOLS,
-    runtime_type: "python",
-  },
-  {
-    skill_id: "oneshot-task-runtime",
-    name: "OneShot Task Runtime",
-    path: resolve("skill/oneshot-task-runtime/SKILL.md"),
-    capabilities: [
-      "task-runtime",
-      "event-replay",
-      "audit-projection",
-      "graph-projection",
-    ],
-    responsibilities: [
-      "processing event replay",
-      "checkpoint projection",
-      "audit projection",
-      "ADK provider graph projection",
-    ],
-    tools: TASK_RUNTIME_SKILL_TOOLS,
-    runtime_type: "typescript",
-  },
-  {
-    skill_id: "oneshot-intent-collection",
-    name: "OneShot Intent Collection",
-    path: resolve("skill/oneshot-intent-collection/SKILL.md"),
-    capabilities: [
-      "intent-collection",
-      "prompt-projection",
-      "intent-preservation",
-    ],
-    responsibilities: [
-      "multi-turn intent preservation",
-      "targeted clarification",
-      "Prompt(id) readiness projection",
-    ],
-    tools: INTENT_COLLECTION_SKILL_TOOLS,
-    runtime_type: "typescript",
-  },
-  {
-    skill_id: "oneshot-sandbox-runtime",
-    name: "OneShot Sandbox Runtime",
-    path: resolve("skill/oneshot-sandbox-runtime/SKILL.md"),
-    capabilities: [
-      "sandbox-runtime",
-      "isolated-execution",
-      "admission-verification",
-      "evidence-recording",
-    ],
-    responsibilities: [
-      "admission verification",
-      "isolated execution boundary",
-      "execution evidence recording",
-      "sandbox canonical hash verification",
-    ],
-    tools: SANDBOX_RUNTIME_SKILL_TOOLS,
-    runtime_type: "typescript",
-  },
-  {
-    skill_id: "oneshot-init",
-    name: "OneShot Workspace Init",
-    path: resolve("skill/init/SKILL.md"),
-    capabilities: [
-      "init",
-      "workspace-initialization",
-      "preflight-check",
-    ],
-    responsibilities: [
-      "workspace directory provisioning",
-      "environment preflight diagnostics",
-    ],
-    tools: INIT_SKILL_TOOLS,
-    runtime_type: "typescript",
-  },
-];
+function builtinSkills(projectRoot: string): SkillDescriptor[] {
+  return [
+    {
+      skill_id: "oneshot-canonical-contracts",
+      name: "OneShot Canonical Contracts",
+      path: join(
+        projectRoot,
+        "skill",
+        "oneshot-canonical-contracts",
+        "SKILL.md",
+      ),
+      capabilities: [
+        "canonical-contracts",
+        "contract-validation",
+        "canonicalization",
+        "hash-verification",
+      ],
+      responsibilities: [
+        "contract validation",
+        "runtime parity",
+        "workflow graph proof",
+        "fixture proof",
+        "canonicalization",
+        "hash verification",
+      ],
+      tools: CANONICAL_SKILL_TOOLS,
+      runtime_type: "python",
+    },
+    {
+      skill_id: "oneshot-task-runtime",
+      name: "OneShot Task Runtime",
+      path: join(projectRoot, "skill", "oneshot-task-runtime", "SKILL.md"),
+      capabilities: [
+        "task-runtime",
+        "event-replay",
+        "audit-projection",
+        "graph-projection",
+      ],
+      responsibilities: [
+        "processing event replay",
+        "checkpoint projection",
+        "audit projection",
+        "ADK provider graph projection",
+      ],
+      tools: TASK_RUNTIME_SKILL_TOOLS,
+      runtime_type: "typescript",
+    },
+    {
+      skill_id: "oneshot-intent-collection",
+      name: "OneShot Intent Collection",
+      path: join(
+        projectRoot,
+        "skill",
+        "oneshot-intent-collection",
+        "SKILL.md",
+      ),
+      capabilities: [
+        "intent-collection",
+        "prompt-projection",
+        "intent-preservation",
+      ],
+      responsibilities: [
+        "multi-turn intent preservation",
+        "targeted clarification",
+        "Prompt(id) readiness projection",
+      ],
+      tools: INTENT_COLLECTION_SKILL_TOOLS,
+      runtime_type: "typescript",
+    },
+    {
+      skill_id: "oneshot-sandbox-runtime",
+      name: "OneShot Sandbox Runtime",
+      path: join(
+        projectRoot,
+        "skill",
+        "oneshot-sandbox-runtime",
+        "SKILL.md",
+      ),
+      capabilities: [
+        "sandbox-runtime",
+        "isolated-execution",
+        "admission-verification",
+        "evidence-recording",
+      ],
+      responsibilities: [
+        "admission verification",
+        "isolated execution boundary",
+        "execution evidence recording",
+        "sandbox canonical hash verification",
+      ],
+      tools: SANDBOX_RUNTIME_SKILL_TOOLS,
+      runtime_type: "typescript",
+    },
+    {
+      skill_id: "oneshot-init",
+      name: "OneShot Workspace Init",
+      path: join(projectRoot, "skill", "init", "SKILL.md"),
+      capabilities: [
+        "init",
+        "workspace-initialization",
+        "preflight-check",
+      ],
+      responsibilities: [
+        "workspace directory provisioning",
+        "environment preflight diagnostics",
+      ],
+      tools: INIT_SKILL_TOOLS,
+      runtime_type: "typescript",
+    },
+  ];
+}
 
 /**
  * Declarative and Dynamic Reusable Skill Catalog.
@@ -149,8 +167,11 @@ const BUILTIN_SKILLS: SkillDescriptor[] = [
 export class SkillCatalog {
   private indexed = new Map<string, SkillDescriptor>();
 
-  constructor(initial: SkillDescriptor[] = BUILTIN_SKILLS) {
-    for (const s of initial) {
+  constructor(
+    initial?: SkillDescriptor[],
+    private runtimePaths: RuntimePaths = resolveRuntimePaths(),
+  ) {
+    for (const s of initial ?? builtinSkills(runtimePaths.projectRoot)) {
       this.register(s);
     }
   }
@@ -195,8 +216,8 @@ export class SkillCatalog {
   /**
    * Dynamically discover reusable Skill definitions from `skill/` directories on disk.
    */
-  discover(rootDir = process.env.ONESHOT_ROOT || process.cwd()): SkillDescriptor[] {
-    const skillRoot = resolve(rootDir, "skill");
+  discover(rootDir = this.runtimePaths.projectRoot): SkillDescriptor[] {
+    const skillRoot = join(rootDir, "skill");
     if (!existsSync(skillRoot)) return this.list();
 
     for (const entry of readdirSync(skillRoot, { withFileTypes: true })) {

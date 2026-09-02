@@ -19,10 +19,12 @@ import type { TaskManagement } from "../task/task-management.js";
 import { projectAdkGraph } from "../graph/adk-graph.js";
 import { projectAuthorityGraph } from "../graph/authority-graph.js";
 import { projectIntentGraph } from "../graph/intent-graph.js";
+import { projectWorkflowGraph } from "../graph/workflow-graph.js";
 import type { IntentCollectionService } from "../intent/intent-collection.js";
 import type { SandboxService } from "../sandbox/sandbox-service.js";
 import { projectSandboxGraph } from "../sandbox/graph/sandbox-graph.js";
 import type { SandboxExecutionInput } from "../sandbox/types.js";
+import { resolveRuntimePaths } from "../runtime-paths.js";
 import { HttpSecurity } from "./http-security.js";
 import {
   WorkspacePathDeniedError,
@@ -62,8 +64,13 @@ const MIME: Record<string, string> = {
   ".png": "image/png",
   ".svg": "image/svg+xml",
   ".webp": "image/webp",
+  ".pdf": "application/pdf",
+  ".txt": "text/plain; charset=utf-8",
+  ".md": "text/markdown; charset=utf-8",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
 };
-const mime = (p: string) => MIME[extname(p)] || "application/octet-stream";
+const mime = (p: string) => MIME[extname(p).toLowerCase()] || "application/octet-stream";
 
 function workspacePolicyError(
   res: ServerResponse,
@@ -196,7 +203,7 @@ export async function startHttpServer(
   }
   const security = new HttpSecurity();
   const workspaceRoot = resolve(
-    options.workspaceRoot || process.env.ONESHOT_WORKSPACE_ROOT || process.cwd(),
+    options.workspaceRoot || resolveRuntimePaths().workspaceRoot,
   );
   const workspacePolicy = await WorkspacePathPolicy.create(workspaceRoot);
 
@@ -207,7 +214,6 @@ export async function startHttpServer(
 
       try {
         const url = new URL(req.url || "/", "http://localhost");
-
 
         // ---------------------------------------------------------------
         // Workspace Tree & File Endpoints (for OneShot IDE Explorer & Viewer)
@@ -260,6 +266,29 @@ export async function startHttpServer(
         }
 
         if (
+          req.method === "GET" &&
+          (url.pathname === "/v1/workspace/raw" ||
+            url.pathname === "/api/workspace/raw")
+        ) {
+          const reqPath = url.searchParams.get("path") || "";
+          if (!reqPath) return json(res, 400, { error: "path parameter required" });
+          try {
+            const targetFile = await workspacePolicy.authorizeExisting(reqPath);
+            const data = await readFile(targetFile);
+            const contentType = mime(targetFile);
+            res.writeHead(200, {
+              "content-type": contentType,
+              "content-disposition": "inline",
+              "cache-control": "no-store",
+            });
+            return res.end(data);
+          } catch (error) {
+            if (workspacePolicyError(res, error)) return;
+            return json(res, 404, { error: `File not found: ${reqPath}` });
+          }
+        }
+
+        if (
           req.method === "POST" &&
           (url.pathname === "/v1/workspace/file" ||
             url.pathname === "/api/workspace/file")
@@ -291,6 +320,44 @@ export async function startHttpServer(
         }
 
         // ---------------------------------------------------------------
+        // Release Package Download (oneshot-judge-1.3.0.zip)
+        // ---------------------------------------------------------------
+        if (
+          req.method === "GET" &&
+          (url.pathname === "/api/download/judge-zip" ||
+            url.pathname === "/api/download/oneshot-judge.zip" ||
+            url.pathname === "/dist/oneshot-judge-1.3.0.zip" ||
+            url.pathname === "/dist/oneshot-judge.zip" ||
+            url.pathname === "/oneshot-judge-1.3.0.zip" ||
+            url.pathname === "/oneshot-judge.zip")
+        ) {
+          const root = resolveRuntimePaths().projectRoot;
+          const candidates = [
+            join(root, "dist", "oneshot-judge-1.3.0.zip"),
+            join(root, "dist", "oneshot-judge.zip"),
+            join(workspaceRoot, "dist", "oneshot-judge-1.3.0.zip"),
+            join(workspaceRoot, "dist", "oneshot-judge.zip"),
+          ];
+          for (const zipPath of candidates) {
+            try {
+              const data = await readFile(zipPath);
+              res.writeHead(200, {
+                "content-type": "application/zip",
+                "content-disposition": 'attachment; filename="oneshot-judge-1.3.0.zip"',
+                "content-length": data.length,
+                "cache-control": "no-store",
+              });
+              return res.end(data);
+            } catch {
+              // continue trying candidates
+            }
+          }
+          return json(res, 404, {
+            error: "Release ZIP package not found on server",
+          });
+        }
+
+        // ---------------------------------------------------------------
         // Health
         // ---------------------------------------------------------------
         if (req.method === "GET" && url.pathname === "/api/health") {
@@ -304,8 +371,62 @@ export async function startHttpServer(
             sandbox_service: Boolean(sandbox),
             adk_graph: "oneshot-adk-researcher-v1",
             authority_graph: "oneshot-authority-trace-v1",
-            sandbox_graph: "oneshot-sandbox-execution-v1",
+                        sandbox_graph: "oneshot-sandbox-execution-v1",
           });
+        }
+
+        // ---------------------------------------------------------------
+        // Browser session authentication (cookie + CSRF layered on Bearer auth)
+        // ---------------------------------------------------------------
+        // POST /auth/login — exchange the operator token for a session cookie
+        //   + CSRF token. When auth is disabled (no ONESHOT_API_TOKEN) a session
+        //   is still issued so the IDE loads without a login wall.
+        if (req.method === "POST" && url.pathname === "/auth/login") {
+          if (!security.authDisabled) {
+            const input = await body(req);
+            const candidate = String(input.token || "");
+            if (!security.tokenMatches(candidate)) {
+              return json(res, 401, { error: "invalid token" });
+            }
+          }
+          const session = security.createSession();
+          security.applySessionCookie(res, session);
+          return json(res, 200, {
+            ok: true,
+            csrf_token: session.csrfToken,
+            expires_at: new Date(session.expiresAt).toISOString(),
+          });
+        }
+
+        // GET /auth/session — session status + CSRF token, or 401.
+        if (req.method === "GET" && url.pathname === "/auth/session") {
+          const session = security.sessionFromRequest(req);
+          if (!session && security.authDisabled) {
+            const anon = security.createSession();
+            security.applySessionCookie(res, anon);
+            return json(res, 200, {
+              ok: true,
+              csrf_token: anon.csrfToken,
+              expires_at: new Date(anon.expiresAt).toISOString(),
+            });
+          }
+          if (!session) {
+            return json(res, 401, { error: "no active session" });
+          }
+          return json(res, 200, {
+            ok: true,
+            csrf_token: session.csrfToken,
+            expires_at: new Date(session.expiresAt).toISOString(),
+          });
+        }
+
+        // POST /auth/logout — revoke session and clear cookie.
+        // Low-impact (session teardown only): CSRF-exempt by design, but the
+        // session cookie is sent so the correct session is revoked.
+        if (req.method === "POST" && url.pathname === "/auth/logout") {
+          security.revokeSession(req);
+          security.clearSessionCookie(res);
+          return json(res, 200, { ok: true });
         }
 
         // ---------------------------------------------------------------
@@ -313,6 +434,9 @@ export async function startHttpServer(
         // ---------------------------------------------------------------
         if (req.method === "GET" && url.pathname === "/api/graphs/adk") {
           return json(res, 200, projectAdkGraph());
+        }
+        if (req.method === "GET" && (url.pathname === "/api/graphs/workflow" || url.pathname === "/api/graphs/adk-workflow")) {
+          return json(res, 200, projectWorkflowGraph());
         }
         if (req.method === "GET" && url.pathname === "/api/graphs/authority") {
           return json(res, 200, projectAuthorityGraph());
@@ -518,6 +642,20 @@ export async function startHttpServer(
           const r = runs.get(graphMatch[1]);
           if (!r) return json(res, 404, { error: "run not found" });
           return json(res, 200, projectAdkGraph(events.list(graphMatch[1])));
+        }
+
+        // GET /api/runs/:id/workflow-graph — ADK 2.0 workflow graph for a specific run
+        const workflowGraphMatch = url.pathname.match(
+          /^\/api\/runs\/([^/]+)\/(?:workflow-graph|adk-workflow-graph)$/,
+        );
+        if (req.method === "GET" && workflowGraphMatch) {
+          const r = runs.get(workflowGraphMatch[1]);
+          if (!r) return json(res, 404, { error: "run not found" });
+          return json(
+            res,
+            200,
+            projectWorkflowGraph(events.list(workflowGraphMatch[1])),
+          );
         }
 
         // GET /api/runs/:id/authority-graph — authority graph for a specific run

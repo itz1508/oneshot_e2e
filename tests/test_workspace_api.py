@@ -11,7 +11,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from workspace_api.api import create_app
-from workspace_api.config import WorkspaceSettings
+from workspace_api.config import PROJECT_ROOT, WORKSPACE_ENV_FILE, WorkspaceSettings
 from workspace_api.database import Database
 from workspace_api.models import (
     ModelConfiguration,
@@ -42,6 +42,18 @@ class FakeProvider:
 
 
 class WorkspaceApiTests(unittest.TestCase):
+    def test_workspace_paths_are_repository_relative_not_cwd_relative(self) -> None:
+        settings = WorkspaceSettings(
+            environment="test",
+            database_url="sqlite:///./data/path-normalization-test.db",
+        )
+
+        self.assertEqual(WORKSPACE_ENV_FILE, PROJECT_ROOT / ".env.workspace")
+        self.assertEqual(
+            settings.database_url,
+            f"sqlite:///{(PROJECT_ROOT / 'data' / 'path-normalization-test.db').as_posix()}",
+        )
+
     def test_full_auth_key_model_chat_usage_and_rotation_path(self) -> None:
         with tempfile.TemporaryDirectory(prefix="oneshot-workspace-test-") as temp:
             database_path = Path(temp) / "workspace.db"

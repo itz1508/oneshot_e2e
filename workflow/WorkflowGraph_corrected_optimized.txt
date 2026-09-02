@@ -1,0 +1,571 @@
+# OneShot Google ADK 2.0 Workflow Graph
+## Corrected and optimized specification
+
+Authority:
+- OneShot Workflow_Tree — Source of Truth
+- OneShot Canonical Contract & Verification Specification
+- Google ADK graph workflows: https://adk.dev/graphs/
+- Google ADK graph routes / JoinNode: https://adk.dev/graphs/routes/
+
+PURPOSE
+
+Encode the existing OneShot workflow as a Google ADK graph without changing OneShot
+ownership, IDs, validation vocabulary, proof semantics, or Builder handoff.
+
+Google ADK owns graph topology, node routing, fan-out/fan-in, and execution order.
+It does not replace OneShot Roles, canonical JSON Schemas, deterministic Python
+validators, confirmed-package hashing, Builder execution, or Task Management evidence.
+
+CRITICAL CORRECTIONS
+
+Remove these elements from the previous WorkflowGraph draft:
+
+- Custom Python WorkflowGraph / AdvancedWorkflowGraph / ProductionWorkflowGraph.
+  These are home-grown graph engines, not Google ADK Workflow.
+- ValidationStatus.INVALID and validator PENDING.
+  Canonical validator result: VALID | NOT_VALID.
+- evaluation_score >= 0.7.
+  Canonical Evaluation result: PASSED | ROOT_CAUSE.
+- Schema/Fixture/Goal quality thresholds 0.95/0.90/0.92.
+  They are not canonical.
+- Retry/fallback/escalation routes selected from validation-error counts.
+- FALLBACK_BUILDER and relaxed validation/build modes.
+- refactored_plan as a replacement identity.
+  Refactor preserves the SAME plan_id.
+- Planner creating plan from raw research.
+  Researcher owns plan_id; Planner consumes plan_id and produces audit_id.
+- Goal validation against raw intent.
+  Goal Validation consumes FINAL plan_id + goal_id.
+- Hashing str(plan), artifact_path, or file-path-derived values.
+- Custom ArtifactCache, analytics, debugger, workflow suites, metrics history,
+  ThreadPoolExecutor workflow routing, and invented state-machine vocabularies.
+- workflow_id as a replacement for Job_id.
+- success/failed as canonical OneShot final results.
+
+IDENTITY MODEL
+
+Job_id
+  = stable execution context for one complete OneShot job.
+
+Prompt_id
+  = generated work-order artifact associated with Job_id.
+
+Researcher(id)
+  = Researcher output artifact.
+
+plan_id
+  = Researcher-owned plan identity.
+
+audit_id
+  = Planner-owned audit/review artifact.
+
+schema_id / fixture_id / goal_id / validation_id
+  = Researcher-owned validation inputs.
+
+User-facing graph labels may show:
+- Researcher(Job_id)
+- Planner(Job_id)
+- Refactor(Job_id)
+- Gap Analysis(Job_id)
+- Evaluation(Job_id)
+- Builder(Job_id)
+
+This is display context only. Do not rename canonical artifacts.
+
+CANONICAL SYSTEM FLOW
+
+START
+  ↓
+USER
+  ↓
+CHAT
+  ↓
+INTENT READY
+  ↓
+GENERATOR
+  ↓
+Prompt_id
+  ├─ record under JOB_ID
+  ↓
+RESEARCHER
+  ↓
+Researcher(id)
+  ├─ plan_id
+  ├─ schema_id
+  ├─ fixture_id
+  ├─ goal_id
+  ├─ validation_id
+  └─ additional required *_id
+  ↓
+PLANNER
+  ├─ input: plan_id
+  └─ output: audit_id
+  ↓
+REFACTOR / REFINEMENT
+  ├─ input: plan_id + audit_id
+  └─ output: SAME plan_id with revision/evidence update
+  ↓
+GAP ANALYSIS
+  ├─ inspect updated plan_id
+  ├─ correct gaps
+  ├─ fresh recheck
+  └─ gap_0 + FINAL plan_id
+  ↓
+EVALUATION
+  └─ PASSED | ROOT_CAUSE
+  ↓
+TRIPLE VALIDATION
+  ├─ Schema Validation: FINAL plan_id + schema_id → VALID | NOT_VALID
+  ├─ Fixture Validation: FINAL plan_id + fixture_id → VALID | NOT_VALID
+  └─ Goal Validation: FINAL plan_id + goal_id → VALID | NOT_VALID
+  ↓
+all_valid =
+  schema == VALID
+  AND fixture == VALID
+  AND goal == VALID
+  ↓
+CONFIRMED
+  ↓
+confirmed_package.core
+  ↓
+CREATE HASH
+  ├─ RFC 8785 JCS
+  └─ SHA-256 → created_hash
+  ↓
+PROMOTE
+  ↓
+Researcher(id) FINAL
+  ↓
+update JOB_ID
+  ├─ Prompt_id
+  └─ Plan_id CONFIRMED
+  ↓
+BUILDER
+  ├─ exact confirmed immutable package
+  └─ created_hash
+  ↓
+BUILD RESULT
+  ↓
+RECOMPUTE HASH
+  ├─ same confirmed_package.core definition
+  ├─ RFC 8785 JCS
+  └─ SHA-256 → recomputed_hash
+  ↓
+HASH VERIFICATION
+  └─ created_hash == recomputed_hash
+  ↓
+DONE
+  ↓
+PASSED
+
+No validator bypass is allowed.
+
+ADK EXECUTION BOUNDARY
+
+Do not force USER, CHAT, or GENERATOR into ADK unless repository truth already places
+them there.
+
+Determine the real current handoff first. A valid graph input can be:
+
+JobContext {
+  Job_id,
+  Prompt_id
+}
+
+Then ADK coordinates:
+Researcher → Planner → Refactor → Gap Analysis → Evaluation → Triple Validation
+→ Confirmed → Create Hash → Promote → Builder → Hash Verification → Done.
+
+GOOGLE ADK 2.0 MODEL
+
+Use the installed Google ADK 2.x API. For TypeScript, official graph primitives include:
+
+import {
+  JoinNode,
+  node,
+  NodeContext,
+  Workflow,
+} from '@google/adk';
+
+Use:
+- node() to wrap existing deterministic code/functions
+- existing ADK Agent nodes for real Agent-owned work
+- nested Workflow for Triple Validation
+- JoinNode as the fan-in barrier
+- explicit edges for execution order
+
+Do not create another workflow engine beside ADK.
+
+TRIPLE VALIDATION GRAPH
+
+Evaluation
+    │
+    ▼
+Triple Validation Workflow
+    ├───────────────┬───────────────┐
+    ▼               ▼               ▼
+Schema           Fixture          Goal
+Validation       Validation       Validation
+    │               │               │
+    └───────────────┼───────────────┘
+                    ▼
+                 JoinNode
+                    │
+                    ▼
+           deterministic all_valid
+                    │
+          all 3 results == VALID
+                    │
+                    ▼
+                CONFIRMED
+
+Each validator must emit its own result and evidence.
+The join must wait for all three outputs.
+Any NOT_VALID prevents confirmation and Builder invocation.
+
+TYPE-SAFE ADK SKELETON
+
+```ts
+import {
+  JoinNode,
+  node,
+  type NodeContext,
+  Workflow,
+} from '@google/adk';
+
+type JobContext = {
+  Job_id: string;
+  Prompt_id: string;
+
+  Researcher_id?: string;
+  plan_id?: string;
+  audit_id?: string;
+
+  schema_id?: string;
+  fixture_id?: string;
+  goal_id?: string;
+  validation_id?: string;
+
+  evaluation_result?: 'PASSED' | 'ROOT_CAUSE';
+
+  confirmed_package?: unknown;
+  created_hash?: string;
+  recomputed_hash?: string;
+};
+
+type ValidatorResult = {
+  result: 'VALID' | 'NOT_VALID';
+  evidence_ids: string[];
+};
+
+const researcherNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingResearcher(input),
+  { name: 'researcher' },
+);
+
+const plannerNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingPlanner(input),
+  { name: 'planner' },
+);
+
+const refactorNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingRefactor(input),
+  { name: 'refactor' },
+);
+
+const gapAnalysisNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingGapAnalysis(input),
+  { name: 'gap_analysis' },
+);
+
+const evaluationNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingEvaluation(input),
+  { name: 'evaluation' },
+);
+
+const schemaValidationNode = node(
+  async (_ctx: NodeContext, input: JobContext): Promise<ValidatorResult> =>
+    runExistingSchemaValidation(input),
+  { name: 'schema_validation' },
+);
+
+const fixtureValidationNode = node(
+  async (_ctx: NodeContext, input: JobContext): Promise<ValidatorResult> =>
+    runExistingFixtureValidation(input),
+  { name: 'fixture_validation' },
+);
+
+const goalValidationNode = node(
+  async (_ctx: NodeContext, input: JobContext): Promise<ValidatorResult> =>
+    runExistingGoalValidation(input),
+  { name: 'goal_validation' },
+);
+
+const tripleJoin = new JoinNode({ name: 'triple_validation_join' });
+
+const tripleGateNode = node(
+  async (
+    _ctx: NodeContext,
+    outputs: Record<string, ValidatorResult>,
+  ) => {
+    const schema = outputs.schema_validation;
+    const fixture = outputs.fixture_validation;
+    const goal = outputs.goal_validation;
+
+    const all_valid =
+      schema.result === 'VALID' &&
+      fixture.result === 'VALID' &&
+      goal.result === 'VALID';
+
+    return runExistingTripleValidationGate({
+      schema,
+      fixture,
+      goal,
+      all_valid,
+    });
+  },
+  { name: 'triple_validation_gate' },
+);
+
+export const tripleValidationWorkflow = new Workflow({
+  name: 'oneshot_triple_validation',
+  edges: [
+    ['START', schemaValidationNode, tripleJoin],
+    ['START', fixtureValidationNode, tripleJoin],
+    ['START', goalValidationNode, tripleJoin],
+    [tripleJoin, tripleGateNode],
+  ],
+});
+
+const confirmedNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingConfirmed(input),
+  { name: 'confirmed' },
+);
+
+const createHashNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingCreateHash(input),
+  { name: 'create_hash' },
+);
+
+const promoteNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingPromote(input),
+  { name: 'promote' },
+);
+
+const researcherFinalNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingResearcherFinalize(input),
+  { name: 'researcher_final' },
+);
+
+const jobUpdateNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingJobUpdate(input),
+  { name: 'job_update' },
+);
+
+const builderNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingBuilder(input),
+  { name: 'builder' },
+);
+
+const hashVerificationNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingHashVerification(input),
+  { name: 'hash_verification' },
+);
+
+const doneNode = node(
+  async (_ctx: NodeContext, input: JobContext) =>
+    runExistingDone(input),
+  { name: 'done' },
+);
+
+export const oneShotWorkflow = new Workflow({
+  name: 'oneshot_job_workflow',
+  edges: [[
+    'START',
+    researcherNode,
+    plannerNode,
+    refactorNode,
+    gapAnalysisNode,
+    evaluationNode,
+    tripleValidationWorkflow,
+    confirmedNode,
+    createHashNode,
+    promoteNode,
+    researcherFinalNode,
+    jobUpdateNode,
+    builderNode,
+    hashVerificationNode,
+    doneNode,
+  ]],
+});
+```
+
+The runExisting* names above are placeholders for adapters to EXISTING OneShot owners.
+Before implementation, map each node to repository truth. Do not duplicate Role logic.
+
+HASH / PROOF INVARIANT
+
+Wrong:
+  sha256(str(plan))
+  vs
+  sha256(artifact_path + "_content")
+
+Correct:
+  canonical_bytes = JCS_RFC8785(confirmed_package.core)
+  created_hash = HEX_LOWER(SHA256(canonical_bytes))
+
+Verification:
+  recomputed_hash =
+    HEX_LOWER(SHA256(JCS_RFC8785(same confirmed_package.core)))
+
+Required:
+  created_hash == recomputed_hash
+  equal = true
+
+Do not include timestamp, runtime status, filesystem path, checkpoint state,
+execution-environment metadata, or packaging metadata in the comparable object.
+
+UI GRAPH PROJECTION
+
+The frontend must not maintain an independent workflow definition.
+
+Project the same Job_id execution from real backend events/artifacts:
+
+Job: job:123
+
+Prompt(Job_id)                     COMPLETE
+  │
+Researcher(Job_id)                 COMPLETE
+  │  output: Researcher(id)
+Planner(Job_id)                    COMPLETE
+  │  output: audit_id
+Refactor(Job_id)                   COMPLETE
+  │  same plan_id
+Gap Analysis(Job_id)               COMPLETE
+Evaluation(Job_id)                 PASSED
+  │
+  ├──────────────┬──────────────┐
+  ▼              ▼              ▼
+Schema         Fixture         Goal
+VALID          VALID           VALID
+  └──────────────┴──────────────┘
+                 │
+Confirmed(Job_id)                 COMPLETE
+Create Hash(Job_id)               COMPLETE
+Promote(Job_id)                   COMPLETE
+Builder(Job_id)                   RUNNING / COMPLETE from real state
+Hash Verification(Job_id)         COMPLETE
+  │  equal=true
+Done(Job_id)
+
+Node details may show:
+- Job_id
+- input artifact IDs
+- output artifact IDs
+- established processor state
+- validation result
+- event count
+- established timestamps
+- hash/proof references
+
+Do not expose chain-of-thought.
+Do not fabricate progress or completion.
+
+OPENTELEMETRY BOUNDARY
+
+OpenTelemetry is separate from the graph.
+
+OneShot event/proof system
+  = deterministic execution truth
+
+Google ADK Workflow
+  = executable process topology
+
+Workflow Graph UI
+  = projection of Job_id runtime state
+
+OpenTelemetry
+  = traces / metrics / logs correlation
+
+If added later, correlate Job_id + ADK node + trace_id/span_id/duration/error.
+Do not make OpenTelemetry a workflow stage.
+
+IMPLEMENTATION ORDER
+
+A. Audit current repository
+- installed @google/adk version
+- existing ADK integration
+- current Role/workflow owners
+- validator boundaries
+- confirmed package/hash implementation
+- Builder handoff
+- Task Management events
+- frontend job projection
+
+B. Build ADK adapters
+- wrap existing owners with node()
+- preserve canonical contracts
+- keep Job_id context
+- no duplicated Role logic
+
+C. Triple Validation
+- 3 validator nodes
+- JoinNode
+- deterministic all_valid
+- no validation bypass
+
+D. Confirmation/proof/build
+- confirmed_package.core
+- Create Hash
+- exact-package Builder handoff
+- recompute same comparable core
+- equality proof
+
+E. UI
+- visible Workflow Graph section
+- Job_id as top-level context
+- nodes driven by real backend events
+- artifact/evidence detail panel
+
+F. Documentation
+Update README/JUDGE_README only after runtime proof exists.
+Do not claim live ADK graph or OpenTelemetry until verified.
+
+ACCEPTANCE TESTS
+
+- Graph order matches canonical OneShot workflow.
+- Researcher owns plan/schema/fixture/goal/validation artifacts.
+- Planner owns audit_id.
+- Refactor preserves same plan_id.
+- Gap Analysis reaches canonical resolved/final state.
+- Evaluation PASSED routes to Triple Validation.
+- Evaluation ROOT_CAUSE cannot reach successful build.
+- VALID/VALID/VALID => all_valid=true => CONFIRMED.
+- Any NOT_VALID => all_valid=false; Builder does not execute.
+- Join waits for all 3 validator outputs.
+- Confirmed package is immutable input to Create Hash.
+- RFC 8785 JCS + SHA-256 uses confirmed_package.core.
+- Same core with different JSON property ordering hashes identically.
+- Meaningful mutation changes hash.
+- created_hash == recomputed_hash => equal=true.
+- mismatch => ROOT_CAUSE.
+- Job_id remains stable across graph execution.
+- UI graph uses real backend event/artifact state.
+- Existing Python/TypeScript/React/manifest/Docker E2E remains green.
+
+FINAL RULE
+
+Google ADK must encode the OneShot workflow.
+Google ADK must not redefine the OneShot workflow.

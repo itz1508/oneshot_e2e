@@ -1,176 +1,255 @@
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+OneShot Hackathon Evaluation License
+Version 1.0
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+Copyright (c) 2026 The One Shot.
+All rights reserved.
 
-   1. Definitions.
 
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
+1. Definitions
 
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
+"Licensor" means the copyright owner of OneShot.
 
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
+"OneShot" means the OneShot software, Docker images, binaries, source code,
+documentation, schemas, contracts, configuration, assets, and other materials
+made available by the Licensor as part of an authorized evaluation distribution.
 
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
+"Evaluator" means an individual or organization that receives authorized
+access to OneShot solely for testing, judging, demonstration, review,
+inspection, or evaluation purposes under this License.
 
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
+"Authorized Evaluation" means a hackathon, competition, judging process,
+technical evaluation, product review, demonstration, or other evaluation
+expressly permitted by the Licensor.
 
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
 
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
+2. Limited evaluation license
 
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
+Subject to the terms of this License, the Licensor grants the Evaluator a
+limited, revocable, non-exclusive, non-transferable, and non-sublicensable
+license to access, install, operate, test, inspect, demonstrate, review, and
+evaluate OneShot solely for an Authorized Evaluation.
 
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
+The Evaluator receives no ownership interest in OneShot.
 
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
+Receipt, possession, download, or access to OneShot for any purpose outside
+an Authorized Evaluation does not grant any additional license or rights.
 
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
+No rights are granted except those expressly stated in this License.
 
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
 
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
+3. Permitted use
 
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
+For an Authorized Evaluation, the Evaluator may:
 
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
+a. download the authorized OneShot evaluation distribution;
 
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
+b. extract the distribution;
 
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
+c. load and run the supplied Docker image;
 
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
+d. install and operate OneShot on systems used for the Authorized Evaluation;
 
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
+e. make temporary or technical copies strictly necessary to extract, load,
+   cache, execute, test, inspect, demonstrate, or evaluate OneShot;
 
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
+f. evaluate OneShot's functionality, behavior, performance, interfaces,
+   architecture, outputs, and capabilities; and
 
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
+g. demonstrate OneShot to authorized hackathon judges, organizers, reviewers,
+   or other persons participating in the Authorized Evaluation.
 
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
+No other use is permitted.
 
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
 
-   END OF TERMS AND CONDITIONS
+4. Restrictions
+
+Except as expressly permitted by this License, the Evaluator may not:
+
+a. reproduce or copy OneShot;
+
+b. distribute, redistribute, publish, transmit, upload, mirror, share, or
+   otherwise make OneShot available to another person or organization;
+
+c. sell, offer for sale, rent, lease, sublicense, assign, transfer, or
+   otherwise commercially distribute OneShot;
+
+d. use OneShot for production, commercial, hosted, resale, redistribution,
+   service-provider, or revenue-generating purposes;
+
+e. modify, adapt, translate, or create derivative works from OneShot;
+
+f. remove, conceal, or alter copyright, ownership, attribution, license,
+   or proprietary notices;
+
+g. use OneShot for any purpose outside the Authorized Evaluation; or
+
+h. represent that possession of OneShot grants any right to redistribute,
+   resell, sublicense, transfer, publish, or commercially exploit OneShot.
+
+
+5. Technical and evaluation copies
+
+Copies created solely because they are technically required by Docker,
+container runtimes, operating systems, archive extraction, caching, temporary
+storage, or other mechanisms necessary to conduct the Authorized Evaluation
+are permitted.
+
+Such copies:
+
+a. may exist only as necessary for the Authorized Evaluation;
+
+b. may not be independently distributed, transferred, published, sold,
+   sublicensed, or reused for another purpose; and
+
+c. remain subject to this License.
+
+
+6. No redistribution, transfer, or resale
+
+Possession of the OneShot distribution does not give the Evaluator the right
+to provide, distribute, redistribute, resell, license, sublicense, publish,
+upload, mirror, transfer, host, or otherwise make available OneShot, its Docker
+image, source code, binaries, documentation, credentials, or any substantial
+portion of OneShot to another person or organization.
+
+If the Evaluator intends, proposes, or wishes to:
+
+- redistribute OneShot;
+- resell OneShot;
+- commercially distribute OneShot;
+- sublicense OneShot;
+- transfer OneShot;
+- publish or mirror OneShot;
+- host OneShot for others;
+- incorporate OneShot into a commercial offering; or
+- otherwise use OneShot beyond the Authorized Evaluation,
+
+the Evaluator must notify the Licensor before taking any such action and must
+obtain the Licensor's prior express written authorization.
+
+Notification alone does not constitute permission.
+
+Unless and until the Licensor provides express written authorization, all such
+redistribution, resale, commercial distribution, sublicensing, transfer,
+publication, hosting, or other dissemination remains prohibited.
+
+The Licensor may approve, reject, condition, or separately license any proposed
+use at the Licensor's discretion.
+
+
+7. Evaluation period
+
+The rights granted under this License apply only for the period reasonably
+necessary to conduct the applicable Authorized Evaluation.
+
+When the Authorized Evaluation ends, the Evaluator must cease using OneShot
+and delete evaluation copies under the Evaluator's control, except where:
+
+a. retention is expressly authorized by the Licensor;
+
+b. the hackathon or evaluation organizer requires limited retention for
+   judging or recordkeeping purposes; or
+
+c. retention is required by applicable law.
+
+Any retained copy remains subject to this License and may not be used for
+another purpose.
+
+
+8. Ownership
+
+OneShot is licensed, not sold.
+
+The Licensor retains all right, title, and interest in and to OneShot,
+including all copyright and other intellectual property rights owned by the
+Licensor.
+
+Nothing in this License transfers ownership of OneShot or grants rights beyond
+those expressly stated.
+
+
+9. Third-party software
+
+OneShot may contain, incorporate, depend on, or interact with third-party
+software or other materials.
+
+Third-party software and materials remain subject to their respective license
+terms.
+
+Nothing in this License restricts rights independently granted to the Evaluator
+under an applicable third-party license.
+
+Where required, applicable third-party copyright notices, attribution notices,
+and license terms must be preserved.
+
+
+10. No implied intellectual property rights
+
+Except for the limited rights expressly granted under this License, no patent,
+copyright, trademark, trade-secret, or other intellectual property right is
+granted by implication, estoppel, or otherwise.
+
+Use of the OneShot name, marks, branding, or logos beyond reasonable reference
+to the Authorized Evaluation requires separate authorization from the Licensor.
+
+
+11. Disclaimer of warranty
+
+ONESHOT IS PROVIDED FOR EVALUATION PURPOSES "AS IS" AND "AS AVAILABLE."
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSOR DISCLAIMS ALL
+WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+
+THE EVALUATOR IS RESPONSIBLE FOR DETERMINING WHETHER ONESHOT IS SUITABLE FOR
+THE AUTHORIZED EVALUATION.
+
+
+12. Limitation of liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSOR SHALL NOT BE
+LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR
+PUNITIVE DAMAGES, OR FOR LOSS OF DATA, PROFITS, REVENUE, BUSINESS, OR
+OPPORTUNITY ARISING FROM OR RELATED TO THE EVALUATOR'S ACCESS TO OR USE OF
+ONESHOT.
+
+Nothing in this section excludes liability that cannot lawfully be excluded.
+
+
+13. Termination
+
+This License terminates automatically if the Evaluator uses OneShot outside
+the permissions expressly granted by this License or otherwise materially
+violates its terms.
+
+Upon termination, the Evaluator must:
+
+a. immediately cease unauthorized use of OneShot; and
+
+b. delete copies under the Evaluator's control that the Evaluator is not
+   otherwise legally entitled or expressly authorized to retain.
+
+Termination does not grant permission for any previous or continuing
+unauthorized use.
+
+
+14. Requests for additional rights
+
+Any request to redistribute, resell, sublicense, transfer, commercially use,
+host, publish, incorporate, or otherwise use OneShot outside the scope of an
+Authorized Evaluation must be submitted to the Licensor.
+
+No requested use is authorized unless the Licensor provides express written
+approval or enters into a separate written license agreement covering that use.
+
+
+15. Entire evaluation permission
+
+This License states the permissions granted by the Licensor for the Authorized
+Evaluation.
+
+Any broader right must be provided separately and expressly in writing by the
+Licensor.
+
+
+END OF LICENSE

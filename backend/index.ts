@@ -1,6 +1,6 @@
 import "./environment.js";
 import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolveRuntimePaths } from "./runtime-paths.js";
 import { ProcessingEventBus } from "./runtime/event-bus.js";
 import { RunRepository } from "./runtime/run-repository.js";
 import { FileArtifactStore } from "./runtime/artifact-store.js";
@@ -13,6 +13,7 @@ import { PythonBridge } from "./validation/python-bridge.js";
 import { DeterministicValidationRuntime } from "./validation/deterministic-validation.js";
 import { CanonicalContractSkill } from "./skill/canonical-contract-skill.js";
 import { createSkillSystem } from "./skill/bootstrap.js";
+import { SkillCatalog } from "./skill/catalog.js";
 import { resolveResearchProvider } from "./role/researcher/provider-resolver.js";
 import { ResearcherWorkflow } from "./role/researcher/workflow.js";
 import { PlannerWorkflow } from "./role/planner/workflow.js";
@@ -32,22 +33,23 @@ import { startHttpServer, type RuntimeInfo } from "./server/http-server.js";
 // Bootstrap
 // ---------------------------------------------------------------------------
 
-const projectRoot = process.env.ONESHOT_ROOT || process.cwd();
+const runtimePaths = resolveRuntimePaths();
+const projectRoot = runtimePaths.projectRoot;
 
 // --- Task Management infrastructure ---
 const taskEventStore = new AppendOnlyProcessingEventStore(
-  resolve(projectRoot, "data/task-events"),
+  runtimePaths.taskEventsRoot,
 );
 const events = new ProcessingEventBus(taskEventStore);
-const runs = new RunRepository(resolve(projectRoot, "data/run-state"));
+const runs = new RunRepository(runtimePaths.runStateRoot);
 const task = new TaskManagement(
   taskEventStore,
-  new CheckpointStore(resolve(projectRoot, "data/checkpoints")),
+  new CheckpointStore(runtimePaths.checkpointsRoot),
 );
 
 // --- Intent Collection infrastructure ---
 const intent = new IntentCollectionService(
-  new ConversationStore(resolve(projectRoot, "data/conversations")),
+  new ConversationStore(runtimePaths.conversationsRoot),
 );
 
 // --- Global event observer: wires events into run snapshots + task checkpoints ---
@@ -59,8 +61,11 @@ events.observe((e) => {
 });
 
 // --- Validation & Contracts (composed through the Reusable Skill subsystem) ---
-const bridge = new PythonBridge();
-const skills = createSkillSystem();
+const bridge = new PythonBridge(undefined, runtimePaths);
+const skills = createSkillSystem(
+  new SkillCatalog(undefined, runtimePaths),
+  runtimePaths,
+);
 const runtimeCtx = {
   caller_id: "backend/runtime",
   bridge,
@@ -92,7 +97,7 @@ const deterministic = new DeterministicValidationRuntime(bridge);
 const runtime = new WorkflowRuntime(
   events,
   runs,
-  new FileArtifactStore(resolve(projectRoot, "data/runs")),
+  new FileArtifactStore(runtimePaths.artifactRunsRoot),
   new ResearcherWorkflow(provider, contracts),
   new PlannerWorkflow(contracts),
   new RefactorWorkflow(contracts),
@@ -110,7 +115,7 @@ const sandbox = new SandboxService(
   process.env.ONESHOT_SANDBOX_RUNNER === "container"
     ? new ContainerSandboxRunner()
     : new HardenedProcessRunner(),
-  resolve(projectRoot, "data/sandbox-workspaces"),
+  runtimePaths.sandboxWorkspacesRoot,
 );
 
 // --- Bind the remaining production Skills to live runtime services ---
@@ -122,11 +127,9 @@ await skills.activation.activate({ skill_id: "oneshot-sandbox-runtime" }, runtim
 await skills.activation.activate({ skill_id: "oneshot-init" }, runtimeCtx);
 
 // --- HTTP Server ---
-const webDistPath = resolve(projectRoot, "web/dist");
-const uiRoot = existsSync(webDistPath) ? webDistPath : resolve(projectRoot, "ui");
-const workspaceRoot = resolve(
-  process.env.ONESHOT_WORKSPACE_ROOT || projectRoot,
-);
+const uiRoot = existsSync(runtimePaths.webDistRoot)
+  ? runtimePaths.webDistRoot
+  : runtimePaths.legacyUiRoot;
 
 const server = await startHttpServer(
   runtime,
@@ -138,13 +141,16 @@ const server = await startHttpServer(
   intent,
   sandbox,
   runtimeInfo,
-  { workspaceRoot },
+  { workspaceRoot: runtimePaths.workspaceRoot },
 );
 
 const address = server.address();
 const port =
   typeof address === "object" && address ? address.port : process.env.PORT;
 console.log(`ONESHOT_SERVER_READY port=${port} mode=${runtimeInfo.mode} provider=${runtimeInfo.provider}`);
+console.log(
+  `ONESHOT_PATHS_RESOLVED project_root=${JSON.stringify(runtimePaths.projectRoot)} workspace_root=${JSON.stringify(runtimePaths.workspaceRoot)} project_source=${runtimePaths.trace.projectRootSource} workspace_source=${runtimePaths.trace.workspaceRootSource}`,
+);
 
 // --- Graceful shutdown ---
 const shutdown = () => {

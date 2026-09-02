@@ -8,11 +8,15 @@ import { SkillRegistry } from "./registry.js";
 import { SkillResolver } from "./resolver.js";
 import { SkillActivationEngine } from "./activation.js";
 import type { ActivatedSkill, ActivationContext, SkillDescriptor } from "./types.js";
+import { resolveRuntimePaths, type RuntimePaths } from "../runtime-paths.js";
 
 /**
  * Bootstrap and configure the standard OneShot Reusable Skill subsystem.
  */
-export function createSkillSystem(catalog = new SkillCatalog()): {
+export function createSkillSystem(
+  catalog = new SkillCatalog(),
+  runtimePaths: RuntimePaths = resolveRuntimePaths(),
+): {
   catalog: SkillCatalog;
   registry: SkillRegistry;
   resolver: SkillResolver;
@@ -122,7 +126,7 @@ export function createSkillSystem(catalog = new SkillCatalog()): {
   registry.registerFactory(
     "oneshot-init",
     async (desc: SkillDescriptor, ctx: ActivationContext): Promise<ActivatedSkill> => {
-      const skill = new InitSkill();
+      const skill = new InitSkill(runtimePaths);
       return {
         skill_id: desc.skill_id,
         descriptor: desc,

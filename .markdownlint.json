@@ -1,0 +1,23 @@
+{
+  "default": true,
+  "MD013": false,
+  "MD033": {
+    "allowed_elements": [
+      "video",
+      "source",
+      "a",
+      "details",
+      "summary",
+      "b",
+      "code",
+      "table",
+      "tr",
+      "td",
+      "th",
+      "thead",
+      "tbody"
+    ]
+  },
+  "MD034": true,
+  "MD060": false
+}

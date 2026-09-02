@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { resolveRuntimePaths, type RuntimePaths } from "../runtime-paths.js";
 import { ToolRegistry } from "../tool/registry.js";
 
 export interface WorkspaceInitResult {
@@ -21,14 +22,16 @@ export interface PreflightCheckResult {
 export class InitSkill {
   private registry = new ToolRegistry();
 
-  constructor() {
+  constructor(private runtimePaths: RuntimePaths = resolveRuntimePaths()) {
     this.registry.register(
       {
         name: "init_workspace",
         description: "Provision required OneShot runtime data directories",
       },
       async (input: { root?: string } = {}): Promise<WorkspaceInitResult> => {
-        const root = resolve(input.root || process.env.ONESHOT_ROOT || process.cwd());
+        const root = input.root
+          ? resolve(this.runtimePaths.projectRoot, input.root)
+          : this.runtimePaths.projectRoot;
         const dirs = [
           "data/runs",
           "data/checkpoints",
@@ -61,7 +64,9 @@ export class InitSkill {
         description: "Verify environment configuration, node/python runtime, and schemas",
       },
       async (input: { root?: string } = {}): Promise<PreflightCheckResult> => {
-        const root = resolve(input.root || process.env.ONESHOT_ROOT || process.cwd());
+        const root = input.root
+          ? resolve(this.runtimePaths.projectRoot, input.root)
+          : this.runtimePaths.projectRoot;
         const checks: PreflightCheckResult["checks"] = [];
 
         // Check 1: Schema directory

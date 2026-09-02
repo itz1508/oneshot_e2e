@@ -6,9 +6,10 @@
  */
 
 import type {ClaimRequest, ClaimResponse} from './types'
+import {fetchAuthed} from './authApi'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-    const response = await fetch(path, init)
+    const response = await fetchAuthed(path, init)
     if (!response.ok) {
         const body = await response.json().catch(() => ({detail: response.statusText}))
         throw new Error(JSON.stringify(body.detail ?? body))

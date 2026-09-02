@@ -17,8 +17,8 @@ import { rmSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { platform } from "node:os";
 
-const ROOT = resolve(import.meta.dirname || ".");
-const environmentFile = resolve(ROOT, ".env");
+const projectRoot = resolve(import.meta.dirname || ".");
+const environmentFile = resolve(projectRoot, ".env");
 if (existsSync(environmentFile)) {
   if (typeof process.loadEnvFile !== "function") {
     throw new Error(
@@ -62,7 +62,7 @@ log(`Provider: ${C.bold}${provider}${C.reset}`);
 log("");
 
 log("Cleaning stale build output (dist/)...");
-const distPath = resolve(ROOT, "dist");
+const distPath = resolve(projectRoot, "dist");
 if (existsSync(distPath)) {
   rmSync(distPath, { recursive: true, force: true });
 }
@@ -71,13 +71,13 @@ if (existsSync(distPath)) {
 log("Compiling real TypeScript backend and OneShot React IDE...");
 try {
   execSync("npx tsc -p tsconfig.json", {
-    cwd: ROOT,
+    cwd: projectRoot,
     stdio: ["ignore", "pipe", "pipe"],
   });
-  if (!existsSync(resolve(ROOT, "web/dist"))) {
+  if (!existsSync(resolve(projectRoot, "web/dist"))) {
     log("Building OneShot React UI bundle...");
     execSync("npm --prefix web run build", {
-      cwd: ROOT,
+      cwd: projectRoot,
       stdio: ["ignore", "pipe", "pipe"],
     });
   }
@@ -97,7 +97,7 @@ const probeHost = bindHost === "0.0.0.0" ? "127.0.0.1" : bindHost === "::" ? "::
 const probeAddress = probeHost.includes(":") ? `[${probeHost}]` : probeHost;
 const apiToken = (process.env.ONESHOT_API_TOKEN || "").trim();
 const child = spawn("node", ["dist/backend/index.js"], {
-  cwd: ROOT,
+  cwd: projectRoot,
   stdio: ["ignore", "pipe", "pipe"],
   env: { ...process.env, PORT: port },
 });
@@ -163,6 +163,14 @@ child.stdout.on("data", async (data) => {
       log(`  ${C.bold}URL:${C.reset}       ${C.cyan}${url}${C.reset}`);
       log(`  ${C.bold}Mode:${C.reset}      ${activeMode}`);
       log(`  ${C.bold}Provider:${C.reset}  ${activeProvider}`);
+      log("");
+      log(`  ${C.bold}${C.cyan}Architecture & Verification Documentation Index:${C.reset}`);
+      log(`  • ${C.bold}Master Index:${C.reset}     docs/INDEX.md`);
+      log(`  • ${C.bold}Workflow Tree:${C.reset}    docs/WORKFLOW_TREE & docs/WORKFLOW_TREE.pdf`);
+      log(`  • ${C.bold}Canonical Spec:${C.reset}   docs/source/OneShot_Canonical_Contract_and_Verification.txt`);
+      log(`  • ${C.bold}ADK & Task Graph:${C.reset} docs/TASK_MANAGEMENT_AND_ADK_GRAPH.md`);
+      log(`  • ${C.bold}Visual Diagram:${C.reset}   docs/Workflow_Processing.pdf`);
+      log(`  • ${C.bold}Judge Guide:${C.reset}      JUDGE_README.md`);
       log("");
       log(`${C.dim}  1. Interact with the real OneShot IDE in your browser${C.reset}`);
       log(`${C.dim}  2. Submit a request through the real Chat flow (or click example prompt)${C.reset}`);
