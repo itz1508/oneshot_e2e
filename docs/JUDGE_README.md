@@ -171,7 +171,7 @@ npm test
 
 ## 8. License
 
-Apache License, Version 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE) for details.
+Apache License, Version 2.0. See [`LICENSE`](../LICENSE), [`NOTICE`](../NOTICE), and [`THIRD_PARTY_LICENSES`](../THIRD_PARTY_LICENSES/) for details.
 
 
 ### Mode C: Docker Container (Single Command Release)

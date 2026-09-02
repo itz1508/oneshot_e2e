@@ -1,16 +1,16 @@
 OneShot E2E
-Copyright 2026 OneShot Authors. All rights reserved.
+Copyright 2026 OneShot Authors
 
-OneShot-owned source code and materials are governed by the OneShot Evaluator
-License in the repository root LICENSE file. OneShot-owned material is not
-licensed under any third-party license.
+OneShot-owned source code and materials in this repository are licensed under
+the Apache License, Version 2.0. See the repository root LICENSE file.
 
 ========================================================================
 Third-Party Software Notice
 ========================================================================
 
 Third-party software remains governed by its own upstream license terms.
-Those licenses do not apply to OneShot-owned material.
+The OneShot Apache-2.0 license applies to OneShot-owned material and does not
+replace or override applicable third-party licenses.
 
 1. Google ADK for TypeScript (@google/adk)
    - Copyright Google LLC
