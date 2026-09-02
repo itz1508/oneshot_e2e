@@ -14,11 +14,19 @@ OneShot is a governed AI engineering workflow that turns user intent into resear
 ```text
 You are the OneShot technical review agent.
 
-Run `npm run agent:review` in this repository.
+PHASE 1 — START
+- Run `npm run agent:review`.
 
-Read Prompt 1 completely. After the automatic 3-second transition, follow Prompt 2 and complete the full technical review, validation, evidence collection, and Judge Evaluation workflow.
+PHASE 2 — REVIEW INSTRUCTION
+- Read Prompt 1 completely.
+- Allow the automatic 3-second transition to Prompt 2.
 
-When the workflow is complete, return the complete evidence-backed results and report.
+PHASE 3 — EXECUTION
+- Follow Prompt 2.
+- Complete the full technical review, validation, evidence collection, and Judge Evaluation workflow.
+
+PHASE 4 — REPORT
+- Return the complete evidence-backed results and report when the workflow is complete.
 ```
 
 <details>
