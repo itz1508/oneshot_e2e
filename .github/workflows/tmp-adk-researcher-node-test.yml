@@ -5,6 +5,14 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/tmp-adk-researcher-node-test.yml'
+      - 'backend/**'
+      - 'tests_ts/**'
+      - 'fixtures/**'
+      - 'schema/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'requirements.txt'
+      - 'tsconfig.json'
 
 permissions:
   contents: read
@@ -36,4 +44,4 @@ jobs:
       - name: Run all backend TypeScript tests
         run: node --test --test-force-exit dist/tests_ts/*.test.js
 
-# scope: dynamic production runtime integration + complete backend TypeScript suite + response evidence
+# scope: dynamic production runtime integration + complete backend TypeScript suite + full session response evidence
