@@ -50,12 +50,13 @@ export class AdkGemmaWorker {
     );
     const env = {
       ...process.env,
-      OLLAMA_API_BASE: this.config.ollamaBaseUrl,
-      GEMMA2_DISTRIBUTION_MODEL: this.config.distributionModel,
-      GEMMA2_RESEARCH_MODEL: this.config.researchModel,
-      GEMMA2_SYNTHESIS_MODEL: this.config.synthesisModel,
-      GEMMA2_AUTO_PULL: String(this.config.autoPull),
-      GEMMA2_TIMEOUT_SECONDS: String(this.config.timeoutSeconds),
+      GEMINI_DISTRIBUTION_MODEL: this.config.distributionModel,
+      GEMINI_RESEARCH_MODEL: this.config.researchModel,
+      GEMINI_SYNTHESIS_MODEL: this.config.synthesisModel,
+      GEMINI_TIMEOUT_SECONDS: String(this.config.timeoutSeconds),
+      GOOGLE_CLOUD_PROJECT: this.config.googleCloudProject || "",
+      GOOGLE_CLOUD_LOCATION: this.config.googleCloudLocation,
+      GOOGLE_GENAI_USE_VERTEXAI: String(this.config.useVertexAi),
       CACHE_URL: this.config.cacheUrl || "",
       CACHE_TTL: String(this.config.cacheTtlSeconds),
       ONESHOT_ADK_TEST_DRAFT_FILE: this.config.testDraftFile || "",
@@ -94,14 +95,14 @@ export class AdkGemmaWorker {
         clearTimeout(p.timer);
         msg.ok
           ? p.resolve(msg.result)
-          : p.reject(new Error(msg.error || "ADK Gemma worker failed"));
+          : p.reject(new Error(msg.error || "ADK Gemini worker failed"));
       }
     });
     let err = "";
     child.stderr.on("data", (d: string) => (err += d));
     child.on("exit", (code) => {
       this.rejectAll(
-        new Error(`ADK Gemma worker exited (${code}): ${err}`),
+        new Error(`ADK Gemini worker exited (${code}): ${err}`),
       );
       this.child = undefined;
     });
@@ -121,7 +122,7 @@ export class AdkGemmaWorker {
         this.pending.delete(id);
         reject(
           new Error(
-            `ADK Gemma ${op} timed out after ${this.config.timeoutSeconds}s`,
+            `ADK Gemini ${op} timed out after ${this.config.timeoutSeconds}s`,
           ),
         );
         if (this.child && !this.child.killed) {
@@ -161,6 +162,6 @@ export class AdkGemmaWorker {
       this.child.kill();
     }
     this.child = undefined;
-    this.rejectAll(new Error("ADK Gemma worker closed"));
+    this.rejectAll(new Error("ADK Gemini worker closed"));
   }
 }

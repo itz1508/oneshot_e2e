@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Prompt, RootCause } from "../contract/types.js";
+import type { RootCause } from "../contract/types.js";
 import type {
   ConversationSnapshot,
   ConversationTurn,
@@ -9,6 +9,7 @@ import type {
   PromptCreationResult,
 } from "./types.js";
 import { ConversationStore } from "./conversation-store.js";
+import { PromptGenerator } from "./prompt-generator.js";
 
 // ---------------------------------------------------------------------------
 // Semantic intent extraction — recognizes natural user requests and derives
@@ -92,27 +93,6 @@ function deriveGoalAndOutcome(
   return { goal, requested_outcome: outcome || goal };
 }
 
-/**
- * Build the Researcher work directions inside the established Prompt(id)
- * contract. The directions are deliberately structured around the existing
- * Researcher-owned outputs and keep user-stated requirements/constraints
- * explicit without creating a new workflow stage or new Prompt fields.
- */
-function buildResearchDirection(intent: IntentState): string[] {
-  return unique([
-    "Requirements: Determine requirements supported by the user intent and supplied context; do not broaden scope beyond supported evidence.",
-    "Dependencies: Identify dependencies needed by those requirements and map each dependency to the requirement it supports.",
-    "Success criteria: Define measurable success criteria for the requested outcome and establish why that success matters.",
-    "Scope control: Preserve explicit user requirements and constraints while distinguishing supplied context from independently gathered evidence.",
-    ...intent.requirements.map(
-      (requirement) => `User requirement: ${requirement}`,
-    ),
-    ...intent.constraints.map(
-      (constraint) => `User constraint: ${constraint}`,
-    ),
-  ]);
-}
-
 function statement(
   kind: IntentStatement["kind"],
   value: string,
@@ -143,8 +123,7 @@ function statement(
 
 /**
  * Converts multi-turn chat input into a traceable Intent revision and then
- * into a canonical Prompt(id) — only when required user-owned information is
- * sufficient.
+ * delegates sufficient IntentState to PromptGenerator for canonical Prompt(id).
  *
  * Boundaries:
  *  - Never creates plan_id.
@@ -152,7 +131,10 @@ function statement(
  *  - No automatic retry/fix loops — asks the smallest targeted question.
  */
 export class IntentCollectionService {
-  constructor(private store: ConversationStore) {}
+  constructor(
+    private store: ConversationStore,
+    private promptGenerator = new PromptGenerator(),
+  ) {}
 
   /** Start a brand-new conversation with the first user message. */
   start(message: string): ConversationSnapshot {
@@ -236,17 +218,7 @@ export class IntentCollectionService {
       return { result: "ROOT_CAUSE", root_cause: rc, help_request: help, intent };
     }
 
-    const prompt: Prompt = {
-      prompt_id: promptId,
-      intent: intent.goal!,
-      requested_outcome: intent.requested_outcome!,
-      context: intent.context.map((x, i) => ({
-        context_id: `intent-context:${intent.intent_id}:${i + 1}`,
-        statement: x,
-      })),
-      research_direction: buildResearchDirection(intent),
-    };
-
+    const prompt = this.promptGenerator.generate(intent, promptId);
     return { result: "PASSED", prompt, intent };
   }
 

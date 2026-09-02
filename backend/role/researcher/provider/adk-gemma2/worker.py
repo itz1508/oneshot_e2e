@@ -6,12 +6,8 @@ import json
 import os
 import sys
 import time
-import urllib.request
 from pathlib import Path
 from typing import Any
-
-os.environ["LITELLM_LOG"] = "ERROR"
-os.environ["LITELLM_SUPPRESS_DEBUG_INFO"] = "true"
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -47,16 +43,34 @@ class ResearchDraft(Strict):
     success_criteria: list[DraftCriterion] = Field(min_length=1)
 
 
-DISTRIBUTION_MODEL = os.getenv("GEMMA2_DISTRIBUTION_MODEL", "").strip()
-RESEARCH_MODEL = os.getenv("GEMMA2_RESEARCH_MODEL", "").strip()
-SYNTHESIS_MODEL = os.getenv("GEMMA2_SYNTHESIS_MODEL", "").strip()
-BASE = os.getenv("OLLAMA_API_BASE", "http://localhost:11434").rstrip("/")
-TTL = max(1, int(os.getenv("CACHE_TTL", "3600")))
-TIMEOUT = max(1, int(os.getenv("GEMMA2_TIMEOUT_SECONDS", "300")))
-REFINEMENT_ATTEMPTS = max(1, int(os.getenv("GEMMA2_REFINEMENT_ATTEMPTS", "3")))
-MAX_OUTPUT_TOKENS = max(512, int(os.getenv("GEMMA2_MAX_OUTPUT_TOKENS", "3072")))
-AUTO_PULL = os.getenv("GEMMA2_AUTO_PULL", "false").lower() == "true"
 TEST_DRAFT = os.getenv("ONESHOT_ADK_TEST_DRAFT_FILE", "").strip()
+DISTRIBUTION_MODEL = (
+    os.getenv("GEMINI_DISTRIBUTION_MODEL", "").strip()
+    or (os.getenv("GEMMA2_DISTRIBUTION_MODEL", "").strip() if TEST_DRAFT else "")
+)
+RESEARCH_MODEL = (
+    os.getenv("GEMINI_RESEARCH_MODEL", "").strip()
+    or (os.getenv("GEMMA2_RESEARCH_MODEL", "").strip() if TEST_DRAFT else "")
+)
+SYNTHESIS_MODEL = (
+    os.getenv("GEMINI_SYNTHESIS_MODEL", "").strip()
+    or (os.getenv("GEMMA2_SYNTHESIS_MODEL", "").strip() if TEST_DRAFT else "")
+)
+PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "").strip()
+LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "global").strip() or "global"
+USE_VERTEX = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+}
+TTL = max(1, int(os.getenv("CACHE_TTL", "3600")))
+TIMEOUT = max(1, int(os.getenv("GEMINI_TIMEOUT_SECONDS", "300")))
+REFINEMENT_ATTEMPTS = max(
+    1, int(os.getenv("GEMINI_REFINEMENT_ATTEMPTS", "3"))
+)
+MAX_OUTPUT_TOKENS = max(
+    512, int(os.getenv("GEMINI_MAX_OUTPUT_TOKENS", "3072"))
+)
 EMIT_EVENTS = os.getenv("ONESHOT_ADK_EMIT_EVENTS", "false").lower() == "true"
 _cache: dict[str, tuple[float, str]] = {}
 _redis = None
@@ -76,15 +90,21 @@ def _preview(text: str, limit: int = 700) -> str:
     return " ".join(text.split())[:limit]
 
 
+def _backend() -> str:
+    if TEST_DRAFT:
+        return "deterministic-test"
+    return "vertex-ai" if USE_VERTEX else "gemini-api"
+
+
 def _pipeline_models() -> list[str]:
     models = [DISTRIBUTION_MODEL, RESEARCH_MODEL, SYNTHESIS_MODEL]
     if any(not model for model in models):
         raise RuntimeError(
-            "Researcher model pipeline is not fully bound: distribution, research, and synthesis models are required"
+            "Researcher Gemini pipeline is not fully bound: distribution, research, and synthesis models are required"
         )
     if not TEST_DRAFT and len(set(models)) != 3:
         raise RuntimeError(
-            "Researcher model pipeline requires three distinct model bindings"
+            "Researcher Gemini pipeline requires three distinct model bindings"
         )
     return models
 
@@ -142,10 +162,7 @@ def _draft_semantic_issues(
     lower = prompt_text.lower()
     requires_node_commands = (
         "every plan step description" in lower
-        and (
-            "beginning with node" in lower
-            or "direct shell command" in lower
-        )
+        and ("beginning with node" in lower or "direct shell command" in lower)
     )
     if requires_node_commands:
         for index, step in enumerate(draft.plan_steps):
@@ -212,12 +229,12 @@ def _key(prompt: dict[str, Any], evidence: list[dict[str, Any]]) -> str:
         ],
     }
     raw = json.dumps(
-        {"models": _pipeline_models(), "prompt": semantic},
+        {"models": _pipeline_models(), "backend": _backend(), "prompt": semantic},
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,
     ).encode()
-    return "oneshot:adk-pipeline-draft:" + hashlib.sha256(raw).hexdigest()
+    return "oneshot:adk-gemini-draft:" + hashlib.sha256(raw).hexdigest()
 
 
 async def _cache_get(key: str) -> str | None:
@@ -267,75 +284,73 @@ async def _cache_delete(key: str):
     _cache.pop(key, None)
 
 
-def _ollama_tags() -> list[str]:
-    with urllib.request.urlopen(BASE + "/api/tags", timeout=5) as response:
-        data = json.loads(response.read().decode())
-        return [model.get("name", "") for model in data.get("models", [])]
+def _probe_client():
+    from google import genai
 
+    if USE_VERTEX:
+        if not PROJECT:
+            raise RuntimeError(
+                "GOOGLE_CLOUD_PROJECT is required when GOOGLE_GENAI_USE_VERTEXAI=true"
+            )
+        return genai.Client(vertexai=True, project=PROJECT, location=LOCATION)
 
-def _pull_model(model: str):
-    req = urllib.request.Request(
-        BASE + "/api/pull",
-        data=json.dumps({"name": model, "stream": False}).encode(),
-        headers={"content-type": "application/json"},
-        method="POST",
+    api_key = (
+        os.getenv("GEMINI_API_KEY", "").strip()
+        or os.getenv("GOOGLE_API_KEY", "").strip()
     )
-    with urllib.request.urlopen(req, timeout=3600) as response:
-        if response.status != 200:
-            raise RuntimeError(f"Ollama pull failed for {model}: HTTP {response.status}")
-
-
-def _ensure_ollama():
-    models = _pipeline_models()
-    try:
-        installed = _ollama_tags()
-    except Exception as error:
-        raise RuntimeError(f"Ollama is not reachable at {BASE}: {error}") from error
-
-    missing = [model for model in models if model not in installed]
-    if not missing:
-        return
-    if not AUTO_PULL:
+    if not api_key:
         raise RuntimeError(
-            "Researcher pipeline models are not installed in Ollama: "
-            + ", ".join(missing)
+            "GEMINI_API_KEY or GOOGLE_API_KEY is required when Vertex AI is disabled"
         )
-    for model in missing:
-        _pull_model(model)
+    return genai.Client(api_key=api_key)
 
 
 def _health() -> dict[str, Any]:
     models = _pipeline_models()
+    backend = _backend()
     if TEST_DRAFT:
         return {
             "ready": True,
             "provider": "google-adk",
             "models": models,
-            "ollama_api_base": BASE,
+            "backend": backend,
+            "google_cloud_project": PROJECT or None,
+            "google_cloud_location": LOCATION,
             "detail": "deterministic adapter draft configured",
         }
+
     try:
-        installed = _ollama_tags()
+        client = _probe_client()
+        responses: list[str] = []
+        for index, model in enumerate(models, start=1):
+            response = client.models.generate_content(
+                model=model,
+                contents=(
+                    "Return exactly this token and nothing else: "
+                    f"ONESHOT_MODEL_{index}_OK"
+                ),
+            )
+            text = (response.text or "").strip()
+            responses.append(f"{model}={_preview(text, 100)}")
+        return {
+            "ready": True,
+            "provider": "google-adk",
+            "models": models,
+            "backend": backend,
+            "google_cloud_project": PROJECT or None,
+            "google_cloud_location": LOCATION,
+            "detail": "live model probes completed: " + " | ".join(responses),
+        }
     except Exception as error:
         return {
             "ready": False,
             "provider": "google-adk",
             "models": models,
-            "ollama_api_base": BASE,
-            "detail": f"Ollama is not reachable: {error}",
+            "backend": backend,
+            "google_cloud_project": PROJECT or None,
+            "google_cloud_location": LOCATION,
+            "detail": f"live Gemini readiness failed: {type(error).__name__}: {error}",
         }
-    missing = [model for model in models if model not in installed]
-    return {
-        "ready": not missing,
-        "provider": "google-adk",
-        "models": models,
-        "ollama_api_base": BASE,
-        "detail": (
-            "three model bindings ready"
-            if not missing
-            else "missing Ollama models: " + ", ".join(missing)
-        ),
-    }
 
 
 async def _build_runner():
@@ -343,43 +358,33 @@ async def _build_runner():
     if _runner is not None:
         return _runner
 
-    await asyncio.to_thread(_ensure_ollama)
-    os.environ["OLLAMA_API_BASE"] = BASE
+    _pipeline_models()
 
     from google.adk.agents import LlmAgent, SequentialAgent
-    from google.adk.models.lite_llm import LiteLlm
+    from google.adk.models import Gemini
     from google.adk.runners import InMemoryRunner
     from google.genai import types
 
     distribution_agent = LlmAgent(
         name="ResearcherDistribution",
-        model=LiteLlm(
-            model=f"ollama_chat/{DISTRIBUTION_MODEL}",
-            api_base=BASE,
-        ),
+        model=Gemini(model=DISTRIBUTION_MODEL),
         instruction=(
             "You are the distribution stage of the OneShot Researcher pipeline. "
-            "Read the user request, supplied repository evidence, and any refinement_feedback. "
+            "Read the job-specific Prompt(id), supplied repository evidence, and any refinement_feedback. "
             "In at most 8 short bullets, identify exactly what the research stage must preserve: requested behavior, evidence, constraints, executable steps, and measurable success. "
             "If refinement_feedback exists, explicitly correct that prior defect without reducing any user requirement. "
             "Do not produce the final ResearchDraft, do not add architecture, and do not invent repository facts. Be concise."
         ),
-        generate_content_config=types.GenerateContentConfig(
-            temperature=0.0,
-            max_output_tokens=384,
-        ),
+        generate_content_config=types.GenerateContentConfig(max_output_tokens=384),
         output_key="research_distribution",
     )
 
     research_agent = LlmAgent(
         name="ResearcherResearch",
-        model=LiteLlm(
-            model=f"ollama_chat/{RESEARCH_MODEL}",
-            api_base=BASE,
-        ),
+        model=Gemini(model=RESEARCH_MODEL),
         instruction=(
             "You are the research stage of the OneShot Researcher pipeline. "
-            "Use the user request, supplied evidence, preceding distribution analysis, and any refinement_feedback. "
+            "Use the job-specific Prompt(id), supplied evidence, preceding distribution analysis, and any refinement_feedback. "
             "Return a concise candidate with requirements, dependencies, executable plan steps, and measurable criteria. "
             "Requirements and success criteria must be grounded in supplied evidence. "
             "Dependency required_by indexes refer to zero-based requirement indexes, not plan-step indexes, and may only reference indexes that exist. "
@@ -387,22 +392,16 @@ async def _build_runner():
             "If refinement_feedback exists, correct the prior defect while preserving all previously requested value. "
             "Do not invent deployment, provider, database, security, or workflow requirements that are not requested. Keep the response under 700 words."
         ),
-        generate_content_config=types.GenerateContentConfig(
-            temperature=0.0,
-            max_output_tokens=768,
-        ),
+        generate_content_config=types.GenerateContentConfig(max_output_tokens=768),
         output_key="research_candidate",
     )
 
     synthesis_agent = LlmAgent(
         name="ResearcherSynthesis",
-        model=LiteLlm(
-            model=f"ollama_chat/{SYNTHESIS_MODEL}",
-            api_base=BASE,
-        ),
+        model=Gemini(model=SYNTHESIS_MODEL),
         instruction=(
             "You are the synthesis stage of the OneShot Researcher pipeline. "
-            "Review the original request, evidence, distribution analysis, research candidate, and any refinement_feedback. "
+            "Review the original job-specific Prompt(id), evidence, distribution analysis, research candidate, and any refinement_feedback. "
             "Return one final ResearchDraft only. "
             "Keep only evidence-backed requirements, dependencies, implementation steps, success meaning, and measurable success criteria. "
             "Every required_by and requirement_indexes value is a zero-based index into the final requirements array and must be less than the number of final requirements; never enumerate indexes beyond the actual requirements. "
@@ -412,8 +411,7 @@ async def _build_runner():
             "Correct inconsistencies without inventing unsupported facts."
         ),
         generate_content_config=types.GenerateContentConfig(
-            temperature=0.0,
-            max_output_tokens=MAX_OUTPUT_TOKENS,
+            max_output_tokens=MAX_OUTPUT_TOKENS
         ),
         output_schema=ResearchDraft,
         output_key="research_final",
@@ -424,7 +422,9 @@ async def _build_runner():
         sub_agents=[distribution_agent, research_agent, synthesis_agent],
         description="Three-model distribution -> research -> synthesis pipeline.",
     )
-    _runner = InMemoryRunner(app_name="oneshot_researcher_pipeline", agent=pipeline)
+    _runner = InMemoryRunner(
+        app_name="oneshot_researcher_pipeline", agent=pipeline
+    )
     return _runner
 
 
@@ -434,7 +434,12 @@ async def _adk(
     req_id: int | None,
     refinement_feedback: str = "",
 ) -> ResearchDraft:
-    emit(req_id, "researcher-pipeline", "RUNNING", "distribution -> research -> synthesis")
+    emit(
+        req_id,
+        "researcher-pipeline",
+        "RUNNING",
+        "distribution -> research -> synthesis",
+    )
     emit(req_id, "distribution-model", "RUNNING", DISTRIBUTION_MODEL)
 
     runner = await _build_runner()
@@ -514,7 +519,7 @@ async def _adk(
         req_id,
         "researcher-pipeline",
         "COMPLETE",
-        "three live model responses observed and structured synthesis returned",
+        "three live Gemini model responses observed and structured synthesis returned",
     )
     try:
         draft = ResearchDraft.model_validate_json(final_text)
@@ -539,7 +544,7 @@ async def research(
         req_id,
         "researcher-provider",
         "RUNNING",
-        "provider=google-adk models=" + "->".join(models),
+        f"provider=google-adk backend={_backend()} models=" + "->".join(models),
     )
     key = _key(prompt, evidence)
     emit(req_id, "cache", "RUNNING", "lookup research draft")
@@ -550,10 +555,17 @@ async def research(
             cached_issues = _draft_semantic_issues(prompt, cached_draft)
         except Exception as error:
             cached_draft = None
-            cached_issues = [f"cached draft invalid: {type(error).__name__}: {error}"]
+            cached_issues = [
+                f"cached draft invalid: {type(error).__name__}: {error}"
+            ]
         if cached_draft is not None and not cached_issues:
             emit(req_id, "cache", "COMPLETE", "hit")
-            emit(req_id, "research-draft", "COMPLETE", "loaded from non-canonical cache")
+            emit(
+                req_id,
+                "research-draft",
+                "COMPLETE",
+                "loaded from non-canonical cache",
+            )
             emit(req_id, "researcher-provider", "COMPLETE")
             return cached_draft.model_dump()
         await _cache_delete(key)

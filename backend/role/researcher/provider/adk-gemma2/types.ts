@@ -6,11 +6,12 @@ export interface AdkGemmaConfig {
   distributionModel: string;
   researchModel: string;
   synthesisModel: string;
-  ollamaBaseUrl: string;
+  googleCloudProject?: string;
+  googleCloudLocation: string;
+  useVertexAi: boolean;
   workerPoolSize: number;
   cacheUrl?: string;
   cacheTtlSeconds: number;
-  autoPull: boolean;
   timeoutSeconds: number;
   testDraftFile?: string;
 }
@@ -19,7 +20,9 @@ export interface AdkProviderHealth {
   ready: boolean;
   provider: "google-adk";
   models: string[];
-  ollama_api_base: string;
+  backend: "vertex-ai" | "gemini-api" | "deterministic-test";
+  google_cloud_project?: string;
+  google_cloud_location?: string;
   detail?: string;
 }
 

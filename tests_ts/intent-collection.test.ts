@@ -7,7 +7,7 @@ import { IntentCollectionService } from "../backend/intent/intent-collection.js"
 import { projectIntentGraph } from "../backend/graph/intent-graph.js";
 import { IntentCollectionSkill } from "../backend/skill/intent-collection-skill.js";
 
-test("multi-turn Intent keeps identity, asks targeted help, then creates Prompt(id)", async () => {
+test("multi-turn Intent keeps identity, asks targeted help, then creates job-specific Prompt(id)", async () => {
   const root = resolve(`data/test-intent/${process.pid}`);
   await rm(root, { recursive: true, force: true });
   const svc = new IntentCollectionService(new ConversationStore(root));
@@ -34,17 +34,14 @@ test("multi-turn Intent keeps identity, asks targeted help, then creates Prompt(
   if (ready.result !== "PASSED") throw new Error("expected prompt");
   assert.equal(ready.prompt.prompt_id, "prompt:test");
   assert.match(ready.prompt.intent, /multimedia player/i);
-  assert.ok(
+  const directions = ready.prompt.research_direction.join("\n");
+  assert.match(directions, /multimedia player/i);
+  assert.match(directions, /audio, video, and images/i);
+  assert.match(directions, /requested outcome/i);
+  assert.match(directions, /unsupported behavior as unknown/i);
+  assert.equal(
     ready.prompt.research_direction.some((x) => x.startsWith("Requirements:")),
-  );
-  assert.ok(
-    ready.prompt.research_direction.some((x) => x.startsWith("Dependencies:")),
-  );
-  assert.ok(
-    ready.prompt.research_direction.some((x) => x.startsWith("Success criteria:")),
-  );
-  assert.ok(
-    ready.prompt.research_direction.some((x) => x.startsWith("Scope control:")),
+    false,
   );
   assert.equal(ready.intent.source_turn_ids.length, 2);
   assert.ok(
@@ -76,7 +73,7 @@ test("multi-turn Intent keeps identity, asks targeted help, then creates Prompt(
   assert.equal(reloaded?.turns.length, 2);
 });
 
-test("Prompt(id) carries explicit requirements and constraints into structured research directions", async () => {
+test("Prompt(id) carries explicit requirements and constraints into job-specific research directions", async () => {
   const root = resolve(`data/test-intent-prompt-direction/${process.pid}`);
   await rm(root, { recursive: true, force: true });
   const svc = new IntentCollectionService(new ConversationStore(root));
@@ -102,12 +99,12 @@ test("Prompt(id) carries explicit requirements and constraints into structured r
   assert.equal(result.prompt.context[0].statement, userMessage);
   assert.ok(
     result.prompt.research_direction.includes(
-      "User requirement: It must support audio and video.",
+      "Investigate how to satisfy and prove this explicit user requirement without expanding its scope: It must support audio and video.",
     ),
   );
   assert.ok(
     result.prompt.research_direction.includes(
-      "User constraint: It must run offline.",
+      "Determine the repository or runtime implications of this explicit user constraint and preserve it: It must run offline.",
     ),
   );
   assert.equal(result.prompt.research_direction.includes("requirements"), false);
@@ -134,7 +131,6 @@ test("Intent automatically derives sufficient intent from natural conversational
   await rm(root, { recursive: true, force: true });
   const svc = new IntentCollectionService(new ConversationStore(root));
 
-  // Natural query about JSON Schema
   const conv1 = svc.start(
     "Explain what JSON Schema is and give me 3 practical reasons to use it in an API project.",
   );
@@ -144,14 +140,12 @@ test("Intent automatically derives sufficient intent from natural conversational
   const prompt1 = svc.createPrompt(conv1.conversation_id, "prompt:json-schema");
   assert.equal(prompt1.result, "PASSED");
 
-  // Natural programming request
   const conv2 = svc.start("Write a Python prime checker.");
   assert.equal(conv2.intent.ready_for_prompt, true);
   assert.match(conv2.intent.goal || "", /prime checker/i);
   const prompt2 = svc.createPrompt(conv2.conversation_id, "prompt:prime-checker");
   assert.equal(prompt2.result, "PASSED");
 
-  // Vague unresolvable request
   const conv3 = svc.start("Build it.");
   assert.equal(conv3.intent.ready_for_prompt, false);
   const prompt3 = svc.createPrompt(conv3.conversation_id, "prompt:vague");
