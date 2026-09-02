@@ -1,21 +1,24 @@
 # OneShot Production E2E 1.3.0
 
-Deterministic AI execution platform combining strict Draft 2020-12 schema validation, multi-turn conversational intent collection, verifiable AI research providers (Google ADK & Featherless), multi-stage planning, refactoring, triple validation (Schema, Fixture, Goal), RFC 8785 canonicalization, SHA-256 verification, isolated sandbox execution, and workspace tooling.
+OneShot is a governed AI engineering workflow that turns user intent into researched, planned, validated, executed, and cryptographically verified work.
 
-Licensed under the **Apache License, Version 2.0** for all workflow processing components.
+The runtime combines a TypeScript orchestration layer, Google ADK graph routing, strict JSON Schema contracts, deterministic Python validation, RFC 8785 canonicalization, SHA-256 proof, isolated execution, and an event-driven React IDE.
 
-> **Hackathon judges:** See [JUDGE_README.md](JUDGE_README.md) for the focused evaluation quick start.
+**Release:** `1.3.0`  
+**Local UI:** `http://localhost:8787`  
+**Video walkthrough:** [YouTube](https://www.youtube.com/watch?v=RQTxYwcNx_0)  
+**Judge quick start:** [JUDGE_README.md](JUDGE_README.md)
 
 ---
 
 ## Install OneShot
 
-Choose one installation path. All instructions are collapsed by default; select **Review steps** only when needed.
+Choose one installation path. Detailed steps stay collapsed until you need them.
 
 <details>
 <summary><strong>Windows — Download ZIP</strong> · Recommended · <strong>Review steps</strong></summary>
 
-1. Download the OneShot ZIP release package.
+1. Download the `oneshot-judge-1.3.0.zip` release package.
 2. Extract the ZIP.
 3. Start Docker Desktop.
 4. Run:
@@ -26,13 +29,15 @@ Choose one installation path. All instructions are collapsed by default; select 
 
 5. Open `http://localhost:8787`.
 
+This packaged path does not require Node.js, Python, npm, or Git on the host.
+
 </details>
 
 <details>
 <summary><strong>CLI</strong> · Terminal installation · <strong>Review steps</strong></summary>
 
-1. Install Node.js 20+ and Python 3.11+.
-2. Clone OneShot and enter the repository:
+1. Install Node.js 20+, Python 3.11+, and Git.
+2. Clone OneShot:
 
    ```bash
    git clone https://github.com/itz1508/oneshot_e2e.git
@@ -45,12 +50,14 @@ Choose one installation path. All instructions are collapsed by default; select 
    npm run oneshot
    ```
 
+4. Open `http://localhost:8787`.
+
 </details>
 
 <details>
 <summary><strong>Developer / Source</strong> · Build from source · <strong>Review steps</strong></summary>
 
-1. Clone OneShot.
+1. Clone the repository.
 2. Bootstrap dependencies:
 
    ```bash
@@ -69,32 +76,54 @@ Choose one installation path. All instructions are collapsed by default; select 
    npm start
    ```
 
+5. Open `http://localhost:8787`.
+
 </details>
 
 ---
 
-## Repository Architecture
+## What OneShot Proves
+
+A successful run does not stop at model output. OneShot preserves artifact ownership, validates the completed plan, executes the confirmed package, and verifies the result against the same canonical comparable representation.
 
 ```text
-oneshot_e2e/
-├─ backend/        OneShot backend/runtime authority
-├─ schema/         canonical JSON Schema contracts
-├─ validation/     deterministic Python proof/validation
-├─ workspace_api/  optional workspace/control-plane service
-├─ web/            OneShot React IDE
-└─ ui/             legacy standalone UI
+User intent
+   ↓
+Prompt_id
+   ↓
+Researcher(Job_id)
+   ↓
+Planner
+   ↓
+Refactor
+   ↓
+Gap Analysis
+   ↓
+Evaluation
+   ↓
+Triple Validation
+   ↓
+Confirmed package
+   ↓
+Builder execution
+   ↓
+Hash Verification
+   ↓
+DONE
 ```
+
+Workflow operations use `PASSED | ROOT CAUSE`. Validation operations use `VALID | NOT_VALID`.
 
 ---
 
-## Workflow
+## Review Workflow
 
 <details>
 <summary><strong>Review Workflow</strong></summary>
 
+This is a static overview of the runtime topology. The live graph in OneShot is driven by backend execution events for the active `Job_id`.
+
 ```text
-Prompt_id
-   ↓
 Researcher(Job_id)
    ↓
 Planner
@@ -130,36 +159,88 @@ Evaluation
          └─ MISMATCH → Root Cause
 ```
 
-The graph view summarizes the real OneShot execution topology: explicit Gap Analysis recheck routing, Evaluation routing, Triple Validation fan-out/fan-in, JoinNode synchronization, validation routing, Builder execution, and final hash verification.
+Key invariants:
 
-For the governing workflow and contract references, see [`docs/WORKFLOW_TREE`](docs/WORKFLOW_TREE) and [`CANONICAL_WORKFLOW.md`](CANONICAL_WORKFLOW.md).
+- Researcher owns the plan, schema, fixture, goal, and validation artifacts.
+- Planner consumes the plan and produces `audit_id`.
+- Refactor preserves the same logical `plan_id` with revision provenance.
+- Gap Analysis must reach `gap_0` before Evaluation proceeds.
+- Schema, Fixture, and Goal validation fan out independently and join before the validation gate.
+- Confirmation freezes the comparable package core.
+- Hashing uses RFC 8785 canonicalization and SHA-256.
+- Post-build verification compares the same canonical comparable representation; equality routes to `DONE`.
+
+See [docs/WORKFLOW_TREE](docs/WORKFLOW_TREE), [workflow/](workflow/), and [docs/TASK_MANAGEMENT_AND_ADK_GRAPH.md](docs/TASK_MANAGEMENT_AND_ADK_GRAPH.md) for supporting workflow material.
 
 </details>
 
 ---
 
-## Subsystem Ownership
+## Architecture
 
-- **JSON Schema Draft 2020-12 (`schema/`)**: structural source of truth for canonical artifact and validation contracts.
-- **Python canonical engine (`validation/`)**: strict Pydantic runtime validation, reference resolution, fixture execution, schema parity proof, RFC 8785 canonicalization, and SHA-256 verification.
-- **TypeScript runtime (`backend/`)**: intent collection, role orchestration, Google ADK graph routing, task events, checkpoints, HTTP/SSE, sandbox coordination, and Builder handoff.
-- **Workspace API (`workspace_api/`)**: optional FastAPI workspace/control-plane service.
-- **React IDE (`web/`)**: frontend presentation of runtime state, workflow activity, tasks, artifacts, and execution evidence.
+| Layer | Responsibility |
+| --- | --- |
+| `backend/` | TypeScript runtime, role orchestration, ADK graph routing, HTTP/SSE, Builder handoff |
+| `schema/` | JSON Schema Draft 2020-12 contracts |
+| `validation/` | Deterministic Python validation, RFC 8785 canonicalization, SHA-256 proof |
+| `web/` | React 19 + Vite event-driven IDE |
+| `workspace_api/` | Optional FastAPI multi-workspace control-plane service |
+| `workflow/` | Graph specifications and topology |
+| `skill/` | Reusable OneShot skills and tools |
+
+### Repository layout
+
+```text
+oneshot_e2e/
+├── backend/
+├── web/
+├── schema/
+├── validation/
+├── workspace_api/
+│
+├── requirements/
+│   ├── core.txt
+│   ├── provider-adk.txt
+│   ├── provider-featherless.txt
+│   └── workspace-api.txt
+│
+├── skill/
+├── workflow/
+├── tests/
+├── tests_ts/
+├── scripts/
+│
+├── deploy/
+│   ├── docker/
+│   └── judge/
+│
+├── docs/
+├── dist/
+│
+├── pyproject.toml
+├── package.json
+├── package-lock.json
+├── Dockerfile
+├── docker-compose.yml
+├── AGENTS.md
+├── JUDGE_README.md
+└── MANIFEST.sha256
+```
 
 ---
 
-## Developer Dependency Profiles
+## Python Dependency Profiles
 
-The normal installation choices above stay short. Provider/service dependency details are available only when needed.
+`pyproject.toml` is the Python dependency declaration authority. Pinned installation profiles live under `requirements/`.
 
 <details>
-<summary><strong>Core Python runtime</strong> · <strong>Review steps</strong></summary>
+<summary><strong>Core runtime</strong> · <strong>Review steps</strong></summary>
 
 ```bash
 python scripts/bootstrap.py
 ```
 
-Core validation dependencies support JSON Schema validation, Pydantic runtime models, canonicalization, and deterministic proof.
+Installs the deterministic Python validation runtime used by the production build.
 
 </details>
 
@@ -170,18 +251,18 @@ Core validation dependencies support JSON Schema validation, Pydantic runtime mo
 python scripts/bootstrap.py --with-adk
 ```
 
-Use when enabling the Python Google ADK/Gemma research-provider worker.
+Installs the Python Google ADK research-worker profile when that provider is enabled.
 
 </details>
 
 <details>
-<summary><strong>Featherless research provider</strong> · Optional · <strong>Review steps</strong></summary>
+<summary><strong>Featherless provider</strong> · Optional · <strong>Review steps</strong></summary>
 
 ```bash
 python scripts/bootstrap.py --with-featherless
 ```
 
-Use when enabling the Featherless provider worker.
+Installs the Featherless research-provider profile.
 
 </details>
 
@@ -192,42 +273,48 @@ Use when enabling the Featherless provider worker.
 python scripts/bootstrap.py --with-workspace-api
 ```
 
-Use when running the standalone FastAPI workspace/control-plane service.
+Installs the standalone FastAPI workspace service profile.
 
 </details>
 
 ---
 
-## Running OneShot
+## Running From Source
 
-### Start the IDE and backend
-
-Copy `.env.example` to `.env` when local runtime configuration is required.
+Build and start the backend and IDE:
 
 ```bash
 npm run build
 npm start
 ```
 
-Open `http://localhost:8787`.
+Open:
 
-The Node server binds to `127.0.0.1` by default. External binding is an explicit authenticated mode:
+```text
+http://localhost:8787
+```
+
+The default server binding is local. External binding should be explicit and authenticated.
 
 ```bash
 ONESHOT_BIND_HOST=0.0.0.0 ONESHOT_API_TOKEN="replace-with-a-secret" npm start
 ```
 
-When `ONESHOT_API_TOKEN` is configured, `/api`, `/api/*`, `/v1`, and `/v1/*` requests must send `Authorization: Bearer <token>`.
+`ONESHOT_API_TOKEN` secures the local OneShot API session. It is not a third-party AI-provider API key.
 
-### Research provider modes
+---
+
+## Research Provider Modes
 
 <details>
-<summary><strong>Sample mode</strong> · Deterministic default</summary>
+<summary><strong>Deterministic sample mode</strong></summary>
 
 ```bash
 export ONESHOT_MODE=sample
 npm start
 ```
+
+Uses the reproducible sample provider and requires no external inference service.
 
 </details>
 
@@ -255,68 +342,81 @@ npm start
 
 </details>
 
-<details>
-<summary><strong>Workspace API sidecar</strong></summary>
-
-```bash
-python scripts/verify_workspace_api.py
-uvicorn workspace_api.main:app --host 0.0.0.0 --port 8080
-```
-
-</details>
-
 ---
 
 ## Verification
 
-Run the complete repository verification:
+Locked 1.3.0 baseline:
+
+| Verification | Result |
+| --- | ---: |
+| Python unit tests | 49 / 49 |
+| Node E2E + ADK graph tests | 57 / 57 |
+| React IDE Vitest | 104 / 104 |
+| Source manifest | 480 / 480 |
+| Dependency profiles | `ONESHOT_DEPENDENCIES_PINNED profile=all` |
+| Production image | `oneshot:1.3.0` |
+| Judge clean-room package | `PASSED` |
+
+Run the complete verification suite:
 
 ```bash
-python scripts/verify_all.py
+npm run verify
 ```
 
-Useful focused commands:
+Focused verification:
 
 ```bash
-# Verify checksum manifest integrity
+python scripts/verify_dependencies.py --profile all
 python scripts/verify_manifest.py
+python -m unittest discover -s tests -v
+npm --prefix web test
+```
 
-# Verify Workspace API endpoints and OpenAPI schema
-python scripts/verify_workspace_api.py
+Production Docker build:
 
-# Live Google ADK/Ollama verification
-python scripts/verify_adk_live.py
-
-# Live Featherless verification
-node scripts/verify_featherless_live.mjs
-
-# Ollama availability check
-python scripts/ollama_preflight.py
+```bash
+docker build -t oneshot:1.3.0 .
 ```
 
 ---
 
-## Durable State
+## Docker Environments
 
-- `data/conversations/`: conversational history and intent revisions.
-- `data/run-state/`: active execution state.
-- `data/runs/`: canonical workflow artifacts and proofs.
-- `data/task-events/`: append-only task event logs.
-- `data/checkpoints/`: execution checkpoints.
-- `data/sandbox-workspaces/`: isolated sandbox workspaces.
+The repository keeps the normal production path separate from supplemental environments.
+
+```text
+Root
+├── Dockerfile
+└── docker-compose.yml
+
+Supplemental
+└── deploy/docker/
+    ├── local AI
+    ├── sandbox
+    └── GPU configurations
+
+Distribution
+└── deploy/judge/
+```
+
+The generated judge bundle is `dist/oneshot-judge-1.3.0.zip` in the release build workspace.
 
 ---
 
-## Reusable Skills & Tools
+## Documentation
 
-The repository includes reusable skills for canonical contracts, task runtime, intent collection, sandbox runtime, and workspace initialization.
+Useful references:
 
-For reusable-skill vs. role placement rules, see [`.agents/rules/oneshot-skill-architecture.md`](.agents/rules/oneshot-skill-architecture.md). Contributor guidance is in [`AGENTS.md`](AGENTS.md).
+- [Workflow Tree](docs/WORKFLOW_TREE)
+- [Google ADK + Gemma integration](docs/ADK_GEMMA2_INTEGRATION.md)
+- [Task Management and ADK Graph](docs/TASK_MANAGEMENT_AND_ADK_GRAPH.md)
+- [Intent Authority and Help](docs/INTENT_AUTHORITY_AND_HELP.md)
+- [Workspace API Design](docs/WORKSPACE_API_DESIGN.md)
+- [IDE Build Record](docs/ONESHOT_IDE_BUILD_RECORD.md)
 
 ---
 
 ## License
 
-All workflow processing code, contracts, runtime engines, validation frameworks, and tooling in this repository are open-source software licensed under the **Apache License, Version 2.0**.
-
-See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE) for full terms.
+This repository currently declares the Apache License, Version 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
