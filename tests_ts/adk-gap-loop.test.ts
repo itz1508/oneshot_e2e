@@ -6,6 +6,7 @@ import type {
   ResearchBundle,
   ResolvedGap,
 } from "../backend/contract/types.js";
+import { RolePipeline } from "../backend/pipeline/role-pipeline.js";
 import type { GapFinding } from "../backend/role/gap-analysis/tool/coverage.js";
 import { GapAnalysisWorkflow } from "../backend/role/gap-analysis/workflow.js";
 import { createGapAnalysisAgent } from "../backend/workflow/adk/gap-loop.js";
@@ -50,15 +51,20 @@ class OneIterationGapWorkflow extends GapAnalysisWorkflow {
   }
 }
 
-test("real LoopAgent performs fix then recheck then exits at gap_0", async () => {
+test("real LoopAgent activates GapAnalysis, fixes, rechecks, and exits at gap_0", async () => {
   const h = await harness("adk-gap-loop");
   try {
     const runId = "adk-gap-loop-run";
     const bundle = await h.researcher.run(prompt(runId), runId);
     const gapper = new OneIterationGapWorkflow(h.contracts);
+    const pipeline = new RolePipeline();
+    pipeline.register("GapAnalysis", () => ({
+      role_id: "GapAnalysis",
+      runtime: gapper,
+    }));
     const emitted: Array<{ processor: string; state: string; data?: Record<string, unknown> }> = [];
 
-    const agent = createGapAnalysisAgent(gapper, {
+    const agent = createGapAnalysisAgent(pipeline, {
       event(_runId, processor, state, data) {
         emitted.push({ processor, state, data });
       },
@@ -92,6 +98,7 @@ test("real LoopAgent performs fix then recheck then exits at gap_0", async () =>
       // consume the real ADK event stream
     }
 
+    assert.equal(pipeline.isActive(runId, "GapAnalysis"), true);
     assert.equal(gapper.fixes, 1);
     assert.ok(gapper.checks >= 2, `expected recheck, got ${gapper.checks} checks`);
     const complete = emitted.find(
