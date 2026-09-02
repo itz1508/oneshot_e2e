@@ -107,6 +107,12 @@ export async function harness(
   await contracts.verifyStatic();
 
   const validationLanes = new ValidationLanePool();
+  const closeContractBridge = bridge.close.bind(bridge);
+  bridge.close = () => {
+    validationLanes.close();
+    closeContractBridge();
+  };
+
   const validation = new DeterministicValidationRuntime(validationLanes);
   const researcher = new ResearcherWorkflow(
     provider || new FixtureResearchProvider(),
@@ -165,7 +171,6 @@ export async function harness(
     store,
     runtime,
     close() {
-      validationLanes.close();
       bridge.close();
     },
   };
