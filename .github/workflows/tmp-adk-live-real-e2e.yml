@@ -24,6 +24,7 @@ env:
   GEMMA2_AUTO_PULL: 'false'
   GEMMA2_TIMEOUT_SECONDS: '900'
   SANDBOX_TIMEOUT_SECONDS: '120'
+  API_RATE_LIMIT_MAX: '2000'
 
 jobs:
   live-proof:
