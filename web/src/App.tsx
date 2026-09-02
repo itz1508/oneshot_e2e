@@ -11,10 +11,18 @@ import {useAppStore} from './store/taskStore'
 import {BackendChatSource} from './agent/BackendChatSource'
 import styles from './App.module.css'
 
-const CodeFixEditor = lazy(() => import('./features/code-fix-editor/CodeFixEditor').then((m) => ({default: m.CodeFixEditor})))
-const PlanReview = lazy(() => import('./features/plan-review/PlanReview').then((m) => ({default: m.PlanReview})))
-const BuildExecution = lazy(() => import('./features/build-execution/BuildExecution').then((m) => ({default: m.BuildExecution})))
-const AppShell = lazy(() => import('./features/app-shell/AppShell').then((m) => ({default: m.AppShell})))
+const CodeFixEditor = lazy(() =>
+    import('./features/code-fix-editor/CodeFixEditor').then((m) => ({default: m.CodeFixEditor})),
+)
+const PlanReview = lazy(() =>
+    import('./features/plan-review/PlanReview').then((m) => ({default: m.PlanReview})),
+)
+const BuildExecution = lazy(() =>
+    import('./features/build-execution/BuildExecution').then((m) => ({default: m.BuildExecution})),
+)
+const AppShell = lazy(() =>
+    import('./features/app-shell/AppShell').then((m) => ({default: m.AppShell})),
+)
 
 const eventSource = new BackendChatSource()
 
@@ -48,7 +56,9 @@ function App() {
         return () => eventSource.dispose()
     }, [bindEventSource])
 
-    const handleRailSelect = (tab: RailTab) => setRailTab(tab)
+    const handleRailSelect = (tab: RailTab) => {
+        setRailTab(tab)
+    }
 
     const handleFileClick = (fileName: string, filePath: string) => {
         setOpenFiles((prev) => {
@@ -62,7 +72,9 @@ function App() {
         })
     }
 
-    const handleFileSwitch = (index: number) => setActiveFileIndex(index)
+    const handleFileSwitch = (index: number) => {
+        setActiveFileIndex(index)
+    }
 
     const handleFileClose = () => {
         setOpenFiles((prev) => {
@@ -75,29 +87,63 @@ function App() {
 
     return (
         <div className={styles.shell}>
-            <TopMenu runnerMode={runnerMode} loading={loading} task={task} drawerOpen={drawerOpen} onToggleDrawer={toggleDrawer} onCancelTask={cancelTask}/>
-            <div className={styles.body}>
-                <AppSidebar activeTab={railTab} onTabSelect={handleRailSelect} workspaces={workspaces} participatingWorkspaceIds={participatingWorkspaceIds} onLEDClick={openDrawerForWorkspace} onFileClick={handleFileClick}/>
-                <main className={styles.main}>
-                    {railTab === 'appshell' ? (
-                        <Suspense fallback={null}><AppShell/></Suspense>
-                    ) : railTab === 'editor' ? (
-                        <Suspense fallback={null}><CodeFixEditor/></Suspense>
-                    ) : railTab === 'explorer' && explorerMode === 'plan-review' && activePlanId ? (
-                        <Suspense fallback={null}><PlanReview planId={activePlanId}/></Suspense>
-                    ) : railTab === 'explorer' && explorerMode === 'build' && activeBuildId ? (
-                        <Suspense fallback={null}><BuildExecution buildId={activeBuildId}/></Suspense>
-                    ) : openFiles.length > 0 ? (
-                        <FileViewer files={openFiles} activeIndex={activeFileIndex} onSwitch={handleFileSwitch} onClose={handleFileClose}/>
-                    ) : (
-                        <>
-                            <Conversation messages={messages} loading={loading} anchorMode={anchorMode}/>
-                            <TurnIndicator turn={turn}/>
-                            <MessageComposer onSend={sendMessage} anchorMode={anchorMode} onAnchorModeChange={setAnchorMode} disabled={turn !== 'user'}/>
-                        </>
-                    )}
-                </main>
-            </div>
+                <TopMenu
+                    runnerMode={runnerMode}
+                    loading={loading}
+                    task={task}
+                    drawerOpen={drawerOpen}
+                    onToggleDrawer={toggleDrawer}
+                    onCancelTask={cancelTask}
+                />
+                <div className={styles.body}>
+                    <AppSidebar
+                        activeTab={railTab}
+                        onTabSelect={handleRailSelect}
+                        workspaces={workspaces}
+                        participatingWorkspaceIds={participatingWorkspaceIds}
+                        onLEDClick={openDrawerForWorkspace}
+                        onFileClick={handleFileClick}
+                    />
+                    <main className={styles.main}>
+                        {railTab === 'appshell' ? (
+                            <Suspense fallback={null}>
+                                <AppShell/>
+                            </Suspense>
+                        ) : railTab === 'editor' ? (
+                            <Suspense fallback={null}>
+                                <CodeFixEditor/>
+                            </Suspense>
+                        ) : railTab === 'explorer' && explorerMode === 'plan-review' && activePlanId ? (
+                            <Suspense fallback={null}>
+                                <PlanReview planId={activePlanId}/>
+                            </Suspense>
+                        ) : railTab === 'explorer' && explorerMode === 'build' && activeBuildId ? (
+                            <Suspense fallback={null}>
+                                <BuildExecution buildId={activeBuildId}/>
+                            </Suspense>
+                        ) : (
+                            openFiles.length > 0 ? (
+                                <FileViewer
+                                    files={openFiles}
+                                    activeIndex={activeFileIndex}
+                                    onSwitch={handleFileSwitch}
+                                    onClose={handleFileClose}
+                                />
+                            ) : (
+                                <>
+                                    <Conversation messages={messages} loading={loading} anchorMode={anchorMode}/>
+                                    <TurnIndicator turn={turn}/>
+                                    <MessageComposer
+                                        onSend={sendMessage}
+                                        anchorMode={anchorMode}
+                                        onAnchorModeChange={setAnchorMode}
+                                        disabled={turn !== 'user'}
+                                    />
+                                </>
+                            )
+                        )}
+                    </main>
+                </div>
         </div>
     )
 }
