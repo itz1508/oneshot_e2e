@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  triple-validation-node:
+  dynamic-workflow:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -33,7 +33,13 @@ jobs:
         run: python -m pip install --disable-pip-version-check -r requirements.txt
       - name: Build backend and tests
         run: npm run build:backend
-      - name: Run ADK Triple Validation connector test
-        run: node --test --test-force-exit dist/tests_ts/adk-triple-validation-node.test.js
+      - name: Run ADK remaining connector tests
+        run: |
+          node --test --test-force-exit \
+            dist/tests_ts/adk-gap-analysis-node.test.js \
+            dist/tests_ts/adk-evaluation-node.test.js \
+            dist/tests_ts/adk-triple-validation-node.test.js \
+            dist/tests_ts/adk-validation-refinement-loop.test.js \
+            dist/tests_ts/adk-dynamic-workflow.test.js
 
-# role-under-test: TripleValidation; attempt: parallel-proof-and-not-valid-signal
+# scope: remaining dynamic connectors + refinement + full workflow
