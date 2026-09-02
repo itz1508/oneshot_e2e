@@ -134,6 +134,9 @@ def test_persistence():
     print(f"  [INFO] Created run {run_id[:8]}...")
     
     # Wait for completion
+    event_count_before = 0
+    artifact_count_before = 0
+    run_completed = False
     for i in range(30):
         time.sleep(1)
         r = requests.get(f"{BASE_URL}/api/runs/{run_id}", headers=headers, timeout=5)
@@ -141,7 +144,9 @@ def test_persistence():
             event_count_before = len(r.json().get("events", []))
             artifact_count_before = len(r.json().get("artifacts", {}))
             print(f"  [INFO] Run complete: {event_count_before} events, {artifact_count_before} artifacts")
+            run_completed = True
             break
+    assert run_completed, "Run did not reach PASSED status before restart"
     
     # Step 2: Restart container
     print("  [INFO] Restarting container...")

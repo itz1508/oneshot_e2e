@@ -47,7 +47,12 @@ def main():
                 zf.write(filepath, arcname)
                 print(f"  + {arcname}")
     
-    print(f"Successfully packaged {zip_path} ({zip_path.stat().st_size} bytes)")
+    # Also write versioned zip dist/oneshot-judge-1.3.0.zip
+    versioned_zip = dist_dir / "oneshot-judge-1.3.0.zip"
+    with open(zip_path, "rb") as src, open(versioned_zip, "wb") as dst:
+        dst.write(src.read())
+
+    print(f"Successfully packaged {zip_path} and {versioned_zip}")
 
 if __name__ == "__main__":
     main()

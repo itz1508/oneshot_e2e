@@ -1,8 +1,17 @@
 /**
- * WelcomeDocsIndex — Key Architecture & Documentation Index Hub.
- * Displayed when the chat conversation is initially empty on launch.
+ * WelcomeDocsIndex — Key Architecture, Installation UX & Workflow Index Hub.
+ *
+ * Requirements:
+ * 1. Exactly three installation options:
+ *    - Windows — Download ZIP (Recommended)
+ *    - CLI
+ *    - Developer / Source
+ *    All instructions collapsed by default with "Review steps ▼" toggle.
+ * 2. Review Workflow dropdown disclosure:
+ *    Collapsed by default with "Review Workflow ▼" toggle showing compact REAL ADK graph topology.
  */
 
+import {useState} from 'react'
 import {
     FileText,
     GitBranch,
@@ -13,9 +22,12 @@ import {
     Sparkles,
     BookOpen,
     Eye,
-    CheckCircle2,
     Video,
     Play,
+    ChevronDown,
+    ChevronUp,
+    Download,
+    RotateCw,
 } from 'lucide-react'
 import styles from './WelcomeDocsIndex.module.css'
 
@@ -76,6 +88,15 @@ export const KEY_DOCUMENTS: KeyDocItem[] = [
         category: 'graph',
     },
     {
+        id: 'adk-workflow-graph',
+        title: 'Google ADK 2.0 Workflow Graph',
+        format: 'Canonical Spec',
+        path: 'workflow/WorkflowGraph_corrected_optimized.txt',
+        description: 'Google ADK 2.0 graph topology, 24 nodes, Gap Analysis loop, Triple Validation fan-out, and JoinNode fan-in barrier.',
+        icon: GitBranch,
+        category: 'graph',
+    },
+    {
         id: 'workflow-processing-pdf',
         title: 'Workflow Processing Map',
         format: 'PDF Visual',
@@ -95,28 +116,33 @@ export const KEY_DOCUMENTS: KeyDocItem[] = [
     },
 ]
 
-const PIPELINE_STAGES = [
-    'Intent Understanding',
-    'Repository Research',
-    'Plan Synthesis',
-    'Gap Analysis',
-    'Triple Validation',
-    'Confirmed Changes',
-    'Cryptographic Verification',
-    'Execution Handoff',
-]
-
 interface WelcomeDocsIndexProps {
     onOpenFile: (fileName: string, filePath: string) => void
     onStartPrompt?: (prompt: string) => void
     onOpenDocsModal?: () => void
+    onOpenGraphModal?: () => void
 }
 
 export function WelcomeDocsIndex({
     onOpenFile,
     onStartPrompt,
     onOpenDocsModal,
+    onOpenGraphModal,
 }: WelcomeDocsIndexProps) {
+    // Collapsed states for 3 installation options (all collapsed by default)
+    const [installOpen, setInstallOpen] = useState<{win: boolean, cli: boolean, dev: boolean}>({
+        win: false,
+        cli: false,
+        dev: false,
+    })
+
+    // Collapsed state for Review Workflow dropdown (collapsed by default)
+    const [workflowOpen, setWorkflowOpen] = useState<boolean>(false)
+
+    const toggleInstall = (key: 'win' | 'cli' | 'dev') => {
+        setInstallOpen((prev) => ({...prev, [key]: !prev[key]}))
+    }
+
     const handleExampleClick = () => {
         if (onStartPrompt) {
             onStartPrompt('Generate and verify canonical execution proof for task automation with triple validation')
@@ -144,6 +170,15 @@ export function WelcomeDocsIndex({
                         <Sparkles size={14}/>
                         <span>💡 Try Example Demonstration Run</span>
                     </button>
+                    {onOpenGraphModal && (
+                        <button
+                            className={styles.secondaryActionBtn}
+                            onClick={onOpenGraphModal}
+                        >
+                            <GitBranch size={13}/>
+                            <span>ADK Graph Visualizer</span>
+                        </button>
+                    )}
                     {onOpenDocsModal && (
                         <button
                             className={styles.secondaryActionBtn}
@@ -154,6 +189,195 @@ export function WelcomeDocsIndex({
                         </button>
                     )}
                 </div>
+            </div>
+
+            {/* ── FINAL INSTALLATION UX (3 EXACT OPTIONS, COLLAPSED BY DEFAULT) ── */}
+            <div className={styles.installSection}>
+                <div className={styles.sectionTitle}>
+                    <Download size={14}/>
+                    <span>Installation Options</span>
+                </div>
+                <div className={styles.installGrid}>
+                    {/* Option 1: Windows - Download ZIP (Recommended) */}
+                    <div className={`${styles.installCard} ${styles.installCardRecommended}`}>
+                        <div>
+                            <div className={styles.installTop}>
+                                <span className={styles.installTitle}>Windows — Download ZIP</span>
+                                <span className={styles.installBadge}>Recommended</span>
+                            </div>
+                            <p className={styles.installDesc}>
+                                Standalone self-contained package with pre-pinned Docker image and 1-click launcher scripts.
+                            </p>
+                        </div>
+                        <div>
+                            <button
+                                className={styles.reviewStepsBtn}
+                                onClick={() => toggleInstall('win')}
+                                aria-expanded={installOpen.win}
+                            >
+                                <span>{installOpen.win ? 'Review steps ▲' : 'Review steps ▼'}</span>
+                                {installOpen.win ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+                            </button>
+                            {installOpen.win && (
+                                <div className={styles.stepsContent}>
+                                    <div>1. <a href="/api/download/judge-zip" download="oneshot-judge-1.3.0.zip" style={{ color: '#60a5fa', textDecoration: 'underline', fontWeight: 600 }}>Download oneshot-judge-1.3.0.zip</a> and extract to your directory.</div>
+                                    <div>2. Ensure Docker Desktop is running.</div>
+                                    <div>3. Run launcher in PowerShell:</div>
+                                    <code className={styles.stepCode}>.\start-oneshot.ps1</code>
+                                    <div>4. Open <code>http://localhost:8787</code> in your browser.</div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Option 2: CLI */}
+                    <div className={styles.installCard}>
+                        <div>
+                            <div className={styles.installTop}>
+                                <span className={styles.installTitle}>CLI</span>
+                                <span className={styles.cardFormat}>Docker / CLI</span>
+                            </div>
+                            <p className={styles.installDesc}>
+                                Direct single-command execution via standard Docker CLI and docker-compose.
+                            </p>
+                        </div>
+                        <div>
+                            <button
+                                className={styles.reviewStepsBtn}
+                                onClick={() => toggleInstall('cli')}
+                                aria-expanded={installOpen.cli}
+                            >
+                                <span>{installOpen.cli ? 'Review steps ▲' : 'Review steps ▼'}</span>
+                                {installOpen.cli ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+                            </button>
+                            {installOpen.cli && (
+                                <div className={styles.stepsContent}>
+                                    <div>1. Pull pre-built image:</div>
+                                    <code className={styles.stepCode}>docker pull oneshot:1.3.0</code>
+                                    <div>2. Run container:</div>
+                                    <code className={styles.stepCode}>docker compose up -d</code>
+                                    <div>3. Access UI at <code>http://localhost:8787</code>.</div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Option 3: Developer / Source */}
+                    <div className={styles.installCard}>
+                        <div>
+                            <div className={styles.installTop}>
+                                <span className={styles.installTitle}>Developer / Source</span>
+                                <span className={styles.cardFormat}>Node + Python</span>
+                            </div>
+                            <p className={styles.installDesc}>
+                                Full development environment setup for modifying contracts, skills, and graph algorithms.
+                            </p>
+                        </div>
+                        <div>
+                            <button
+                                className={styles.reviewStepsBtn}
+                                onClick={() => toggleInstall('dev')}
+                                aria-expanded={installOpen.dev}
+                            >
+                                <span>{installOpen.dev ? 'Review steps ▲' : 'Review steps ▼'}</span>
+                                {installOpen.dev ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+                            </button>
+                            {installOpen.dev && (
+                                <div className={styles.stepsContent}>
+                                    <div>1. Install dependencies:</div>
+                                    <code className={styles.stepCode}>npm run setup</code>
+                                    <div>2. Build & launch with single command:</div>
+                                    <code className={styles.stepCode}>npm run oneshot</code>
+                                    <div>3. Run verification suite: <code>npm run verify</code></div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── REVIEW WORKFLOW DROPDOWN DISCLOSURE ── */}
+            <div className={styles.workflowSection}>
+                <button
+                    className={styles.workflowHeaderBtn}
+                    onClick={() => setWorkflowOpen((v) => !v)}
+                    aria-expanded={workflowOpen}
+                >
+                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                        <GitBranch size={15} style={{color: '#58a6ff'}}/>
+                        <span>{workflowOpen ? 'Review Workflow ▲' : 'Review Workflow ▼'}</span>
+                        <span className={styles.cardFormat}>Google ADK 2.0 Real Graph Topology</span>
+                    </div>
+                    {workflowOpen ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+                </button>
+
+                {workflowOpen && (
+                    <div className={styles.workflowExpandedBox}>
+                        <div style={{fontSize: '12px', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '6px'}}>
+                            <RotateCw size={13} style={{color: '#f0883e'}}/>
+                            <span><strong>Compact ADK Graph Flow:</strong> Gap Analysis Loop ➔ Evaluation Router ➔ Triple Validation Fan-Out/Fan-In ➔ Validation Gate ➔ Builder Sandbox ➔ Hash Verification Router</span>
+                        </div>
+                        <pre className={styles.workflowDiagramBox}>
+{`[START]
+   │
+   ▼
+[user_intent] ➔ [generator_prompt] ➔ [researcher] ➔ [planner] ➔ [refactor]
+   │
+   ▼
+[gap_check Router] ───(GAPS_FOUND)───► [gap_fix] ➔ [gap_recheck] ──┐
+   │                                                               │ (EXPLICIT BACK-EDGE)
+   │ (GAP_0: 0 unresolved gaps)                                    ▼
+   │◄──────────────────────────────────────────────────────────────┘
+   ▼
+[evaluation Router]
+   ├─► (ROOT_CAUSE) ──► [evaluation_root_cause] (Terminal Halt)
+   │
+   └─► (PASSED)
+        │ (Parallel Fan-Out)
+        ├──────────────────────┬──────────────────────┐
+        ▼                      ▼                      ▼
+   [schema_validator]    [fixture_validator]    [goal_validator]
+        │                      │                      │
+        └──────────────────────┼──────────────────────┘
+                               ▼ (Fan-In Barrier)
+                     [triple_join JoinNode]
+                               │
+                               ▼
+                    [validation_gate Router]
+                       ├─► (NOT_VALID) ──► [validation_root_cause]
+                       │
+                       └─► (ALL_VALID)
+                            │
+                            ▼
+                        [confirmed] (confirmed_package.core)
+                            │
+                            ▼
+                        [create_hash] (RFC 8785 JCS + SHA-256)
+                            │
+                            ▼
+                        [promote] ➔ [builder Sandbox Execution] ➔ [recompute_hash]
+                            │
+                            ▼
+                        [hash_verification Router]
+                           ├─► (MISMATCH) ──► [hash_mismatch_root_cause]
+                           │
+                           └─► (MATCH: created_hash == recomputed_hash)
+                                │
+                                ▼
+                             [DONE] (PASSED)`}
+                        </pre>
+                        {onOpenGraphModal && (
+                            <button
+                                className={styles.examplePromptBtn}
+                                onClick={onOpenGraphModal}
+                                style={{alignSelf: 'flex-start', marginTop: '6px'}}
+                            >
+                                <Eye size={13}/>
+                                <span>Open Full Interactive ADK Flowchart Visualizer</span>
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Featured Demonstration Video */}
@@ -203,25 +427,6 @@ export function WelcomeDocsIndex({
                     <p className={styles.videoDesc}>
                         <strong>Task Drawer & Multi-Agent Compatibility:</strong> End-to-end execution flow demonstrating real-time activity tracing, participant telemetry, and deterministic result confirmation.
                     </p>
-                </div>
-            </div>
-
-            {/* Pipeline Strip */}
-            <div className={styles.pipelineWrap}>
-                <div className={styles.pipelineHeader}>
-                    <span className={styles.pipelineTitle}>Canonical Execution Pipeline</span>
-                    <span className={styles.pipelineBadge}>
-                        <CheckCircle2 size={11} style={{marginRight: 4, display: 'inline'}}/>
-                        13 Deterministic Stages
-                    </span>
-                </div>
-                <div className={styles.pipelineStages}>
-                    {PIPELINE_STAGES.map((stage, idx) => (
-                        <span key={stage} style={{display: 'inline-flex', alignItems: 'center', gap: 6}}>
-                            <span className={styles.stageChip}>{stage}</span>
-                            {idx < PIPELINE_STAGES.length - 1 && <span className={styles.stageArrow}>→</span>}
-                        </span>
-                    ))}
                 </div>
             </div>
 

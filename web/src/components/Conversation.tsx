@@ -29,6 +29,7 @@ interface ConversationProps {
     onOpenFile?: (fileName: string, filePath: string) => void
     onStartPrompt?: (prompt: string) => void
     onOpenDocsModal?: () => void
+    onOpenGraphModal?: () => void
 }
 
 const STAGE_TITLES: Record<string, string> = {
@@ -50,6 +51,7 @@ export function Conversation({
     onOpenFile,
     onStartPrompt,
     onOpenDocsModal,
+    onOpenGraphModal,
 }: ConversationProps) {
     const anchorRole: ChatMessage['role'] = anchorMode === 'assistant' ? 'agent' : 'user'
     const phaseName = currentStage ? (STAGE_TITLES[currentStage] || 'Working') : 'Researching'
@@ -62,6 +64,7 @@ export function Conversation({
                         onOpenFile={onOpenFile || (() => {})}
                         onStartPrompt={onStartPrompt}
                         onOpenDocsModal={onOpenDocsModal}
+                        onOpenGraphModal={onOpenGraphModal}
                     />
                 ) : (
                     <div className={styles.list}>

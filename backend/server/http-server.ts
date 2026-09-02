@@ -320,6 +320,44 @@ export async function startHttpServer(
         }
 
         // ---------------------------------------------------------------
+        // Release Package Download (oneshot-judge-1.3.0.zip)
+        // ---------------------------------------------------------------
+        if (
+          req.method === "GET" &&
+          (url.pathname === "/api/download/judge-zip" ||
+            url.pathname === "/api/download/oneshot-judge.zip" ||
+            url.pathname === "/dist/oneshot-judge-1.3.0.zip" ||
+            url.pathname === "/dist/oneshot-judge.zip" ||
+            url.pathname === "/oneshot-judge-1.3.0.zip" ||
+            url.pathname === "/oneshot-judge.zip")
+        ) {
+          const root = resolveRuntimePaths().projectRoot;
+          const candidates = [
+            join(root, "dist", "oneshot-judge-1.3.0.zip"),
+            join(root, "dist", "oneshot-judge.zip"),
+            join(workspaceRoot, "dist", "oneshot-judge-1.3.0.zip"),
+            join(workspaceRoot, "dist", "oneshot-judge.zip"),
+          ];
+          for (const zipPath of candidates) {
+            try {
+              const data = await readFile(zipPath);
+              res.writeHead(200, {
+                "content-type": "application/zip",
+                "content-disposition": 'attachment; filename="oneshot-judge-1.3.0.zip"',
+                "content-length": data.length,
+                "cache-control": "no-store",
+              });
+              return res.end(data);
+            } catch {
+              // continue trying candidates
+            }
+          }
+          return json(res, 404, {
+            error: "Release ZIP package not found on server",
+          });
+        }
+
+        // ---------------------------------------------------------------
         // Health
         // ---------------------------------------------------------------
         if (req.method === "GET" && url.pathname === "/api/health") {

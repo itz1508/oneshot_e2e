@@ -44,10 +44,11 @@ RUN rm -rf /usr/local/lib/node_modules/npm \
     /opt/yarn-v*
 
 # Install Python validation dependencies
-COPY requirements.txt .
+COPY pyproject.toml .
+COPY requirements ./requirements
 RUN --mount=type=cache,target=/root/.cache/pip \
     python3 -m venv /opt/oneshot-venv \
-    && /opt/oneshot-venv/bin/pip install --no-cache-dir -r requirements.txt
+    && /opt/oneshot-venv/bin/pip install --no-cache-dir -r requirements/core.txt
 
 # Copy compiled backend and React IDE assets
 COPY package*.json ./
@@ -59,7 +60,7 @@ COPY skill ./skill
 COPY workflow ./workflow
 COPY fixtures ./fixtures
 COPY ui ./ui
-COPY contract-registry.json CANONICAL_WORKFLOW.md ./
+COPY contract-registry.json ./
 
 # Run with a writable data boundary and no root privileges.
 RUN groupadd --gid 10001 oneshot \
