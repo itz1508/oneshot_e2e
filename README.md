@@ -2,88 +2,220 @@
 
 OneShot is a governed AI engineering workflow that turns user intent into researched, planned, validated, executed, and cryptographically verified work.
 
-The runtime combines TypeScript orchestration, Google ADK graph routing, strict JSON Schema contracts, deterministic Python validation, RFC 8785 canonicalization, SHA-256 proof, isolated execution, and an event-driven React IDE.
-
-**Release:** `1.3.0` · **Local UI:** `http://localhost:8787`  
-**Video:** [YouTube](https://www.youtube.com/watch?v=RQTxYwcNx_0) · **Judge quick start:** [JUDGE_README.md](JUDGE_README.md)
+**Video:** https://www.youtube.com/watch?v=RQTxYwcNx_0  
+**Local UI:** `http://localhost:8787`
 
 ---
 
-## Install OneShot
+## Prompt to Agent — Install & Run OneShot
+
+Copy this prompt into your coding/repository agent.
 
 <details>
-<summary><strong>Windows — Download ZIP</strong> · Recommended · Click to install</summary>
+<summary><strong>Copy installation prompt</strong> · Install, launch, and run the sample</summary>
 
-1. Download the `oneshot-judge-1.3.0.zip` release package.
-2. Extract the ZIP.
-3. Start Docker Desktop.
-4. Run:
+```text
+You are installing and launching the OneShot repository.
 
-   ```powershell
-   .\start-oneshot.ps1
-   ```
+Work from the repository itself. Inspect the current files and environment before taking action. Do not invent commands or rely on stale README instructions when the repository provides the actual launcher or package scripts.
 
-5. Open `http://localhost:8787`.
+GOAL
+Install OneShot, launch the real application, verify health, and run the deterministic sample flow successfully.
 
-No Node.js, Python, npm, or Git is required on the host for this packaged path.
+REQUIREMENTS
+1. Inspect the repository and determine the supported installation path for this environment.
+2. Prefer the packaged Docker/ZIP path when the release package is available and appropriate.
+3. Otherwise use the repository's supported CLI/source installation path.
+4. Do not change application source code merely to make installation succeed.
+5. Do not push, publish, tag, or create a release.
+6. If a required dependency or service is unavailable, report the exact root cause instead of bypassing it.
 
-</details>
+INSTALLATION CHECKS
+- operating system
+- Docker availability when using the packaged path
+- Node.js/Python/Git only when the selected source path requires them
+- required environment configuration
+- port 8787 availability
 
-<details>
-<summary><strong>CLI</strong> · Terminal installation · Click for <strong>Review steps</strong></summary>
+LAUNCH
+Use the repository's real launch path, such as the packaged start script or the supported OneShot CLI/source launcher.
 
-1. Install Node.js 20+, Python 3.11+, and Git.
-2. Clone OneShot:
+VERIFY
+1. Wait for the real backend health endpoint.
+2. Verify `http://localhost:8787` is available.
+3. Confirm the frontend is served by the running backend.
+4. Run the deterministic/sample OneShot job.
+5. Observe the real workflow execution for the Job_id.
+6. Confirm the job reaches its legitimate terminal result.
+7. If successful, confirm the final proof/hash verification is present.
 
-   ```bash
-   git clone https://github.com/itz1508/oneshot_e2e.git
-   cd oneshot_e2e
-   ```
+DO NOT fabricate timings, hashes, test counts, health results, or workflow status.
 
-3. Launch:
-
-   ```bash
-   npm run oneshot
-   ```
-
-4. Open `http://localhost:8787`.
-
-</details>
-
-<details>
-<summary><strong>Developer / Source</strong> · Build from source · Click for <strong>Review steps</strong></summary>
-
-1. Clone the repository.
-2. Bootstrap dependencies:
-
-   ```bash
-   python scripts/bootstrap.py
-   ```
-
-3. Build:
-
-   ```bash
-   npm run build
-   ```
-
-4. Launch:
-
-   ```bash
-   npm start
-   ```
-
-5. Open `http://localhost:8787`.
+RETURN
+INSTALL_PATH
+COMMANDS_RUN
+HEALTH_RESULT
+SAMPLE_JOB_RESULT
+WORKFLOW_RESULT
+HASH_VERIFICATION_RESULT
+FINAL_RESULT: PASSED | ROOT CAUSE
+```
 
 </details>
 
 ---
 
-## Workflow
+## Prompt to Agent — Run Full Test & Validation
+
+Copy this prompt into your coding/repository agent after installation, or run it directly from a source checkout.
 
 <details>
-<summary><strong>Review Workflow</strong> · Google ADK graph · Click for full route</summary>
+<summary><strong>Copy test prompt</strong> · Full E2E, validation, fixture, graph, and proof checks</summary>
 
-The live graph in OneShot is driven by backend execution events for the active `Job_id`.
+```text
+You are performing an evidence-based technical verification of the OneShot repository.
+
+Do not evaluate the project from README claims. Inspect the actual implementation, tests, schemas, fixtures, workflow graph, runtime evidence, and verification scripts. Run the real commands available in the repository.
+
+GOAL
+Execute the complete supported verification matrix and identify what OneShot actually proves.
+
+FIRST
+Inspect:
+- package.json
+- pyproject.toml
+- requirements/
+- scripts/verify_dependencies.py
+- scripts/verify_manifest.py
+- tests/
+- tests_ts/
+- validation/
+- schema/
+- workflow/
+- backend/graph/
+- backend/workflow/
+
+RUN THE COMPLETE SUPPORTED TEST MATRIX
+At minimum, where supported by the repository/environment, execute:
+
+python scripts/verify_dependencies.py --profile all
+python -m unittest discover -s tests -v
+npm run verify
+npm --prefix web test
+python scripts/verify_manifest.py
+
+Also run the focused proof tests below.
+
+FULL E2E SAMPLE
+Inspect and run:
+- tests/test_e2e.py
+- fixtures/e2e/complete-success.json
+
+Command:
+python -m unittest tests.test_e2e -v
+
+Determine whether the test proves the successful confirmation/hash-equality path and negative mutation/failure cases.
+
+SCHEMA VALIDATION
+Inspect:
+- validation/schema_validator.py
+- tests/test_schemas.py
+- tests/test_parity.py
+- schema/
+
+Run:
+python -m unittest tests.test_schemas -v
+python -m unittest tests.test_parity -v
+
+Report exactly which artifacts are structurally validated and whether invalid structures are rejected.
+
+FIXTURE VALIDATION
+Inspect:
+- validation/fixture_runner.py
+- validation/triple_validation.py
+- tests/test_fixture.py
+- tests/test_fixture_operators.py
+- fixtures/e2e/complete-success.json
+
+Run:
+python -m unittest tests.test_fixture -v
+python -m unittest tests.test_fixture_operators -v
+
+Prove whether fixture assertions are actually executed against the Plan, not merely stored as descriptive JSON. List the supported deterministic fixture operators from implementation.
+
+TRIPLE VALIDATION
+Inspect validation/triple_validation.py and its tests.
+
+Verify independently:
+- Schema Validation
+- Fixture Validation
+- Goal Validation
+
+Confirm `all_valid` becomes true only when all three validator results are `VALID`.
+
+GOOGLE ADK WORKFLOW GRAPH
+Inspect:
+- backend/graph/
+- backend/workflow/
+- workflow/
+- tests_ts/adk-workflow-graph.test.ts
+- installed @google/adk version
+
+Verify executable evidence for:
+- explicit routing
+- Gap Analysis fix/recheck loop
+- Evaluation branching
+- Schema/Fixture/Goal fan-out
+- JoinNode fan-in
+- validation gate
+- Builder route
+- hash MATCH/MISMATCH routing
+
+HASH PROOF
+Inspect:
+- validation/canonicalize.py
+- validation/hash_proof.py
+- tests/test_canonicalize.py
+- tests/test_e2e.py
+
+Determine whether the confirmed comparable core is canonicalized using RFC 8785/JCS, hashed with SHA-256, verified against the same comparable representation after execution, and whether meaningful mutation causes mismatch.
+
+DOCKER / CLEAN ROOM
+If Docker and the repository's release verification scripts are available, run the supported Docker audit and clean-room package verification. Do not claim these passed unless they actually execute successfully.
+
+EVALUATION RULE
+For every claimed strength, provide:
+- implementation evidence
+- test evidence
+- runtime evidence when available
+- negative/failure evidence when available
+- confidence
+
+Actively identify documentation-only or unproven claims.
+
+RETURN
+1. COMPLETE TEST RESULTS
+2. FULL E2E RESULT
+3. SCHEMA VALIDATION RESULT
+4. FIXTURE VALIDATION RESULT
+5. TRIPLE VALIDATION RESULT
+6. GOOGLE ADK GRAPH RESULT
+7. HASH VERIFICATION RESULT
+8. DOCKER / CLEAN-ROOM RESULT
+9. STRONGEST VERIFIED CAPABILITIES
+10. UNPROVEN CLAIMS
+11. EVIDENCE INDEX
+12. FINAL_RESULT: PASSED | ROOT CAUSE
+```
+
+</details>
+
+---
+
+## Sample Workflow
+
+<details>
+<summary><strong>Review workflow</strong></summary>
 
 ```text
 Researcher(Job_id)
@@ -93,221 +225,34 @@ Planner
 Refactor
    ↓
 Gap Analysis
-   ├─ gaps found → Gap Fix → Recheck ──↺ Gap Analysis
+   ├─ gaps found → Gap Fix → Recheck ↺
    └─ gap_0
         ↓
 Evaluation
-   ├─ ROOT_CAUSE → Root Cause
+   ├─ ROOT_CAUSE
    └─ PASSED
         ↓
-   ┌────────────┬────────────┐
-   ↓            ↓            ↓
- Schema       Fixture       Goal
- Validation   Validation    Validation
-   └────────────┼────────────┘
-                ↓
-             JoinNode
-                ↓
-         Validation Gate
-         ├─ NOT_VALID → Root Cause
-         └─ ALL_VALID
-                ↓
-            Confirmed
-                ↓
-             Builder
-                ↓
-        Hash Verification
-         ├─ MATCH → DONE
-         └─ MISMATCH → Root Cause
-```
-
-**Core invariants**
-
-- Researcher owns the plan, schema, fixture, goal, and validation artifacts.
-- Planner consumes the plan and produces `audit_id`.
-- Refactor preserves the same logical `plan_id` with revision provenance.
-- Gap Analysis reaches `gap_0` before Evaluation proceeds.
-- Schema, Fixture, and Goal validation fan out independently and join before the validation gate.
-- Confirmation freezes the comparable package core.
-- Hashing uses RFC 8785 canonicalization and SHA-256.
-- Post-build verification compares the same canonical comparable representation; equality routes to `DONE`.
-
-Supporting material: [Workflow Tree](docs/WORKFLOW_TREE) · [workflow/](workflow/) · [Task Management and ADK Graph](docs/TASK_MANAGEMENT_AND_ADK_GRAPH.md)
-
-</details>
-
----
-
-## Project Details
-
-<details>
-<summary><strong>Architecture</strong> · Runtime boundaries and repository layout</summary>
-
-| Layer | Responsibility |
-| --- | --- |
-| `backend/` | TypeScript runtime, role orchestration, ADK graph routing, HTTP/SSE, Builder handoff |
-| `schema/` | JSON Schema Draft 2020-12 contracts |
-| `validation/` | Deterministic Python validation, RFC 8785 canonicalization, SHA-256 proof |
-| `web/` | React 19 + Vite event-driven IDE |
-| `workspace_api/` | Optional FastAPI multi-workspace control-plane service |
-| `workflow/` | Graph specifications and topology |
-| `skill/` | Reusable OneShot skills and tools |
-
-```text
-oneshot_e2e/
-├── backend/
-├── web/
-├── schema/
-├── validation/
-├── workspace_api/
-├── requirements/
-├── skill/
-├── workflow/
-├── tests/
-├── tests_ts/
-├── scripts/
-├── deploy/
-│   ├── docker/
-│   └── judge/
-├── docs/
-├── dist/
-├── pyproject.toml
-├── package.json
-├── package-lock.json
-├── Dockerfile
-├── docker-compose.yml
-├── AGENTS.md
-├── JUDGE_README.md
-└── MANIFEST.sha256
+Schema ─┐
+Fixture ├─ JoinNode
+Goal ───┘
+        ↓
+Validation Gate
+   ├─ NOT_VALID → ROOT CAUSE
+   └─ VALID
+        ↓
+Confirmed
+   ↓
+Builder
+   ↓
+Hash Verification
+   ├─ MATCH → DONE
+   └─ MISMATCH → ROOT CAUSE
 ```
 
 </details>
-
-<details>
-<summary><strong>Python Dependency Profiles</strong> · Click to review</summary>
-
-`pyproject.toml` is the Python dependency declaration authority. Pinned installation profiles live under `requirements/`.
-
-| Profile | Purpose |
-| --- | --- |
-| `requirements/core.txt` | Deterministic production validation runtime |
-| `requirements/provider-adk.txt` | Optional Google ADK research worker |
-| `requirements/provider-featherless.txt` | Optional Featherless provider |
-| `requirements/workspace-api.txt` | Optional FastAPI workspace service |
-
-```bash
-# Core
-python scripts/bootstrap.py
-
-# Optional profiles
-python scripts/bootstrap.py --with-adk
-python scripts/bootstrap.py --with-featherless
-python scripts/bootstrap.py --with-workspace-api
-```
-
-</details>
-
-<details>
-<summary><strong>Research Provider Modes</strong> · Click to review</summary>
-
-### Deterministic sample mode
-
-```bash
-export ONESHOT_MODE=sample
-npm start
-```
-
-### Google ADK + local Gemma
-
-```bash
-docker compose -f deploy/docker/docker-compose.local-ai.yml up -d
-export ONESHOT_MODE=production
-export ONESHOT_RESEARCH_PROVIDER=adk_gemma2
-npm start
-```
-
-### Featherless
-
-```bash
-export ONESHOT_MODE=production
-export ONESHOT_RESEARCH_PROVIDER=featherless
-export FEATHERLESS_API_KEY="your_api_key_here"
-npm start
-```
-
-</details>
-
-<details>
-<summary><strong>Verification</strong> · Locked 1.3.0 baseline · Click to review</summary>
-
-| Verification | Result |
-| --- | ---: |
-| Python unit tests | 49 / 49 |
-| Node E2E + ADK graph tests | 57 / 57 |
-| React IDE Vitest | 104 / 104 |
-| Source manifest | 480 / 480 |
-| Dependency profiles | `ONESHOT_DEPENDENCIES_PINNED profile=all` |
-| Production image | `oneshot:1.3.0` |
-| Judge clean-room package | `PASSED` |
-
-```bash
-npm run verify
-python scripts/verify_dependencies.py --profile all
-python scripts/verify_manifest.py
-npm --prefix web test
-```
-
-</details>
-
-<details>
-<summary><strong>Docker Environments</strong> · Click to review</summary>
-
-```text
-Production
-├── Dockerfile
-└── docker-compose.yml
-
-Supplemental
-└── deploy/docker/
-    ├── local AI
-    ├── sandbox
-    └── GPU configurations
-
-Distribution
-└── deploy/judge/
-```
-
-The generated judge bundle is `dist/oneshot-judge-1.3.0.zip` in the release build workspace.
-
-</details>
-
-<details>
-<summary><strong>Documentation</strong> · Click to review</summary>
-
-- [Workflow Tree](docs/WORKFLOW_TREE)
-- [Google ADK + Gemma integration](docs/ADK_GEMMA2_INTEGRATION.md)
-- [Task Management and ADK Graph](docs/TASK_MANAGEMENT_AND_ADK_GRAPH.md)
-- [Intent Authority and Help](docs/INTENT_AUTHORITY_AND_HELP.md)
-- [Workspace API Design](docs/WORKSPACE_API_DESIGN.md)
-- [IDE Build Record](docs/ONESHOT_IDE_BUILD_RECORD.md)
-
-</details>
-
----
-
-## Running From Source
-
-```bash
-npm run build
-npm start
-```
-
-Open `http://localhost:8787`.
-
-`ONESHOT_API_TOKEN` secures the local OneShot API session. It is not a third-party AI-provider API key.
 
 ---
 
 ## License
 
-This repository currently declares the Apache License, Version 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+See [LICENSE](LICENSE) and [NOTICE](NOTICE).
