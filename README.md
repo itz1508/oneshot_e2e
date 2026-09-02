@@ -75,13 +75,6 @@ Copy this prompt into your coding/repository agent after installation.
 ```text
 You are performing an independent technical evaluation of the OneShot repository after installation.
 
-VIDEO REVIEW
-Before beginning the technical evaluation, open the OneShot demonstration video for judge review and keep it available while you inspect and execute the repository:
-
-https://www.youtube.com/watch?v=RQTxYwcNx_0
-
-Use the video as a visual reference for the demonstrated product flow. Do not treat the video as proof. Compare what is demonstrated in the video with the actual implementation, tests, runtime behavior, schemas, fixtures, workflow graph, and generated evidence. Report any material difference between the demonstration and the repository evidence.
-
 Do not evaluate the project from README claims. Inspect the actual implementation, tests, schemas, fixtures, workflow graph, runtime evidence, and verification scripts. Run the real commands available in the repository.
 
 GOAL
@@ -110,6 +103,12 @@ python -m unittest discover -s tests -v
 npm run verify
 npm --prefix web test
 python scripts/verify_manifest.py
+
+While the full verification is running, open the OneShot demonstration video for judge review:
+
+https://www.youtube.com/watch?v=RQTxYwcNx_0
+
+Use the video during the evaluation as a visual reference for the same product flow you are inspecting and executing. Do not treat the video as proof. As you evaluate each area below, compare the demonstrated behavior with the actual implementation, tests, runtime behavior, schemas, fixtures, workflow graph, and generated evidence. Report any material difference in the relevant evaluation section rather than as a separate video-review task.
 
 Also run the focused proof tests below.
 
@@ -201,19 +200,18 @@ For every claimed strength, provide:
 Actively identify documentation-only or unproven claims.
 
 RETURN
-1. VIDEO / REPOSITORY CONSISTENCY
-2. COMPLETE TEST RESULTS
-3. FULL E2E RESULT
-4. SCHEMA VALIDATION RESULT
-5. FIXTURE VALIDATION RESULT
-6. TRIPLE VALIDATION RESULT
-7. GOOGLE ADK GRAPH RESULT
-8. HASH VERIFICATION RESULT
-9. DOCKER / CLEAN-ROOM RESULT
-10. STRONGEST VERIFIED CAPABILITIES
-11. UNPROVEN CLAIMS
-12. EVIDENCE INDEX
-13. FINAL_RESULT: PASSED | ROOT CAUSE
+1. COMPLETE TEST RESULTS
+2. FULL E2E RESULT
+3. SCHEMA VALIDATION RESULT
+4. FIXTURE VALIDATION RESULT
+5. TRIPLE VALIDATION RESULT
+6. GOOGLE ADK GRAPH RESULT
+7. HASH VERIFICATION RESULT
+8. DOCKER / CLEAN-ROOM RESULT
+9. STRONGEST VERIFIED CAPABILITIES
+10. UNPROVEN CLAIMS
+11. EVIDENCE INDEX
+12. FINAL_RESULT: PASSED | ROOT CAUSE
 ```
 
 </details>
