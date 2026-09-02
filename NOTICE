@@ -1,30 +1,37 @@
-OneShot Production E2E
-Copyright 2026 OneShot Authors
+OneShot E2E
+Copyright 2026 OneShot Authors. All rights reserved.
 
-This product includes software developed by the OneShot Project.
+OneShot-owned source code and materials are governed by the OneShot Evaluator
+License in the repository root LICENSE file. OneShot-owned material is not
+licensed under Apache-2.0.
 
 ========================================================================
-Third-Party Software & Isolated Adapters Notice
+Third-Party Software Notice
 ========================================================================
 
-The core OneShot Canonical Workflow, dynamic skill engine, sandbox runtime,
-and verification matrix do not bundle or require Google ADK.
+Third-party software remains governed by its own upstream license terms.
+Those licenses do not apply to OneShot-owned material.
 
-The following optional research provider adapter is isolated in a separate
-sub-process boundary under `backend/role/researcher/provider/adk-gemma2/`:
-
-1. Google ADK (google-adk, google-genai, google-auth)
+1. Google ADK for TypeScript (@google/adk)
    - Copyright Google LLC
    - Licensed under the Apache License, Version 2.0
-   - Manifest: `requirements-adk.txt`
-   - Execution boundary: Isolated external subprocess (`worker.py`)
+   - Used by the canonical workflow orchestration, including SequentialAgent,
+     LoopAgent, ParallelAgent, and Runner integration.
+   - Apache-2.0 license copy:
+     THIRD_PARTY_LICENSES/Google-ADK-Apache-2.0.txt
 
-2. LiteLLM (litellm)
+2. Google ADK research-provider dependencies
+   - Used by the isolated researcher provider adapter under
+     backend/role/researcher/provider/adk-gemma2/
+   - Governed by their respective upstream licenses.
+   - Manifest: requirements-adk.txt
+
+3. LiteLLM (litellm)
    - Copyright (c) BerriAI
-   - Licensed under the MIT License
-   - Manifest: `requirements-adk.txt`
+   - Governed by its applicable upstream license.
+   - Manifest: requirements-adk.txt
 
-3. Redis Client (redis-py)
+4. Redis Client (redis-py)
    - Copyright (c) Redis Ltd.
-   - Licensed under the MIT License / BSD-3-Clause
-   - Manifest: `requirements-adk.txt`
+   - Governed by its applicable upstream license.
+   - Manifest: requirements-adk.txt
