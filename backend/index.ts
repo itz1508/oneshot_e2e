@@ -14,10 +14,8 @@ import { ValidationLanePool } from "./validation/validation-lane-pool.js";
 import { DeterministicValidationRuntime } from "./validation/deterministic-validation.js";
 import { CanonicalContractSkill } from "./skill/canonical-contract-skill.js";
 import { createSkillSystem } from "./skill/bootstrap.js";
-import { createRolePipeline } from "./pipeline/bootstrap.js";
+import { createDynamicDependencyFactory } from "./workflow/adk/dynamic-dependencies.js";
 import { TripleValidationWorkflow } from "./workflow/triple-validation.js";
-import { ConfirmationWorkflow } from "./workflow/confirmation.js";
-import { HashWorkflow } from "./workflow/hash.js";
 import { WorkflowRuntime } from "./runtime/workflow-runtime.js";
 import { SandboxService } from "./sandbox/sandbox-service.js";
 import { HardenedProcessRunner } from "./sandbox/runner/process-runner.js";
@@ -56,7 +54,8 @@ events.observe((e) => {
 
 // --- Validation & Contracts (composed through the Reusable Skill subsystem) ---
 // Canonical contract operations keep their own bridge. Triple Validation has
-// three separate Python lanes so ADK ParallelAgent performs real fan-out.
+// three separate Python lanes; the ADK dynamic node starts all three runNode()
+// calls before awaiting Promise.all.
 const bridge = new PythonBridge();
 const validationLanes = new ValidationLanePool();
 const skills = createSkillSystem();
@@ -77,8 +76,8 @@ if (!(contracts instanceof CanonicalContractSkill)) {
 await contracts.verifyStatic();
 
 // --- Runtime Info ---
-// Provider/model readiness is deliberately NOT claimed at bootstrap. Researcher
-// resolves and probes its configured provider only when that Role is activated.
+// Provider/model readiness is deliberately not claimed at bootstrap. Each job
+// resolves and probes its Researcher provider before ADK invokes Researcher.
 const runtimeMode = (process.env.ONESHOT_MODE || "sample").toLowerCase();
 const providerName =
   runtimeMode === "sample"
@@ -89,6 +88,7 @@ const runtimeInfo: RuntimeInfo = { mode: runtimeMode, provider: providerName };
 
 // --- Deterministic Triple Validation ---
 const deterministic = new DeterministicValidationRuntime(validationLanes);
+const triple = new TripleValidationWorkflow(deterministic, contracts);
 
 // --- Sandbox Infrastructure (runner selectable via ONESHOT_SANDBOX_RUNNER) ---
 const sandbox = new SandboxService(
@@ -100,25 +100,21 @@ const sandbox = new SandboxService(
   resolve(projectRoot, "data/sandbox-workspaces"),
 );
 
-// --- Explicit Role Pipeline ---
-// Bootstrap registers factories only. ADK stages activate Roles manually at the
-// moment their canonical responsibility is reached.
-const rolePipeline = createRolePipeline({
+// --- Google ADK Dynamic Workflow Runtime ---
+// The dependency factory proves provider/model readiness per job and returns
+// the existing OneShot Role implementations consumed by ADK connector nodes.
+const bindDependencies = createDynamicDependencyFactory({
   projectRoot,
   events,
   contracts,
   sandbox,
+  triple,
 });
-
-// --- Canonical ADK Workflow Runtime ---
 const runtime = new WorkflowRuntime(
   events,
   runs,
   new FileArtifactStore(resolve(projectRoot, "data/runs")),
-  rolePipeline,
-  new TripleValidationWorkflow(deterministic, contracts),
-  new ConfirmationWorkflow(contracts),
-  new HashWorkflow(contracts),
+  bindDependencies,
 );
 
 // --- Bind the remaining production Skills to live runtime services ---
