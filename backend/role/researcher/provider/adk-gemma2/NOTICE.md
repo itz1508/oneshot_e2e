@@ -12,4 +12,4 @@ This directory (`backend/role/researcher/provider/adk-gemma2/`) contains the opt
 1. **Zero Core Dependencies**: The core Canonical Workflow, Planner, Refactor, Gap Analysis, Evaluation, Triple Validation, Hashing, and Sandbox Runtime never import or depend on Google ADK.
 2. **Subprocess Isolation**: All ADK execution runs out-of-process in `worker.py` via standard I/O RPC (`worker-bridge.ts`).
 3. **Advisory Output Only**: Output from ADK is treated strictly as an untrusted research draft (`AdkResearchDraft`) subject to strict schema validation and fresh run-scoped ID assignment before entry into the canonical pipeline.
-4. **Separate Dependencies**: Dependencies are maintained in `requirements-adk.txt` independently from the base `requirements.txt`.
+4. **Separate Dependencies**: Dependencies are maintained in `requirements/adk.txt` independently from the base `requirements/base.txt`.

@@ -1,0 +1,25 @@
+# Netlify build configuration for the OneShot IDE frontend (web/).
+# The Node backend (dist/backend/index.js) is NOT deployed here — host it
+# separately and proxy /api/* and /v1/* to it if needed.
+
+[build]
+  base = "web"
+  command = "npm run build"
+  publish = "web/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Required for @webcontainer/api (SharedArrayBuffer / cross-origin isolation),
+# mirroring the dev/preview headers in web/vite.config.ts.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
+
+# SPA fallback for client-side routing.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

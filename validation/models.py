@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any, Annotated, Literal
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints, model_validator, field_validator
 
 class StrictModel(BaseModel):
     model_config=ConfigDict(extra='forbid',strict=True,populate_by_name=True)
@@ -63,7 +63,32 @@ class GraphNode(StrictModel): id:NonEmptyStr; kind:Literal['source','processor',
 class GraphEdge(StrictModel): from_:NonEmptyStr=Field(alias='from'); to:NonEmptyStr; artifact:NonEmptyStr
 class ArtifactOwnership(StrictModel): artifact:NonEmptyStr; owner:NonEmptyStr; consumers:UniqueStrList
 class ParallelGroup(StrictModel): group_id:NonEmptyStr; members:UniqueStrList; join:NonEmptyStr
-class WorkflowGraph(StrictModel): workflow_id:Literal['oneshot-canonical-workflow']; version:NonEmptyStr; nodes:list[GraphNode]; edges:list[GraphEdge]; artifact_ownership:list[ArtifactOwnership]; parallel_groups:list[ParallelGroup]
+class WorkflowAgent(StrictModel):
+    id: NonEmptyStr
+    type: Literal['SequentialAgent', 'LoopAgent', 'ParallelAgent']
+    members: UniqueStrList
+    exit: NonEmptyStr | None = None
+    join: NonEmptyStr | None = None
+    @field_validator('exit', 'join')
+    @classmethod
+    def validate_exit_join(cls, v, info):
+        if v is None: return v
+        agent_type = info.data.get('type')
+        if agent_type == 'SequentialAgent' and (info.field_name == 'exit' or info.field_name == 'join'):
+            raise ValueError(f'SequentialAgent cannot have {info.field_name}')
+        if agent_type == 'LoopAgent' and info.field_name == 'join':
+            raise ValueError('LoopAgent cannot have join')
+        if agent_type == 'ParallelAgent' and info.field_name == 'exit':
+            raise ValueError('ParallelAgent cannot have exit')
+        return v
+    @model_validator(mode='after')
+    def validate_required_fields(self):
+        if self.type == 'LoopAgent' and self.exit is None:
+            raise ValueError('LoopAgent must have exit')
+        if self.type == 'ParallelAgent' and self.join is None:
+            raise ValueError('ParallelAgent must have join')
+        return self
+class WorkflowGraph(StrictModel): workflow_id:Literal['oneshot-canonical-workflow']; version:NonEmptyStr; nodes:list[GraphNode]; edges:list[GraphEdge]; artifact_ownership:list[ArtifactOwnership]; parallel_groups:list[ParallelGroup]; workflow_agents:list[WorkflowAgent]
 class ContractRegistryEntry(StrictModel): contract_id:NonEmptyStr; version:NonEmptyStr; artifact_type:NonEmptyStr; schema_path:NonEmptyStr; schema_digest:Sha256Str; producer:NonEmptyStr; consumers:UniqueStrList
 class ContractRegistry(StrictModel): registry_id:Literal['oneshot-contract-registry']; registry_version:NonEmptyStr; contracts:list[ContractRegistryEntry]
 

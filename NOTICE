@@ -16,15 +16,15 @@ sub-process boundary under `backend/role/researcher/provider/adk-gemma2/`:
 1. Google ADK (google-adk, google-genai, google-auth)
    - Copyright Google LLC
    - Licensed under the Apache License, Version 2.0
-   - Manifest: `requirements-adk.txt`
+   - Manifest: `requirements/adk.txt`
    - Execution boundary: Isolated external subprocess (`worker.py`)
 
 2. LiteLLM (litellm)
    - Copyright (c) BerriAI
    - Licensed under the MIT License
-   - Manifest: `requirements-adk.txt`
+   - Manifest: `requirements/adk.txt`
 
 3. Redis Client (redis-py)
    - Copyright (c) Redis Ltd.
    - Licensed under the MIT License / BSD-3-Clause
-   - Manifest: `requirements-adk.txt`
+   - Manifest: `requirements/adk.txt`
