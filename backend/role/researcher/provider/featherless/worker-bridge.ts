@@ -15,10 +15,18 @@ function pythonPath(projectRoot: string): string {
 
 type Pending = {
   runId: string;
-  resolve: (value: FeatherlessResearchDraft) => void;
+  resolve: (value: unknown) => void;
   reject: (reason: unknown) => void;
   timer: NodeJS.Timeout;
 };
+
+export interface FeatherlessHealth {
+  ready: boolean;
+  provider: "featherless";
+  model: string;
+  api_base: string;
+  detail?: string;
+}
 
 export class FeatherlessWorker {
   private child?: ChildProcessWithoutNullStreams;
@@ -97,7 +105,7 @@ export class FeatherlessWorker {
         this.pending.delete(message.id);
         clearTimeout(pending.timer);
         if (message.ok) {
-          pending.resolve(message.result as FeatherlessResearchDraft);
+          pending.resolve(message.result);
         } else {
           pending.reject(
             new Error(message.error || "Featherless worker failed"),
@@ -118,20 +126,19 @@ export class FeatherlessWorker {
     return child;
   }
 
-  async research(payload: {
-    prompt: unknown;
-    run_id: string;
-    evidence?: unknown;
-  }): Promise<FeatherlessResearchDraft> {
+  private async request<T>(
+    op: "health" | "research",
+    payload: unknown,
+    runId: string,
+  ): Promise<T> {
     const child = this.ensure();
     const id = this.nextId++;
-
-    return await new Promise((resolvePromise, reject) => {
+    return await new Promise<T>((resolvePromise, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
         reject(
           new Error(
-            `Featherless request timed out after ${this.config.timeoutSeconds}s`,
+            `Featherless ${op} timed out after ${this.config.timeoutSeconds}s`,
           ),
         );
         if (this.child && !this.child.killed) {
@@ -141,15 +148,29 @@ export class FeatherlessWorker {
       }, this.config.timeoutSeconds * 1000);
 
       this.pending.set(id, {
-        runId: payload.run_id,
-        resolve: resolvePromise,
+        runId,
+        resolve: (value) => resolvePromise(value as T),
         reject,
         timer,
       });
-      child.stdin.write(
-        JSON.stringify({ id, op: "research", payload }) + "\n",
-      );
+      child.stdin.write(JSON.stringify({ id, op, payload }) + "\n");
     });
+  }
+
+  async health(runId: string): Promise<FeatherlessHealth> {
+    return await this.request<FeatherlessHealth>("health", {}, runId);
+  }
+
+  async research(payload: {
+    prompt: unknown;
+    run_id: string;
+    evidence?: unknown;
+  }): Promise<FeatherlessResearchDraft> {
+    return await this.request<FeatherlessResearchDraft>(
+      "research",
+      payload,
+      payload.run_id,
+    );
   }
 
   close() {
