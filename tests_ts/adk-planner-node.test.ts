@@ -30,14 +30,16 @@ test("ADK passes Researcher output directly into existing Planner Role", async (
         { job_id: jobId, prompt: prompt(jobId) },
         { runId: `${jobId}-researcher` },
       );
+      const researchOutput = research.output as ResearchBundle;
 
       const audit = await ctx.runNode(
         plannerNode,
-        { job_id: jobId, research: research.output },
+        { job_id: jobId, research: researchOutput },
         { runId: `${jobId}-planner` },
       );
+      const auditOutput = audit.output as Audit;
 
-      return { research: research.output, audit: audit.output };
+      return { research: researchOutput, audit: auditOutput };
     },
     { name: "researcher_planner_probe", rerunOnResume: true },
   );
