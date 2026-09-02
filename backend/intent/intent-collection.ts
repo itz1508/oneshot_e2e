@@ -92,6 +92,27 @@ function deriveGoalAndOutcome(
   return { goal, requested_outcome: outcome || goal };
 }
 
+/**
+ * Build the Researcher work directions inside the established Prompt(id)
+ * contract. The directions are deliberately structured around the existing
+ * Researcher-owned outputs and keep user-stated requirements/constraints
+ * explicit without creating a new workflow stage or new Prompt fields.
+ */
+function buildResearchDirection(intent: IntentState): string[] {
+  return unique([
+    "Requirements: Determine requirements supported by the user intent and supplied context; do not broaden scope beyond supported evidence.",
+    "Dependencies: Identify dependencies needed by those requirements and map each dependency to the requirement it supports.",
+    "Success criteria: Define measurable success criteria for the requested outcome and establish why that success matters.",
+    "Scope control: Preserve explicit user requirements and constraints while distinguishing supplied context from independently gathered evidence.",
+    ...intent.requirements.map(
+      (requirement) => `User requirement: ${requirement}`,
+    ),
+    ...intent.constraints.map(
+      (constraint) => `User constraint: ${constraint}`,
+    ),
+  ]);
+}
+
 function statement(
   kind: IntentStatement["kind"],
   value: string,
@@ -223,12 +244,7 @@ export class IntentCollectionService {
         context_id: `intent-context:${intent.intent_id}:${i + 1}`,
         statement: x,
       })),
-      research_direction: unique([
-        "requirements",
-        "dependencies",
-        "success criteria",
-        ...intent.requirements.slice(0, 3),
-      ]),
+      research_direction: buildResearchDirection(intent),
     };
 
     return { result: "PASSED", prompt, intent };
