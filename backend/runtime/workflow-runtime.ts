@@ -6,6 +6,7 @@ import type {
   RunSnapshot,
 } from "../contract/types.js";
 import { WorkflowInformationRequiredError } from "../core/information-required-error.js";
+import { WorkflowRootCauseError } from "../core/root-cause-error.js";
 import type { HelpRequest } from "../intent/types.js";
 import type { BoundDynamicDependencies } from "../workflow/adk/dynamic-dependencies.js";
 import {
@@ -19,6 +20,41 @@ import type { RunRepository } from "./run-repository.js";
 
 const APP_NAME = "oneshot-dynamic-workflow";
 export type DynamicDependencyFactory = (runId: string) => Promise<BoundDynamicDependencies>;
+
+const VALIDATOR_PROCESSORS = new Set([
+  "SchemaValidation",
+  "FixtureValidation",
+  "GoalValidation",
+]);
+
+/**
+ * Google ADK wraps a failing dynamic child in DynamicNodeFailError and retains
+ * the original exception on `.error`. Unwrap that chain without importing an
+ * internal ADK error class so canonical OneShot ROOT_CAUSE and HelpRequest data
+ * survive ctx.runNode() boundaries.
+ */
+function unwrapAdkError(error: unknown): unknown {
+  let current = error;
+  const seen = new Set<unknown>();
+
+  for (let depth = 0; depth < 16; depth += 1) {
+    if (
+      current instanceof WorkflowRootCauseError ||
+      current instanceof WorkflowInformationRequiredError
+    ) {
+      return current;
+    }
+    if (!current || typeof current !== "object" || seen.has(current)) break;
+    seen.add(current);
+
+    const record = current as { error?: unknown; cause?: unknown };
+    const next = record.error ?? record.cause;
+    if (next === undefined || next === current) break;
+    current = next;
+  }
+
+  return current;
+}
 
 /**
  * External runtime facade for the canonical OneShot Google ADK dynamic Workflow.
@@ -121,8 +157,19 @@ export class WorkflowRuntime {
     try {
       bound = await this.bindDependencies(runId);
       const rootAgent = createOneShotDynamicWorkflow(bound, {
-        event: (jobId, processor, state, data = {}) =>
-          this.ev(jobId, processor, state, data),
+        event: (jobId, processor, state, data = {}) => {
+          // Triple Validation is an internal validation gate, not a workflow
+          // completion result. Keep its public event vocabulary VALID/NOT_VALID.
+          if (
+            processor === "TripleValidation" &&
+            state === "COMPLETE" &&
+            data.result === "PASSED"
+          ) {
+            this.ev(jobId, processor, state, { ...data, result: "VALID" });
+            return;
+          }
+          this.ev(jobId, processor, state, data);
+        },
         save: (jobId, name, value) => this.save(jobId, name, value),
       });
       const sessionService = new InMemorySessionService();
@@ -138,6 +185,7 @@ export class WorkflowRuntime {
       });
 
       let terminal: OneShotDynamicResult | undefined;
+      const projectedValidatorRuns = new Set<string>();
       for await (const event of runner.runAsync({
         userId: runId,
         sessionId: session.id,
@@ -146,6 +194,42 @@ export class WorkflowRuntime {
           parts: [{ text: JSON.stringify({ job_id: runId, prompt }) }],
         },
       })) {
+        const adkEvent = event as unknown as {
+          author?: string;
+          output?: unknown;
+          nodeInfo?: { path?: string };
+          invocationId?: string;
+        };
+
+        // ADK FunctionNode output is the authoritative response from each
+        // parallel validator. Project those real responses into Task events;
+        // do not synthesize validator progress in the frontend.
+        if (
+          adkEvent.author &&
+          VALIDATOR_PROCESSORS.has(adkEvent.author) &&
+          adkEvent.output &&
+          typeof adkEvent.output === "object"
+        ) {
+          const validation = adkEvent.output as {
+            result?: "VALID" | "NOT_VALID";
+            plan_id?: string;
+          };
+          const projectionKey = `${adkEvent.nodeInfo?.path ?? adkEvent.author}:${adkEvent.invocationId ?? ""}`;
+          if (
+            validation.result &&
+            !projectedValidatorRuns.has(projectionKey)
+          ) {
+            projectedValidatorRuns.add(projectionKey);
+            this.ev(runId, adkEvent.author, "RUNNING", {
+              message: "ADK validator node response received",
+            });
+            this.ev(runId, adkEvent.author, "COMPLETE", {
+              result: validation.result,
+              artifact_id: validation.plan_id,
+            });
+          }
+        }
+
         if ("output" in event && event.output !== undefined) {
           terminal = event.output as OneShotDynamicResult;
         }
@@ -165,12 +249,13 @@ export class WorkflowRuntime {
     } catch (error) {
       const current = this.runs.require(runId);
       if (current.result) return current;
+      const underlying = unwrapAdkError(error);
       return this.finishRoot(
         runId,
-        toDynamicRootCause(error, runId),
+        toDynamicRootCause(underlying, runId),
         undefined,
-        error instanceof WorkflowInformationRequiredError
-          ? error.helpRequest
+        underlying instanceof WorkflowInformationRequiredError
+          ? underlying.helpRequest
           : undefined,
       );
     } finally {
