@@ -99,7 +99,7 @@ export async function harness(
     task.onEvent(e, runs.require(e.run_id));
   });
 
-  const researchProvider = provider || new FixtureResearchProvider();
+  const researchProvider: ResearchProvider = provider || new FixtureResearchProvider();
   researchProvider.attachEvents?.(events);
 
   const bridge = new PythonBridge();
