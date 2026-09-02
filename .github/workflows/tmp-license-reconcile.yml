@@ -39,21 +39,19 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-
           path = Path('.github/workflows/tmp-adk-live-real-e2e.yml')
           text = path.read_text(encoding='utf-8')
-          old = '''      - name: Verify canonical contracts and manifest
-        run: npm run verify
-'''
-          new = '''      - name: Verify canonical contracts, Apache-2.0 license, and manifest
-        run: |
-          npm run verify
-          python scripts/verify_license.py
-          python scripts/generate_manifest.py
-          git diff --exit-code -- MANIFEST.sha256
-          python scripts/generate_manifest.py
-          git diff --exit-code -- MANIFEST.sha256
-'''
+          old = "      - name: Verify canonical contracts and manifest\n        run: npm run verify\n"
+          new = (
+              "      - name: Verify canonical contracts, Apache-2.0 license, and manifest\n"
+              "        run: |\n"
+              "          npm run verify\n"
+              "          python scripts/verify_license.py\n"
+              "          python scripts/generate_manifest.py\n"
+              "          git diff --exit-code -- MANIFEST.sha256\n"
+              "          python scripts/generate_manifest.py\n"
+              "          git diff --exit-code -- MANIFEST.sha256\n"
+          )
           assert text.count(old) == 1, 'permanent E2E verification block drifted'
           path.write_text(text.replace(old, new), encoding='utf-8', newline='\n')
           PY
