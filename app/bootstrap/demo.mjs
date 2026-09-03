@@ -67,15 +67,15 @@ if (existsSync(distPath)) {
   rmSync(distPath, { recursive: true, force: true });
 }
 
-// ── Step 2: Compile real TypeScript source & OneShot React IDE ───
-log("Compiling real TypeScript backend and OneShot React IDE...");
+// ── Step 2: Compile real TypeScript source & OneShot Web IDE ───
+log("Compiling real TypeScript backend and OneShot Web IDE...");
 try {
   execSync("npx tsc -p tsconfig.json", {
     cwd: ROOT,
     stdio: ["ignore", "pipe", "pipe"],
   });
   if (!existsSync(resolve(ROOT, "web/dist"))) {
-    log("Building OneShot React UI bundle...");
+    log("Building OneShot Web UI bundle...");
     execSync("npm --prefix web run build", {
       cwd: ROOT,
       stdio: ["ignore", "pipe", "pipe"],

@@ -12,7 +12,7 @@ RUN npm install --ignore-scripts --no-audit --no-fund
 COPY backend ./backend
 RUN npx tsc -p tsconfig.json
 
-# Copy and build OneShot React IDE
+# Copy and build OneShot Web IDE
 COPY web ./web
 RUN cd web && npm ci --no-audit --no-fund && npm run build
 
@@ -37,12 +37,12 @@ RUN pip install --no-cache-dir -r app/requirements/base.txt
 COPY package*.json ./
 COPY --from=node-builder /app/node_modules ./node_modules
 
-# Copy compiled backend and React IDE assets
+# Copy compiled backend and Web IDE assets
 COPY --from=node-builder /app/dist ./dist
 COPY --from=node-builder /app/web/dist ./web/dist
 # Schema, Python validation package, reusable skills, and workflow live under backend/
 COPY backend ./backend
-# Deterministic fixture provider reads the canonical seed bundle at app/fixtures
+# Deterministic fixture provider reads the canonical seed bundle at app/fixtures/
 COPY app/fixtures ./app/fixtures
 COPY contract-registry.json CANONICAL_WORKFLOW.md LICENSE NOTICE ./
 

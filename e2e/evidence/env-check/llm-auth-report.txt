@@ -1,4 +1,0 @@
-﻿CODEX_AUTH=present
-CODEX_KEYS=auth_mode,last_refresh,OPENAI_API_KEY,tokens
-MISTRAL_KEY=present prefix=bwjdGS length=32
-MISTRAL_MODELS_HTTP=OK model_count=48

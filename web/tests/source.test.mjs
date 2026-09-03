@@ -3,8 +3,16 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const h=fs.readFileSync('src/index.html','utf8');
-const j=fs.readFileSync('src/app.js','utf8');
 const c=fs.readFileSync('src/styles.css','utf8');
+const SRC_MODULES=['app.js','visual-settings.js','runtime-view-state.js','live-activity.js','task-management.js'];
+const j=SRC_MODULES.map(f=>fs.readFileSync('src/'+f,'utf8')).join('\n');
+
+test('frontend modules exist and compose',()=>{
+  for(const f of SRC_MODULES) assert.ok(fs.existsSync('src/'+f),`missing src/${f}`);
+  const app=fs.readFileSync('src/app.js','utf8');
+  for(const f of ['visual-settings.js','runtime-view-state.js','live-activity.js','task-management.js'])
+    assert.ok(app.includes(`from '/${f}'`),`app.js must import /${f}`);
+});
 
 test('stable E2E selectors',()=>{
   for(const x of['readiness','generate-button','task-management','researcher-stage','researcher-activity','run-context','workspace-tree','message-oneshot']){

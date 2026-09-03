@@ -327,14 +327,14 @@ ensureNodeDependencies(
   "web",
 );
 
-header("4. Backend and React IDE builds");
+header("4. Backend and Web IDE builds");
 
 runNpm(["run", "build:backend"], {
   label: "Backend TypeScript build failed",
 });
 pass("Backend TypeScript compiled to dist/");
-runNpm(["run", "build:ui"], { label: "OneShot React IDE build failed" });
-pass("OneShot React IDE compiled to web/dist/");
+runNpm(["run", "build:ui"], { label: "OneShot Web IDE build failed" });
+pass("OneShot Web IDE compiled to web/dist/");
 
 header("5. Canonical contracts and manifest verification");
 
@@ -512,9 +512,9 @@ function pollHealth(targetPort, timeoutMs = 15_000) {
 const health = await pollHealth(port);
 pass(`http://localhost:${port}/api/health reports status='${health.status}'`);
 
-header("9. OneShot React IDE ready");
+header("9. OneShot Web IDE ready");
 console.log(`
-${C.bold}${C.green}OneShot React IDE is running.${C.reset}
+${C.bold}${C.green}OneShot Web IDE is running.${C.reset}
 ${C.bold}URL:${C.reset}      http://localhost:${port}
 ${C.bold}Mode:${C.reset}     ${mode.toUpperCase()}
 ${C.bold}Provider:${C.reset} ${providerDisplay}

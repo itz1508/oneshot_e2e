@@ -24,10 +24,23 @@
 
   <div class="shell" id="shell">
     <aside class="sidebar" id="sidebar" aria-label="Workspace navigation">
-      <nav><button class="nav active" data-view="chat">Chat</button><button class="nav" data-view="work">Work</button></nav>
-      <h3>Workspace</h3>
-      <div id="workspace-state" class="workspace-state">Loading workspace…</div>
-      <div id="workspace-tree" data-testid="workspace-tree"></div>
+      <div class="sidebar-normal" id="sidebar-normal">
+        <nav><button class="nav active" data-view="chat">Chat</button><button class="nav" data-view="work">Work</button></nav>
+        <h3>Workspace</h3>
+        <div id="workspace-state" class="workspace-state">Loading workspace…</div>
+        <div id="workspace-tree" data-testid="workspace-tree"></div>
+      </div>
+      <div class="sidebar-live" id="sidebar-live" hidden aria-label="Live run activity">
+        <div class="live-pane" id="live-action-pane">
+          <h3 class="live-title">Live Activity</h3>
+          <div class="live-rows" id="live-action"><div class="live-empty">Actions will appear when the run starts.</div></div>
+        </div>
+        <div class="live-divider" id="live-divider" role="separator" aria-orientation="horizontal" aria-label="Adjust live activity split"></div>
+        <div class="live-pane" id="live-files-pane">
+          <h3 class="live-title">Files / Records</h3>
+          <div class="live-rows" id="live-files"><div class="live-empty">No artifacts reported yet.</div></div>
+        </div>
+      </div>
     </aside>
     <button class="side-handle" id="side-handle" aria-label="Open sidebar" aria-expanded="false">›</button>
 
@@ -52,11 +65,13 @@
     <aside class="drawer" id="tasks" data-testid="task-management" aria-label="Task Management">
       <header><div><h2>Task Management</h2><p id="run-meta">Waiting for a real run</p></div><button data-close aria-label="Close Task Management">×</button></header>
       <div class="drawer-body">
-        <details class="researcher" id="researcher" data-testid="researcher-stage">
-          <summary><span>Researcher</span><em>PENDING</em></summary>
+        <details class="researcher role-group" id="researcher" data-testid="researcher-stage" data-role="Researcher">
+          <summary><span class="role-name">Researcher</span><em>PENDING</em></summary>
           <div id="researcher-activity" data-testid="researcher-activity"></div>
+          <div class="role-tasks" data-role-tasks="Researcher" aria-label="Researcher tasks"></div>
         </details>
         <div id="stages"></div>
+        <div id="task-plan-extras"></div>
         <section id="run-result" data-testid="run-result"></section>
       </div>
     </aside>
@@ -70,6 +85,7 @@
       <div class="rail-stack" id="rail-stack">
         <button class="rail-btn" id="tasks-button" aria-label="Task Management" title="Task Management">☷</button>
         <button class="rail-btn" id="context-button" aria-label="Run Context" title="Run Context">⌘</button>
+        <button class="rail-btn" id="settings-button" aria-label="Visual Settings" title="Visual Settings" aria-haspopup="dialog" aria-expanded="false">✦</button>
       </div>
       <i class="rail-status" id="rail-status" aria-label="Runtime status"></i>
     </aside>
@@ -85,6 +101,7 @@
     <div class="auth-actions"><button type="button" id="auth-cancel">Cancel</button><button type="submit" class="primary">Authenticate</button></div>
   </form>
 </div>
+<aside class="settings-popover" id="settings-popover" role="dialog" aria-label="Visual Settings" hidden></aside>
 <div id="toast" role="status" aria-live="polite"></div>
 <script type="module" src="./app.js"></script>
 </body>
