@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
-import { resolvePythonExecutable } from "../../../python-runtime.js";
+import { resolvePythonExecutable } from "../../../../python-runtime.js";
 
 export type TavilyRequest =
   | {
