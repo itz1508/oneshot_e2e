@@ -1,13 +1,16 @@
 /**
  * TaskReviewDrawer — header dropdown for at-a-glance task review.
  * Compact chevron trigger sits next to connection status; opens a
- * right-aligned dropdown panel with objective, status, runner, activity.
+ * right-aligned dropdown panel with objective, status, runner, activity,
+ * and the persistent canonical runtime trace.
  */
 
-import {useRef, useEffect} from 'react'
+import {useRef, useEffect, useSyncExternalStore} from 'react'
 import {ChevronDown} from 'lucide-react'
 import type {TaskState} from '../agent/types'
+import {workflowTraceStore} from '../agent/workflowTrace'
 import {ParticipantHeader} from './ParticipantHeader'
+import {WorkflowTracePanel} from './WorkflowTracePanel'
 import styles from './TaskReviewDrawer.module.css'
 
 interface TaskReviewDrawerProps {
@@ -27,11 +30,15 @@ const STATUS_DOT: Record<string, string> = {
 
 export function TaskReviewDrawer({open, task, runnerMode, onToggle, onCancel}: TaskReviewDrawerProps) {
     const ref = useRef<HTMLDivElement>(null)
-    const hasTask = task.taskId !== null
+    const trace = useSyncExternalStore(
+        workflowTraceStore.subscribe,
+        workflowTraceStore.getSnapshot,
+        workflowTraceStore.getSnapshot,
+    )
+    const hasTask = task.taskId !== null || trace.length > 0
     const isRunning = task.status === 'running' || task.status === 'queued'
     const dotClass = STATUS_DOT[task.status] ?? styles.dotIdle
 
-    // Close on outside click or Escape
     useEffect(() => {
         if (!open) return
         const onMouse = (e: MouseEvent) => {
@@ -68,41 +75,47 @@ export function TaskReviewDrawer({open, task, runnerMode, onToggle, onCancel}: T
 
                     {hasTask ? (
                         <div className={styles.panelBody}>
-                            <ParticipantHeader
-                                participantId={task.activeParticipantId}
-                                status={task.activeActivity?.status ?? 'idle'}
-                                summary={task.activeActivity?.summary ?? ''}
-                            />
-                            <div className={styles.field}>
-                                <span className={styles.label}>Objective</span>
-                                <p className={styles.objective}>{task.objective}</p>
-                            </div>
-
-                            <div className={styles.divider}/>
-
-                            <div className={styles.metaGrid}>
-                                <div className={styles.metaItem}>
-                                    <span className={styles.label}>Status</span>
-                                    <span className={styles.statusValue}>
-                                        <span className={`${styles.dot} ${dotClass}`}/>
-                                        {task.status}
-                                    </span>
-                                </div>
-                                <div className={styles.metaItem}>
-                                    <span className={styles.label}>Runner</span>
-                                    <span className={styles.value}>{runnerMode}</span>
-                                </div>
-                            </div>
-
-                            {task.activeActivity && (
+                            {task.taskId && (
                                 <>
-                                    <div className={styles.divider}/>
+                                    <ParticipantHeader
+                                        participantId={task.activeParticipantId}
+                                        status={task.activeActivity?.status ?? 'idle'}
+                                        summary={task.activeActivity?.summary ?? ''}
+                                    />
                                     <div className={styles.field}>
-                                        <span className={styles.label}>Activity</span>
-                                        <p className={styles.activity}>{task.activeActivity.summary}</p>
+                                        <span className={styles.label}>Objective</span>
+                                        <p className={styles.objective}>{task.objective}</p>
                                     </div>
+
+                                    <div className={styles.divider}/>
+
+                                    <div className={styles.metaGrid}>
+                                        <div className={styles.metaItem}>
+                                            <span className={styles.label}>Status</span>
+                                            <span className={styles.statusValue}>
+                                                <span className={`${styles.dot} ${dotClass}`}/>
+                                                {task.status}
+                                            </span>
+                                        </div>
+                                        <div className={styles.metaItem}>
+                                            <span className={styles.label}>Runner</span>
+                                            <span className={styles.value}>{runnerMode}</span>
+                                        </div>
+                                    </div>
+
+                                    {task.activeActivity && (
+                                        <>
+                                            <div className={styles.divider}/>
+                                            <div className={styles.field}>
+                                                <span className={styles.label}>Activity</span>
+                                                <p className={styles.activity}>{task.activeActivity.summary}</p>
+                                            </div>
+                                        </>
+                                    )}
                                 </>
                             )}
+
+                            <WorkflowTracePanel/>
 
                             {isRunning && (
                                 <div className={styles.panelFooter}>
