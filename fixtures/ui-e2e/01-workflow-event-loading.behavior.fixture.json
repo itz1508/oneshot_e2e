@@ -1,0 +1,19 @@
+{
+  "classification": "UI_E2E_BEHAVIOR_FIXTURE",
+  "rules": {"canonical_workflow_only": true, "no_ad_hoc_execution": true, "no_chain_of_thought": true, "no_hardcoded_runtime_values": true, "no_fake_progress": true, "no_artificial_delays": true, "status_is_not_evidence": true, "runtime_values_are_authoritative": true},
+  "fixture_id": "ui-behavior:workflow-event-loading",
+  "name": "Live canonical workflow event loading",
+  "purpose": "Verify that real canonical run events progressively appear in the localhost UI and remain inspectable.",
+  "runtime_sources": {"processor_order": "resolve_from_canonical_workflow_contract", "events": "resolve_from_canonical_run_event_stream", "timestamps": "use_event_timestamp", "sequence": "use_event_sequence"},
+  "assertions": [
+    {"id": "loading-001", "assert": "submitted_user_message_remains_visible", "expected": true},
+    {"id": "loading-002", "assert": "task_timeline_opens_or_becomes_visible", "expected": true},
+    {"id": "loading-003", "assert": "processor_rows_are_created_from_real_events", "expected": true},
+    {"id": "loading-004", "assert": "active_processor_changes_only_on_real_event", "expected": true},
+    {"id": "loading-005", "assert": "completed_processor_rows_remain_visible", "expected": true},
+    {"id": "loading-006", "assert": "event_sequence_matches_runtime_sequence", "expected": true},
+    {"id": "loading-007", "assert": "event_timestamps_match_runtime_values", "expected": true},
+    {"id": "loading-008", "assert": "fake_delay_or_scripted_progress_used", "expected": false}
+  ],
+  "failure_conditions": ["UI advances processors without receiving a corresponding runtime event.", "UI replaces real processor names or order with a separately hard-coded sequence.", "UI hides completed events as new events arrive.", "UI displays private reasoning or chain-of-thought."]
+}
