@@ -1,0 +1,39 @@
+{
+  "fixture_suite": "ui-e2e-observability-v1",
+  "description": "Fixture suite for UI E2E observability tests",
+  "fixtures": [
+    {
+      "fixture_id": "fixture:001",
+      "file": "fixtures/e2e/complete-success.json",
+      "purpose": "Base canonical workflow fixture",
+      "status": "complete"
+    },
+    {
+      "fixture_id": "fixture:004",
+      "file": "fixtures/e2e/complete-004.json",
+      "purpose": "Deterministic validation plan fixture 004",
+      "status": "complete"
+    },
+    {
+      "fixture_id": "fixture:005",
+      "file": "fixtures/e2e/complete-005.json",
+      "purpose": "Deterministic validation plan fixture 005",
+      "status": "complete"
+    },
+    {
+      "fixture_id": "fixture:006",
+      "file": "fixtures/e2e/complete-006.json",
+      "purpose": "Deterministic validation plan fixture 006",
+      "status": "complete"
+    },
+    {
+      "fixture_id": "fixture:007",
+      "file": "fixtures/e2e/complete-007.json",
+      "purpose": "Deterministic validation plan fixture 007",
+      "status": "complete"
+    }
+  ],
+  "total_fixtures": 5,
+  "suite_generated": "2026-09-02",
+  "workflow_context": "ui-e2e-observability"
+}

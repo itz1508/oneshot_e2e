@@ -1,0 +1,211 @@
+{
+  "audit": {
+    "audit_id": "audit:006",
+    "findings": [
+      {
+        "affected_plan_refs": ["step:006"],
+        "area": "goal traceability",
+        "evidence_ids": ["evidence:research"],
+        "finding": "Make goal traceability explicit in the plan step",
+        "finding_id": "finding:006",
+        "required_refinement": "add goal_refs criterion:006"
+      }
+    ],
+    "plan_id": "plan:006",
+    "researcher_id": "researcher:006",
+    "reviewed_areas": [
+      "evidence sufficiency",
+      "file or subject coverage",
+      "requirement coverage",
+      "dependency coverage",
+      "goal clarity",
+      "success criteria",
+      "fixture usability",
+      "schema applicability",
+      "validation traceability",
+      "plan structure",
+      "unresolved findings"
+    ]
+  },
+  "evaluation": {
+    "evidence": [
+      {
+        "check_id": "evaluation:research-alignment",
+        "subject": "research alignment",
+        "finding": "complete",
+        "evidence_ids": ["evidence:research"]
+      },
+      {
+        "check_id": "evaluation:requirement-coverage",
+        "subject": "requirement coverage",
+        "finding": "complete",
+        "evidence_ids": ["evidence:research"]
+      },
+      {
+        "check_id": "evaluation:dependency-coherence",
+        "subject": "dependency coherence",
+        "finding": "complete",
+        "evidence_ids": ["evidence:research"]
+      },
+      {
+        "check_id": "evaluation:plan-coherence",
+        "subject": "plan coherence",
+        "finding": "complete",
+        "evidence_ids": ["evidence:research"]
+      },
+      {
+        "check_id": "evaluation:goal-traceability",
+        "subject": "goal traceability",
+        "finding": "complete",
+        "evidence_ids": ["evidence:research"]
+      },
+      {
+        "check_id": "evaluation:success-criteria-traceability",
+        "subject": "success-criteria traceability",
+        "finding": "complete",
+        "evidence_ids": ["evidence:research"]
+      },
+      {
+        "check_id": "evaluation:fixture-traceability",
+        "subject": "fixture traceability",
+        "finding": "complete",
+        "evidence_ids": ["evidence:research"]
+      },
+      {
+        "check_id": "evaluation:schema-traceability",
+        "subject": "schema traceability",
+        "finding": "complete",
+        "evidence_ids": ["evidence:research"]
+      },
+      {
+        "check_id": "evaluation:execution-meaning",
+        "subject": "execution meaning",
+        "finding": "complete",
+        "evidence_ids": ["evidence:research"]
+      }
+    ],
+    "plan_id": "plan:006",
+    "result": "PASSED"
+  },
+  "fixture": {
+    "fixture_id": "fixture:006",
+    "plan_assertions": [
+      {
+        "assertion_id": "assertion:006",
+        "evidence_ids": ["evidence:research"],
+        "expected": "plan:006",
+        "operator": "equals",
+        "target": "$.plan_id"
+      }
+    ],
+    "researcher_id": "researcher:006"
+  },
+  "gap_analysis": {
+    "gap_0": true,
+    "requirements": [
+      {
+        "requirement_id": "req:006",
+        "statement": "Plan must preserve canonical workflow traceability",
+        "evidence_ids": ["evidence:research"]
+      }
+    ],
+    "researcher_id": "researcher:006",
+    "revision": 1,
+    "revision_evidence": [],
+    "steps": [
+      {
+        "depends_on": [],
+        "description": "Implement deterministic contract proof for fixture 006",
+        "fixture_refs": ["assertion:006"],
+        "goal_refs": ["criterion:006"],
+        "requirement_refs": ["req:006"],
+        "responsibility": "ContractProof",
+        "schema_refs": ["schema:006"],
+        "step_id": "step:006"
+      }
+    ]
+  },
+  "prompt": {
+    "context": [
+      {
+        "context_id": "ctx:006",
+        "statement": "Current canonical workflow for fixture 006"
+      }
+    ],
+    "intent": "Create a deterministic validation plan for fixture 006",
+    "prompt_id": "prompt:006",
+    "requested_outcome": "A plan with explicit proof contracts",
+    "research_direction": ["contracts", "proof"]
+  },
+  "researcher": {
+    "evidence": [
+      {
+        "evidence_id": "evidence:research",
+        "provenance": "conversation",
+        "source": "canonical-input",
+        "statement": "Requirement is established by current canonical information"
+      }
+    ],
+    "fixture_id": "fixture:006",
+    "goal_id": "goal:006",
+    "plan_id": "plan:006",
+    "prompt_id": "prompt:006",
+    "requirement_ids": ["req:006"],
+    "researcher_id": "researcher:006",
+    "schema_id": "schema:006",
+    "success_definition": {
+      "evidence_ids": ["evidence:research"],
+      "success_criteria_ids": ["criterion:006"],
+      "success_meaning": "The plan has deterministic traceability and proof"
+    },
+    "validation_id": "validation:006"
+  },
+  "schema_artifact": {
+    "evidence_ids": ["evidence:research"],
+    "researcher_id": "researcher:006",
+    "schema_document": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": true,
+      "properties": {
+        "plan_id": {
+          "const": "plan:006"
+        },
+        "steps": {
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "plan_id",
+        "researcher_id",
+        "requirements",
+        "dependencies",
+        "steps",
+        "revision",
+        "revision_evidence"
+      ],
+      "type": "object"
+    },
+    "schema_id": "schema:006",
+    "target": "plan"
+  },
+  "validation": {
+    "fixture_validation": {
+      "assertion_ids": ["assertion:006"],
+      "fixture_id": "fixture:006",
+      "plan_id": "plan:006"
+    },
+    "goal_validation": {
+      "criterion_ids": ["criterion:006"],
+      "goal_id": "goal:006",
+      "plan_id": "plan:006"
+    },
+    "plan_id": "plan:006",
+    "researcher_id": "researcher:006",
+    "schema_validation": {
+      "schema_id": "schema:006",
+      "plan_id": "plan:006"
+    },
+    "validation_id": "validation:006"
+  }
+}
