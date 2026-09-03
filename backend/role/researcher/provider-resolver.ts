@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { ResearchProvider } from "./provider.js";
@@ -6,6 +7,14 @@ import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
 import { AdkGemmaResearchProvider } from "./provider/adk-gemma2/provider.js";
 import { FeatherlessResearchProvider } from "./provider/featherless/provider.js";
 import type { ProcessingEventBus } from "../../runtime/event-bus.js";
+
+function resolveSeedFixture(projectRoot: string): string {
+  const p1 = resolve(projectRoot, "app/fixtures/product/complete-success-seed.json");
+  if (existsSync(p1)) return p1;
+  const p2 = resolve(projectRoot, "fixtures/product/complete-success-seed.json");
+  if (existsSync(p2)) return p2;
+  return p1;
+}
 
 class MissingProductionResearchProvider implements ResearchProvider {
   async research(
@@ -40,7 +49,7 @@ export async function resolveResearchProvider(
 
   if (mode === "sample") {
     return new FixtureResearchProvider(
-      resolve(projectRoot, "app/fixtures/product/complete-success-seed.json"),
+      resolveSeedFixture(projectRoot),
     );
   }
 

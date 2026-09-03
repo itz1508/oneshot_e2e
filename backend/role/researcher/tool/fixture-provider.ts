@@ -1,8 +1,17 @@
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Prompt, ResearchBundle } from "../../../contract/types.js";
 import type { ResearchProvider } from "../provider.js";
 import { clone } from "../../../core/clone.js";
+
+function resolveDefaultFixture(): string {
+  const p1 = resolve(process.cwd(), "app/fixtures/product/complete-success-seed.json");
+  if (existsSync(p1)) return p1;
+  const p2 = resolve(process.cwd(), "fixtures/product/complete-success-seed.json");
+  if (existsSync(p2)) return p2;
+  return p1;
+}
 
 function rewrite(value:unknown,map:Map<string,string>):unknown{
   if(typeof value==="string") return map.get(value) ?? value;
@@ -11,7 +20,7 @@ function rewrite(value:unknown,map:Map<string,string>):unknown{
   return value;
 }
 export class FixtureResearchProvider implements ResearchProvider {
-  constructor(private fixturePath=resolve(process.cwd(),"app/fixtures/product/complete-success-seed.json")){}
+  constructor(private fixturePath=resolveDefaultFixture()){}
   async research(prompt:Prompt,runId:string):Promise<ResearchBundle>{
     const seed=JSON.parse(await readFile(this.fixturePath,"utf8")) as ResearchBundle;
     const map=new Map<string,string>([

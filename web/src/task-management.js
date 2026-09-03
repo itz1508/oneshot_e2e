@@ -114,20 +114,38 @@ export function createTaskManagement({ apiFetch } = {}) {
     const row = document.createElement('div');
     row.className = 'task-item';
     if (it.stepId) row.dataset.stepId = it.stepId;
+    const currentState = it.stepId ? stepStates.get(it.stepId) : null;
+    if (currentState) row.dataset.state = currentState;
+
+    const check = document.createElement('span');
+    check.className = 'task-check';
+    check.setAttribute('aria-hidden', 'true');
+    check.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
     const glyph = document.createElement('i');
     glyph.className = 'task-glyph';
     glyph.textContent = '·';
     glyph.setAttribute('aria-hidden', 'true');
+
     const desc = document.createElement('span');
     desc.className = 'task-desc';
     desc.textContent = it.description;
-    row.append(glyph, desc);
+
+    row.append(check, glyph, desc);
+
+    if (it.dependsOn && it.dependsOn.length > 0) {
+      const dep = document.createElement('span');
+      dep.className = 'task-deps';
+      dep.textContent = `deps: ${it.dependsOn.join(', ')}`;
+      row.append(dep);
+    }
+
     if (it.stepId) {
       const chip = document.createElement('em');
       chip.className = 'step-state';
-      chip.textContent = stepStates.get(it.stepId) || '—';
+      chip.textContent = currentState || '—';
       chip.title = 'Step state (provided only by step-scoped runtime events)';
-      if (stepStates.has(it.stepId)) chip.dataset.state = stepStates.get(it.stepId);
+      if (currentState) chip.dataset.state = currentState;
       row.append(chip);
     }
     return row;
@@ -174,10 +192,14 @@ export function createTaskManagement({ apiFetch } = {}) {
       if (st) {
         stepStates.set(st.stepId, st.state);
         for (const [stepId, state] of stepStates) {
-          const chip = q(`[data-step-id="${CSS.escape(stepId)}"] .step-state`);
-          if (chip) {
-            chip.textContent = state;
-            chip.dataset.state = state;
+          const row = q(`[data-step-id="${CSS.escape(stepId)}"]`);
+          if (row) {
+            row.dataset.state = state;
+            const chip = row.querySelector('.step-state');
+            if (chip) {
+              chip.textContent = state;
+              chip.dataset.state = state;
+            }
           }
         }
       }

@@ -8,15 +8,15 @@ export const VISUAL_DEFAULTS = {
   intensity: 'LOW',
   smartHue: true,
   glow: true,
-  particles: false,
+  particles: true,
   motion: true,
   depth: true,
   stateColors: {
-    IDLE: { primary: '#f4f7fb', secondary: '#7e8998', ambientStrength: 0 },
-    PLANNING: { primary: '#c9a15a', secondary: '#d8aa64', ambientStrength: 0.08 },
-    RUNNING: { primary: '#3a6aa3', secondary: '#2d8690', ambientStrength: 0.12 },
-    COMPLETE: { primary: '#4fa88a', secondary: '#72c894', ambientStrength: 0.1 },
-    ERROR: { primary: '#c96870', secondary: '#df777e', ambientStrength: 0.12 },
+    IDLE: { primary: '#3b82f6', secondary: '#64748b', ambientStrength: 0.12 },
+    PLANNING: { primary: '#f59e0b', secondary: '#d97706', ambientStrength: 0.26 },
+    RUNNING: { primary: '#2563eb', secondary: '#06b6d4', ambientStrength: 0.30 },
+    COMPLETE: { primary: '#10b981', secondary: '#34d399', ambientStrength: 0.28 },
+    ERROR: { primary: '#ef4444', secondary: '#f87171', ambientStrength: 0.30 },
   },
   hueMap: {
     Researcher: 'aqua',
@@ -31,15 +31,15 @@ export const VISUAL_DEFAULTS = {
 };
 
 export const HUE_TOKENS = {
-  aqua: '#2d8690',
-  'warm-amber': '#c9a15a',
-  amber: '#d8aa64',
-  cyan: '#4fb3c9',
-  sapphire: '#3a6aa3',
-  'sapphire-aqua': '#34789a',
-  'blue-green': '#3a8f86',
-  green: '#4fa88a',
-  red: '#c96870',
+  aqua: '#06b6d4',
+  'warm-amber': '#f59e0b',
+  amber: '#d97706',
+  cyan: '#38bdf8',
+  sapphire: '#2563eb',
+  'sapphire-aqua': '#0ea5e9',
+  'blue-green': '#10b981',
+  green: '#34d399',
+  red: '#ef4444',
 };
 
 export const STATE_NAMES = ['IDLE', 'PLANNING', 'RUNNING', 'COMPLETE', 'ERROR'];
@@ -113,8 +113,98 @@ export function applyVisualSettings(v, app) {
     app.style.setProperty(`--state-${key}-secondary`, c.secondary);
     app.style.setProperty(`--state-${key}-strength`, String(c.ambientStrength));
   }
-  app.style.setProperty('--ambient-strength', v.intensity === 'HIGH' ? '1.5' : '1');
-  app.style.setProperty('--glow-strength', v.glow ? (v.intensity === 'HIGH' ? '1.5' : '1') : '0');
+  app.style.setProperty('--ambient-strength', v.intensity === 'HIGH' ? '1.8' : '1');
+  app.style.setProperty('--glow-strength', v.glow ? (v.intensity === 'HIGH' ? '1.8' : '1') : '0');
+}
+
+/** Lightweight particle system for ethereal sparse background particles. */
+class ParticleSystem {
+  constructor(canvas, app) {
+    this.canvas = canvas;
+    this.app = app;
+    this.ctx = canvas?.getContext?.('2d');
+    this.particles = [];
+    this.animId = null;
+    this.active = false;
+    if (!this.ctx) return;
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+    this.init();
+  }
+
+  resize() {
+    if (!this.canvas) return;
+    this.width = this.canvas.width = window.innerWidth;
+    this.height = this.canvas.height = window.innerHeight;
+  }
+
+  init() {
+    this.particles = [];
+    const count = 24;
+    for (let i = 0; i < count; i++) {
+      this.particles.push({
+        x: Math.random() * this.width,
+        y: Math.random() * this.height,
+        size: Math.random() * 2 + 0.8,
+        speedX: (Math.random() - 0.5) * 0.35,
+        speedY: -Math.random() * 0.45 - 0.15,
+        alpha: Math.random() * 0.6 + 0.2,
+        pulse: Math.random() * Math.PI * 2,
+      });
+    }
+  }
+
+  start() {
+    if (this.active || !this.ctx) return;
+    this.active = true;
+    const loop = () => {
+      if (!this.active) return;
+      this.draw();
+      this.animId = requestAnimationFrame(loop);
+    };
+    loop();
+  }
+
+  stop() {
+    this.active = false;
+    if (this.animId) cancelAnimationFrame(this.animId);
+    this.animId = null;
+    if (this.ctx) this.ctx.clearRect(0, 0, this.width, this.height);
+  }
+
+  draw() {
+    if (!this.ctx) return;
+    this.ctx.clearRect(0, 0, this.width, this.height);
+    const color = this.getCurrentColor();
+    for (const p of this.particles) {
+      p.x += p.speedX;
+      p.y += p.speedY;
+      p.pulse += 0.03;
+      if (p.y < -10) {
+        p.y = this.height + 10;
+        p.x = Math.random() * this.width;
+      }
+      if (p.x < -10) p.x = this.width + 10;
+      if (p.x > this.width + 10) p.x = -10;
+      const currentAlpha = p.alpha * (0.6 + Math.sin(p.pulse) * 0.4);
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      this.ctx.fillStyle = color.replace('ALPHA', String(currentAlpha));
+      this.ctx.shadowBlur = p.size * 4;
+      this.ctx.shadowColor = color.replace('ALPHA', String(currentAlpha * 0.8));
+      this.ctx.fill();
+    }
+  }
+
+  getCurrentColor() {
+    const isRunning = this.app?.classList.contains('state-running');
+    const isPlanning = this.app?.classList.contains('state-planning');
+    const isComplete = this.app?.classList.contains('state-complete');
+    if (isRunning) return 'rgba(37, 99, 235, ALPHA)';
+    if (isPlanning) return 'rgba(245, 158, 11, ALPHA)';
+    if (isComplete) return 'rgba(16, 185, 129, ALPHA)';
+    return 'rgba(96, 165, 250, ALPHA)';
+  }
 }
 
 function seg(host, label, options, current, onPick) {
@@ -176,9 +266,26 @@ export function createVisualSettings(app) {
   const settings = loadVisual();
   applyVisualSettings(settings, app);
 
+  let particleSystem = null;
+  const canvas = document.getElementById('ambient-particles');
+  if (canvas) {
+    particleSystem = new ParticleSystem(canvas, app);
+    if (settings.effects && settings.particles) particleSystem.start();
+  }
+
+  function syncParticles() {
+    if (!particleSystem) return;
+    if (settings.effects && settings.particles) {
+      particleSystem.start();
+    } else {
+      particleSystem.stop();
+    }
+  }
+
   function persist() {
     saveVisual(settings);
     applyVisualSettings(settings, app);
+    syncParticles();
   }
 
   function renderInto(host) {
@@ -285,7 +392,10 @@ export function createVisualSettings(app) {
 
   return {
     settings,
-    apply: () => applyVisualSettings(settings, app),
+    apply: () => {
+      applyVisualSettings(settings, app);
+      syncParticles();
+    },
     renderInto,
     bindToggle,
     hueTokenFor: role => hueTokenFor(settings, role),

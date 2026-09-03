@@ -13,7 +13,7 @@
     "agent:review": "npm run build:backend && node dist/app/bootstrap/readme.js",
     "build": "tsc -p tsconfig.json && npm --prefix web run build",
     "start": "node dist/backend/index.js",
-    "test": "npm run build:backend && tsc -p tsconfig.test.json && node --test dist/backend/test/ts/*.test.js",
+    "test": "npm run build:backend && tsc -p tsconfig.test.json && node --test --test-concurrency=1 --test-force-exit dist/backend/test/ts/*.test.js",
     "build:test": "tsc -p tsconfig.test.json",
     "demo": "node app/bootstrap/demo.mjs",
     "setup": "node -e \"require('child_process').execSync(process.platform==='win32'?'app/bootstrap/setup.bat':'bash app/bootstrap/setup.sh',{stdio:'inherit'})\"",

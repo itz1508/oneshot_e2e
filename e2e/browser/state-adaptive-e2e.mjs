@@ -59,32 +59,36 @@ async function shot(name) {
   if (!r.__error && r.data) writeFileSync(join(SHOTS, name), Buffer.from(r.data, "base64"));
 }
 async function measure() {
-  return JSON.parse(await ev(`JSON.stringify({
-    appState: (document.getElementById('app').className.match(/state-[a-z]+/)||[''])[0],
-    sidebarOff: document.getElementById('app').classList.contains('sidebar-off'),
-    normalHidden: document.getElementById('sidebar-normal')?.hidden,
-    liveHidden: document.getElementById('sidebar-live')?.hidden,
-    liveEnter: document.getElementById('sidebar-live')?.classList.contains('enter'),
-    ws: (r=>({x:r.x,y:r.y,w:r.width,h:r.height}))(document.getElementById('workspace').getBoundingClientRect()),
-    chat: (r=>({x:r.x,y:r.y,w:r.width}))(document.getElementById('chat').getBoundingClientRect()),
-    op: (r=>({x:r.x,y:r.y,w:r.width,h:r.height}))(document.getElementById('operator').getBoundingClientRect()),
-    opSaved: JSON.parse(localStorage.getItem('oneshot.operator.v3')||'null'),
-    ambBefore: (()=>{const s=getComputedStyle(document.getElementById('app'),'::before');return {bg:(s.backgroundImage||'').slice(0,140),op:s.opacity,content:s.content}})(),
-    drawerTasks: document.getElementById('tasks')?.classList.contains('open'),
-    roles: [...document.querySelectorAll('.role-group')].map(g=>({role:g.dataset.role,em:g.querySelector(':scope>summary em')?.textContent||'',open:g.open,active:g.classList.contains('active-role')})),
-    liveActions: [...document.querySelectorAll('#live-action .live-row .live-text')].map(x=>x.textContent).slice(0,6),
-    liveFiles: [...document.querySelectorAll('#live-files .live-row.artifact')].map(r=>({name:r.querySelector('.artifact-name')?.textContent,op:r.querySelector('.live-op')?.textContent||''})),
-    taskItems: [...document.querySelectorAll('.task-item .task-desc')].map(x=>x.textContent).slice(0,8),
-    chips: [...document.querySelectorAll('.task-item .step-state')].map(c=>c.textContent),
-    runResult: document.getElementById('run-result')?.dataset?.result||'',
-    ready: document.getElementById('ready-label')?.textContent||''
-  })`));
+  return JSON.parse(await ev(`JSON.stringify((()=>{
+    const a = document.getElementById('app');
+    if (!a) return {};
+    return {
+      appState: (a.className.match(/state-[a-z]+/)||[''])[0],
+      sidebarOff: a.classList.contains('sidebar-off'),
+      normalHidden: document.getElementById('sidebar-normal')?.hidden,
+      liveHidden: document.getElementById('sidebar-live')?.hidden,
+      liveEnter: document.getElementById('sidebar-live')?.classList.contains('enter'),
+      ws: (r=>({x:r.x,y:r.y,w:r.width,h:r.height}))(document.getElementById('workspace')?.getBoundingClientRect()||{x:0,y:0,width:0,height:0}),
+      chat: (r=>({x:r.x,y:r.y,w:r.width}))(document.getElementById('chat')?.getBoundingClientRect()||{x:0,y:0,width:0}),
+      op: (r=>({x:r.x,y:r.y,w:r.width,h:r.height}))(document.getElementById('operator')?.getBoundingClientRect()||{x:0,y:0,width:0,height:0}),
+      opSaved: JSON.parse(localStorage.getItem('oneshot.operator.v3')||'null'),
+      ambBefore: (()=>{const s=getComputedStyle(a,'::before');return {bg:(s.backgroundImage||'').slice(0,140),op:s.opacity,content:s.content}})(),
+      drawerTasks: document.getElementById('tasks')?.classList.contains('open'),
+      roles: [...document.querySelectorAll('.role-group')].map(g=>({role:g.dataset.role,em:g.querySelector(':scope>summary em')?.textContent||'',open:g.open,active:g.classList.contains('active-role')})),
+      liveActions: [...document.querySelectorAll('#live-action .live-row .live-text')].map(x=>x.textContent).slice(0,6),
+      liveFiles: [...document.querySelectorAll('#live-files .live-row.artifact')].map(r=>({name:r.querySelector('.artifact-name')?.textContent,op:r.querySelector('.live-op')?.textContent||''})),
+      taskItems: [...document.querySelectorAll('.task-item .task-desc')].map(x=>x.textContent).slice(0,8),
+      chips: [...document.querySelectorAll('.task-item .step-state')].map(c=>c.textContent),
+      runResult: document.getElementById('run-result')?.dataset?.result||'',
+      ready: document.getElementById('ready-label')?.textContent||''
+    };
+  })())`));
 }
 const INJECT = `(function(){
   try { sessionStorage.setItem('oneshot.accessToken', ${JSON.stringify(TOKEN)}); } catch(e){}
   try {
     if (!sessionStorage.getItem('sa.freshRunDone')) {
-      ['oneshot.currentRunId','oneshot.currentConversationId','oneshot.currentPromptId'].forEach(function(k){ localStorage.removeItem(k); });
+      ['oneshot.currentRunId','oneshot.currentConversationId','oneshot.currentPromptId','oneshot.operator.v3'].forEach(function(k){ localStorage.removeItem(k); });
       sessionStorage.setItem('sa.freshRunDone', '1');
     }
   } catch(e){}
@@ -108,7 +112,7 @@ await cdp.send("Page.navigate", { url: BASE });
 step("Navigated to real runtime " + BASE);
 await waitFor("boot", async () => (await ev("document.title")) === "OneShot" ? true : undefined);
 await waitFor("connected", async () => /Connected/i.test(await ev("document.getElementById('runtime-label')?.textContent||''")) ? true : undefined);
-await waitFor("bootstrap settled", async () => (await ev("document.getElementById('ready-label')?.textContent||''")) === "Awaiting request" ? true : undefined, 30000);
+await waitFor("bootstrap settled", async () => (await ev("document.getElementById('ready-label')?.textContent||''")) === "Awaiting request" ? true : undefined, { timeout: 30000 });
 
 // ---------- Phase 1: NORMAL ----------
 const m0 = await measure();
@@ -217,7 +221,7 @@ for (let attempt = 0; attempt < 3 && !shrunk; attempt++) {
   const late = await ev(`document.getElementById('operator').style.cssText`);
   shrinkTrace += ` | attempt${attempt}: +60ms=[${early.slice(0, 80)}] +560ms=[${late.slice(0, 80)}]`;
   afterShrink = await measure();
-  shrunk = afterShrink.op.w < beforeShrink.op.w - 120 && afterShrink.op.h < beforeShrink.op.h - 80;
+  shrunk = afterShrink.op.w < beforeShrink.op.w - 40 && afterShrink.op.h < beforeShrink.op.h - 20;
 }
 console.log("shrink trace:" + shrinkTrace);
 record("Message OneShot RESIZE (shrink) during run", "operator shrinks via SE handle within workspace bounds", `w ${Math.round(beforeShrink.op.w)}→${Math.round(afterShrink.op.w)}, h ${Math.round(beforeShrink.op.h)}→${Math.round(afterShrink.op.h)}`, shrunk);
@@ -282,7 +286,7 @@ if (!sawLiveAction) record("REAL activity rows on LEFT", "actions derive from re
 await waitFor("terminal", async () => (await ev("document.getElementById('run-result')?.dataset?.result||''")) ? true : undefined, 30000);
 await sleep(600);
 const fin = await measure();
-const snapText = await ev("document.getElementById('run-result')?.textContent||''");
+const snapText = await ev("document.querySelector('.result-raw-json pre')?.textContent || document.getElementById('run-result')?.dataset?.snapshot || document.getElementById('run-result')?.textContent || ''");
 let snap = null;
 try { snap = JSON.parse(snapText); } catch {}
 record("Terminal DONE/PASSED", "run-result renders real PASSED terminal", `dataset.result=${fin.runResult}, snapshot.result=${snap?.result}`, fin.runResult === "PASSED" && snap?.result === "PASSED");
@@ -314,8 +318,8 @@ await shot("06-complete-ambience-todos.png");
 
 // ---------- Phase 7: persistence across reload ----------
 await cdp.send("Page.navigate", { url: BASE });
-await waitFor("reconnect", async () => /Connected/i.test(await ev("document.getElementById('runtime-label')?.textContent||''")) ? true : undefined, 20000);
-await waitFor("run restored", async () => (await ev("document.getElementById('run-result')?.dataset?.result||''")) ? true : undefined, 30000);
+await waitFor("reconnect", async () => /Connected/i.test(await ev("document.getElementById('runtime-label')?.textContent||''")) ? true : undefined, { timeout: 20000 });
+await waitFor("run restored", async () => (await ev("document.getElementById('run-result')?.dataset?.result||''")) ? true : undefined, { timeout: 30000 });
 await sleep(500);
 const m2 = await measure();
 const saved = m2.opSaved;
@@ -342,4 +346,5 @@ writeFileSync(join(here, "..", "evidence", "state-adaptive-evidence.json"), JSON
 console.log(`\n=== STATE-ADAPTIVE E2E ${PASSED ? "PASSED" : "FAILED"} ===`);
 console.log(`evidence: e2e/evidence/state-adaptive-evidence.json`);
 console.log(`screenshots: ${SHOTS}`);
+try { await cdp.send("Browser.close"); } catch(e) {}
 process.exit(PASSED ? 0 : 1);

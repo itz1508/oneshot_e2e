@@ -88,7 +88,9 @@ export class CDP {
   }
 }
 
-export async function waitFor(name, fn, { timeout = 90_000, poll = 200 } = {}) {
+export async function waitFor(name, fn, opts = {}) {
+  const options = typeof opts === "number" ? { timeout: opts } : (opts || {});
+  const { timeout = 90_000, poll = 200 } = options;
   const deadline = Date.now() + timeout;
   for (;;) {
     let v;
