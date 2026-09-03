@@ -9,7 +9,6 @@
     align-items: center;
 }
 
-/* Trigger — chevron sitting on the header's bottom border */
 .trigger {
     display: inline-flex;
     align-items: center;
@@ -25,20 +24,15 @@
     transition: color 0.12s ease;
 }
 
-.trigger:hover {
-    color: #a1a1aa;
-}
+.trigger:hover { color: #a1a1aa; }
+.triggerOpen { color: #a1a1aa; }
 
-.triggerOpen {
-    color: #a1a1aa;
-}
-
-/* Panel */
 .panel {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    width: 300px;
+    width: min(520px, calc(100vw - 24px));
+    max-height: min(76vh, 760px);
     z-index: 100;
     background: #111113;
     border: 1px solid #27272a;
@@ -49,14 +43,8 @@
 }
 
 @keyframes dropIn {
-    from {
-        opacity: 0;
-        transform: translateY(-4px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .panelHeader {
@@ -80,14 +68,11 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    overflow-y: auto;
+    max-height: calc(min(76vh, 760px) - 38px);
 }
 
-/* Fields */
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
+.field { display: flex; flex-direction: column; gap: 3px; }
 
 .label {
     font-size: 10px;
@@ -105,23 +90,10 @@
     margin: 0;
 }
 
-.divider {
-    height: 1px;
-    background: #1e1e22;
-}
+.divider { height: 1px; background: #1e1e22; }
 
-/* Meta grid */
-.metaGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.metaItem {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
+.metaGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.metaItem { display: flex; flex-direction: column; gap: 3px; }
 
 .value {
     font-size: 12px;
@@ -140,39 +112,71 @@
     text-transform: capitalize;
 }
 
-/* Status dot */
-.dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    flex-shrink: 0;
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dotIdle { background: #52525b; }
+.dotRunning { background: #4ade80; box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.15); }
+.dotQueued { background: #facc15; }
+.dotCompleted { background: #60a5fa; }
+.dotFailed { background: #f87171; }
+
+.traceList {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 5px;
 }
 
-.dotIdle {
-    background: #52525b;
+.traceEntry {
+    border: 1px solid #27272a;
+    border-radius: 6px;
+    background: #0c0c0e;
+    overflow: hidden;
 }
 
-.dotRunning {
-    background: #4ade80;
-    box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.15);
+.traceSummary {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 8px;
+    cursor: pointer;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 10px;
+    color: #d4d4d8;
 }
 
-.dotQueued {
-    background: #facc15;
+.traceDetails {
+    display: grid;
+    grid-template-columns: minmax(80px, auto) 1fr;
+    gap: 4px 8px;
+    margin: 0;
+    padding: 8px;
+    border-top: 1px solid #1e1e22;
+    font-size: 10px;
 }
 
-.dotCompleted {
-    background: #60a5fa;
+.traceDetails dt {
+    color: #71717a;
+    overflow-wrap: anywhere;
 }
 
-.dotFailed {
-    background: #f87171;
+.traceDetails dd {
+    margin: 0;
+    color: #d4d4d8;
+    overflow-wrap: anywhere;
+    min-width: 0;
 }
 
-/* Footer */
-.panelFooter {
-    padding-top: 2px;
+.traceDetailBlock { display: contents; }
+
+.traceDetails pre {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font: inherit;
+    color: inherit;
 }
+
+.panelFooter { padding-top: 2px; }
 
 .cancelBtn {
     width: 100%;
@@ -187,11 +191,8 @@
     transition: background 0.12s ease;
 }
 
-.cancelBtn:hover {
-    background: rgba(127, 29, 29, 0.22);
-}
+.cancelBtn:hover { background: rgba(127, 29, 29, 0.22); }
 
-/* Empty state */
 .empty {
     padding: 22px 14px;
     display: flex;
@@ -200,12 +201,5 @@
     gap: 4px;
 }
 
-.emptyTitle {
-    font-size: 12px;
-    color: #71717a;
-}
-
-.emptyHint {
-    font-size: 11px;
-    color: #3f3f46;
-}
+.emptyTitle { font-size: 12px; color: #71717a; }
+.emptyHint { font-size: 11px; color: #3f3f46; }
