@@ -14,8 +14,8 @@ version: "3.8"
 services:
   sandbox-worker:
     build:
-      context: ../../
-      dockerfile: deploy/docker/Dockerfile.sandbox
+      context: ../../../
+      dockerfile: app/deploy/docker/Dockerfile.sandbox
     image: ${ONESHOT_SANDBOX_IMAGE:-oneshot-sandbox-worker:latest}
     user: "${SANDBOX_UID:-10001}:${SANDBOX_GID:-10001}"
 

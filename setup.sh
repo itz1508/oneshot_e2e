@@ -59,8 +59,8 @@ source .venv/bin/activate
 # ── Python dependencies ──────────────────────────────────────────
 echo ""
 echo "[3/6] Installing Python dependencies..."
-pip install -q -r requirements/base.txt
-pip install -q -r requirements/workspace-api.txt
+pip install -q -r app/requirements/base.txt
+pip install -q -r app/requirements/workspace-api.txt
 echo "       Python deps installed"
 
 # ── Node dependencies ────────────────────────────────────────────

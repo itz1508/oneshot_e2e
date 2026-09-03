@@ -40,7 +40,7 @@ cache               Redis localhost:6379/0
 cache TTL           3600 seconds
 ```
 
-`OLLAMA_CONTEXT_LENGTH=8192`, `OLLAMA_KEEP_ALIVE=5m`, and `OLLAMA_NUM_PARALLEL=2` are supplied in `config/local-ai.env.example` and the Docker Compose profile.
+`OLLAMA_CONTEXT_LENGTH=8192`, `OLLAMA_KEEP_ALIVE=5m`, and `OLLAMA_NUM_PARALLEL=2` are supplied in `app/config/local-ai.env.example` and the Docker Compose profile.
 
 ## Cache boundary
 
@@ -72,16 +72,16 @@ ADK provider dependencies:
 python scripts/bootstrap.py --with-adk
 ```
 
-The ADK-specific pins are in `requirements/adk.txt`.
+The ADK-specific pins are in `app/requirements/adk.txt`.
 
 ## Local services
 
 ```bash
-docker compose -f deploy/docker/docker-compose.local-ai.yml up -d
+docker compose -f app/deploy/docker/docker-compose.local-ai.yml up -d
 ollama pull gemma2:9b
 ```
 
-Then load `config/local-ai.env.example` into the environment and start OneShot.
+Then load `app/config/local-ai.env.example` into the environment and start OneShot.
 
 ```bash
 npm start
@@ -98,7 +98,7 @@ python scripts/ollama_preflight.py
 
 `GEMMA2_TIMEOUT_SECONDS` bounds the complete ADK inference operation through `asyncio.wait_for`. Expiry is returned through the normal provider boundary and becomes workflow `ROOT_CAUSE`.
 
-When `ONESHOT_RESEARCH_PROVIDER=adk_gemma2`, `scripts/verify_dependencies.py` validates every exact pin in both `requirements/base.txt` and `requirements/adk.txt`.
+When `ONESHOT_RESEARCH_PROVIDER=adk_gemma2`, `scripts/verify_dependencies.py` validates every exact pin in both `app/requirements/base.txt` and `app/requirements/adk.txt`.
 
 ## HTTP boundary hardening
 

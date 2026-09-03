@@ -13,7 +13,7 @@ rate limiting, and usage tracking.
 
 - Implementation root: `workspace_api/`.
 - Schema/API design: `docs/WORKSPACE_API_DESIGN.md`.
-- Dependency profile: `requirements/workspace-api.txt`.
+- Dependency profile: `app/requirements/workspace-api.txt`.
 - Test authority: `tests/test_workspace_api.py`.
 - Existing TypeScript workflow, ResearchProvider boundary, hashes, Task
   Management, sandbox, and IDE structure are unchanged.

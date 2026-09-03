@@ -290,13 +290,13 @@ const providerKey = (
   (mode === "sample" ? "" : "adk_gemma2")
 ).toLowerCase();
 const profiles = [
-  ["base", "requirements/base.txt"],
-  ["workspace", "requirements/workspace-api.txt"],
+  ["base", "app/requirements/base.txt"],
+  ["workspace", "app/requirements/workspace-api.txt"],
 ];
 if (["adk_gemma2", "google_adk_gemma2"].includes(providerKey)) {
-  profiles.push(["adk", "requirements/adk.txt"]);
+  profiles.push(["adk", "app/requirements/adk.txt"]);
 } else if (["featherless", "featherless_gemma4"].includes(providerKey)) {
-  profiles.push(["featherless", "requirements/featherless.txt"]);
+  profiles.push(["featherless", "app/requirements/featherless.txt"]);
 }
 for (const [profile, requirementsFile] of profiles) {
   ensurePythonProfile(venvPython, profile, requirementsFile);

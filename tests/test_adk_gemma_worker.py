@@ -118,7 +118,7 @@ class AdkGemmaWorkerTests(unittest.TestCase):
                 self._close(p)
 
     def test_local_ai_example_config_declares_live_settings_only(self):
-        text = (ROOT / "config/local-ai.env.example").read_text(
+        text = (ROOT / "app/config/local-ai.env.example").read_text(
             encoding="utf-8"
         )
         for expected in [

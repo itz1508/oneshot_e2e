@@ -74,7 +74,7 @@ def normalize_tree_glyphs(text: str) -> str:
 
 
 def build_workflow_tree_pdf():
-    project_root = Path(__file__).resolve().parent.parent
+    project_root = Path(__file__).resolve().parent.parent.parent
     tree_file = project_root / "docs" / "WORKFLOW_TREE"
     output_pdf = project_root / "docs" / "WORKFLOW_TREE.pdf"
 

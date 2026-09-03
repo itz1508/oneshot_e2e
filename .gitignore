@@ -11,8 +11,8 @@ __pycache__/
 *.pfx
 credentials*
 secrets*
-config/*.env
-!config/*.env.example
+app/config/*.env
+!app/config/*.env.example
 /data/
 dist/
 .venv/
