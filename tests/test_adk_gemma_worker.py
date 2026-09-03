@@ -62,6 +62,8 @@ class AdkGemmaWorkerTests(unittest.TestCase):
             self.assertTrue(out["ok"])
             self.assertEqual(len(out["result"]["requirements"]), 2)
             self.assertEqual(len(out["result"]["success_criteria"]), 2)
+            self.assertIsInstance(out["result"]["deliverable"], str)
+            self.assertGreater(len(out["result"]["deliverable"]), 0)
         finally:
             self._close(p)
 
@@ -94,6 +96,7 @@ class AdkGemmaWorkerTests(unittest.TestCase):
                     },
                 )["result"]
                 source["summary"] = "MUTATED SOURCE THAT CACHE MUST HIDE"
+                source["deliverable"] = "MUTATED DELIVERABLE THAT CACHE MUST HIDE"
                 path.write_text(json.dumps(source), encoding="utf-8")
                 prompt2 = {
                     "prompt_id": "p2",
@@ -113,7 +116,9 @@ class AdkGemmaWorkerTests(unittest.TestCase):
                     },
                 )["result"]
                 self.assertEqual(first["summary"], second["summary"])
+                self.assertEqual(first["deliverable"], second["deliverable"])
                 self.assertNotEqual(second["summary"], source["summary"])
+                self.assertNotEqual(second["deliverable"], source["deliverable"])
             finally:
                 self._close(p)
 
@@ -126,8 +131,6 @@ class AdkGemmaWorkerTests(unittest.TestCase):
             "CACHE_TTL=3600",
         ]:
             self.assertIn(expected, text)
-        # Obsolete "prior local performance profile" variables are never read
-        # by the runtime and were removed from the example configuration.
         for obsolete in [
             "OLLAMA_CONTEXT_LENGTH=",
             "OLLAMA_KEEP_ALIVE=",
