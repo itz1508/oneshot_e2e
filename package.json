@@ -16,12 +16,12 @@
     "test": "npm run build && node --test dist/tests_ts/*.test.js",
     "demo": "node demo.mjs",
     "setup": "node -e \"require('child_process').execSync(process.platform==='win32'?'setup.bat':'bash setup.sh',{stdio:'inherit'})\"",
-    "verify": "python scripts/verify_all.py",
+    "verify": "python app/scripts/verify_all.py",
     "verify:adk-adapter": "npm run build && node --test --test-force-exit dist/tests_ts/adk-gemma-provider.test.js",
     "verify:featherless-adapter": "npm run build && node --test --test-force-exit dist/tests_ts/featherless-provider.test.js",
-    "verify:featherless-live": "npm run build && node scripts/verify_featherless_live.mjs",
-    "preflight:ollama": "python scripts/ollama_preflight.py",
-    "verify:adk-live": "python scripts/verify_adk_live.py",
+    "verify:featherless-live": "npm run build && node e2e/scripts/verify_featherless_live.mjs",
+    "preflight:ollama": "python backend/scripts/ollama_preflight.py",
+    "verify:adk-live": "python e2e/scripts/verify_adk_live.py",
     "build:backend": "tsc -p tsconfig.json",
     "build:ui": "npm --prefix web run build"
   },
@@ -29,8 +29,8 @@
     "@google/adk": "2.0.0"
   },
   "devDependencies": {
-    "@types/node": "file:vendor/npm/types-node-24.0.4.tgz",
-    "typescript": "file:vendor/npm/typescript-5.8.3.tgz",
-    "undici-types": "file:vendor/npm/undici-types-7.8.0.tgz"
+    "@types/node": "file:app/vendor/npm/types-node-24.0.4.tgz",
+    "typescript": "file:app/vendor/npm/typescript-5.8.3.tgz",
+    "undici-types": "file:app/vendor/npm/undici-types-7.8.0.tgz"
   }
 }

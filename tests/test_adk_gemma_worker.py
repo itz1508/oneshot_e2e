@@ -42,7 +42,7 @@ class AdkGemmaWorkerTests(unittest.TestCase):
                 f.close()
 
     def test_worker_structured_draft_without_external_runtime(self):
-        p = self._worker(ROOT / "fixtures/provider/adk-research-draft.json")
+        p = self._worker(ROOT / "app/fixtures/provider/adk-research-draft.json")
         try:
             request = {
                 "id": 1,
@@ -67,7 +67,7 @@ class AdkGemmaWorkerTests(unittest.TestCase):
 
     def test_cache_reuses_noncanonical_draft_for_same_prompt(self):
         source = json.loads(
-            (ROOT / "fixtures/provider/adk-research-draft.json").read_text(
+            (ROOT / "app/fixtures/provider/adk-research-draft.json").read_text(
                 encoding="utf-8"
             )
         )

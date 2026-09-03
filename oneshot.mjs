@@ -170,7 +170,7 @@ function pythonVersion(probe) {
 
 function verifyProfile(python, profile) {
   return capture(python, [
-    "scripts/verify_dependencies.py",
+    "app/scripts/verify_dependencies.py",
     "--profile",
     profile,
   ]);
@@ -359,7 +359,7 @@ try {
 }
 pass("Canonical registry, schemas, and workflow graph verified");
 
-run(venvPython, ["scripts/verify_manifest.py"], {
+run(venvPython, ["app/scripts/verify_manifest.py"], {
   label:
     "MANIFEST.sha256 verification failed; regenerate it only after reviewing the intended source changes",
 });
@@ -371,7 +371,7 @@ if (skipTests) {
   warn("Automated tests were explicitly skipped with --skip-tests");
 } else {
   info("Running the authoritative Python and TypeScript verification suite...");
-  const tests = capture(venvPython, ["scripts/verify_all.py"]);
+  const tests = capture(venvPython, ["app/scripts/verify_all.py"]);
   const testOutput = `${tests.stdout || ""}\n${tests.stderr || ""}`;
   if (tests.status !== 0) {
     fail("Automated verification suite failed", testOutput);

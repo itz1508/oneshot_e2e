@@ -2,7 +2,7 @@ from __future__ import annotations
 import argparse, os, shutil, subprocess, sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 p = argparse.ArgumentParser()
 p.add_argument('--skip-python', action='store_true')

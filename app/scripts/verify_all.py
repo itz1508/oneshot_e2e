@@ -2,7 +2,7 @@ from __future__ import annotations
 import shutil, subprocess, sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def run(cmd):
@@ -28,7 +28,7 @@ if not (ROOT / "node_modules/.bin/tsc").exists() and not (
     ROOT / "node_modules/typescript/bin/tsc"
 ):
     run(["npm", "ci", "--offline"])
-run([py, "scripts/verify_dependencies.py", "--profile", "base"])
+run([py, "app/scripts/verify_dependencies.py", "--profile", "base"])
 run([py, "-m", "unittest", "discover", "-s", "tests", "-v"])
 run(["npm", "run", "build"])
 compiled = sorted((ROOT / "dist/tests_ts").glob("*.test.js"))

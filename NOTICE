@@ -17,7 +17,7 @@ Those licenses do not apply to OneShot-owned material.
    - Licensed under the Apache License, Version 2.0
    - Used by OneShot workflow orchestration.
    - License copy:
-     THIRD_PARTY_LICENSES/Google-ADK-Apache-2.0.txt
+     app/legal/third-party/Google-ADK-Apache-2.0.txt
 
 2. Google ADK research-provider dependencies
    - Used by the isolated researcher provider adapter under

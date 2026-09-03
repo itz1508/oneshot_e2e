@@ -16,7 +16,7 @@ test("Featherless Gemma provider boundary executes canonical chain in determinis
   process.env.ONESHOT_MODE = "test";
   process.env.ONESHOT_RESEARCH_PROVIDER = "featherless";
   process.env.ONESHOT_FEATHERLESS_TEST_DRAFT_FILE =
-    "fixtures/provider/adk-research-draft.json";
+    "app/fixtures/provider/adk-research-draft.json";
   process.env.FEATHERLESS_NUM_PARALLEL = "2";
   delete process.env.FEATHERLESS_MODEL;
 
@@ -115,7 +115,7 @@ test("Production Featherless failure produces ROOT_CAUSE and never silently fall
   process.env.ONESHOT_MODE = "production";
   process.env.ONESHOT_RESEARCH_PROVIDER = "featherless";
   delete process.env.FEATHERLESS_API_KEY;
-  process.env.ONESHOT_FEATHERLESS_TEST_DRAFT_FILE = "fixtures/product/complete-success-seed.json";
+  process.env.ONESHOT_FEATHERLESS_TEST_DRAFT_FILE = "app/fixtures/product/complete-success-seed.json";
 
   try {
     const provider = await resolveResearchProvider(process.cwd());

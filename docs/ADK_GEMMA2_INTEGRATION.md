@@ -63,13 +63,13 @@ If Redis is unavailable, the provider worker uses an in-process TTL cache with t
 Base deterministic runtime:
 
 ```bash
-python scripts/bootstrap.py
+python app/scripts/bootstrap.py
 ```
 
 ADK provider dependencies:
 
 ```bash
-python scripts/bootstrap.py --with-adk
+python app/scripts/bootstrap.py --with-adk
 ```
 
 The ADK-specific pins are in `app/requirements/adk.txt`.
@@ -90,15 +90,15 @@ npm start
 ## Live provider checks
 
 ```bash
-python scripts/verify_adk_live.py
-python scripts/ollama_preflight.py
+python e2e/scripts/verify_adk_live.py
+python backend/scripts/ollama_preflight.py
 ```
 
 `verify_adk_live.py` verifies exact ADK dependency availability, Ollama/model reachability, then starts the real OneShot production HTTP caller with fixture bypass disabled. It executes Google ADK → LiteLLM → Ollama → Gemma inference and requires evidence provenance, dependency edges, non-trivial fixtures, Triple Validation, hash equality, and `DONE PASSED`.
 
 `GEMMA2_TIMEOUT_SECONDS` bounds the complete ADK inference operation through `asyncio.wait_for`. Expiry is returned through the normal provider boundary and becomes workflow `ROOT_CAUSE`.
 
-When `ONESHOT_RESEARCH_PROVIDER=adk_gemma2`, `scripts/verify_dependencies.py` validates every exact pin in both `app/requirements/base.txt` and `app/requirements/adk.txt`.
+When `ONESHOT_RESEARCH_PROVIDER=adk_gemma2`, `app/scripts/verify_dependencies.py` validates every exact pin in both `app/requirements/base.txt` and `app/requirements/adk.txt`.
 
 ## HTTP boundary hardening
 

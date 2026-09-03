@@ -30,7 +30,7 @@
         "evidence_id": "evidence:seed",
         "source": "canonical-success-fixture",
         "statement": "The plan must preserve canonical workflow traceability.",
-        "provenance": "fixtures/product/complete-success-seed.json"
+        "provenance": "app/fixtures/product/complete-success-seed.json"
       }
     ],
     "success_definition": {

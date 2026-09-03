@@ -44,7 +44,7 @@ ONESHOT_MODE=production ONESHOT_RESEARCH_PROVIDER=featherless FEATHERLESS_API_KE
 
 ROUTE 5 — VERIFY
 npm test
-python scripts/verify_all.py
+python app/scripts/verify_all.py
 
 ROUTE 6 — DOCKER
 Only when Docker is available:
@@ -67,4 +67,4 @@ Do not claim anything that was not executed or verified.
 
 ## License
 
-OneShot-owned source is provided under the [Apache License, Version 2.0](LICENSE) (Apache-2.0). Third-party software remains under its own upstream licenses; see [NOTICE](NOTICE) and [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES/).
+OneShot-owned source is provided under the [Apache License, Version 2.0](LICENSE) (Apache-2.0). Third-party software remains under its own upstream licenses; see [NOTICE](NOTICE) and [app/legal/third-party](app/legal/third-party/).

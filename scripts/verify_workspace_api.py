@@ -30,7 +30,7 @@ def find_python() -> str:
 
 def main() -> int:
     py = find_python()
-    run([py, "scripts/verify_dependencies.py", "--profile", "workspace"])
+    run([py, "app/scripts/verify_dependencies.py", "--profile", "workspace"])
     run([py, "-m", "compileall", "-q", "workspace_api"])
     run([py, "-m", "unittest", "tests.test_workspace_api", "-v"])
     run(

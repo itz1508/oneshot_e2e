@@ -128,7 +128,7 @@ npm run demo
 Run the full end-to-end verification suite across all layers:
 
 ```bash
-python scripts/verify_all.py
+python app/scripts/verify_all.py
 ```
 
 ### Verification Matrix:
@@ -156,7 +156,7 @@ npm test
 | **Dual AI Research Providers** | Integrated Google ADK + Ollama (`gemma2:9b`) and Featherless (`google/gemma-4-31B-it`) |
 | **Multi-Tenant Control Plane** | Standalone FastAPI Workspace API sidecar with Argon2 password hashing, encrypted provider credentials, and token analytics |
 | **Real-Time IDE** | Event-driven web interface with live SSE streaming, audit graph projection, and artifact explorer |
-| **Zero Offline Dependencies** | Pinned npm tarballs vendored in `vendor/npm/` — clones and builds with zero network required |
+| **Zero Offline Dependencies** | Pinned npm tarballs vendored in `app/vendor/npm/` — clones and builds with zero network required |
 
 ---
 

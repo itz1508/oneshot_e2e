@@ -4,7 +4,7 @@ from validation.schema_validator import SchemaStore
 from validation.triple_validation import run_triple
 ROOT=Path(__file__).resolve().parents[1]
 class TestFixtureOperators(unittest.TestCase):
- def setUp(self): self.b=json.loads((ROOT/'fixtures/e2e/complete-success.json').read_text());self.s=SchemaStore(ROOT/'schema');self.g=json.loads((ROOT/'workflow/graph.json').read_text())
+ def setUp(self): self.b=json.loads((ROOT/'app/fixtures/e2e/complete-success.json').read_text());self.s=SchemaStore(ROOT/'schema');self.g=json.loads((ROOT/'workflow/graph.json').read_text())
  def fixture(self):
   e=['evidence:research'];p=self.b['plan'];return {'fixture_id':self.b['fixture']['fixture_id'],'researcher_id':self.b['fixture']['researcher_id'],'plan_assertions':[
    {'assertion_id':'exists','operator':'exists','target':'$.plan_id','evidence_ids':e},

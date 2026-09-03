@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class SandboxAdmissionTests(unittest.TestCase):
     def setUp(self):
-        self.b = json.loads((ROOT / "fixtures/e2e/complete-success.json").read_text(encoding="utf-8"))
+        self.b = json.loads((ROOT / "app/fixtures/e2e/complete-success.json").read_text(encoding="utf-8"))
         self.s = SchemaStore(ROOT / "schema")
         self.g = json.loads((ROOT / "workflow/graph.json").read_text(encoding="utf-8"))
         self.confirmed_pkg = self._build_confirmed()

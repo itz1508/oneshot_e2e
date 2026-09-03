@@ -3,7 +3,7 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 
-const FIXTURES_DIR = path.join(__dirname, "..", "..", "fixtures");
+const FIXTURES_DIR = path.join(__dirname, "..", "..", "app", "fixtures");
 
 function loadFixture(name: string) {
   const fp = path.join(FIXTURES_DIR, "e2e", name);

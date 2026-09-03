@@ -3,7 +3,7 @@ import argparse, json, os, re, sys
 from importlib.metadata import version
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def requirement_files(provider: str | None = None) -> list[Path]:

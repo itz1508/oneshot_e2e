@@ -6,7 +6,7 @@ File selection reuses ``source_file_policy.iter_source_files``, so archives
 preserve exactly the shared sensitive-file exclusion policy used by
 ``generate_manifest.py`` / ``verify_manifest.py``.
 
-Usage: python scripts/build_deterministic_zip.py SRC OUT
+Usage: python app/scripts/build_deterministic_zip.py SRC OUT
 Prints the SHA-256 of the produced archive.
 """
 from __future__ import annotations

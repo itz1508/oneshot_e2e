@@ -123,7 +123,7 @@ Configured ADK timeout:             ROOT_CAUSE within bound
 Conditional ADK pin verification:   PASSED
 ```
 
-The ADK adapter tests invoke the real OneShot production provider resolver, persistent worker bridge, canonical Role runtime, HTTP server, artifact creation, Triple Validation, confirmation and hash workflow. The model response is supplied by `fixtures/provider/adk-research-draft.json` so the product integration can be tested deterministically without requiring a local model service in CI.
+The ADK adapter tests invoke the real OneShot production provider resolver, persistent worker bridge, canonical Role runtime, HTTP server, artifact creation, Triple Validation, confirmation and hash workflow. The model response is supplied by `app/fixtures/provider/adk-research-draft.json` so the product integration can be tested deterministically without requiring a local model service in CI.
 
 ## Observed live server run in deterministic ADK adapter mode
 
@@ -151,7 +151,7 @@ created_hash: 23434c38a34f5187e78d6d61ce1614b65a7c9076bc7e51fca31c34e6039e0c5d
 
 ## Live Google ADK → LiteLLM → Ollama → Gemma 2 proof
 
-The target workstation executed `scripts/verify_adk_live.py` with fixture bypass disabled and returned:
+The target workstation executed `e2e/scripts/verify_adk_live.py` with fixture bypass disabled and returned:
 
 ```text
 provider:          Google ADK → LiteLLM → Ollama
@@ -172,8 +172,8 @@ created_hash:      c7cb883471f58552b3724bc6f60aed07112bfddbba9ef43f81e4af45e8951
 Recheck with:
 
 ```bash
-python scripts/verify_adk_live.py
-python scripts/ollama_preflight.py
+python e2e/scripts/verify_adk_live.py
+python backend/scripts/ollama_preflight.py
 ```
 
 The live local-model boundary is accepted because the inference result traversed the production HTTP caller and canonical chain to `DONE PASSED`.

@@ -44,7 +44,7 @@ docker run -d -p 8787:8787 --name oneshot-runner oneshot:latest
 
 5. VERIFY
 npm test
-python scripts/verify_all.py
+python app/scripts/verify_all.py
 
 6. REPORT
 Return the environment, acquisition route, execution mode/provider, commands executed, verification results, Docker result if used, failures/discrepancies, and final observed result.

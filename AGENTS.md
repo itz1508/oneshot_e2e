@@ -15,7 +15,7 @@ Preserve `ROLE != SKILL != TOOL != WORKFLOW`. Role SOPs remain in `backend/role/
 - `npm --prefix web test`: run web tests (node:test).
 - `npm run build:backend && node --test dist/tests_ts/workspace-http.test.js`: run one compiled Node test.
 - `python -m unittest tests.test_source_file_policy -v`: run one Python test module.
-- `python scripts/generate_manifest.py` then `python scripts/verify_manifest.py`: refresh and verify source hashes after reviewing the bounded diff.
+- `python app/scripts/generate_manifest.py` then `python app/scripts/verify_manifest.py`: refresh and verify source hashes after reviewing the bounded diff.
 
 ## Coding Style & Naming Conventions
 

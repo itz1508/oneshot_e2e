@@ -64,12 +64,12 @@ python scripts/verify_workspace_api.py
   workspace tests                                 4 passed, 0 failed
   generated OpenAPI (25 paths + error schema)     PASSED
 
-python scripts/verify_all.py
+python app/scripts/verify_all.py
   Python                                          46 passed, 0 failed
   TypeScript                                      44 passed, 0 failed
   overall                                         ONESHOT_PRODUCTION_E2E_VERIFIED
 
-python scripts/verify_dependencies.py --profile all
+python app/scripts/verify_dependencies.py --profile all
   all exact direct pins                           PASSED
 ```
 
@@ -86,7 +86,7 @@ Run:
 
 ```powershell
 python scripts/verify_workspace_api.py
-python scripts/verify_all.py
+python app/scripts/verify_all.py
 ```
 
 Both commands pass. The code implementation is complete. Remaining deployment

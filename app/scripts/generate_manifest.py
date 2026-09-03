@@ -7,7 +7,7 @@ try:
 except ImportError:
     from source_file_policy import iter_source_files
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def generate_manifest(root: Path = ROOT, manifest_path: Path | None = None) -> int:

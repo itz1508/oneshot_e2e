@@ -12,7 +12,7 @@ ROOT=Path(__file__).resolve().parents[1]
 class TestRuntimeParityExtended(unittest.TestCase):
     def setUp(self):
         self.s=SchemaStore(ROOT/'schema')
-        self.b=json.loads((ROOT/'fixtures/e2e/complete-success.json').read_text())
+        self.b=json.loads((ROOT/'app/fixtures/e2e/complete-success.json').read_text())
         self.g=json.loads((ROOT/'workflow/graph.json').read_text())
 
     def test_graph_parity(self):

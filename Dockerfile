@@ -5,7 +5,7 @@ WORKDIR /app
 # Install root runtime + build dependencies. @google/adk is a registry package;
 # the old offline vendor directory does not contain its dependency closure.
 COPY package*.json tsconfig.json ./
-COPY vendor ./vendor
+COPY app/vendor ./app/vendor
 RUN npm install --ignore-scripts --no-audit --no-fund
 
 # Copy backend source and compile

@@ -15,7 +15,7 @@ test("Google ADK + Gemma provider boundary executes canonical chain in determini
   process.env.ONESHOT_MODE = "production";
   process.env.ONESHOT_RESEARCH_PROVIDER = "adk_gemma2";
   process.env.ONESHOT_ADK_TEST_DRAFT_FILE =
-    "fixtures/provider/adk-research-draft.json";
+    "app/fixtures/provider/adk-research-draft.json";
   process.env.GEMMA2_NUM_PARALLEL = "2";
   const p = await resolveResearchProvider(process.cwd());
   assert.ok(p instanceof AdkGemmaResearchProvider);

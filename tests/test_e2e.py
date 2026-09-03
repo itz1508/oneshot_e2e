@@ -8,7 +8,7 @@ from validation.hash_proof import create_hash,verify_hash
 ROOT=Path(__file__).resolve().parents[1]
 class TestE2E(unittest.TestCase):
  def setUp(self):
-  self.b=json.loads((ROOT/'fixtures/e2e/complete-success.json').read_text()); self.s=SchemaStore(ROOT/'schema'); self.g=json.loads((ROOT/'workflow/graph.json').read_text())
+  self.b=json.loads((ROOT/'app/fixtures/e2e/complete-success.json').read_text()); self.s=SchemaStore(ROOT/'schema'); self.g=json.loads((ROOT/'workflow/graph.json').read_text())
  def build_confirmed(self):
   ev=evaluate_plan(self.b['plan'],self.b['goal'],self.b['researcher'],self.b['fixture'],self.b['schema_artifact'],self.b['validation']); self.assertEqual('PASSED',ev['result'])
   self.b['evaluation']=ev

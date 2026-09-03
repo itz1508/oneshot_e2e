@@ -14,7 +14,7 @@ test("HTTP/UI path reaches DONE through canonical ADK workflow and Researcher pr
   process.env.ONESHOT_MODE = "production";
   process.env.ONESHOT_RESEARCH_PROVIDER = "adk_gemma2";
   process.env.ONESHOT_ADK_TEST_DRAFT_FILE =
-    "fixtures/provider/adk-research-draft.json";
+    "app/fixtures/provider/adk-research-draft.json";
   const provider = await resolveResearchProvider(process.cwd());
   const h = await harness("adk-http", provider);
   const server = await startHttpServer(

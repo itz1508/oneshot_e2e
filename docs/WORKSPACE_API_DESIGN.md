@@ -229,7 +229,7 @@ python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 ## Setup and example usage
 
 ```powershell
-python scripts/bootstrap.py --with-workspace-api
+python app/scripts/bootstrap.py --with-workspace-api
 Copy-Item .env.workspace.example .env.workspace
 python scripts/verify_workspace_api.py
 uvicorn workspace_api.main:app --host 0.0.0.0 --port 8080
