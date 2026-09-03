@@ -38,6 +38,7 @@ class ResearchDraft(Strict):
     plan_steps: list[DraftStep] = Field(min_length=1)
     success_meaning: str
     success_criteria: list[DraftCriterion] = Field(min_length=1)
+    deliverable: str = Field(min_length=1)
 
 
 MODEL = os.getenv("GEMMA2_LOCAL_MODEL", "gemma2:9b")
@@ -167,6 +168,9 @@ async def _build_runner():
             "You are the Researcher model inside OneShot. Return only the structured research draft requested by the output schema. "
             "Use the supplied evidence as support for requirements and success criteria. Dependency required_by indexes refer to requirement indexes, not plan-step indexes. "
             "Derive concise requirements, dependencies, implementation plan steps, success meaning, and measurable success criteria from the user prompt. "
+            "The deliverable field is the complete, production-quality user-requested artifact that Builder must return after canonical validation and execution. "
+            "Generate the deliverable from the user's requested outcome; do not merely repeat the requirement bullets. "
+            "For evaluation or judging artifacts, distinguish observed evidence from inference and never fabricate verification results. "
             "Do not invent deployment, provider, database, security, or workflow requirements that are not requested."
         ),
         output_schema=ResearchDraft,
