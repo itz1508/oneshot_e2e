@@ -7,7 +7,7 @@ Example::
 
     $env:ONESHOT_WORKSPACE_ENVIRONMENT = "development"
     $env:ONESHOT_WORKSPACE_DATABASE_URL = "sqlite:///./data/workspace.db"
-    uvicorn workspace_api.main:app --reload
+    uvicorn --app-dir app workspace_api.main:app --reload
 """
 
 from __future__ import annotations

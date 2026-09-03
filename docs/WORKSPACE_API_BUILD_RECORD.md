@@ -11,10 +11,10 @@ rate limiting, and usage tracking.
 
 ## Authority and isolation
 
-- Implementation root: `workspace_api/`.
+- Implementation root: `app/workspace_api/`.
 - Schema/API design: `docs/WORKSPACE_API_DESIGN.md`.
 - Dependency profile: `app/requirements/workspace-api.txt`.
-- Test authority: `tests/test_workspace_api.py`.
+- Test authority: `app/workspace_api/tests/test_workspace_api.py`.
 - Existing TypeScript workflow, ResearchProvider boundary, hashes, Task
   Management, sandbox, and IDE structure are unchanged.
 - `oneshot-ai-workspace/` was not reused because prior records classify it as an
@@ -58,7 +58,7 @@ At creation time, focused deterministic HTTP tests passed for:
 Final verification on 2026-08-31:
 
 ```text
-python scripts/verify_workspace_api.py
+python app/workspace_api/scripts/verify.py
   dependency profile                              PASSED
   workspace compile                               PASSED
   workspace tests                                 4 passed, 0 failed
@@ -85,7 +85,7 @@ reported as live provider proof.
 Run:
 
 ```powershell
-python scripts/verify_workspace_api.py
+python app/workspace_api/scripts/verify.py
 python app/scripts/verify_all.py
 ```
 

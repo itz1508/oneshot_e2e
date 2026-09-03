@@ -6,7 +6,7 @@ model routes, chat history, completions, and usage analytics.
 Example::
 
     app = create_app()
-    # uvicorn workspace_api.main:app --host 0.0.0.0 --port 8080
+    # uvicorn --app-dir app workspace_api.main:app --host 0.0.0.0 --port 8080
 """
 
 from contextlib import asynccontextmanager

@@ -3,7 +3,7 @@ import importlib.util,tempfile,unittest
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-SPEC=importlib.util.spec_from_file_location('verify_dependencies',ROOT/'scripts/verify_dependencies.py')
+SPEC=importlib.util.spec_from_file_location('verify_dependencies',ROOT/'app/scripts/verify_dependencies.py')
 assert SPEC and SPEC.loader
 VERIFY=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(VERIFY)
 

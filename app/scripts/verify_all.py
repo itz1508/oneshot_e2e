@@ -30,6 +30,7 @@ if not (ROOT / "node_modules/.bin/tsc").exists() and not (
     run(["npm", "ci", "--offline"])
 run([py, "app/scripts/verify_dependencies.py", "--profile", "base"])
 run([py, "-m", "unittest", "discover", "-s", "tests", "-v"])
+run([py, "app/workspace_api/scripts/verify.py"])
 run(["npm", "run", "build"])
 compiled = sorted((ROOT / "dist/tests_ts").glob("*.test.js"))
 if not compiled:

@@ -1,23 +1,30 @@
 """Run dependency, syntax, OpenAPI, database, and HTTP workspace proofs.
 
 Example:
-    python scripts/verify_workspace_api.py
+    python app/workspace_api/scripts/verify.py
 """
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
+APP = ROOT / "app"
 
 
 def run(command: list[str]) -> None:
-    """Run one verification command from the repository root."""
+    """Run one verification command from the repository root.
 
+    The workspace_api package lives at app/workspace_api/. It is imported by its
+    canonical Python package name ``workspace_api``, so ``app`` is placed on
+    PYTHONPATH deterministically for every child process.
+    """
+    env = {**os.environ, "PYTHONPATH": str(APP.resolve())}
     print("+", " ".join(command))
-    subprocess.run(command, cwd=ROOT, check=True)
+    subprocess.run(command, cwd=ROOT, env=env, check=True)
 
 
 def find_python() -> str:
@@ -31,8 +38,8 @@ def find_python() -> str:
 def main() -> int:
     py = find_python()
     run([py, "app/scripts/verify_dependencies.py", "--profile", "workspace"])
-    run([py, "-m", "compileall", "-q", "workspace_api"])
-    run([py, "-m", "unittest", "tests.test_workspace_api", "-v"])
+    run([py, "-m", "compileall", "-q", "app/workspace_api"])
+    run([py, "-m", "unittest", "workspace_api.tests.test_workspace_api", "-v"])
     run(
         [
             py,

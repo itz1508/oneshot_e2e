@@ -4,7 +4,7 @@ Last updated: 2026-08-31
 
 ## Boundary
 
-`workspace_api/` is a Python control-plane sidecar. It owns users, workspace
+`app/workspace_api/` is a Python control-plane sidecar. It owns users, workspace
 tenancy, subscriptions, provider credentials, model configuration/routing,
 chat/context storage, usage accounting, rate limiting, and its own HTTP API.
 
@@ -231,8 +231,8 @@ python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 ```powershell
 python app/scripts/bootstrap.py --with-workspace-api
 Copy-Item .env.workspace.example .env.workspace
-python scripts/verify_workspace_api.py
-uvicorn workspace_api.main:app --host 0.0.0.0 --port 8080
+python app/workspace_api/scripts/verify.py
+uvicorn --app-dir app workspace_api.main:app --host 0.0.0.0 --port 8080
 ```
 
 Register, then use the returned access token:
