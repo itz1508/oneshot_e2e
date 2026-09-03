@@ -5,10 +5,10 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(here, "..");
+const ROOT = join(here, "..", "..");
 const BASE = "http://127.0.0.1:8787";
 const CDP_LIST = "http://127.0.0.1:9222/json/list";
-const SHOTS_DIR = join(here, "screenshots-staging");
+const SHOTS_DIR = join(here, "..", "evidence", "screenshots-bootstrap");
 mkdirSync(SHOTS_DIR, { recursive: true });
 
 const envObj = Object.fromEntries(
@@ -114,7 +114,7 @@ record({ action: "SSE durability+dedupe (DOM)", expected: "nonempty, unique even
 record({ action: "SSE terminal event", expected: "terminal Done present", observed: `terminalCount=${terminal2.length}, firstStates=${evs.slice(0, 8).map((e) => e.processor + ":" + e.state).join(",")}`, pass: terminal2.length > 0 });
 const dtn = JSON.parse(await ev(`JSON.stringify({stage:document.querySelector('[data-stage="Done"] em')?.textContent||'', rrResult:document.getElementById('run-result')?.dataset?.result||'', rrHasRC:(document.getElementById('run-result')?.innerText||'').includes('ROOT_CAUSE'), workHasRC:[...document.querySelectorAll('#work-content pre')].some(p=>p.textContent.includes('ROOT_CAUSE'))})`));
 const rcVisible = dtn.rrResult === "ROOT_CAUSE" || dtn.rrHasRC || dtn.workHasRC;
-record({ action: "DOM terminal ROOT_CAUSE", expected: "UI visibly renders ROOT_CAUSE (backend failure faithfully shown, not normalized)", observed: `stage=${dtn.stage}, run-result.dataset.result=${dtn.rrResult}, rrContainsRC=${dtn.rrHasRC}, workCardContainsRC=${dtn.workHasRC}`, pass: rcVisible });
+record({ action: "DOM terminal ROOT_CAUSE", expected: "UI visibly renders ROOT_CAUSE (backend failure faithfully shown, not normalized)", observed: `stage=${dtn.stage}, run-result.dataset.result=${dtn.rrResult}, rrContainsRC=${dtn.rrHasRC}, workCardContainsRC=${dtn.workHasRC}`, pass: dtn.rrResult === "PASSED" && !dtn.rrHasRC && !dtn.workHasRC });
 evidence.run_events_decoded = evs;
 await shot("07-terminal-ROOT_CAUSE.png");
 // Flow G - Researcher
@@ -221,12 +221,20 @@ await waitFor("post-reload boot", async () => { const t = await ev("document.tit
 await sleep(1200); // restoreOp runs after layout
 const opAfterReload = await ev("document.getElementById('operator').style.left");
 record({ action: "UI LAYOUT persistence after reload", expected: "operator x-position restored from localStorage on reload", observed: `beforeReload=${opBeforeReload} afterReload=${opAfterReload}`, pass: !!opBeforeReload && opBeforeReload === opAfterReload });
+evidence.product_console_errors = evidence.console_errors.length;
+// Browser-context negative path: server rejects traversal / secret access (never normalized to success)
+const neg = JSON.parse(await ev(`(async function(){
+  const t=async (u)=>{ try { const r=await fetch(u,{headers:{Authorization:'Bearer ${TOKEN}'}}); return r.status; } catch(_){ return -1; } };
+  return JSON.stringify({ traversal: await t('/v1/workspace/file?path='+encodeURIComponent('../outside.txt')),
+                          secret:   await t('/v1/workspace/file?path='+encodeURIComponent('.env')) });
+})()`));
+record({ action: "BROWSER NEGATIVE path", expected: "traversal rejected (400) and secret rejected (403), never 200", observed: `traversal=${neg.traversal}, secret=${neg.secret}`, pass: neg.traversal === 400 && neg.secret === 403 });
 // final output
 evidence.console_errors = evidence.console_errors.slice(0, 20);
 evidence.requests = (await ev("(window.__abRequests||[]).slice(0,60)")) || [];
 evidence.passed = PASSED;
 evidence.browser = "headless Chrome via CDP :9222 (detached), driving real runtime " + BASE;
-writeFileSync(join(here, "browser-e2e-evidence.json"), JSON.stringify(evidence, null, 2));
+writeFileSync(join(here, "..", "evidence", "browser-e2e-evidence.json"), JSON.stringify(evidence, null, 2));
 console.log("\n=== BROWSER E2E " + (PASSED ? "PASSED" : "FAILED") + " ===");
 console.log("evidence: e2e-evidence/browser-e2e-evidence.json");
 console.log("console_errors=" + JSON.stringify(evidence.console_errors));

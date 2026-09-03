@@ -23,7 +23,18 @@ git clone https://github.com/itz1508/oneshot_e2e.git
 cd oneshot_e2e
 
 ROUTE 3 — INSTALL
+Recommended (canonical single-command launcher):
 npm run oneshot
+
+Manual bootstrap (equivalent, explicit paths):
+Windows (PowerShell/cmd):
+app\bootstrap\setup.bat
+
+Linux/macOS:
+./app/bootstrap/setup.sh
+
+Agent review prompt generator (orchestration only):
+npm run agent:review
 
 If installation fails, stop and report the exact ROOT CAUSE.
 

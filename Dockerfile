@@ -42,6 +42,8 @@ COPY --from=node-builder /app/dist ./dist
 COPY --from=node-builder /app/web/dist ./web/dist
 # Schema, Python validation package, reusable skills, and workflow live under backend/
 COPY backend ./backend
+# Deterministic fixture provider reads the canonical seed bundle at app/fixtures
+COPY app/fixtures ./app/fixtures
 COPY contract-registry.json CANONICAL_WORKFLOW.md LICENSE NOTICE ./
 
 # Python import roots: `validation` lives at backend/validation/python; `workspace_api` lives at app
