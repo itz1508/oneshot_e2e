@@ -45,7 +45,7 @@ COPY validation ./validation
 COPY workflow ./workflow
 COPY skill ./skill
 COPY ui ./ui
-COPY contract-registry.json CANONICAL_WORKFLOW.md ./
+COPY contract-registry.json CANONICAL_WORKFLOW.md LICENSE NOTICE ./
 
 # Create durable/evidence directories
 RUN mkdir -p data/runs data/run-state data/task-events data/checkpoints data/conversations data/sandbox-workspaces

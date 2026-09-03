@@ -67,4 +67,4 @@ Do not claim anything that was not executed or verified.
 
 ## License
 
-OneShot-owned source is provided under the [OneShot Evaluator License](LICENSE). Third-party software remains under its own upstream licenses; see [NOTICE](NOTICE) and [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES/).
+OneShot-owned source is provided under the [Apache License, Version 2.0](LICENSE) (Apache-2.0). Third-party software remains under its own upstream licenses; see [NOTICE](NOTICE) and [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES/).
