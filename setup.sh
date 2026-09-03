@@ -84,10 +84,10 @@ echo ""
 echo "[6/6] Running test suite (94 tests)..."
 echo ""
 
-$PYTHON_CMD -m unittest discover -s tests -v 2>&1
+$PYTHON_CMD -m unittest discover -s backend/test/python -v 2>&1
 
 echo ""
-node --test --test-force-exit dist/tests_ts/*.test.js
+node --test --test-force-exit dist/backend/test/ts/*.test.js
 
 echo ""
 echo " ============================================================"

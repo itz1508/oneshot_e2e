@@ -46,7 +46,7 @@ export class OneShotStageAgent extends BaseAgent {
       return;
     }
 
-    const result = (await this.handler(ctx)) ?? {};
+    const result = ((await this.handler(ctx)) ?? {}) as StageOutcome;
     yield createEvent({
       author: this.name,
       actions: createEventActions({

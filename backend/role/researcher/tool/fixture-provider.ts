@@ -11,7 +11,7 @@ function rewrite(value:unknown,map:Map<string,string>):unknown{
   return value;
 }
 export class FixtureResearchProvider implements ResearchProvider {
-  constructor(private fixturePath=resolve(process.cwd(),"fixtures/product/complete-success-seed.json")){}
+  constructor(private fixturePath=resolve(process.cwd(),"app/fixtures/product/complete-success-seed.json")){}
   async research(prompt:Prompt,runId:string):Promise<ResearchBundle>{
     const seed=JSON.parse(await readFile(this.fixturePath,"utf8")) as ResearchBundle;
     const map=new Map<string,string>([

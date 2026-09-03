@@ -132,8 +132,8 @@ python app/scripts/verify_all.py
 ```
 
 ### Verification Matrix:
-- **47 Python unit tests** (`tests/`): Schema validation, model parity, graph structure, fixture assertions, RFC 8785 JCS canonicalization, SHA-256 equality, Workspace API security, rate limiting, and archive secret-selection parity.
-- **47 TypeScript integration tests** (`tests_ts/`): Google ADK adapter, Featherless adapter, intent collection, sandbox admission boundary, process isolation, SSE streaming, task event store, and workspace filesystem security.
+- **47 Python unit tests** (`backend/test/python/`): Schema validation, model parity, graph structure, fixture assertions, RFC 8785 JCS canonicalization, SHA-256 equality, Workspace API security, rate limiting, and archive secret-selection parity.
+- **47 TypeScript integration tests** (`backend/test/ts/`): Google ADK adapter, Featherless adapter, intent collection, sandbox admission boundary, process isolation, SSE streaming, task event store, and workspace filesystem security.
 - **Expected result:** `ONESHOT_PRODUCTION_E2E_VERIFIED`
 
 To run TypeScript tests directly:

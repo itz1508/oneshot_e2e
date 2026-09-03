@@ -40,7 +40,7 @@ export async function resolveResearchProvider(
 
   if (mode === "sample") {
     return new FixtureResearchProvider(
-      resolve(projectRoot, "fixtures/product/complete-success-seed.json"),
+      resolve(projectRoot, "app/fixtures/product/complete-success-seed.json"),
     );
   }
 

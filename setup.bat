@@ -108,7 +108,7 @@ echo.
 echo [6/6] Running test suite (94 tests)...
 echo.
 
-python -m unittest discover -s tests -v 2>&1
+python -m unittest discover -s backend/test/python -v 2>&1
 if %ERRORLEVEL% neq 0 (
     echo.
     echo  !! Python tests failed.
@@ -116,7 +116,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo.
-node --test --test-force-exit dist/tests_ts/*.test.js
+node --test --test-force-exit dist/backend/test/ts/*.test.js
 if %ERRORLEVEL% neq 0 (
     echo.
     echo  !! TypeScript tests failed.

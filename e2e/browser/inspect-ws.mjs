@@ -1,0 +1,11 @@
+const t = await (await fetch("http://127.0.0.1:9222/json/list")).json();
+const p = t.find((x) => x.type === "page");
+const ws = new WebSocket(p.webSocketDebuggerUrl);
+await new Promise((ok, e) => { ws.onopen = ok; ws.onerror = e; });
+let id = 1; const pend = new Map();
+ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id && pend.has(d.id)) { pend.get(d.id)(d.result); pend.delete(d.id); } };
+const send = (method, params = {}) => new Promise((r) => { const i = id++; pend.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
+const ev = async (x) => { const r = await send("Runtime.evaluate", { expression: x, returnByValue: true }); return r.result?.value; };
+const info = await ev(`JSON.stringify({treeExists:!!document.getElementById('workspace-tree'),rows:document.querySelectorAll('#workspace-tree .tree-row').length,rowTexts:[...document.querySelectorAll('#workspace-tree .tree-row')].map(function(b){return b.textContent.trim();}),state:(document.getElementById('workspace-state')?.textContent||'')})`);
+console.log("INFO=" + info);
+process.exit(0);

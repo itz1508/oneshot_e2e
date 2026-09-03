@@ -6,7 +6,7 @@ import { ResearcherRole } from "./role.js";
 
 export class ResearcherWorkflow {
   readonly role = ResearcherRole;
-  private tools;
+  private tools: ReturnType<typeof researcherTools>;
   constructor(provider: ResearchProvider, private contracts: CanonicalContractSkill) {
     this.tools = researcherTools(provider);
   }

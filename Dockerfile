@@ -40,12 +40,12 @@ COPY --from=node-builder /app/node_modules ./node_modules
 # Copy compiled backend and React IDE assets
 COPY --from=node-builder /app/dist ./dist
 COPY --from=node-builder /app/web/dist ./web/dist
-COPY schema ./schema
-COPY validation ./validation
-COPY workflow ./workflow
-COPY skill ./skill
-COPY ui ./ui
+# Schema, Python validation package, reusable skills, and workflow live under backend/
+COPY backend ./backend
 COPY contract-registry.json CANONICAL_WORKFLOW.md LICENSE NOTICE ./
+
+# Python import roots: `validation` lives at backend/validation/python; `workspace_api` lives at app
+ENV PYTHONPATH=/app/backend/validation/python:/app/app
 
 # Create durable/evidence directories
 RUN mkdir -p data/runs data/run-state data/task-events data/checkpoints data/conversations data/sandbox-workspaces

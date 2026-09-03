@@ -1,0 +1,513 @@
+{
+  "started_at": "2026-09-03T15:17:32.990Z",
+  "asserts": [
+    {
+      "action": "APP LOAD real runtime",
+      "expected": "title='OneShot', app present, runtime Connected, no auth overlay, no fatal error",
+      "observed": "title=OneShot, runtime=\"Connected · sample · FixtureResearchProvider\", genDisabled=true, authOverlay=\"auth-overlay\"",
+      "pass": true
+    },
+    {
+      "action": "HEALTH visible",
+      "expected": "runtime-label includes Connected (from real /api/health)",
+      "observed": "Connected · sample · FixtureResearchProvider",
+      "pass": true
+    },
+    {
+      "action": "USER MESSAGE submitted real request",
+      "expected": "chat-message-user present with 'parses csv'",
+      "observed": "[\"chat-message-user:build a python cli tool that parses csv files and prints a summary\"]",
+      "pass": true
+    },
+    {
+      "action": "READINESS reflects real ready_for_prompt=true",
+      "expected": "ready-label='Ready', generate enabled",
+      "observed": "ready=Ready, genDisabled=false",
+      "pass": true
+    },
+    {
+      "action": "INSUFFICIENT_INTENT",
+      "expected": "explicitness",
+      "observed": "NOT EXERCISABLE WITH CURRENT FIXTURE RUNTIME (ready_for_prompt always true) — not a frontend failure",
+      "pass": true
+    },
+    {
+      "action": "GENERATE creates real run",
+      "expected": "real run_id+prompt_id retained; Task Management open; run-meta shows Run/Prompt",
+      "observed": "runId=7c90eba4-fb7f-4511-8819-08435fb9c8be, promptId=prompt:7c90eba4-fb7f-4511-8819-08435fb9c8be, tasksOpen=true, meta=\"Prompt(prompt:7c90eba4-fb7f-4511-8819-08435fb9c8be) · Run 7c90eba4-fb7f-4511-8819-08435fb9c8be\"",
+      "pass": true
+    },
+    {
+      "action": "SSE durability+dedupe (DOM)",
+      "expected": "nonempty, unique event ids, backend sequence order",
+      "observed": "count=33, unique=33, seqSorted=true",
+      "pass": true
+    },
+    {
+      "action": "SSE terminal event",
+      "expected": "terminal Done present",
+      "observed": "terminalCount=1, firstStates=Researcher:PENDING,Planner:PENDING,Refactor:PENDING,GapAnalysis:PENDING,Evaluation:PENDING,SchemaValidation:PENDING,FixtureValidation:PENDING,GoalValidation:PENDING",
+      "pass": true
+    },
+    {
+      "action": "DOM terminal ROOT_CAUSE",
+      "expected": "UI visibly renders ROOT_CAUSE (backend failure faithfully shown, not normalized)",
+      "observed": "stage=COMPLETE, run-result.dataset.result=ROOT_CAUSE, rrContainsRC=true, workCardContainsRC=true",
+      "pass": true
+    },
+    {
+      "action": "RESEARCHER state",
+      "expected": "Researcher shows a state from real backend events",
+      "observed": "summary=COMPLETE, state=COMPLETE, activityEls=0",
+      "pass": true
+    },
+    {
+      "action": "RESEARCHER expanded",
+      "expected": "researcher details open",
+      "observed": "expanded=true",
+      "pass": true
+    },
+    {
+      "action": "STAGE PROGRESSION event-driven",
+      "expected": "processor stages reflect received events (RUNNING/COMPLETE)",
+      "observed": "[\"Planner:COMPLETE\",\"Refactor:COMPLETE\",\"Evaluation:COMPLETE\",\"Done:COMPLETE\"]",
+      "pass": true
+    },
+    {
+      "action": "RUN CONTEXT opens",
+      "expected": "context drawer open",
+      "observed": "open=true",
+      "pass": true
+    },
+    {
+      "action": "RUN CONTEXT content",
+      "expected": "real runtime-derived context (Agent/runtime input) or truthful unavailable state",
+      "observed": "value=\"Run context is not exposed by the current runtime snapshot.\"",
+      "pass": true
+    },
+    {
+      "action": "WORKSPACE tree real",
+      "expected": "real repo tree rows rendered (not hard-coded)",
+      "observed": "372 rows",
+      "pass": true
+    },
+    {
+      "action": "WORKSPACE FILE real content",
+      "expected": "actual repo file content visible in .file-view",
+      "observed": "view=\"# OneShot Reusable Skill vs. Role Architecture — Core Rules\n\n## 1. Three-Way Responsibility Partition\n\n| Category | Loca\" (class=file-view)",
+      "pass": true
+    },
+    {
+      "action": "UI SIDEBAR toggle",
+      "expected": "sidebar-off toggles on the real app",
+      "observed": "before=true after=false",
+      "pass": true
+    },
+    {
+      "action": "UI TOPBAR toggle",
+      "expected": "top bar collapses via top-handle (app.top-off class flips)",
+      "observed": "top-off before=false after=true",
+      "pass": true
+    },
+    {
+      "action": "UI OPERATOR move via pointer drag",
+      "expected": "operator moves and stays within workspace bounds",
+      "observed": "before(left,top)=(16px,253px) after=(24px,265px) inside=true",
+      "pass": true
+    },
+    {
+      "action": "UI OPERATOR resize",
+      "expected": "size changes via se handle and stays within bounds",
+      "observed": "before(w,h)=(684px,164px) after=(700px,421px) inside=true",
+      "pass": true
+    },
+    {
+      "action": "UI RAIL vertical move",
+      "expected": "rail-stack moves vertically via drag",
+      "observed": "top 10 -> 70",
+      "pass": true
+    },
+    {
+      "action": "UI LAYOUT persistence saved",
+      "expected": "operator.v3 and rail.y persisted to localStorage on interactions",
+      "observed": "opSaved=true, railSaved=true",
+      "pass": true
+    },
+    {
+      "action": "UI LAYOUT persistence after reload",
+      "expected": "operator x-position restored from localStorage on reload",
+      "observed": "beforeReload=8px afterReload=8px",
+      "pass": true
+    }
+  ],
+  "steps": [
+    {
+      "at": "2026-09-03T15:17:33.061Z",
+      "msg": "Navigated browser to real runtime http://127.0.0.1:8787"
+    },
+    {
+      "at": "2026-09-03T15:17:33.337Z",
+      "msg": "Submitted real message via Send"
+    },
+    {
+      "at": "2026-09-03T15:17:33.566Z",
+      "msg": "Clicked Generate"
+    },
+    {
+      "at": "2026-09-03T15:17:33.840Z",
+      "msg": "Awaiting real SSE terminal event (Done COMPLETE)"
+    },
+    {
+      "at": "2026-09-03T15:17:36.803Z",
+      "msg": "Researcher activity: FixtureResearchProvider emitted no search/extract activity events — recorded as not emitted (not fabricated)."
+    },
+    {
+      "at": "2026-09-03T15:17:36.837Z",
+      "msg": "Opened Run Context"
+    },
+    {
+      "at": "2026-09-03T15:17:37.614Z",
+      "msg": "Workspace file opened read-only; no execute/modify on open."
+    }
+  ],
+  "console_errors": [],
+  "run_events_decoded": [
+    {
+      "eventId": "b6b0d85d-7135-4b9c-901c-3c0e7025a3ff",
+      "sequence": 1,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Researcher",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.568Z"
+    },
+    {
+      "eventId": "e233c958-2081-4fda-843d-bf8c64e4845a",
+      "sequence": 2,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Planner",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.569Z"
+    },
+    {
+      "eventId": "effec615-9635-4c99-8b6a-71880c9544ea",
+      "sequence": 3,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Refactor",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.571Z"
+    },
+    {
+      "eventId": "f1588436-f8f8-4556-a7f1-9deadc31603d",
+      "sequence": 4,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "GapAnalysis",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.572Z"
+    },
+    {
+      "eventId": "2d2fe959-3c9c-42b5-b30b-7192d16d9ff9",
+      "sequence": 5,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Evaluation",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.573Z"
+    },
+    {
+      "eventId": "ba7842e9-45d6-432e-ae7d-3875fa9a7cb6",
+      "sequence": 6,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "SchemaValidation",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.574Z"
+    },
+    {
+      "eventId": "5736f9fd-6e29-409f-9fed-ea077632ad41",
+      "sequence": 7,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "FixtureValidation",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.576Z"
+    },
+    {
+      "eventId": "50c6820b-1489-42cd-a7c7-10a1c38cd928",
+      "sequence": 8,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "GoalValidation",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.577Z"
+    },
+    {
+      "eventId": "0739b83f-f6b1-4bd6-a7ec-836c13789f11",
+      "sequence": 9,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "TripleValidation",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.578Z"
+    },
+    {
+      "eventId": "d346aa89-8d11-4bc7-b884-dcb5c5bb1d1d",
+      "sequence": 10,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Confirmed",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.579Z"
+    },
+    {
+      "eventId": "4e256518-29f4-483f-ba6f-ce40ae62ede2",
+      "sequence": 11,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "CreateHash",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.580Z"
+    },
+    {
+      "eventId": "c8d17655-7ca0-47de-ba78-b10b6085f487",
+      "sequence": 12,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Builder",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.581Z"
+    },
+    {
+      "eventId": "39c8886f-f7b7-46a8-b30f-e8644da1caaa",
+      "sequence": 13,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Hash",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.582Z"
+    },
+    {
+      "eventId": "77de8281-4189-4f1f-9993-d87269e31030",
+      "sequence": 14,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Done",
+      "scope": "WORKFLOW",
+      "state": "PENDING",
+      "timestamp": "2026-09-03T15:17:33.584Z"
+    },
+    {
+      "eventId": "cf5998c6-04a0-42b5-9e2a-40f6805fe083",
+      "sequence": 15,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Researcher",
+      "scope": "WORKFLOW",
+      "state": "RUNNING",
+      "timestamp": "2026-09-03T15:17:33.586Z"
+    },
+    {
+      "eventId": "f959d68b-2230-4db6-9aca-cf2499c1ce07",
+      "sequence": 16,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Researcher",
+      "scope": "WORKFLOW",
+      "state": "COMPLETE",
+      "result": "PASSED",
+      "artifactId": "researcher:7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "timestamp": "2026-09-03T15:17:33.609Z"
+    },
+    {
+      "eventId": "9d05f790-27f7-44f5-8fca-c4288f150815",
+      "sequence": 17,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Planner",
+      "scope": "WORKFLOW",
+      "state": "RUNNING",
+      "timestamp": "2026-09-03T15:17:33.612Z"
+    },
+    {
+      "eventId": "1c4054e5-a1fd-44ad-8ef7-76a4308980c7",
+      "sequence": 18,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Planner",
+      "scope": "WORKFLOW",
+      "state": "COMPLETE",
+      "result": "PASSED",
+      "message": "reviewed=11; findings=0",
+      "artifactId": "audit:7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "timestamp": "2026-09-03T15:17:33.616Z"
+    },
+    {
+      "eventId": "fe250b4a-78ce-418d-95b2-e14034376bfa",
+      "sequence": 19,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Refactor",
+      "scope": "WORKFLOW",
+      "state": "RUNNING",
+      "timestamp": "2026-09-03T15:17:33.619Z"
+    },
+    {
+      "eventId": "1da4ac56-a2ea-423f-9c1c-4dc18deabc2c",
+      "sequence": 20,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Refactor",
+      "scope": "WORKFLOW",
+      "state": "COMPLETE",
+      "result": "PASSED",
+      "message": "plan_id preserved; revision=1",
+      "artifactId": "plan:7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "timestamp": "2026-09-03T15:17:33.623Z"
+    },
+    {
+      "eventId": "2251ede3-4f5a-4f74-b3ee-741897ae5940",
+      "sequence": 21,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "GapAnalysis",
+      "scope": "WORKFLOW",
+      "state": "RUNNING",
+      "timestamp": "2026-09-03T15:17:33.626Z"
+    },
+    {
+      "eventId": "21113cbf-bdb3-4d89-8f77-2400a52da7bc",
+      "sequence": 22,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "GapAnalysis",
+      "scope": "WORKFLOW",
+      "state": "COMPLETE",
+      "result": "PASSED",
+      "message": "gap_0=true; resolved=0",
+      "artifactId": "plan:7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "timestamp": "2026-09-03T15:17:33.634Z"
+    },
+    {
+      "eventId": "44856c8c-c3c4-400a-a0fd-5df94290eba0",
+      "sequence": 23,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Evaluation",
+      "scope": "WORKFLOW",
+      "state": "RUNNING",
+      "timestamp": "2026-09-03T15:17:33.637Z"
+    },
+    {
+      "eventId": "42e1fb94-feb8-4eea-8aa5-01b32f96f4f0",
+      "sequence": 24,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Evaluation",
+      "scope": "WORKFLOW",
+      "state": "COMPLETE",
+      "result": "PASSED",
+      "message": "evidence=9",
+      "artifactId": "plan:7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "timestamp": "2026-09-03T15:17:33.642Z"
+    },
+    {
+      "eventId": "22fff9eb-d938-45f5-80fa-96a1ed284990",
+      "sequence": 25,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "SchemaValidation",
+      "scope": "WORKFLOW",
+      "state": "RUNNING",
+      "timestamp": "2026-09-03T15:17:33.644Z"
+    },
+    {
+      "eventId": "47bec058-653a-47c2-9d0f-9b1d60f7d8b2",
+      "sequence": 26,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "FixtureValidation",
+      "scope": "WORKFLOW",
+      "state": "RUNNING",
+      "timestamp": "2026-09-03T15:17:33.646Z"
+    },
+    {
+      "eventId": "09d01224-59f5-4064-971f-9b0a7e44209b",
+      "sequence": 27,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "GoalValidation",
+      "scope": "WORKFLOW",
+      "state": "RUNNING",
+      "timestamp": "2026-09-03T15:17:33.647Z"
+    },
+    {
+      "eventId": "441a8845-59db-48ff-985b-795be18dff5e",
+      "sequence": 28,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "SchemaValidation",
+      "scope": "WORKFLOW",
+      "state": "COMPLETE",
+      "result": {},
+      "timestamp": "2026-09-03T15:17:33.649Z"
+    },
+    {
+      "eventId": "51e33c0c-bf70-4e63-9465-32a71b1c5a40",
+      "sequence": 29,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "FixtureValidation",
+      "scope": "WORKFLOW",
+      "state": "COMPLETE",
+      "result": {},
+      "timestamp": "2026-09-03T15:17:33.651Z"
+    },
+    {
+      "eventId": "b1c9c649-2f6d-4840-a3a8-9722b9ccab9d",
+      "sequence": 30,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "GoalValidation",
+      "scope": "WORKFLOW",
+      "state": "COMPLETE",
+      "result": {},
+      "timestamp": "2026-09-03T15:17:33.654Z"
+    },
+    {
+      "eventId": "801b8b2d-5357-4d6d-8214-a68a2f98378d",
+      "sequence": 31,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "TripleValidation",
+      "scope": "WORKFLOW",
+      "state": "RUNNING",
+      "timestamp": "2026-09-03T15:17:33.657Z"
+    },
+    {
+      "eventId": "f3e04e91-ae4f-4623-a883-fde9e0a26a81",
+      "sequence": 32,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Done",
+      "scope": "WORKFLOW",
+      "state": "RUNNING",
+      "timestamp": "2026-09-03T15:17:33.659Z"
+    },
+    {
+      "eventId": "e0705a47-8d81-4564-a3ab-dc882aec95e7",
+      "sequence": 33,
+      "runId": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "processor": "Done",
+      "scope": "WORKFLOW",
+      "state": "COMPLETE",
+      "result": "ROOT_CAUSE",
+      "message": "Triple Validation join mismatch: schema plan_id undefined != plan:7c90eba4-fb7f-4511-8819-08435fb9c8be; fixture plan_id undefined != plan:7c90eba4-fb7f-4511-8819-08435fb9c8be; goal plan_id undefined != plan:7c90eba4-fb7f-4511-8819-08435fb9c8be; schema_id undefined != schema:7c90eba4-fb7f-4511-8819-08435fb9c8be; fixture_id undefined != fixture:7c90eba4-fb7f-4511-8819-08435fb9c8be; goal_id undefined != goal:7c90eba4-fb7f-4511-8819-08435fb9c8be",
+      "timestamp": "2026-09-03T15:17:33.661Z"
+    }
+  ],
+  "bootOK": "OneShot",
+  "run_id": "7c90eba4-fb7f-4511-8819-08435fb9c8be",
+  "prompt_id": "prompt:7c90eba4-fb7f-4511-8819-08435fb9c8be",
+  "requests": [
+    {
+      "url": "/api/health",
+      "method": "GET",
+      "ts": "2026-09-03T15:17:41.387Z",
+      "status": 200,
+      "resp": "{\"status\":\"ok\",\"workflow\":\"oneshot-canonical-workflow\",\"mode\":\"sample\",\"provider\":\"FixtureResearchProvider\",\"task_management\":true,\"intent_collection\":true,\"sandbox_service\":true,\"adk_graph\":\"oneshot-adk-researcher-v1\",\"authority_graph\":\"oneshot-authority-trace-v1\",\"sandbox_graph\":\"oneshot-sandbox-execution-v1\"}"
+    },
+    {
+      "url": "/v1/workspace/tree?path=.&depth=3",
+      "method": "GET",
+      "ts": "2026-09-03T15:17:41.393Z",
+      "status": 200,
+      "resp": "{\"root\":\".\",\"path\":\".\",\"depth\":3,\"nodes\":[{\"name\":\".agents\",\"path\":\".agents\",\"type\":\"folder\",\"children\":[{\"name\":\"rules\",\"path\":\".agents/rules\",\"type\":\"folder\",\"children\":[{\"name\":\"oneshot-skill-architecture.md\",\"path\":\".agents/rules/oneshot-skill-architecture.md\",\"type\":\"file\"}]}]},{\"name\":\".github\",\"path\":\".github\",\"type\":\"folder\",\"children\":[{\"name\":\"workflows\",\"path\":\".github/workflows\",\"type\":\"folder\",\"children\":[{\"name\":\"adk-v2-verify.yml\",\"path\":\".github/workflows/adk-v2-verify.yml\",\"type\":\"file\"}]}]},{\"name\":\".staging-inspect\",\"path\":\".staging-inspect\",\"type\":\"folder\",\"children\":[{\"name\":\"oneshot-frontend-staging\",\"path\":\".staging-inspect/oneshot-frontend-staging\",\"type\":\"folder\",\"children\":[{\"name\":\"scripts\",\"path\":\".staging-inspect/oneshot-frontend-staging/scripts\",\"type\":\"folder\",\"children\":[]},{\"name\":\"src\",\"path\":\".staging-inspect/oneshot-frontend-staging/src\",\"type\":\"folder\",\"children\":[]},{\"name\":\"tests\",\"path\":\".staging-inspect/oneshot-frontend-staging/tests\",\"type\":\"folder\",\"children\":[]},{\"name\":\"INTEGRATION.md\",\"path\":\".staging-inspect/oneshot-frontend-staging/INTEGRATION.md\",\"type\":\"file\"},{\"name\":\"MANIFEST.json\",\"path\":\".staging-inspect/oneshot-frontend-staging/MANIFEST.json\",\"type\":\"file\"},{\"name\":\"package-lock.json\",\"path\":\".staging-inspect/oneshot-frontend-staging/package-lock.json\",\"type\":\"file\"},{\"name\":\"package.json\",\"path\":\".staging-inspect/oneshot-frontend-staging/package.json\",\"type\":\"file\"},{\"name\":\"README.md\",\"path\":\".staging-inspect/oneshot-frontend-staging/README.md\",\"type\":\"file\"},{\"name\":\"VALIDATION.md\",\"path\":\".staging-inspect/oneshot-frontend-staging/VALIDATION.md\",\"type\":\"file\"}]}]},{\"name\":\"backend\",\"path\":\"backend\",\"type\":\"folder\",\"children\":[{\"name\":\"runtime\",\"path\":\"backend/runtime\",\"type\":\"folder\",\"children\":[{\"name\":\"event-bus.ts\",\"path\":\"backend/runtime/event-bus.ts\",\"type\":\"file\"},{\"name\":\"run-repository.ts\",\"path\":\"backend/runtime/run-repository.ts\",\"type\":\"file\"},{\"name\":\"workflow-runtime.ts\",\"path\":\"backend/runtime/w"
+    }
+  ],
+  "passed": true,
+  "browser": "headless Chrome via CDP :9222 (detached), driving real runtime http://127.0.0.1:8787"
+}

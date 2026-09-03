@@ -224,7 +224,7 @@ export async function structuredDraftToResearchBundle(
   }));
 
   const canonicalSchema = JSON.parse(
-    await readFile(resolve(projectRoot, "schema/plan.schema.json"), "utf8"),
+    await readFile(resolve(projectRoot, "backend/schema/plan.schema.json"), "utf8"),
   ) as any;
   const schemaDocument = structuredClone(canonicalSchema);
   schemaDocument.$id = `urn:oneshot:research-schema:${runId}`;

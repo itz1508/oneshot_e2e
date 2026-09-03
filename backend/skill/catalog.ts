@@ -51,7 +51,7 @@ const BUILTIN_SKILLS: SkillDescriptor[] = [
   {
     skill_id: "oneshot-canonical-contracts",
     name: "OneShot Canonical Contracts",
-    path: resolve("skill/oneshot-canonical-contracts/SKILL.md"),
+    path: resolve("backend/skill/oneshot-canonical-contracts/SKILL.md"),
     capabilities: [
       "canonical-contracts",
       "contract-validation",
@@ -72,7 +72,7 @@ const BUILTIN_SKILLS: SkillDescriptor[] = [
   {
     skill_id: "oneshot-task-runtime",
     name: "OneShot Task Runtime",
-    path: resolve("skill/oneshot-task-runtime/SKILL.md"),
+    path: resolve("backend/skill/oneshot-task-runtime/SKILL.md"),
     capabilities: [
       "task-runtime",
       "event-replay",
@@ -91,7 +91,7 @@ const BUILTIN_SKILLS: SkillDescriptor[] = [
   {
     skill_id: "oneshot-intent-collection",
     name: "OneShot Intent Collection",
-    path: resolve("skill/oneshot-intent-collection/SKILL.md"),
+    path: resolve("backend/skill/oneshot-intent-collection/SKILL.md"),
     capabilities: [
       "intent-collection",
       "prompt-projection",
@@ -108,7 +108,7 @@ const BUILTIN_SKILLS: SkillDescriptor[] = [
   {
     skill_id: "oneshot-sandbox-runtime",
     name: "OneShot Sandbox Runtime",
-    path: resolve("skill/oneshot-sandbox-runtime/SKILL.md"),
+    path: resolve("backend/skill/oneshot-sandbox-runtime/SKILL.md"),
     capabilities: [
       "sandbox-runtime",
       "isolated-execution",
@@ -127,7 +127,7 @@ const BUILTIN_SKILLS: SkillDescriptor[] = [
   {
     skill_id: "oneshot-init",
     name: "OneShot Workspace Init",
-    path: resolve("skill/init/SKILL.md"),
+    path: resolve("backend/skill/init/SKILL.md"),
     capabilities: [
       "init",
       "workspace-initialization",
@@ -196,7 +196,7 @@ export class SkillCatalog {
    * Dynamically discover reusable Skill definitions from `skill/` directories on disk.
    */
   discover(rootDir = process.env.ONESHOT_ROOT || process.cwd()): SkillDescriptor[] {
-    const skillRoot = resolve(rootDir, "skill");
+    const skillRoot = resolve(rootDir, "backend/skill");
     if (!existsSync(skillRoot)) return this.list();
 
     for (const entry of readdirSync(skillRoot, { withFileTypes: true })) {

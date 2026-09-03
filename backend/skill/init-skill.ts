@@ -65,7 +65,7 @@ export class InitSkill {
         const checks: PreflightCheckResult["checks"] = [];
 
         // Check 1: Schema directory
-        const schemaDir = join(root, "schema");
+        const schemaDir = join(root, "backend/schema");
         checks.push({
           name: "schema_directory_exists",
           passed: existsSync(schemaDir),
