@@ -1,0 +1,62 @@
+[
+  {
+    "path": "INTEGRATION.md",
+    "bytes": 927,
+    "sha256": "04e8e869a7ff5316330f8e7ba3ea27dae15cf71af3221c0f20816fa070c4f21b"
+  },
+  {
+    "path": "README.md",
+    "bytes": 945,
+    "sha256": "31325254bf6ca77e710e9207ea4943188ca75718f6d0ccd42ab5a9f3b0bf1e5d"
+  },
+  {
+    "path": "VALIDATION.md",
+    "bytes": 2660,
+    "sha256": "c1305ebc7adfee27428d88bf15fc15aea0b280783d6038352b71219925b91ed6"
+  },
+  {
+    "path": "package-lock.json",
+    "bytes": 211,
+    "sha256": "323d9af5f67c4f483f65cc41d68cbb504116063983c268d1e51f736d2a1f7fa6"
+  },
+  {
+    "path": "package.json",
+    "bytes": 338,
+    "sha256": "eb21a76a020e23429390e9ffacac13c88c7eb224e85c513f8d8b18aaafaefbac"
+  },
+  {
+    "path": "scripts/build.mjs",
+    "bytes": 371,
+    "sha256": "e757d1d5a32f1f37c596663edaf3467de75b6abb8991482e1831f86b8d4b7a5c"
+  },
+  {
+    "path": "scripts/check.mjs",
+    "bytes": 844,
+    "sha256": "06346fb6e209929dca41f314ac063ec4a97716d514d2f87f7d40019433b7b1ce"
+  },
+  {
+    "path": "scripts/serve.mjs",
+    "bytes": 542,
+    "sha256": "b00e13c33d56d88c1deb02cc1473c6e96ee8ae7a968d3b98a15c181420febba7"
+  },
+  {
+    "path": "src/app.js",
+    "bytes": 21247,
+    "sha256": "9ef8f41c315e45ac911f9dff553b8906775f8090b87c74b8e699224f69de61f6"
+  },
+  {
+    "path": "src/index.html",
+    "bytes": 5009,
+    "sha256": "738b42945eba41f8e4b85e1b2a19ea18e38686e110084b93f06b2e26344a075c"
+  },
+  {
+    "path": "src/styles.css",
+    "bytes": 10266,
+    "sha256": "107f9f096fb971e793b27a35880ea45407c1f652598e64b84737e319cab9edd3"
+  },
+  {
+    "path": "tests/source.test.mjs",
+    "bytes": 2027,
+    "sha256": "6b4a8afc139e91965393c8990c785eda25eeb1bfb867870c1a474f3107563508"
+  }
+]

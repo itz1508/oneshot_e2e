@@ -1,0 +1,1 @@
+import fs from'node:fs';fs.rmSync('dist',{recursive:true,force:true});fs.mkdirSync('dist');for(const f of['index.html','styles.css','app.js'])fs.copyFileSync(`src/${f}`,`dist/${f}`);const html=fs.readFileSync('dist/index.html','utf8').replace('./styles.css','/styles.css').replace('./app.js','/app.js');fs.writeFileSync('dist/index.html',html);console.log('BUILD PASSED')
