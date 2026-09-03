@@ -62,7 +62,7 @@ def build_pdf():
     project_root = Path(__file__).resolve().parent.parent
     docs_dir = project_root / "docs"
     output_pdf = docs_dir / "Workflow_Processing.pdf"
-    hero_image = project_root / "ui" / "assets" / "oneshot_workflow_hero.jpg"
+    hero_image = project_root / "docs" / "assets" / "oneshot_workflow_hero.jpg"
 
     doc = SimpleDocTemplate(
         str(output_pdf),
