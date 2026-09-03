@@ -1,15 +1,10 @@
 /**
  * BackendChatSource — OneShot backend adapter for OneShot React IDE.
  *
- * Connects the OneShot chat composer and task review timeline to the
- * OneShot REST API (/api/conversations, /api/runs) and Server-Sent Events
- * stream (/api/runs/:runId/events).
- *
- * Strictly follows OneShot backend authority:
- *   - Chat turns -> /api/conversations
- *   - Insufficient info -> Help request turn
- *   - Execution -> /api/runs/:id/events (SSE)
- *   - Real stages: Researcher -> Planner -> Refactor -> GapAnalysis -> Evaluation -> TripleValidation -> Confirmed -> CreateHash -> Hash -> Done
+ * Chat turns go through the canonical conversation boundary. Execution progress
+ * is read only from the real run SSE stream. Terminal output is loaded from
+ * persisted canonical run artifacts; the frontend never synthesizes a product
+ * result or invents runtime proof values.
  */
 
 import type {
@@ -19,6 +14,7 @@ import type {
 } from './types'
 import type {TaskEventSource, EventListener, StartOptions} from './TaskEventSource'
 import {FrontendToolExecutor} from './toolExecutor'
+import {workflowTraceStore} from './workflowTrace'
 
 let nextId = 0
 
@@ -26,7 +22,6 @@ function uid(): string {
     return `evt-${Date.now()}-${nextId++}`
 }
 
-/** Approval resolver — placeholder for frontend tool execution. */
 export type ApprovalRequestHandler = (
     toolCall: ToolCallEvent,
     reason: string,
@@ -72,6 +67,7 @@ export class BackendChatSource implements TaskEventSource {
     ): string {
         this.abortController?.abort()
         this.activeEventSource?.close()
+        workflowTraceStore.reset()
 
         const taskId = `task-${Date.now()}`
         this.currentTaskId = taskId
@@ -117,9 +113,7 @@ export class BackendChatSource implements TaskEventSource {
     }
 
     private emit(event: AgentEvent): void {
-        for (const listener of this.listeners) {
-            listener(event)
-        }
+        for (const listener of this.listeners) listener(event)
     }
 
     private async _dispatch(
@@ -130,7 +124,6 @@ export class BackendChatSource implements TaskEventSource {
     ): Promise<void> {
         let seq = 0
 
-        // 1. Emit task.created (queued)
         this.emit({
             eventId: uid(),
             sequence: seq++,
@@ -141,7 +134,6 @@ export class BackendChatSource implements TaskEventSource {
             timestamp: new Date().toISOString(),
         })
 
-        // 2. Emit participant.activated (reading)
         this.emit({
             eventId: uid(),
             sequence: seq++,
@@ -155,7 +147,6 @@ export class BackendChatSource implements TaskEventSource {
 
         try {
             let convData: any
-
             if (!this.currentConversationId) {
                 const res = await fetch('/api/conversations', {
                     method: 'POST',
@@ -177,8 +168,6 @@ export class BackendChatSource implements TaskEventSource {
                 convData = await res.json()
             }
 
-            // Ask the canonical Prompt gate for its targeted help request when
-            // the accumulated intent is not sufficient yet.
             const isReady = convData.intent ? convData.intent.ready_for_prompt : convData.sufficient !== false
             if (!isReady) {
                 let helpRequest = convData.help_request
@@ -216,7 +205,6 @@ export class BackendChatSource implements TaskEventSource {
                 return
             }
 
-            // Trigger canonical OneShot run
             const targetConvId = this.currentConversationId || ''
             const runRes = await fetch(`/api/conversations/${encodeURIComponent(targetConvId)}/run`, {
                 method: 'POST',
@@ -225,18 +213,12 @@ export class BackendChatSource implements TaskEventSource {
             })
             if (!runRes.ok) throw new Error(`Run initiation failed: ${runRes.status}`)
             const runData = await runRes.json()
-            const runId = runData.run_id
-
-            // Connect to real OneShot SSE stream
-            this._connectEvents(runId, taskId, seq)
-
+            this._connectEvents(runData.run_id, taskId, seq)
         } catch (err: unknown) {
             if (signal.aborted) return
-
             const errorMessage = err instanceof Error
                 ? `OneShot backend error: ${err.message}`
                 : 'OneShot backend error: unknown failure'
-
             this.emit({
                 eventId: uid(),
                 sequence: seq++,
@@ -249,15 +231,40 @@ export class BackendChatSource implements TaskEventSource {
         }
     }
 
+    private async _artifact(runId: string, name: string): Promise<any | null> {
+        try {
+            const response = await fetch(`/api/runs/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(name)}`)
+            if (!response.ok) return null
+            return await response.json()
+        } catch {
+            return null
+        }
+    }
+
+    private _recordTrace(e: BackendProcessingEvent): void {
+        workflowTraceStore.record({
+            eventId: e.event_id,
+            sequence: e.sequence,
+            runId: e.run_id,
+            processor: e.processor,
+            state: e.state,
+            result: e.result,
+            artifactId: e.artifact_id,
+            message: e.message,
+            timestamp: e.created_at,
+        })
+    }
+
     private _connectEvents(runId: string, taskId: string, initialSeq: number): void {
         let seq = initialSeq
         let terminal = false
         const es = new EventSource(`/api/runs/${encodeURIComponent(runId)}/events`)
         this.activeEventSource = es
 
-        es.onmessage = (msgEvent) => {
+        es.onmessage = async (msgEvent) => {
             try {
                 const e = JSON.parse(msgEvent.data) as BackendProcessingEvent
+                this._recordTrace(e)
 
                 if (e.state === 'RUNNING') {
                     const stage = this._mapStage(e.processor)
@@ -276,9 +283,15 @@ export class BackendChatSource implements TaskEventSource {
                         taskId,
                         eventType: 'participant.activity_update',
                         stage,
-                        message: `Executing ${e.processor}...`,
+                        message: e.message || `Executing ${e.processor}...`,
                         timestamp: e.created_at || new Date().toISOString(),
-                        metadata: {participantId: 'oneshot', activityId: `act-${Date.now()}`},
+                        metadata: {
+                            participantId: 'oneshot',
+                            activityId: `act-${Date.now()}`,
+                            processor: e.processor,
+                            result: e.result,
+                            artifactId: e.artifact_id,
+                        },
                     })
                 } else if (e.state === 'COMPLETE' && e.processor === 'Done') {
                     terminal = true
@@ -286,14 +299,37 @@ export class BackendChatSource implements TaskEventSource {
                     this.activeEventSource = null
 
                     if (e.result === 'PASSED') {
-                        const hashProof = e.artifact_id || 'verified'
-                        const summary = [
-                            `### OneShot Canonical Execution Completed`,
-                            ``,
-                            `- **Run ID**: \`${runId}\``,
-                            `- **Cryptographic Hash (SHA-256)**: \`${hashProof}\``,
-                            `- **Triple Validation**: Schema, Fixture, and Goal proofs \`VALID\``,
-                            `- **Result**: \`CONFIRMED\``,
+                        const [builderResult, hashProof, tripleValidation] = await Promise.all([
+                            this._artifact(runId, 'builder-result'),
+                            this._artifact(runId, 'hash-proof'),
+                            this._artifact(runId, 'triple-validation'),
+                        ])
+                        workflowTraceStore.enrich(e.event_id, {builderResult, hashProof, tripleValidation})
+
+                        const finalOutput = typeof builderResult?.final_output === 'string'
+                            ? builderResult.final_output
+                            : ''
+                        const evidence = builderResult?.evidence
+                        const proofLines = [
+                            `run_id=${runId}`,
+                            `builder_execution_id=${evidence?.execution_id ?? 'NOT_AVAILABLE'}`,
+                            `builder_exit_codes=${JSON.stringify(evidence?.exit_codes ?? [])}`,
+                            `builder_files_changed=${JSON.stringify(evidence?.file_changes ?? [])}`,
+                            `builder_bytes_written=${evidence?.bytes_written ?? 'NOT_AVAILABLE'}`,
+                            `created_hash=${hashProof?.created_hash ?? 'NOT_AVAILABLE'}`,
+                            `recomputed_hash=${hashProof?.recomputed_hash ?? 'NOT_AVAILABLE'}`,
+                            `equal=${hashProof?.equal ?? 'NOT_AVAILABLE'}`,
+                            `schema_validation=${tripleValidation?.schema?.result ?? tripleValidation?.schema_result ?? 'NOT_AVAILABLE'}`,
+                            `fixture_validation=${tripleValidation?.fixture?.result ?? tripleValidation?.fixture_result ?? 'NOT_AVAILABLE'}`,
+                            `goal_validation=${tripleValidation?.goal?.result ?? tripleValidation?.goal_result ?? 'NOT_AVAILABLE'}`,
+                            `terminal_processor=${e.processor}`,
+                            `workflow_result=${e.result}`,
+                        ]
+                        const responseMessage = [
+                            finalOutput || '[Builder final_output was not available in the persisted runtime artifact]',
+                            '',
+                            '---',
+                            ...proofLines,
                         ].join('\n')
 
                         this.emit({
@@ -302,9 +338,9 @@ export class BackendChatSource implements TaskEventSource {
                             taskId,
                             eventType: 'task.completed',
                             stage: 'completed',
-                            message: summary,
+                            message: responseMessage,
                             timestamp: e.created_at || new Date().toISOString(),
-                            metadata: {runId, hash: hashProof},
+                            metadata: {runId, builderResult, hashProof, tripleValidation},
                         })
                     } else {
                         const issue = e.message || 'Execution halted at ROOT CAUSE'
@@ -363,26 +399,21 @@ export class BackendChatSource implements TaskEventSource {
 
     private _mapStage(oneShotStage: string): Stage {
         switch (oneShotStage) {
-            case 'Researcher':
-                return 'reading'
+            case 'Researcher': return 'reading'
             case 'Planner':
-            case 'Refactor':
-                return 'planning'
+            case 'Refactor': return 'planning'
             case 'GapAnalysis':
-            case 'Evaluation':
-                return 'reviewing'
+            case 'Evaluation': return 'reviewing'
             case 'TripleValidation':
             case 'SchemaValidation':
             case 'FixtureValidation':
-            case 'GoalValidation':
-                return 'testing'
+            case 'GoalValidation': return 'testing'
+            case 'Builder': return 'editing'
             case 'Confirmed':
             case 'CreateHash':
             case 'Hash':
-            case 'Done':
-                return 'completed'
-            default:
-                return 'working' as Stage
+            case 'Done': return 'completed'
+            default: return 'working' as Stage
         }
     }
 }
