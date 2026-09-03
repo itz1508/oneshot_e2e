@@ -46,5 +46,6 @@
         1
       ]
     }
-  ]
+  ],
+  "deliverable": "{\"kind\":\"software-project-evaluation-skill\",\"evidence_policy\":\"distinguish observed evidence from inference\",\"output_contract\":\"strict-json\"}"
 }
