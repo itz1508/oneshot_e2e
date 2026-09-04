@@ -1,7 +1,8 @@
 """Typed configuration for the OneShot Workspace API.
 
 Configuration is read from ``ONESHOT_WORKSPACE_*`` environment variables and
-optionally ``.env.workspace``. Production refuses placeholder security values.
+optionally ``app/env/.env.workspace``. Production refuses placeholder security
+values.
 
 Example::
 
@@ -15,6 +16,7 @@ from __future__ import annotations
 import base64
 import hashlib
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, SecretStr, model_validator
@@ -26,7 +28,7 @@ class WorkspaceSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="ONESHOT_WORKSPACE_",
-        env_file=".env.workspace",
+        env_file=Path(__file__).resolve().parents[2] / "app" / "env" / ".env.workspace",
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,

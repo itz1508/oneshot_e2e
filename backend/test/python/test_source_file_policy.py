@@ -18,10 +18,11 @@ class SourceFilePolicyTests(unittest.TestCase):
             root.mkdir()
             fixtures = {
                 "safe.txt": "safe",
-                ".env.example": "public",
-                ".env.workspace.example": "public",
+                "app/env/.env.example": "public",
+                "app/env/.env.workspace.example": "public",
                 ".env": "secret",
                 ".env.local": "secret",
+                "app/env/.env": "secret",
                 "private.pem": "secret",
                 "credentials.json": "secret",
                 "secrets-local.txt": "secret",
@@ -41,7 +42,7 @@ class SourceFilePolicyTests(unittest.TestCase):
             }
             self.assertEqual(
                 listed,
-                {"safe.txt", ".env.example", ".env.workspace.example"},
+                {"safe.txt", "app/env/.env.example", "app/env/.env.workspace.example"},
             )
 
             (root / ".env.after-generation").write_text("secret", encoding="utf-8")
@@ -65,7 +66,7 @@ class SourceFilePolicyTests(unittest.TestCase):
                 }
             self.assertEqual(
                 archived,
-                {"safe.txt", ".env.example", ".env.workspace.example"},
+                {"safe.txt", "app/env/.env.example", "app/env/.env.workspace.example"},
             )
 
 

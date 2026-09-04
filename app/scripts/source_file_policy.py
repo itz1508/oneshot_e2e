@@ -17,7 +17,8 @@ EXCLUDED_DIRECTORY_NAMES = frozenset(
     }
 )
 PRIVATE_KEY_SUFFIXES = frozenset({".pem", ".key", ".p12", ".pfx"})
-PUBLIC_ROOT_ENV_EXAMPLES = frozenset({".env.example", ".env.workspace.example"})
+PUBLIC_ENV_TEMPLATE_DIRECTORY = ("app", "env")
+PUBLIC_ENV_TEMPLATE_NAMES = frozenset({".env.example", ".env.workspace.example"})
 GENERATED_SOURCE_FILES = frozenset({"MANIFEST.sha256"})
 IGNORED_LOCAL_FILES = frozenset({".DS_Store"})
 
@@ -29,7 +30,11 @@ def source_path_is_forbidden(relative_path: str | PurePosixPath) -> bool:
         return True
 
     lowered = tuple(part.lower() for part in parts)
-    if len(lowered) == 1 and lowered[0] in PUBLIC_ROOT_ENV_EXAMPLES:
+    if (
+        len(lowered) == 3
+        and lowered[:2] == PUBLIC_ENV_TEMPLATE_DIRECTORY
+        and lowered[2] in PUBLIC_ENV_TEMPLATE_NAMES
+    ):
         return False
 
     if any(part in EXCLUDED_DIRECTORY_NAMES for part in lowered[:-1]):

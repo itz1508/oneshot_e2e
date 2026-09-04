@@ -22,7 +22,7 @@ function loadDotEnv(f) {
   }
   return out;
 }
-const dotenv = { ...loadDotEnv(join(ROOT, ".env")) };
+const dotenv = { ...loadDotEnv(join(ROOT, "app", "env", ".env")) };
 export const TOKEN = process.env.ONESHOT_API_TOKEN || dotenv.ONESHOT_API_TOKEN;
 export const BASE = process.env.ONESHOT_BASE_URL || "http://127.0.0.1:8787";
 export const EDGE =

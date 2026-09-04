@@ -2,6 +2,9 @@
 .git
 .env
 .env.*
+app/env/.env
+app/env/.env.*
+**/*.env
 .venv
 .ollama
 node_modules

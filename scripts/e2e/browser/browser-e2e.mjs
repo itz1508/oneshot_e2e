@@ -12,13 +12,13 @@ const SHOTS_DIR = join(ROOT, "dist", "e2e-evidence", "screenshots-bootstrap");
 mkdirSync(SHOTS_DIR, { recursive: true });
 
 const envObj = Object.fromEntries(
-  readFileSync(join(ROOT, ".env"), "utf8").split(/\r?\n/).map((l) => {
+  readFileSync(join(ROOT, "app", "env", ".env"), "utf8").split(/\r?\n/).map((l) => {
     const m = l.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
     return m ? [m[1], m[2].trim()] : null;
   }).filter(Boolean),
 );
 const TOKEN = envObj.ONESHOT_API_TOKEN;
-if (!TOKEN) throw new Error("ONESHOT_API_TOKEN missing from .env");
+if (!TOKEN) throw new Error("ONESHOT_API_TOKEN missing from app/env/.env");
 
 const evidence = { started_at: new Date().toISOString(), asserts: [], steps: [], console_errors: [], run_events_decoded: [] };
 let PASSED = true;

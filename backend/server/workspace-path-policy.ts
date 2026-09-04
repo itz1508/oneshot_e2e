@@ -25,7 +25,8 @@ const DENIED_PRIVATE_KEY_EXTENSIONS = new Set([
   ".p12",
   ".pfx",
 ]);
-const PUBLIC_ROOT_ENV_EXAMPLES = new Set([
+const PUBLIC_ENV_TEMPLATE_DIRECTORY = "app/env";
+const PUBLIC_ENV_TEMPLATE_NAMES = new Set([
   ".env.example",
   ".env.workspace.example",
 ]);
@@ -56,8 +57,10 @@ export function isSensitiveWorkspacePath(relativePath: string): boolean {
 
   const lowered = parts.map((part) => part.toLowerCase());
   if (
-    lowered.length === 1 &&
-    PUBLIC_ROOT_ENV_EXAMPLES.has(lowered[0])
+    lowered.length === 3 &&
+    lowered[0] === "app" &&
+    lowered[1] === "env" &&
+    PUBLIC_ENV_TEMPLATE_NAMES.has(lowered[2])
   ) {
     return false;
   }

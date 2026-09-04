@@ -4,7 +4,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(here, "..", "..", "..");
-const TOKEN = Object.fromEntries(readFileSync(join(ROOT, ".env"), "utf8").split(/\r?\n/).map((l) => { const m = l.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/); return m ? [m[1], m[2].trim()] : null; }).filter(Boolean)).ONESHOT_API_TOKEN;
+const TOKEN = Object.fromEntries(readFileSync(join(ROOT, "app", "env", ".env"), "utf8").split(/\r?\n/).map((l) => { const m = l.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/); return m ? [m[1], m[2].trim()] : null; }).filter(Boolean)).ONESHOT_API_TOKEN;
 
 const list = await (await fetch("http://127.0.0.1:9222/json/list")).json();
 const page = list.find((t) => t.type === "page");

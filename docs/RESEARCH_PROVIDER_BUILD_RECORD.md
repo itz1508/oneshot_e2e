@@ -56,7 +56,7 @@ created by the local ADK provider. Featherless lifecycle events use the existing
   uses the shared conversion without changing its runtime path.
 - `backend/role/researcher/provider/featherless/`: remote provider, worker bridge,
   strict schema, and actual OpenAI-compatible inference call.
-- `app/config/featherless.env.example`: secret-free backend configuration template.
+- `app/env/featherless.env.example`: secret-free backend configuration template.
 - `app/requirements/featherless.txt`: exact OpenAI Python SDK pin.
 - `scripts/e2e/scripts/verify_featherless_live.mjs`: explicit real-inference proof for the
   immediate Prompt-to-Researcher boundary.

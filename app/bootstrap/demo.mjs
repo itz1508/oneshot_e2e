@@ -18,7 +18,7 @@ import { resolve } from "node:path";
 import { platform } from "node:os";
 
 const ROOT = resolve(import.meta.dirname || ".", "..", "..");
-const environmentFile = resolve(ROOT, ".env");
+const environmentFile = resolve(ROOT, "app", "env", ".env");
 if (existsSync(environmentFile)) {
   if (typeof process.loadEnvFile !== "function") {
     throw new Error(

@@ -61,9 +61,9 @@ test("workspace filesystem security boundary is enforced consistently", async ()
 
   try {
     const environmentProbeRoot = join(temporaryRoot, "environment-probe");
-    await mkdir(environmentProbeRoot, { recursive: true });
+    await mkdir(join(environmentProbeRoot, "app", "env"), { recursive: true });
     await writeFile(
-      join(environmentProbeRoot, ".env"),
+      join(environmentProbeRoot, "app", "env", ".env"),
       "ONESHOT_ENVIRONMENT_PROBE=loaded-from-file\n",
       "utf8",
     );
@@ -93,8 +93,10 @@ test("workspace filesystem security boundary is enforced consistently", async ()
     await writeFile(join(deepDirectory, "proof.txt"), "whole-repo-readable", "utf8");
     await writeFile(join(workspaceRoot, ".env"), "TOKEN=secret", "utf8");
     await writeFile(join(workspaceRoot, ".env.local"), "TOKEN=secret", "utf8");
-    await writeFile(join(workspaceRoot, ".env.example"), "PUBLIC=yes", "utf8");
-    await writeFile(join(workspaceRoot, ".env.workspace.example"), "PUBLIC=yes", "utf8");
+    await mkdir(join(workspaceRoot, "app", "env"), { recursive: true });
+    await writeFile(join(workspaceRoot, "app", "env", ".env.example"), "PUBLIC=yes", "utf8");
+    await writeFile(join(workspaceRoot, "app", "env", ".env.workspace.example"), "PUBLIC=yes", "utf8");
+    await writeFile(join(workspaceRoot, "app", "env", ".env"), "TOKEN=secret", "utf8");
     await writeFile(join(workspaceRoot, "nested", ".env.example"), "PRIVATE=yes", "utf8");
     await writeFile(join(workspaceRoot, "private.key"), "private", "utf8");
     await writeFile(join(workspaceRoot, "credentials.json"), "{}", "utf8");
@@ -155,11 +157,11 @@ test("workspace filesystem security boundary is enforced consistently", async ()
     const tree = (await treeResponse.json()) as any;
     assert.equal(tree.depth, null);
     assert.equal(containsPath(tree.nodes, "one/two/three/four/five/proof.txt"), true);
-    assert.equal(containsPath(tree.nodes, ".env.example"), true);
-    assert.equal(containsPath(tree.nodes, ".env.workspace.example"), true);
+    assert.equal(containsPath(tree.nodes, "app/env/.env.example"), true);
+    assert.equal(containsPath(tree.nodes, "app/env/.env.workspace.example"), true);
     for (const denied of [
       ".env", ".env.local", "private.key", "credentials.json", "secrets-note.txt",
-      "data", "nested/.env.example", "outside-link", "safe-link",
+      "data", "nested/.env.example", "outside-link", "safe-link", "app/env/.env",
     ]) {
       assert.equal(containsPath(tree.nodes, denied), false, `${denied} must be omitted`);
     }

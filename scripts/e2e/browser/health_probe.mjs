@@ -17,7 +17,7 @@ function loadDotEnv(f) {
   return out;
 }
 const token =
-  process.env.ONESHOT_API_TOKEN || loadDotEnv(join(ROOT, ".env")).ONESHOT_API_TOKEN;
+  process.env.ONESHOT_API_TOKEN || loadDotEnv(join(ROOT, "app", "env", ".env")).ONESHOT_API_TOKEN;
 const BASE = "http://127.0.0.1:8787";
 
 const result = { at: new Date().toISOString() };

@@ -12,7 +12,7 @@ import http from "node:http";
 import { join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
-const environmentFile = join(ROOT, ".env");
+const environmentFile = join(ROOT, "app", "env", ".env");
 if (existsSync(environmentFile)) {
   if (typeof process.loadEnvFile !== "function") {
     throw new Error(

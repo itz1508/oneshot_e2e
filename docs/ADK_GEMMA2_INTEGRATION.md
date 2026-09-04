@@ -40,7 +40,7 @@ cache               Redis localhost:6379/0
 cache TTL           3600 seconds
 ```
 
-`OLLAMA_CONTEXT_LENGTH=8192`, `OLLAMA_KEEP_ALIVE=5m`, and `OLLAMA_NUM_PARALLEL=2` are supplied in `app/config/local-ai.env.example` and the Docker Compose profile.
+`OLLAMA_CONTEXT_LENGTH=8192`, `OLLAMA_KEEP_ALIVE=5m`, and `OLLAMA_NUM_PARALLEL=2` are supplied in `app/env/local-ai.env.example` and the Docker Compose profile.
 
 ## Cache boundary
 
@@ -81,7 +81,7 @@ docker compose -f app/deploy/docker/docker-compose.local-ai.yml up -d
 ollama pull gemma2:9b
 ```
 
-Then load `app/config/local-ai.env.example` into the environment and start OneShot.
+Then load `app/env/local-ai.env.example` into the environment and start OneShot.
 
 ```bash
 npm start

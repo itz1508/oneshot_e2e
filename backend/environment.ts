@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-const environmentFile = resolve(process.cwd(), ".env");
+const environmentFile = resolve(process.cwd(), "app", "env", ".env");
 if (existsSync(environmentFile)) {
   if (typeof process.loadEnvFile !== "function") {
     throw new Error(
