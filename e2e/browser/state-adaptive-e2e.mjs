@@ -272,7 +272,7 @@ while (Date.now() < deadline) {
   await sleep(250);
 }
 // Layout must also stay calm right after terminal (settle, no jumps).
-for (let i = 0; i < 3; i++) {
+for (let i = 0; i < 6; i++) {
   await sleep(250);
   const m = await measure();
   if (Math.abs(stableWs.w - m.ws.w) < 1 && Math.abs(stableWs.x - m.ws.x) < 1) stableCount++;

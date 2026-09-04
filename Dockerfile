@@ -16,6 +16,9 @@ RUN npx tsc -p tsconfig.json
 COPY web ./web
 RUN cd web && npm ci --no-audit --no-fund && npm run build
 
+# Prune development dependencies for minimal runner footprint
+RUN npm prune --omit=dev --no-audit --no-fund
+
 FROM python:3.12-slim-bookworm AS runner
 WORKDIR /app
 
@@ -44,6 +47,8 @@ COPY --from=node-builder /app/web/dist ./web/dist
 COPY backend ./backend
 # Deterministic fixture provider reads the canonical seed bundle at app/fixtures/
 COPY app/fixtures ./app/fixtures
+# Third-party and platform legal notices
+COPY app/legal ./app/legal
 COPY contract-registry.json CANONICAL_WORKFLOW.md LICENSE NOTICE ./
 
 # Python import roots: `validation` lives at backend/validation/python; `workspace_api` lives at app
@@ -52,6 +57,7 @@ ENV PYTHONPATH=/app/backend/validation/python:/app/app
 # Create durable/evidence directories
 RUN mkdir -p data/runs data/run-state data/task-events data/checkpoints data/conversations data/sandbox-workspaces
 
+ENV ONESHOT_BIND_HOST=0.0.0.0
 ENV PORT=8787
 ENV NODE_ENV=production
 EXPOSE 8787
