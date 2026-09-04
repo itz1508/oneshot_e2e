@@ -24,7 +24,11 @@
     "preflight:ollama": "python backend/scripts/ollama_preflight.py",
     "verify:adk-live": "python scripts/e2e/scripts/verify_adk_live.py",
     "build:backend": "tsc -p tsconfig.json",
-    "build:ui": "npm --prefix app/web run build"
+    "build:ui": "npm --prefix app/web run build",
+    "judge": "node scripts/judge.mjs",
+    "bootstrap": "node scripts/bootstrap.mjs",
+    "guard:layout": "node scripts/guard/layout.mjs",
+    "guard:layout:enforce": "node scripts/guard/layout.mjs --enforce"
   },
   "dependencies": {
     "@google/adk": "2.0.0",
