@@ -1,4 +1,4 @@
-import { resolveResearchProvider } from "../../dist/backend/role/researcher/provider-resolver.js";
+import { resolveResearchProvider } from "../../../dist/backend/role/researcher/provider-resolver.js";
 
 if (!process.env.FEATHERLESS_API_KEY?.trim()) {
   console.error(

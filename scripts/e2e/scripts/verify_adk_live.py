@@ -2,7 +2,7 @@ from __future__ import annotations
 import importlib,json,os,queue,re,subprocess,sys,threading,time,urllib.request
 from pathlib import Path
 
-ROOT=Path(__file__).resolve().parents[2]
+ROOT=Path(__file__).resolve().parents[3]
 BASE=os.getenv('OLLAMA_API_BASE','http://localhost:11434').rstrip('/')
 MODEL=os.getenv('GEMMA2_LOCAL_MODEL','gemma2:9b')
 

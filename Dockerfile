@@ -13,8 +13,8 @@ COPY backend ./backend
 RUN npx tsc -p tsconfig.json
 
 # Copy and build OneShot Web IDE
-COPY web ./web
-RUN cd web && npm ci --no-audit --no-fund && npm run build
+COPY app/web ./app/web
+RUN cd app/web && npm ci --no-audit --no-fund && npm run build
 
 # Prune development dependencies for minimal runner footprint
 RUN npm prune --omit=dev --no-audit --no-fund
@@ -42,14 +42,16 @@ COPY --from=node-builder /app/node_modules ./node_modules
 
 # Copy compiled backend and Web IDE assets
 COPY --from=node-builder /app/dist ./dist
-COPY --from=node-builder /app/web/dist ./web/dist
+COPY --from=node-builder /app/app/web/dist ./app/web/dist
 # Schema, Python validation package, reusable skills, and workflow live under backend/
 COPY backend ./backend
 # Deterministic fixture provider reads the canonical seed bundle at app/fixtures/
 COPY app/fixtures ./app/fixtures
 # Third-party and platform legal notices
 COPY app/legal ./app/legal
-COPY contract-registry.json CANONICAL_WORKFLOW.md LICENSE NOTICE ./
+COPY app/contract-registry.json ./app/contract-registry.json
+COPY docs/Project.Workflow.md ./docs/Project.Workflow.md
+COPY docs/license/LICENSE docs/license/NOTICE ./docs/license/
 
 # Python import roots: `validation` lives at backend/validation/python; `workspace_api` lives at app
 ENV PYTHONPATH=/app/backend/validation/python:/app/app

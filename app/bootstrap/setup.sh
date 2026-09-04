@@ -70,7 +70,7 @@ npm ci --offline --ignore-scripts --no-audit --no-fund 2>/dev/null || {
     echo "       Retrying with network..."
     npm install --no-audit --no-fund 2>/dev/null
 }
-npm --prefix web install --no-audit --no-fund 2>/dev/null
+npm --prefix app/web install --no-audit --no-fund 2>/dev/null
 echo "       Node deps installed"
 
 # ── Build ────────────────────────────────────────────────────────

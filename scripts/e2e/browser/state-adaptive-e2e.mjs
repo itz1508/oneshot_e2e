@@ -3,10 +3,10 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { launchBrowser, waitFor, sleep, TOKEN, BASE } from "./cdp-core.mjs";
+import { launchBrowser, waitFor, sleep, TOKEN, BASE, ROOT } from "./cdp-core.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const SHOTS = join(here, "..", "evidence", "screenshots-state-adaptive");
+const SHOTS = join(ROOT, "dist", "e2e-evidence", "screenshots-state-adaptive");
 mkdirSync(SHOTS, { recursive: true });
 
 const results = {
@@ -342,9 +342,9 @@ record("No duplicate SSE projection", "unique event ids, backend sequence order 
 record("ROOT_CAUSE path", "deterministic failure fixture availability", "NOT EXERCISABLE: no deterministic ROOT_CAUSE fixture exists for the live UI run (sandbox tamper is unit-level only); ERROR ambience is configured (.app.state-error::before) and state machine maps ROOT_CAUSE→ERROR", true);
 results.state_transitions.push({ at: new Date().toISOString(), state: "SESSION-END", passed: PASSED });
 
-writeFileSync(join(here, "..", "evidence", "state-adaptive-evidence.json"), JSON.stringify({ ...results, passed: PASSED, screenshots: SHOTS }, null, 2));
+writeFileSync(join(ROOT, "dist", "e2e-evidence", "state-adaptive-evidence.json"), JSON.stringify({ ...results, passed: PASSED, screenshots: SHOTS }, null, 2));
 console.log(`\n=== STATE-ADAPTIVE E2E ${PASSED ? "PASSED" : "FAILED"} ===`);
-console.log(`evidence: e2e/evidence/state-adaptive-evidence.json`);
+console.log(`evidence: dist/e2e-evidence/state-adaptive-evidence.json`);
 console.log(`screenshots: ${SHOTS}`);
 try { await cdp.send("Browser.close"); } catch(e) {}
 process.exit(PASSED ? 0 : 1);

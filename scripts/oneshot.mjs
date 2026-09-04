@@ -11,7 +11,7 @@ import { existsSync } from "node:fs";
 import http from "node:http";
 import { join, resolve } from "node:path";
 
-const ROOT = resolve(import.meta.dirname);
+const ROOT = resolve(import.meta.dirname, "..");
 const environmentFile = join(ROOT, ".env");
 if (existsSync(environmentFile)) {
   if (typeof process.loadEnvFile !== "function") {
@@ -316,9 +316,10 @@ ensureNodeDependencies(
   true,
 );
 ensureNodeDependencies(
-  ["--prefix", "web"],
+  ["--prefix", "app/web"],
   join(
     ROOT,
+    "app",
     "web",
     "node_modules",
     ".bin",
@@ -334,7 +335,7 @@ runNpm(["run", "build:backend"], {
 });
 pass("Backend TypeScript compiled to dist/");
 runNpm(["run", "build:ui"], { label: "OneShot Web IDE build failed" });
-pass("OneShot Web IDE compiled to web/dist/");
+pass("OneShot Web IDE compiled to app/web/dist/");
 
 header("5. Canonical contracts and manifest verification");
 

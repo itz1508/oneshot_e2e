@@ -21,7 +21,7 @@ test("HTTP/UI path reaches DONE through canonical ADK workflow and Researcher pr
     h.runtime,
     h.runs,
     h.events,
-    resolve("web/dist"),
+    resolve("app/web/dist"),
     0,
     h.task,
   );

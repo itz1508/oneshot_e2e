@@ -30,7 +30,7 @@ async function launch(workspaceRoot: string): Promise<Server> {
     {} as any,
     {} as any,
     {} as any,
-    resolve("web/dist"),
+    resolve("app/web/dist"),
     0,
     undefined,
     undefined,

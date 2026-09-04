@@ -5,10 +5,10 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(here, "..", "..");
+const ROOT = join(here, "..", "..", "..");
 const BASE = "http://127.0.0.1:8787";
 const CDP_LIST = "http://127.0.0.1:9222/json/list";
-const SHOTS_DIR = join(here, "..", "evidence", "screenshots-bootstrap");
+const SHOTS_DIR = join(ROOT, "dist", "e2e-evidence", "screenshots-bootstrap");
 mkdirSync(SHOTS_DIR, { recursive: true });
 
 const envObj = Object.fromEntries(
@@ -234,8 +234,8 @@ evidence.console_errors = evidence.console_errors.slice(0, 20);
 evidence.requests = (await ev("(window.__abRequests||[]).slice(0,60)")) || [];
 evidence.passed = PASSED;
 evidence.browser = "headless Chrome via CDP :9222 (detached), driving real runtime " + BASE;
-writeFileSync(join(here, "..", "evidence", "browser-e2e-evidence.json"), JSON.stringify(evidence, null, 2));
+writeFileSync(join(ROOT, "dist", "e2e-evidence", "browser-e2e-evidence.json"), JSON.stringify(evidence, null, 2));
 console.log("\n=== BROWSER E2E " + (PASSED ? "PASSED" : "FAILED") + " ===");
-console.log("evidence: e2e-evidence/browser-e2e-evidence.json");
+console.log("evidence: dist/e2e-evidence/browser-e2e-evidence.json");
 console.log("console_errors=" + JSON.stringify(evidence.console_errors));
 process.exit(PASSED ? 0 : 1);

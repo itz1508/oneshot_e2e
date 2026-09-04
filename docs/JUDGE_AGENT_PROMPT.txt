@@ -1,0 +1,18 @@
+Run the OneShot judge skill for this repository.
+
+Use the repository's canonical judge launcher and sample runtime.
+Do not ask me to manually install/configure anything that the agent can perform.
+Do not require any external AI/provider API key.
+Generate the local OneShot access token securely at runtime.
+Launch the actual containerized application, verify health/auth/UI, and run the canonical container browser verification when available.
+
+Do not simulate results.
+
+When complete, return only:
+- result
+- local URL
+- image/container identity
+- health result
+- UI result
+- E2E result
+- ROOT_CAUSE if anything failed.

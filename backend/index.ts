@@ -130,7 +130,7 @@ await skills.activation.activate({ skill_id: "oneshot-sandbox-runtime" }, runtim
 await skills.activation.activate({ skill_id: "oneshot-init" }, runtimeCtx);
 
 // --- HTTP Server ---
-const webDistPath = resolve(projectRoot, "web/dist");
+const webDistPath = resolve(projectRoot, "app/web/dist");
 const uiRoot = existsSync(webDistPath) ? webDistPath : resolve(projectRoot, "ui");
 const workspaceRoot = resolve(
   process.env.ONESHOT_WORKSPACE_ROOT || projectRoot,

@@ -15,7 +15,7 @@ test("HTTP/UI product runs chain and durable run snapshot reloads", async () => 
     h.runtime,
     h.runs,
     h.events,
-    resolve("web/dist"),
+    resolve("app/web/dist"),
     0,
     h.task,
   );

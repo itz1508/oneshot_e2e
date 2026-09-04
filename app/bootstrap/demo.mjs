@@ -17,7 +17,7 @@ import { rmSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { platform } from "node:os";
 
-const ROOT = resolve(import.meta.dirname || ".");
+const ROOT = resolve(import.meta.dirname || ".", "..", "..");
 const environmentFile = resolve(ROOT, ".env");
 if (existsSync(environmentFile)) {
   if (typeof process.loadEnvFile !== "function") {
@@ -74,9 +74,9 @@ try {
     cwd: ROOT,
     stdio: ["ignore", "pipe", "pipe"],
   });
-  if (!existsSync(resolve(ROOT, "web/dist"))) {
+  if (!existsSync(resolve(ROOT, "app/web/dist"))) {
     log("Building OneShot Web UI bundle...");
-    execSync("npm --prefix web run build", {
+    execSync("npm --prefix app/web run build", {
       cwd: ROOT,
       stdio: ["ignore", "pipe", "pipe"],
     });

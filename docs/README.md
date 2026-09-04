@@ -43,6 +43,18 @@ ROOT_CAUSE =
 
 ---
 
+## Judge / Evaluator
+
+1. Open the repository in your coding agent.
+2. Paste `docs/JUDGE_AGENT_PROMPT.txt`:
+   > "Run the OneShot judge skill and launch the verified application."
+
+The OneShot judge skill performs setup, launch, authentication, health verification, and application verification automatically.
+
+No external model/provider API key is required for judge/sample mode.
+
+---
+
 ## Developer Reference (Secondary)
 
 Manual commands for local development, testing, and debugging.
@@ -65,7 +77,7 @@ npm run build
 npm test
 
 # Run frontend unit tests
-npm --prefix web test
+npm --prefix app/web test
 
 # Run full end-to-end verification pipeline
 python app/scripts/verify_all.py
@@ -98,20 +110,21 @@ oneshot/
 │   ├── skill/               # Governed reusable skills & activation engine
 │   ├── task/                # Append-only event store & task management
 │   └── validation/          # JCS canonicalization & SHA-256 verification bridge
-├── app/                     # Control plane & validation engine
+├── app/                       # Control plane & validation engine
 │   ├── bootstrap/           # Demonstration & setup scripts
 │   ├── fixtures/            # Canonical seed fixtures & test suites
 │   ├── legal/               # Third-party license documentation
 │   ├── requirements/        # Pinned Python requirements
 │   ├── scripts/             # Manifest generation & dependency verifiers
 │   └── workspace_api/       # FastAPI control plane sidecar (Argon2, rate limits)
-├── web/                     # Canonical Web IDE frontend (plain HTML/CSS/JS)
-│   ├── src/                 # Reactive interface modules & styles
-│   └── tests/               # Frontend unit test suite (node:test)
-├── e2e/                     # End-to-end integration tests & evidence
-│   ├── browser/             # CDP-based state-adaptive browser test suite
-│   └── evidence/video/      # Verified demonstration video
-└── CANONICAL_WORKFLOW.md    # Definitive workflow specification & state matrix
+├── app/web/                   # Canonical Web IDE frontend (plain HTML/CSS/JS)
+│   ├── src/                   # Reactive interface modules & styles
+│   └── tests/                 # Frontend unit test suite (node:test)
+├── scripts/                   # Launchers, helpers, installation & browser E2E
+│   └── e2e/browser/           # CDP-based state-adaptive browser test suite
+├── docs/                      # Documentation, judge materials, evidence & licenses
+│   └── evidence/video/        # Verified demonstration video
+└── app/contract-registry.json # Canonical contract registry
 ```
 
 ---
@@ -159,4 +172,4 @@ Evaluation ──> Triple Validation
 
 ## License & Third-Party Notices
 
-OneShot-owned source code is licensed under the [Apache License, Version 2.0](LICENSE). Third-party software remains governed by its respective upstream licenses; see [NOTICE](NOTICE) and [app/legal/third-party/](app/legal/third-party).
+OneShot-owned source code is licensed under the [Apache License, Version 2.0](docs/license/LICENSE). Third-party software remains governed by its respective upstream licenses; see [NOTICE](docs/license/NOTICE) and [app/legal/third-party/](app/legal/third-party).

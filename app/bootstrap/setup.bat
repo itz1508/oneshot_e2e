@@ -90,7 +90,7 @@ if %ERRORLEVEL% neq 0 (
     echo        Retrying with network...
     call npm install --no-audit --no-fund >nul 2>&1
 )
-call npm --prefix web install --no-audit --no-fund >nul 2>&1
+call npm --prefix app/web install --no-audit --no-fund >nul 2>&1
 echo        Node deps installed
 
 REM ── Build ──────────────────────────────────────────────────────

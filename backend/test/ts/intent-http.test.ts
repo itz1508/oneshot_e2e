@@ -16,7 +16,7 @@ test("Chat intent help path revises same Intent then runs canonical Task-managed
     h.runtime,
     h.runs,
     h.events,
-    resolve("web/dist"),
+    resolve("app/web/dist"),
     0,
     h.task,
     intent,

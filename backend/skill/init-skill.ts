@@ -82,7 +82,7 @@ export class InitSkill {
         });
 
         // Check 3: Contract registry
-        const registryFile = join(root, "contract-registry.json");
+        const registryFile = join(root, "app/contract-registry.json");
         checks.push({
           name: "contract_registry_exists",
           passed: existsSync(registryFile),

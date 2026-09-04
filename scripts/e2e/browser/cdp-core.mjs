@@ -8,8 +8,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-export const ROOT = resolve(__dirname, "..");
-export const EVIDENCE = __dirname;
+export const ROOT = resolve(__dirname, "..", "..", "..");
+export const EVIDENCE = join(ROOT, "dist", "e2e-evidence");
 export const SHOTS = join(EVIDENCE, "screenshots");
 mkdirSync(SHOTS, { recursive: true });
 
@@ -22,7 +22,7 @@ function loadDotEnv(f) {
   }
   return out;
 }
-const dotenv = { ...loadDotEnv(join(ROOT, ".env")), ...loadDotEnv(join(ROOT, "..", ".env")) };
+const dotenv = { ...loadDotEnv(join(ROOT, ".env")) };
 export const TOKEN = process.env.ONESHOT_API_TOKEN || dotenv.ONESHOT_API_TOKEN;
 export const BASE = process.env.ONESHOT_BASE_URL || "http://127.0.0.1:8787";
 export const EDGE =
@@ -119,7 +119,7 @@ export async function launchBrowser() {
       "--headless=new",
       "--disable-gpu",
       `--remote-debugging-port=${CDP_PORT}`,
-      `--user-data-dir=${join(ROOT, "..", "data", "browser-profile")}`,
+      `--user-data-dir=${join(ROOT, "data", "browser-profile")}`,
       "--no-first-run",
       "--no-default-browser-check",
       "--window-size=1680,1050",

@@ -90,7 +90,7 @@ npm start
 ## Live provider checks
 
 ```bash
-python e2e/scripts/verify_adk_live.py
+python scripts/e2e/scripts/verify_adk_live.py
 python backend/scripts/ollama_preflight.py
 ```
 

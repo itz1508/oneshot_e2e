@@ -5,14 +5,12 @@
 .venv
 .ollama
 node_modules
-web/node_modules
+app/web/node_modules
 dist
-web/dist
+app/web/dist
 data
 **/__pycache__
 **/*.pyc
 **/*.log
 **/*.tmp
 **/*.pid
-e2e/evidence/screenshots*
-e2e/evidence/*.json

@@ -58,7 +58,7 @@ created by the local ADK provider. Featherless lifecycle events use the existing
   strict schema, and actual OpenAI-compatible inference call.
 - `app/config/featherless.env.example`: secret-free backend configuration template.
 - `app/requirements/featherless.txt`: exact OpenAI Python SDK pin.
-- `e2e/scripts/verify_featherless_live.mjs`: explicit real-inference proof for the
+- `scripts/e2e/scripts/verify_featherless_live.mjs`: explicit real-inference proof for the
   immediate Prompt-to-Researcher boundary.
 - `tests_ts/featherless-provider.test.ts`: deterministic full-chain boundary and
   missing-auth failure tests.
@@ -95,7 +95,7 @@ Default local path:
 
 ```powershell
 ollama pull gemma2:9b
-python e2e/scripts/verify_adk_live.py
+python scripts/e2e/scripts/verify_adk_live.py
 ```
 
 Optional Featherless path (set the key outside source control):
