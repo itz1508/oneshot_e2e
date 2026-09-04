@@ -6,7 +6,7 @@
 | :--- | :--- | :--- | :--- |
 | **Pipeline Roles** | `backend/role/<role>/` | **Workflow responsibility owners.** Own defined responsibilities in the canonical pipeline. They are not registered as generic reusable Skills. | `Researcher`, `Planner`, `Refactor`, `GapAnalysis`, `Evaluation` |
 | **Subsystem Domains** | `backend/task/`, `backend/intent/`, `backend/sandbox/` | **Subsystem responsibility owners.** Own domain state, persistence, execution, replay, or infrastructure behavior. They are not forced into Pipeline Roles or converted wholesale into Skills. | Task Event Store, Conversation Store, Sandbox Runtime |
-| **Reusable Skills** | `skill/<name>/` + runtime integration under `backend/skill/` when required | **Cross-cutting capabilities.** Reusable procedures callable by multiple authorized callers without transferring workflow responsibility. | Existing examples: `canonical-contracts`, `init`; illustrative future examples: `schema-inspection`, `dependency-discovery` |
+| **Reusable Skills** | `skill/<name>/` + runtime integration under `backend/skills/` when required | **Cross-cutting capabilities.** Reusable procedures callable by multiple authorized callers without transferring workflow responsibility. | Existing examples: `canonical-contracts`, `init`; illustrative future examples: `schema-inspection`, `dependency-discovery` |
 
 A subsystem may expose a reusable Skill surface when part of its capability is genuinely reusable. That does not transfer ownership of the subsystem to the Skill.
 
@@ -44,7 +44,7 @@ Create or resolve a reusable Skill:
 
 ```text
 skill/<name>/
-backend/skill/<runtime-or-binding> (when required)
+backend/skills/<runtime-or-binding> (when required)
 ```
 
 ### NO — Role-dependent

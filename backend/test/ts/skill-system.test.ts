@@ -1,11 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
-import { SkillCatalog } from "../../skill/catalog.js";
-import { SkillRegistry } from "../../skill/registry.js";
-import { SkillResolver } from "../../skill/resolver.js";
-import { SkillActivationEngine } from "../../skill/activation.js";
-import { createSkillSystem } from "../../skill/bootstrap.js";
+import { SkillCatalog } from "../../skills/catalog.js";
+import { SkillRegistry } from "../../skills/registry.js";
+import { SkillResolver } from "../../skills/resolver.js";
+import { SkillActivationEngine } from "../../skills/activation.js";
+import { createSkillSystem } from "../../skills/bootstrap.js";
 import { PythonBridge } from "../../validation/python-bridge.js";
 
 test("dynamic Skill Catalog discovers skill directories on disk and indexes capabilities", () => {

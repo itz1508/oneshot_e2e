@@ -5,7 +5,7 @@ import { rm } from "node:fs/promises";
 import { ConversationStore } from "../../intent/conversation-store.js";
 import { IntentCollectionService } from "../../intent/intent-collection.js";
 import { projectIntentGraph } from "../../graph/intent-graph.js";
-import { IntentCollectionSkill } from "../../skill/intent-collection-skill.js";
+import { IntentCollectionSkill } from "../../skills/intent-collection-skill.js";
 
 test("multi-turn Intent keeps identity, asks targeted help, then creates Prompt(id)", async () => {
   const root = resolve(`data/test-intent/${process.pid}`);

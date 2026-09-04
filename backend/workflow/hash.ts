@@ -1,5 +1,5 @@
 import type { ConfirmedPackage, HashProof } from "../contract/types.js";
-import { CanonicalContractSkill } from "../skill/canonical-contract-skill.js";
+import { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 
 /** Canonical H1/H2 proof operations. */
 export class HashWorkflow {

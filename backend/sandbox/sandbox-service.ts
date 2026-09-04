@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import type { HashProof, RootCause } from "../contract/types.js";
 import { WorkflowRootCauseError } from "../core/root-cause-error.js";
 import type { ProcessingEventBus } from "../runtime/event-bus.js";
-import type { CanonicalContractSkill } from "../skill/canonical-contract-skill.js";
+import type { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 import { verifySandboxAdmission } from "./admission.js";
 import { HardenedProcessRunner } from "./runner/process-runner.js";
 import type { SandboxRunner } from "./runner/runner.js";

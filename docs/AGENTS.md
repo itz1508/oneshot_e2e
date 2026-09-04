@@ -4,7 +4,7 @@
 
 `docs/Project.Workflow.md` owns workflow order and responsibility; `backend/schema/` owns JSON Schema Draft 2020-12 payload contracts. Keep those authorities separate from their implementations. `backend/environment.ts` loads local configuration before the Node entrypoint in `backend/index.ts`; runtime, HTTP/SSE, workspace access, roles, reusable skills, and sandbox execution live under `backend/`. Deterministic Python validation and hashing live in the `validation` package at `backend/validation/python/validation/` (import root `backend/validation/python`), with TypeScript orchestration only under `backend/validation/ts/`. The canonical workflow graph lives at `backend/workflow/graph.json`. The standalone FastAPI control plane is under `app/workspace_api/` (Python package name `workspace_api`, import root `app`). `app/web/` is the canonical frontend (plain HTML/CSS/JS); the former `ui/` tree is retired. Tests are split between `backend/test/python/` (Python), `backend/test/ts/` (Node), `scripts/e2e/` (genuine browser E2E), and `app/web/tests/` (node:test). Documentation, judge materials, evidence, and legal files live under `docs/` (licenses under `docs/license/`); launchers and helper scripts live under `scripts/`; the contract registry lives at `app/contract-registry.json`. Runtime output belongs under ignored `data/` and `dist/` trees.
 
-Preserve `ROLE != SKILL != TOOL != WORKFLOW`. Role SOPs remain in `backend/role/*/SKILL.md`; reusable skills use `backend/skill/*` (see `.agents/rules/oneshot-skill-architecture.md`).
+Preserve `ROLE != SKILL != TOOL != WORKFLOW`. Role SOPs remain in `backend/role/*/SKILL.md`; reusable skills use `backend/skills/*` (see `.agents/rules/oneshot-skill-architecture.md`).
 
 ## Build, Test, and Development Commands
 

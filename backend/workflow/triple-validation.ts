@@ -6,7 +6,7 @@ import type {
   SchemaValidationResult,
   TripleValidation,
 } from "../contract/types.js";
-import { CanonicalContractSkill } from "../skill/canonical-contract-skill.js";
+import { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 import { DeterministicValidationRuntime } from "../validation/deterministic-validation.js";
 
 /** Deterministic Triple Validation operations used by the ADK workflow. */

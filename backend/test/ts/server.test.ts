@@ -5,7 +5,7 @@ import { rm } from "node:fs/promises";
 import { harness } from "./harness.js";
 import { startHttpServer } from "../../server/http-server.js";
 import { RunRepository } from "../../runtime/run-repository.js";
-import { TaskRuntimeSkill } from "../../skill/task-runtime-skill.js";
+import { TaskRuntimeSkill } from "../../skills/task-runtime-skill.js";
 
 test("HTTP/UI product runs chain and durable run snapshot reloads", async () => {
   const root = resolve("data/test-state/server");
