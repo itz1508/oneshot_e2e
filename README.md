@@ -1,24 +1,48 @@
 # OneShot
 
-Get OneShot running on this machine.
+Agentic build-and-prove system.
 
-## 1. Requirements
-node --version  # >= 24.13.0
-npm --version   # >= 11.8.0
-python --version  # >= 3.11
-Missing? Tell user. Stop.
+## Requirements
+- [Node.js](https://nodejs.org/) >= 24.13.0
+- [npm](https://www.npmjs.com/) >= 11.8.0
+- [Python](https://www.python.org/) >= 3.11
+- [Redis](https://redis.io/) >= 7.x (optional)
 
-## 2. Source (pick one)
+Missing something? Install it first, then come back.
+
+## Install (pick one)
+
+### Option A: Git
+```
 git clone https://github.com/itz1508/oneshot_e2e.git
+cd oneshot_e2e
+```
+
+### Option B: Docker
+```
 docker build -t oneshot:latest .
-Download ZIP -> extract
+```
 
-## 3. Install
+### Option C: ZIP
+Download from [GitHub](https://github.com/itz1508/oneshot_e2e) and extract.
+
+## Build
+```
 npm ci && npm --prefix app/web ci && npm run build
+```
 
-## 4. Verify
+## Verify
+```
 npm run verify
+```
 
-## 5. Launch
-npm start      # server (http://localhost:8787)
-npm run judge  # judge/evaluation view
+## Run
+```
+npm start          # http://localhost:8787
+npm run judge      # judge/evaluation view
+```
+
+## Next steps
+- [Judge Start](docs/judge/START_HERE.md)
+- [Canonical Workflow](docs/CANONICAL_WORKFLOW.md)
+- [Provider Management](docs/PROVIDER_MANAGEMENT.md)
