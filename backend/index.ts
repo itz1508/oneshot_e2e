@@ -16,6 +16,7 @@ import { CanonicalContractSkill } from "./skills/canonical-contract-skill.js";
 import { createSkillSystem } from "./skills/bootstrap.js";
 import { ProviderManager } from "./runtime/provider-manager.js";
 import type { ResearchProvider } from "./role/researcher/provider.js";
+import { createDynamicDependencyFactory } from "./workflow/adk/dynamic-dependencies.js";
 import {
   BullMQRunQueue,
   RUN_QUEUE_NAME,
@@ -28,8 +29,6 @@ import { GapAnalysisWorkflow } from "./role/gap-analysis/workflow.js";
 import { EvaluationWorkflow } from "./role/evaluation/workflow.js";
 import { BuilderWorkflow } from "./role/builder/workflow.js";
 import { TripleValidationWorkflow } from "./workflow/triple-validation.js";
-import { ConfirmationWorkflow } from "./workflow/confirmation.js";
-import { HashWorkflow } from "./workflow/hash.js";
 import { WorkflowRuntime } from "./runtime/workflow-runtime.js";
 import { SandboxService } from "./sandbox/sandbox-service.js";
 import { HardenedProcessRunner } from "./sandbox/runner/process-runner.js";
@@ -73,7 +72,8 @@ events.observe((e) => {
 
 // --- Validation & Contracts (composed through the Reusable Skill subsystem) ---
 // Canonical contract operations keep their own bridge. Triple Validation has
-// three separate Python lanes so ADK ParallelAgent performs real fan-out.
+// three separate Python lanes; the ADK dynamic node starts all three runNode()
+// calls before awaiting Promise.all.
 const bridge = new PythonBridge();
 const validationLanes = new ValidationLanePool();
 const skills = createSkillSystem();
@@ -108,6 +108,7 @@ const providerName = provider.constructor?.name || "UnknownProvider";
 
 // --- Deterministic Triple Validation ---
 const deterministic = new DeterministicValidationRuntime(validationLanes);
+const triple = new TripleValidationWorkflow(deterministic, contracts);
 
 // --- Sandbox Infrastructure (runner selectable via ONESHOT_SANDBOX_RUNNER) ---
 const sandbox = new SandboxService(
@@ -119,22 +120,22 @@ const sandbox = new SandboxService(
   runtimePaths.sandboxWorkspaces,
 );
 
-// --- Canonical ADK Workflow Runtime ---
-// Builder is now part of the same canonical workflow and uses the exact same
-// SandboxService instance exposed to sandbox Skills / explicit debug APIs.
+// --- Google ADK Dynamic Workflow Runtime ---
+// The dependency factory proves provider/model readiness per job and returns
+// the existing OneShot Role implementations consumed by ADK connector nodes.
+const bindDependencies = createDynamicDependencyFactory({
+  projectRoot,
+  events,
+  contracts,
+  sandbox,
+  triple,
+  provider,
+});
 const runtime = new WorkflowRuntime(
   events,
   runs,
   new FileArtifactStore(runtimePaths.runs),
-  new ResearcherWorkflow(provider, contracts),
-  new PlannerWorkflow(contracts),
-  new RefactorWorkflow(contracts),
-  new GapAnalysisWorkflow(contracts),
-  new EvaluationWorkflow(contracts),
-  new TripleValidationWorkflow(deterministic, contracts),
-  new ConfirmationWorkflow(contracts),
-  new HashWorkflow(contracts),
-  new BuilderWorkflow(sandbox),
+  bindDependencies,
 );
 
 // --- Bind the remaining production Skills to live runtime services ---
@@ -159,20 +160,12 @@ const queueDeps: RunQueueDeps = {
     // resolveForRun to create the ResearchProvider from catalog entry.
     return providerManager.resolveForRun(providerId);
   },
-  createRuntime: async (p) =>
+  createRuntime: async () =>
     new WorkflowRuntime(
       events,
       runs,
       new FileArtifactStore(runtimePaths.runs),
-      new ResearcherWorkflow(p, contracts),
-      new PlannerWorkflow(contracts),
-      new RefactorWorkflow(contracts),
-      new GapAnalysisWorkflow(contracts),
-      new EvaluationWorkflow(contracts),
-      new TripleValidationWorkflow(deterministic, contracts),
-      new ConfirmationWorkflow(contracts),
-      new HashWorkflow(contracts),
-      new BuilderWorkflow(sandbox),
+      bindDependencies,
     ),
 };
 const runQueue = new BullMQRunQueue(RUN_QUEUE_NAME, queueDeps, {

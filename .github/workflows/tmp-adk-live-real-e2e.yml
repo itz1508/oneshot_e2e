@@ -1,0 +1,108 @@
+name: Native Gemini Full Session E2E Proof
+
+on:
+  push:
+    branches: [main, handoff-native-gemini-e2e-20260902]
+    paths:
+      - '.github/workflows/tmp-adk-live-real-e2e.yml'
+      - '.env.example'
+      - 'backend/intent/**'
+      - 'backend/role/researcher/provider/adk-gemma2/**'
+      - 'config/gemini.env.example'
+      - 'tests/test_adk_gemma_worker.py'
+      - 'tests_ts/intent-collection.test.ts'
+      - 'tests_ts/prompt-generator.test.ts'
+      - 'tests_ts/session-transcript-e2e.test.ts'
+      - 'tests_ts/native-gemini-session-e2e.test.ts'
+      - 'requirements.txt'
+      - 'scripts/**'
+      - 'MANIFEST.sha256'
+
+permissions:
+  contents: read
+
+env:
+  GEMINI_DISTRIBUTION_MODEL: gemini-3.5-flash-lite
+  GEMINI_RESEARCH_MODEL: gemini-3.6-flash
+  GEMINI_SYNTHESIS_MODEL: gemini-3.7-flash
+  GEMINI_REFINEMENT_ATTEMPTS: '3'
+  GEMINI_MAX_OUTPUT_TOKENS: '3072'
+  GEMINI_NUM_PARALLEL: '1'
+  GEMINI_TIMEOUT_SECONDS: '900'
+  SANDBOX_TIMEOUT_SECONDS: '120'
+  API_RATE_LIMIT_MAX: '2000'
+
+jobs:
+  full-session-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v7
+
+      - name: Print repository revision
+        run: |
+          echo "E2E_REPO_HEAD=$(git rev-parse HEAD)"
+          git status --short
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24.13.0'
+          cache: npm
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Set up npm 11.8
+        run: npm install --global npm@11.8.0 --no-audit --no-fund
+
+      - name: Install root dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: npm --prefix web ci --no-audit --no-fund
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements.txt
+          python -m pip install --disable-pip-version-check -r requirements-workspace-api.txt
+
+      - name: Compile full product
+        run: npm run build
+
+      - name: Run all Python tests
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Run all compiled TypeScript tests
+        run: node --test dist/tests_ts/*.test.js
+
+      - name: Verify canonical contracts and manifest
+        run: npm run verify
+
+      - name: Print focused PromptGenerator and complete session transcript
+        run: |
+          node --test dist/tests_ts/prompt-generator.test.js
+          node --test dist/tests_ts/session-transcript-e2e.test.js
+
+      - name: Report live Gemini credential availability
+        run: |
+          if [ -n "$GEMINI_API_KEY" ]; then
+            echo "LIVE_NATIVE_GEMINI_CREDENTIAL=AVAILABLE"
+          else
+            echo "LIVE_NATIVE_GEMINI_CREDENTIAL=UNAVAILABLE"
+            echo "LIVE_NATIVE_GEMINI_STATUS=ROOT_CAUSE missing repository secret GEMINI_API_KEY"
+          fi
+
+      - name: Run live native Google ADK Gemini session proof
+        if: ${{ env.GEMINI_API_KEY != '' }}
+        env:
+          GOOGLE_GENAI_USE_VERTEXAI: 'false'
+          ONESHOT_LIVE_GEMINI_E2E: 'true'
+          ONESHOT_MODE: production
+          ONESHOT_RESEARCH_PROVIDER: adk_gemma2
+        run: node --test --test-force-exit dist/tests_ts/native-gemini-session-e2e.test.js

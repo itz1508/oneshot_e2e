@@ -1,5 +1,5 @@
 import { LoopAgent, SequentialAgent } from "@google/adk";
-import type { GapAnalysisWorkflow } from "../../role/gap-analysis/workflow.js";
+import type { RolePipeline } from "../../pipeline/role-pipeline.js";
 import { ADK_STATE, state } from "./state.js";
 import { OneShotStageAgent, rootCauseDelta } from "./stage-agent.js";
 
@@ -15,14 +15,16 @@ export interface GapLoopEffects {
 
 /** Build the canonical ADK Gap Analysis workflow. */
 export function createGapAnalysisAgent(
-  gapper: GapAnalysisWorkflow,
+  pipeline: RolePipeline,
   effects: GapLoopEffects,
 ): SequentialAgent {
   const start = new OneShotStageAgent({
     name: "GapAnalysisStart",
-    description: "Marks canonical Gap Analysis as running.",
+    description: "Activates and starts canonical Gap Analysis.",
     handler: async (ctx) => {
-      effects.event(state.runId(ctx), "GapAnalysis", "RUNNING");
+      const runId = state.runId(ctx);
+      await pipeline.activate(runId, "GapAnalysis");
+      effects.event(runId, "GapAnalysis", "RUNNING");
       return {
         stateDelta: {
           [ADK_STATE.resolvedGaps]: [],
@@ -35,20 +37,26 @@ export function createGapAnalysisAgent(
   const check = new OneShotStageAgent({
     name: "GapCheck",
     description: "Detects current deterministic plan gaps.",
-    handler: async (ctx) => ({
-      stateDelta: {
-        [ADK_STATE.gapFindings]: gapper.inspect(
-          state.bundle(ctx),
-          state.plan(ctx),
-        ),
-      },
-    }),
+    handler: async (ctx) => {
+      const runId = state.runId(ctx);
+      const gapper = pipeline.require(runId, "GapAnalysis");
+      return {
+        stateDelta: {
+          [ADK_STATE.gapFindings]: gapper.inspect(
+            state.bundle(ctx),
+            state.plan(ctx),
+          ),
+        },
+      };
+    },
   });
 
   const fix = new OneShotStageAgent({
     name: "GapFix",
     description: "Fixes one deterministic gap per LoopAgent iteration.",
     handler: async (ctx) => {
+      const runId = state.runId(ctx);
+      const gapper = pipeline.require(runId, "GapAnalysis");
       const findings = state.gapFindings(ctx);
       if (findings.length === 0) return;
 
@@ -115,6 +123,8 @@ export function createGapAnalysisAgent(
       "Rechecks the finite gap set and exits LoopAgent on gap_0 or ROOT_CAUSE.",
     runAfterRootCause: true,
     handler: async (ctx) => {
+      const runId = state.runId(ctx);
+      const gapper = pipeline.require(runId, "GapAnalysis");
       const rootCause = state.rootCause(ctx);
       const plan = state.plan(ctx);
       const resolved = state.resolvedGaps(ctx);

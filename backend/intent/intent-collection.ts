@@ -9,6 +9,7 @@ import type {
   PromptCreationResult,
 } from "./types.js";
 import { ConversationStore } from "./conversation-store.js";
+import { PromptGenerator } from "./prompt-generator.js";
 
 // ---------------------------------------------------------------------------
 // Semantic intent extraction — recognizes natural user requests and derives
@@ -122,8 +123,7 @@ function statement(
 
 /**
  * Converts multi-turn chat input into a traceable Intent revision and then
- * into a canonical Prompt(id) — only when required user-owned information is
- * sufficient.
+ * delegates sufficient IntentState to PromptGenerator for canonical Prompt(id).
  *
  * Boundaries:
  *  - Never creates plan_id.
@@ -131,7 +131,10 @@ function statement(
  *  - No automatic retry/fix loops — asks the smallest targeted question.
  */
 export class IntentCollectionService {
-  constructor(private store: ConversationStore) {}
+  constructor(
+    private store: ConversationStore,
+    private promptGenerator = new PromptGenerator(),
+  ) {}
 
   /** Start a brand-new conversation with the first user message. */
   start(message: string): ConversationSnapshot {
@@ -215,22 +218,7 @@ export class IntentCollectionService {
       return { result: "ROOT_CAUSE", root_cause: rc, help_request: help, intent };
     }
 
-    const prompt: Prompt = {
-      prompt_id: promptId,
-      intent: intent.goal!,
-      requested_outcome: intent.requested_outcome!,
-      context: intent.context.map((x, i) => ({
-        context_id: `intent-context:${intent.intent_id}:${i + 1}`,
-        statement: x,
-      })),
-      research_direction: unique([
-        "requirements",
-        "dependencies",
-        "success criteria",
-        ...intent.requirements.slice(0, 3),
-      ]),
-    };
-
+    const prompt = this.promptGenerator.generate(intent, promptId);
     return { result: "PASSED", prompt, intent };
   }
 

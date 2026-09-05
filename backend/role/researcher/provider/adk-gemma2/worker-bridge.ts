@@ -1,7 +1,12 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { delimiter, resolve } from "node:path";
 import { resolvePythonExecutable } from "../../../../python-runtime.js";
-import type { AdkGemmaConfig, AdkResearchDraft, AdkWorkerNodeEvent } from "./types.js";
+import type {
+  AdkGemmaConfig,
+  AdkProviderHealth,
+  AdkResearchDraft,
+  AdkWorkerNodeEvent,
+} from "./types.js";
 
 function pythonPath(projectRoot: string): string {
   const parts = [projectRoot, resolve(projectRoot, ".venv/Lib/site-packages")];
@@ -11,7 +16,7 @@ function pythonPath(projectRoot: string): string {
 
 type Pending = {
   runId: string;
-  resolve: (value: AdkResearchDraft) => void;
+  resolve: (value: unknown) => void;
   reject: (reason: unknown) => void;
   timer: NodeJS.Timeout;
 };
@@ -45,10 +50,13 @@ export class AdkGemmaWorker {
     );
     const env = {
       ...process.env,
-      OLLAMA_API_BASE: this.config.ollamaBaseUrl,
-      GEMMA2_LOCAL_MODEL: this.config.model,
-      GEMMA2_AUTO_PULL: String(this.config.autoPull),
-      GEMMA2_TIMEOUT_SECONDS: String(this.config.timeoutSeconds),
+      GEMINI_DISTRIBUTION_MODEL: this.config.distributionModel,
+      GEMINI_RESEARCH_MODEL: this.config.researchModel,
+      GEMINI_SYNTHESIS_MODEL: this.config.synthesisModel,
+      GEMINI_TIMEOUT_SECONDS: String(this.config.timeoutSeconds),
+      GOOGLE_CLOUD_PROJECT: this.config.googleCloudProject || "",
+      GOOGLE_CLOUD_LOCATION: this.config.googleCloudLocation,
+      GOOGLE_GENAI_USE_VERTEXAI: String(this.config.useVertexAi),
       CACHE_URL: this.config.cacheUrl || "",
       CACHE_TTL: String(this.config.cacheTtlSeconds),
       ONESHOT_ADK_TEST_DRAFT_FILE: this.config.testDraftFile || "",
@@ -75,7 +83,6 @@ export class AdkGemmaWorker {
         try {
           msg = JSON.parse(line);
         } catch {
-          // Ignore non-JSON stdout lines emitted by dependencies (e.g. LiteLLM banners/logs)
           continue;
         }
         const p = this.pending.get(msg.id);
@@ -87,15 +94,15 @@ export class AdkGemmaWorker {
         this.pending.delete(msg.id);
         clearTimeout(p.timer);
         msg.ok
-          ? p.resolve(msg.result as AdkResearchDraft)
-          : p.reject(new Error(msg.error || "ADK Gemma worker failed"));
+          ? p.resolve(msg.result)
+          : p.reject(new Error(msg.error || "ADK Gemini worker failed"));
       }
     });
     let err = "";
     child.stderr.on("data", (d: string) => (err += d));
     child.on("exit", (code) => {
       this.rejectAll(
-        new Error(`ADK Gemma worker exited (${code}): ${err}`),
+        new Error(`ADK Gemini worker exited (${code}): ${err}`),
       );
       this.child = undefined;
     });
@@ -103,29 +110,50 @@ export class AdkGemmaWorker {
     return child;
   }
 
-  async research(payload: {
-    prompt: unknown;
-    run_id: string;
-    evidence?: unknown;
-  }): Promise<AdkResearchDraft> {
-    const child = this.ensure(),
-      id = this.nextId++,
-      runId = payload.run_id;
-    return await new Promise((resolvePromise, reject) => {
+  private async request<T>(
+    op: "health" | "research",
+    payload: unknown,
+    runId: string,
+  ): Promise<T> {
+    const child = this.ensure();
+    const id = this.nextId++;
+    return await new Promise<T>((resolvePromise, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        const error = new Error(
-          `ADK Gemma request timed out after ${this.config.timeoutSeconds}s`,
+        reject(
+          new Error(
+            `ADK Gemini ${op} timed out after ${this.config.timeoutSeconds}s`,
+          ),
         );
-        reject(error);
         if (this.child && !this.child.killed) {
           this.child.kill();
           this.child = undefined;
         }
       }, this.config.timeoutSeconds * 1000);
-      this.pending.set(id, { runId, resolve: resolvePromise, reject, timer });
-      child.stdin.write(JSON.stringify({ id, op: "research", payload }) + "\n");
+      this.pending.set(id, {
+        runId,
+        resolve: (value) => resolvePromise(value as T),
+        reject,
+        timer,
+      });
+      child.stdin.write(JSON.stringify({ id, op, payload }) + "\n");
     });
+  }
+
+  async health(runId: string): Promise<AdkProviderHealth> {
+    return await this.request<AdkProviderHealth>("health", {}, runId);
+  }
+
+  async research(payload: {
+    prompt: unknown;
+    run_id: string;
+    evidence?: unknown;
+  }): Promise<AdkResearchDraft> {
+    return await this.request<AdkResearchDraft>(
+      "research",
+      payload,
+      payload.run_id,
+    );
   }
 
   close() {
@@ -134,6 +162,6 @@ export class AdkGemmaWorker {
       this.child.kill();
     }
     this.child = undefined;
-    this.rejectAll(new Error("ADK Gemma worker closed"));
+    this.rejectAll(new Error("ADK Gemini worker closed"));
   }
 }

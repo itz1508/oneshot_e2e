@@ -2,7 +2,10 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Prompt, ResearchBundle } from "../../../contracts/schema/types.js";
-import type { ResearchProvider } from "../provider.js";
+import type {
+  ResearchProvider,
+  ResearchProviderReadiness,
+} from "../provider.js";
 import { clone } from "../../../core/clone.js";
 
 function resolveDefaultFixture(): string {
@@ -20,7 +23,11 @@ function rewrite(value:unknown,map:Map<string,string>):unknown{
   return value;
 }
 export class FixtureResearchProvider implements ResearchProvider {
-  constructor(private fixturePath=resolveDefaultFixture()){}
+constructor(private fixturePath=resolveDefaultFixture()){}
+  async ready(_runId:string):Promise<ResearchProviderReadiness>{
+    await readFile(this.fixturePath,"utf8");
+    return {ready:true,provider:"fixture",models:[],detail:this.fixturePath};
+  }
   async research(prompt:Prompt,runId:string):Promise<ResearchBundle>{
     const seed=JSON.parse(await readFile(this.fixturePath,"utf8")) as ResearchBundle;
     const map=new Map<string,string>([

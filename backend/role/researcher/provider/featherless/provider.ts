@@ -2,7 +2,10 @@ import { resolve } from "node:path";
 import type { Prompt, ResearchBundle } from "../../../../contracts/schema/types.js";
 import { WorkflowRootCauseError } from "../../../../core/root-cause-error.js";
 import type { ProcessingEventBus } from "../../../../runtime/event-bus.js";
-import type { ResearchProvider } from "../../provider.js";
+import type {
+  ResearchProvider,
+  ResearchProviderReadiness,
+} from "../../provider.js";
 import { ResearchEvidenceCollector } from "../../tool/evidence/collector.js";
 import { structuredDraftToResearchBundle } from "../structured-draft.js";
 import type {
@@ -68,6 +71,33 @@ export class FeatherlessResearchProvider implements ResearchProvider {
 
   attachEvents(events: ProcessingEventBus) {
     this.events = events;
+  }
+
+  async ready(runId: string): Promise<ResearchProviderReadiness> {
+    if (!this.workers.length) {
+      return {
+        ready: false,
+        provider: "featherless",
+        models: [this.config.model],
+        detail: "Featherless worker pool is empty",
+      };
+    }
+    try {
+      const health = await this.workers[0].health(runId);
+      return {
+        ready: health.ready,
+        provider: health.provider,
+        models: [health.model],
+        detail: health.detail || health.api_base,
+      };
+    } catch (error) {
+      return {
+        ready: false,
+        provider: "featherless",
+        models: [this.config.model],
+        detail: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 
   private async draft(

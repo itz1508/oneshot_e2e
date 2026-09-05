@@ -1,15 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { InMemorySessionService, Runner } from "@google/adk";
+import { InMemoryRunner, node, type NodeContext, Workflow } from "@google/adk";
 import type {
+  GapAnalysis,
   Plan,
   ResearchBundle,
   ResolvedGap,
 } from "../../contracts/schema/types.js";
 import type { GapFinding } from "../../role/gap-analysis/tool/coverage.js";
 import { GapAnalysisWorkflow } from "../../role/gap-analysis/workflow.js";
-import { createGapAnalysisAgent } from "../../workflow/adk/gap-loop.js";
-import { ADK_STATE } from "../../workflow/adk/state.js";
+import { createGapAnalysisNode } from "../../workflow/adk/node/gap-analysis-node.js";
 import { harness, prompt } from "./harness.js";
 
 class OneIterationGapWorkflow extends GapAnalysisWorkflow {
@@ -37,69 +37,81 @@ class OneIterationGapWorkflow extends GapAnalysisWorkflow {
   ) {
     this.fixes += 1;
     this.fixed = true;
+    const next = structuredClone(plan);
+    next.revision += 1;
+    next.steps[0].schema_refs.push(gap.ref_id);
+    next.revision_evidence.push({
+      revision: next.revision,
+      affected_area: "schema",
+      reason: "Resolve synthetic dynamic Gap node proof",
+      audit_finding_id: `gap:${gap.key}`,
+    });
     const resolved: ResolvedGap = {
       gap_id: `gap:${gap.key}`,
       affected_branch: gap.affected_branch,
-      issue: "Synthetic missing traceability for LoopAgent proof",
+      issue: "Synthetic missing traceability for dynamic Gap proof",
       evidence_ids: bundle.researcher.evidence.map((e) => e.evidence_id),
-      required_correction: "Apply one deterministic correction",
+      required_correction: "Apply one deterministic additive correction",
       expected_resolved_state: "Synthetic gap removed",
       resolution_evidence: "Synthetic deterministic correction applied",
     };
-    return { plan, resolved };
+    return { plan: next, resolved };
   }
 }
 
-test("real LoopAgent performs fix then recheck then exits at gap_0", async () => {
+test("dynamic Gap node fixes, rechecks, and exits at gap_0", async () => {
   const h = await harness("adk-gap-loop");
   try {
-    const runId = "adk-gap-loop-run";
-    const bundle = await h.researcher.run(prompt(runId), runId);
+    const jobId = "adk-gap-loop-run";
+    const bundle = await h.researcher.run(prompt(jobId), jobId);
     const gapper = new OneIterationGapWorkflow(h.contracts);
-    const emitted: Array<{ processor: string; state: string; data?: Record<string, unknown> }> = [];
+    const gapNode = createGapAnalysisNode(gapper);
 
-    const agent = createGapAnalysisAgent(gapper, {
-      event(_runId, processor, state, data) {
-        emitted.push({ processor, state, data });
+    const probe = node(
+      async (ctx: NodeContext): Promise<{ plan: Plan; gap: GapAnalysis }> => {
+        const result = await ctx.runNode(
+          gapNode,
+          { job_id: jobId, research: bundle, plan: bundle.plan },
+          { runId: `${jobId}-gap` },
+        );
+        return result.output as { plan: Plan; gap: GapAnalysis };
       },
-      async save() {
-        return "test-artifact";
-      },
+      { name: "gap_dynamic_probe", rerunOnResume: true },
+    );
+
+    const rootAgent = new Workflow({
+      name: "gap_dynamic_test",
+      edges: [["START", probe]],
+    });
+    const runner = new InMemoryRunner({
+      agent: rootAgent,
+      appName: "gap_dynamic_test",
+    });
+    const session = await runner.sessionService.createSession({
+      appName: "gap_dynamic_test",
+      userId: jobId,
+      sessionId: jobId,
     });
 
-    const sessionService = new InMemorySessionService();
-    const runner = new Runner({
-      appName: "oneshot-gap-loop-test",
-      agent,
-      sessionService,
-    });
-    const session = await sessionService.createSession({
-      appName: "oneshot-gap-loop-test",
-      userId: runId,
-      sessionId: runId,
-      state: {
-        [ADK_STATE.runId]: runId,
-        [ADK_STATE.bundle]: bundle,
-        [ADK_STATE.plan]: bundle.plan,
-      },
-    });
-
-    for await (const _event of runner.runAsync({
-      userId: runId,
+    let output: { plan: Plan; gap: GapAnalysis } | undefined;
+    for await (const event of runner.runAsync({
+      userId: jobId,
       sessionId: session.id,
       newMessage: { role: "user", parts: [{ text: "Run Gap Analysis" }] },
     })) {
-      // consume the real ADK event stream
+      if ("output" in event && event.output !== undefined) {
+        output = event.output as { plan: Plan; gap: GapAnalysis };
+      }
     }
 
+    assert.ok(output, "dynamic Gap node produced no response");
     assert.equal(gapper.fixes, 1);
-    assert.ok(gapper.checks >= 2, `expected recheck, got ${gapper.checks} checks`);
-    const complete = emitted.find(
-      (event) =>
-        event.processor === "GapAnalysis" && event.state === "COMPLETE",
-    );
-    assert.ok(complete, "GapAnalysis did not complete after LoopAgent escalation");
-    assert.equal(complete.data?.result, "PASSED");
+    assert.ok(gapper.checks >= 2, `expected fresh recheck, got ${gapper.checks}`);
+    assert.equal(output.gap.result, "PASSED");
+    assert.equal(output.gap.gap_0, true);
+    assert.equal(output.plan.plan_id, bundle.plan.plan_id);
+    assert.ok(output.plan.revision > bundle.plan.revision);
+    console.log("GAP_LOOP_RESPONSE_JSON=" + JSON.stringify(output));
   } finally {
     h.close();
   }

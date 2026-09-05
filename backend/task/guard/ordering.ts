@@ -3,7 +3,7 @@ import type { ProcessingEvent } from "../../contracts/schema/types.js";
 /**
  * Canonical processor ordering.
  * TripleValidation is now an explicit node between the three validators and
- * Confirmed.
+ * Confirmed. Builder is the execution boundary between CreateHash and Hash.
  */
 export const CANONICAL_PROCESSORS: string[] = [
   "Researcher",
@@ -43,8 +43,18 @@ export function detectOrderingIssues(
   for (const e of events.filter(
     (x) => x.scope === "WORKFLOW" && x.state === "COMPLETE",
   )) {
-    // Duplicate completion check
-    if (completed.has(e.processor)) {
+    // Duplicate completion check. A refinement loop may legitimately revisit
+    // GapAnalysis/Evaluation/validators/TripleValidation on a newer Plan
+    // revision; those processors are intentionally repeatable.
+    const repeatable = new Set([
+      "GapAnalysis",
+      "Evaluation",
+      "SchemaValidation",
+      "FixtureValidation",
+      "GoalValidation",
+      "TripleValidation",
+    ]);
+    if (completed.has(e.processor) && !repeatable.has(e.processor)) {
       issues.push({
         sequence: e.sequence,
         processor: e.processor,

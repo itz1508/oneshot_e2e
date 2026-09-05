@@ -193,7 +193,7 @@ export class SkillCatalog {
   }
 
   /**
-   * Dynamically discover reusable Skill definitions from `skill/` directories on disk.
+   * Dynamically discover reusable Skill definitions from `skills/` directories on disk.
    */
   discover(rootDir = process.env.ONESHOT_ROOT || process.cwd()): SkillDescriptor[] {
     const skillRoot = resolve(rootDir, "backend/skills");

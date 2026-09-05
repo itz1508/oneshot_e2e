@@ -1,11 +1,6 @@
 import { SequentialAgent } from "@google/adk";
 import type { HashProof, RootCause } from "../../contracts/schema/types.js";
-import type { BuilderWorkflow } from "../../role/builder/workflow.js";
-import type { EvaluationWorkflow } from "../../role/evaluation/workflow.js";
-import type { GapAnalysisWorkflow } from "../../role/gap-analysis/workflow.js";
-import type { PlannerWorkflow } from "../../role/planner/workflow.js";
-import type { RefactorWorkflow } from "../../role/refactor/workflow.js";
-import type { ResearcherWorkflow } from "../../role/researcher/workflow.js";
+import type { RolePipeline } from "../../pipeline/role-pipeline.js";
 import type { ConfirmationWorkflow } from "../confirmation.js";
 import type { HashWorkflow } from "../hash.js";
 import type { TripleValidationWorkflow } from "../triple-validation.js";
@@ -27,37 +22,32 @@ export interface OneShotWorkflowEffects {
 }
 
 export interface OneShotWorkflowDependencies {
-  researcher: ResearcherWorkflow;
-  planner: PlannerWorkflow;
-  refactor: RefactorWorkflow;
-  gapper: GapAnalysisWorkflow;
-  evaluator: EvaluationWorkflow;
+  pipeline: RolePipeline;
   triple: TripleValidationWorkflow;
   confirmation: ConfirmationWorkflow;
   hash: HashWorkflow;
-  builder: BuilderWorkflow;
   effects: OneShotWorkflowEffects;
 }
 
 /**
  * Build the canonical OneShot workflow as a real Google ADK SequentialAgent.
  *
- * Strict outer order is owned by SequentialAgent. Gap repetition and Triple
- * Validation concurrency are delegated to nested LoopAgent / ParallelAgent
- * compositions. Deterministic OneShot responsibilities remain deterministic.
+ * ADK owns stage ordering. OneShot RolePipeline owns explicit Role activation
+ * and binding. No workflow Role can execute from a bootstrap-created instance.
  */
 export function createOneShotRootAgent(
   deps: OneShotWorkflowDependencies,
 ): SequentialAgent {
-  const { effects } = deps;
+  const { effects, pipeline } = deps;
 
   const researcher = new OneShotStageAgent({
     name: "ResearcherStage",
-    description: "Runs the canonical Researcher role.",
+    description: "Activates and runs the canonical Researcher role.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
+      const role = await pipeline.activate(runId, "Researcher");
       effects.event(runId, "Researcher", "RUNNING");
-      const bundle = await deps.researcher.run(state.prompt(ctx), runId);
+      const bundle = await role.run(state.prompt(ctx), runId);
 
       await effects.save(runId, "prompt", bundle.prompt);
       await effects.save(runId, "researcher", bundle.researcher);
@@ -83,11 +73,12 @@ export function createOneShotRootAgent(
 
   const planner = new OneShotStageAgent({
     name: "PlannerStage",
-    description: "Runs the canonical Planner review/audit role.",
+    description: "Activates and runs the canonical Planner review/audit role.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
+      const role = await pipeline.activate(runId, "Planner");
       effects.event(runId, "Planner", "RUNNING");
-      const audit = await deps.planner.run(state.bundle(ctx), runId);
+      const audit = await role.run(state.bundle(ctx), runId);
       await effects.save(runId, "audit", audit);
       effects.event(runId, "Planner", "COMPLETE", {
         result: "PASSED",
@@ -100,11 +91,12 @@ export function createOneShotRootAgent(
 
   const refactor = new OneShotStageAgent({
     name: "RefactorStage",
-    description: "Runs canonical Refactor while preserving logical plan_id.",
+    description: "Activates canonical Refactor while preserving logical plan_id.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
+      const role = await pipeline.activate(runId, "Refactor");
       effects.event(runId, "Refactor", "RUNNING");
-      const plan = await deps.refactor.run(state.bundle(ctx), state.audit(ctx));
+      const plan = await role.run(state.bundle(ctx), state.audit(ctx));
       const bundle = { ...state.bundle(ctx), plan };
       await effects.save(runId, "plan.refactored", plan);
       effects.event(runId, "Refactor", "COMPLETE", {
@@ -121,15 +113,16 @@ export function createOneShotRootAgent(
     },
   });
 
-  const gapAnalysis = createGapAnalysisAgent(deps.gapper, effects);
+  const gapAnalysis = createGapAnalysisAgent(pipeline, effects);
 
   const evaluation = new OneShotStageAgent({
     name: "EvaluationStage",
-    description: "Evaluates the final gap_0 plan.",
+    description: "Activates Evaluation and evaluates the final gap_0 plan.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
+      const role = await pipeline.activate(runId, "Evaluation");
       effects.event(runId, "Evaluation", "RUNNING");
-      const result = await deps.evaluator.run(
+      const result = await role.run(
         state.bundle(ctx),
         state.plan(ctx),
       );
@@ -196,11 +189,12 @@ export function createOneShotRootAgent(
   const builder = new OneShotStageAgent({
     name: "BuilderStage",
     description:
-      "Executes the exact confirmed package through the governed sandbox.",
+      "Activates Builder and executes the exact confirmed package through the governed sandbox.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
+      const role = await pipeline.activate(runId, "Builder");
       effects.event(runId, "Builder", "RUNNING");
-      const result = await deps.builder.run(
+      const result = await role.run(
         state.confirmed(ctx),
         state.createdHash(ctx),
       );
@@ -290,7 +284,7 @@ export function createOneShotRootAgent(
   return new SequentialAgent({
     name: "OneShotCanonicalWorkflow",
     description:
-      "Runs Researcher, planning/refinement, Gap LoopAgent, Evaluation, parallel Triple Validation, confirmation, Builder execution, and sandbox integrity hash verification in canonical order.",
+      "Runs explicitly activated OneShot Roles, Gap LoopAgent, Evaluation, parallel Triple Validation, confirmation, Builder execution, and sandbox integrity hash verification in canonical order.",
     subAgents: [
       researcher,
       planner,

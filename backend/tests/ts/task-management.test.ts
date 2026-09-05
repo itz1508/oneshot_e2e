@@ -40,4 +40,5 @@ test("Task event stream is append-only, replayable, traced, and ADK-projectable"
     graph.nodes.find((n) => n.id === "Provider:cache")?.state,
     "COMPLETE",
   );
+  assert.equal(graph.root_agent.type, "Workflow");
 });

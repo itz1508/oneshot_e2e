@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import type { Prompt } from "../../../../contracts/schema/types.js";
+import { TavilyEvidenceCollector } from "../tavily/evidence.js";
 
 export interface GatheredEvidence {
   source: string;
@@ -13,8 +14,16 @@ function within(root: string, path: string) {
   return r === "" || (!r.startsWith("..") && !isAbsolute(r));
 }
 
+function envTrue(name: string): boolean {
+  return /^(?:1|true|yes)$/i.test((process.env[name] || "").trim());
+}
+
 export class ResearchEvidenceCollector {
-  constructor(private projectRoot: string) {}
+  private tavily: TavilyEvidenceCollector;
+
+  constructor(private projectRoot: string) {
+    this.tavily = new TavilyEvidenceCollector(projectRoot);
+  }
 
   async collect(prompt: Prompt): Promise<GatheredEvidence[]> {
     const out: GatheredEvidence[] = [
@@ -56,6 +65,14 @@ export class ResearchEvidenceCollector {
         statement: raw.slice(0, max),
         provenance: p,
       });
+    }
+
+    try {
+      out.push(...(await this.tavily.collect(prompt)));
+    } catch (error) {
+      if (envTrue("ONESHOT_TAVILY_REQUIRED")) throw error;
+      const detail = error instanceof Error ? error.message : String(error);
+      console.warn(`[Researcher:Tavily] optional evidence unavailable: ${detail}`);
     }
 
     return out;

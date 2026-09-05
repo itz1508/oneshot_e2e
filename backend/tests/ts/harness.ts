@@ -2,6 +2,7 @@
 import { resolve } from "node:path";
 import type { Prompt } from "../../contracts/schema/types.js";
 import type { ResearchProvider } from "../../role/researcher/provider.js";
+import { RolePipeline } from "../../pipeline/role-pipeline.js";
 import { ProcessingEventBus } from "../../runtime/event-bus.js";
 import { AppendOnlyProcessingEventStore } from "../../task/event/event-store.js";
 import { CheckpointStore } from "../../task/checkpoint/checkpoint-store.js";
@@ -98,10 +99,9 @@ export async function harness(
     task.onEvent(e, runs.require(e.run_id));
   });
 
-  provider?.attachEvents?.(events);
+  const researchProvider: ResearchProvider = provider || new FixtureResearchProvider();
+  researchProvider.attachEvents?.(events);
 
-  // Canonical contract operations remain separate from the three independent
-  // Triple Validation worker lanes.
   const bridge = new PythonBridge();
   const contracts = new CanonicalContractSkill(bridge);
   await contracts.verifyStatic();
@@ -114,10 +114,7 @@ export async function harness(
   };
 
   const validation = new DeterministicValidationRuntime(validationLanes);
-  const researcher = new ResearcherWorkflow(
-    provider || new FixtureResearchProvider(),
-    contracts,
-  );
+  const researcher = new ResearcherWorkflow(researchProvider, contracts);
   const planner = new PlannerWorkflow(contracts);
   const refactor = new RefactorWorkflow(contracts);
   const gapper = new GapAnalysisWorkflow(contracts);
@@ -135,19 +132,32 @@ export async function harness(
   );
   const builder = new BuilderWorkflow(sandbox);
 
+  // Kept only for legacy unit tests of the superseded registry itself. The
+  // production/test WorkflowRuntime below executes through ADK dynamic nodes.
+  const pipeline = new RolePipeline(events);
+  pipeline.register("Researcher", () => ({ role_id: "Researcher", runtime: researcher }));
+  pipeline.register("Planner", () => ({ role_id: "Planner", runtime: planner }));
+  pipeline.register("Refactor", () => ({ role_id: "Refactor", runtime: refactor }));
+  pipeline.register("GapAnalysis", () => ({ role_id: "GapAnalysis", runtime: gapper }));
+  pipeline.register("Evaluation", () => ({ role_id: "Evaluation", runtime: evaluator }));
+  pipeline.register("Builder", () => ({ role_id: "Builder", runtime: builder }));
+
   const runtime = new WorkflowRuntime(
     events,
     runs,
     store,
-    researcher,
-    planner,
-    refactor,
-    gapper,
-    evaluator,
-    triple,
-    confirmation,
-    hash,
-    builder,
+    async () => ({
+      researcher,
+      planner,
+      refactor,
+      gapper,
+      evaluator,
+      triple,
+      confirmation,
+      hash,
+      builder,
+      release() {},
+    }),
   );
 
   return {
@@ -168,9 +178,11 @@ export async function harness(
     hash,
     sandbox,
     builder,
+    pipeline,
     store,
     runtime,
     close() {
+      researchProvider.close?.();
       bridge.close();
     },
   };

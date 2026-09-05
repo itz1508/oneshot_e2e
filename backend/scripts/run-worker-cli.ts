@@ -27,6 +27,7 @@ import {
   ensureRuntimeDirectories,
 } from "../runtime/runtime-config.js";
 import { WorkflowRuntime } from "../runtime/workflow-runtime.js";
+import { createDynamicDependencyFactory } from "../workflow/adk/dynamic-dependencies.js";
 import { ResearcherWorkflow } from "../role/researcher/workflow.js";
 import { PlannerWorkflow } from "../role/planner/workflow.js";
 import { RefactorWorkflow } from "../role/refactor/workflow.js";
@@ -102,21 +103,22 @@ async function main() {
     projectRoot,
     resolveProvider: async (_providerId, ev, runId) =>
       providerManager.createProvider(projectRoot, ev, runId),
-    createRuntime: async (provider) =>
-      new WorkflowRuntime(
+    createRuntime: async (provider) => {
+      const bindDependencies = createDynamicDependencyFactory({
+        projectRoot,
+        events,
+        contracts,
+        sandbox,
+        triple: new TripleValidationWorkflow(deterministic, contracts),
+        provider,
+      });
+      return new WorkflowRuntime(
         events,
         runs,
         new FileArtifactStore(runtimePaths.runs),
-        new ResearcherWorkflow(provider, contracts),
-        new PlannerWorkflow(contracts),
-        new RefactorWorkflow(contracts),
-        new GapAnalysisWorkflow(contracts),
-        new EvaluationWorkflow(contracts),
-        new TripleValidationWorkflow(deterministic, contracts),
-        new ConfirmationWorkflow(contracts),
-        new HashWorkflow(contracts),
-        new BuilderWorkflow(sandbox),
-      ),
+        bindDependencies,
+      );
+    },
   };
 
   const worker = new BullMQRunQueue(RUN_QUEUE_NAME, queueDeps, {

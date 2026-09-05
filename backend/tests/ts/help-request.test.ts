@@ -6,6 +6,14 @@ import { WorkflowInformationRequiredError } from "../../core/information-require
 import { harness, prompt } from "./harness.js";
 
 class NeedUserInfo implements ResearchProvider {
+  async ready() {
+    return {
+      ready: true,
+      provider: "test-need-user-info",
+      models: [],
+    };
+  }
+
   async research(_p: Prompt, runId: string): Promise<ResearchBundle> {
     throw new WorkflowInformationRequiredError(
       {

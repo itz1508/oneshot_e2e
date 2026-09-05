@@ -395,8 +395,6 @@ export class ProviderManager {
       const base = loadAdkGemmaConfig(projectRoot);
       const config = {
         ...base,
-        model: settings.model || base.model,
-        ollamaBaseUrl: settings.apiBase || base.ollamaBaseUrl,
         workerPoolSize: settings.parallelism ?? base.workerPoolSize,
         timeoutSeconds: settings.timeoutSeconds ?? base.timeoutSeconds,
       };

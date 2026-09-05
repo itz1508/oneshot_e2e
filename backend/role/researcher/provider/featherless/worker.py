@@ -87,6 +87,42 @@ def _client():
     return _client_instance
 
 
+def _health() -> dict[str, Any]:
+    if TEST_DRAFT:
+        return {
+            "ready": True,
+            "provider": "featherless",
+            "model": MODEL,
+            "api_base": BASE,
+            "detail": "deterministic adapter draft configured",
+        }
+    if not os.getenv("FEATHERLESS_API_KEY", "").strip():
+        return {
+            "ready": False,
+            "provider": "featherless",
+            "model": MODEL,
+            "api_base": BASE,
+            "detail": "FEATHERLESS_API_KEY is not configured",
+        }
+    try:
+        _client()
+    except Exception as error:
+        return {
+            "ready": False,
+            "provider": "featherless",
+            "model": MODEL,
+            "api_base": BASE,
+            "detail": f"{type(error).__name__}: {error}",
+        }
+    return {
+        "ready": True,
+        "provider": "featherless",
+        "model": MODEL,
+        "api_base": BASE,
+        "detail": "client and credential binding ready",
+    }
+
+
 def _json_content(content: str) -> str:
     value = content.strip()
     fenced = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", value, re.DOTALL)
@@ -157,13 +193,7 @@ async def dispatch(message: dict[str, Any]):
     if message.get("op") == "research":
         return await research(message["payload"], message.get("id"))
     if message.get("op") == "health":
-        return {
-            "model": MODEL,
-            "api_base": BASE,
-            "timeout_seconds": TIMEOUT,
-            "max_tokens": MAX_TOKENS,
-            "test_mode": bool(TEST_DRAFT),
-        }
+        return _health()
     raise ValueError(f"unknown op {message.get('op')}")
 
 

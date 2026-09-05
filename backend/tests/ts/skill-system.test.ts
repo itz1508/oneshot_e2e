@@ -67,7 +67,7 @@ test("SkillResolver supports governed resolveOrCreate pathway without fuzzy fall
   const custom = resolver.resolveOrCreate("custom-linter", (cap) => ({
     skill_id: "oneshot-custom-linter",
     name: "Custom Code Linter",
-    path: "skill/custom-linter/SKILL.md",
+    path: "skills/custom-linter/SKILL.md",
     capabilities: [cap],
     responsibilities: ["lint source code"],
     tools: ["lint_file"],

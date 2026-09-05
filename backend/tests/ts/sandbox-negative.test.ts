@@ -11,8 +11,9 @@ test("negative 1: Hash mismatch halts execution before sandbox workspace or runn
   const h = await harness("neg-hash-mismatch");
   const runId = "neg-1-run";
   h.runs.create(runId);
-  const out = await h.runtime.run(runId, prompt(runId));
+  await h.runtime.run(runId, prompt(runId));
   const confirmed = await h.store.load<any>(runId, "confirmed");
+  const beforeSequence = h.events.list(runId).at(-1)?.sequence ?? 0;
 
   const sandbox = new SandboxService(h.contracts, h.events);
   const tamperedInput: SandboxExecutionInput = {
@@ -27,12 +28,19 @@ test("negative 1: Hash mismatch halts execution before sandbox workspace or runn
   assert.match(result.root_cause.issue, /hash mismatch/i);
   assert.equal(result.evidence, undefined); // Execution never started
 
-  const events = h.events.list(runId).filter((e) => e.scope === "SANDBOX");
-  const admissionFailure = events.find((e) => e.processor === "SandboxAdmissionVerified" && e.result === "ROOT_CAUSE");
-  assert.ok(admissionFailure, "SandboxAdmissionVerified ROOT_CAUSE event should exist");
-  // Execution must not start AFTER the admission failure
-  const executionStartedAfterFailure = events.some((e) => e.processor === "ExecutionStarted" && e.sequence > admissionFailure!.sequence);
-  assert.equal(executionStartedAfterFailure, false);
+// Inspect only events produced by the tampered admission attempt. The same
+  // run already has legitimate sandbox evidence from creating the fixture.
+  const events = h.events
+    .list(runId)
+    .filter((e) => e.scope === "SANDBOX" && e.sequence > beforeSequence);
+  assert.ok(
+    events.some(
+      (e) =>
+        e.processor === "SandboxAdmissionVerified" &&
+        e.result === "ROOT_CAUSE",
+    ),
+  );
+  assert.equal(events.some((e) => e.processor === "ExecutionStarted"), false);
 
   h.bridge.close();
 });
@@ -43,15 +51,16 @@ test("negative 2: Timeout kills execution process tree and produces ROOT_CAUSE w
   const h = await harness("neg-timeout");
   const runId = "neg-2-run";
   h.runs.create(runId);
-  const out = await h.runtime.run(runId, prompt(runId));
+  await h.runtime.run(runId, prompt(runId));
   const confirmed = await h.store.load<any>(runId, "confirmed");
 
-  // Add a step that sleeps longer than authorized timeout
+  // Use a command shape the hardened runner explicitly recognizes so this
+  // proves process-tree timeout handling rather than the non-command echo path.
   const timedPlan = structuredClone(confirmed);
   const isWin = process.platform === "win32";
   timedPlan.core.plan.steps[0].description = isWin
     ? "powershell -Command Start-Sleep -Seconds 5"
-    : "sleep 5";
+    : "sh -c \"sleep 5\"";
 
   const updatedHash = await h.contracts.createHash(timedPlan.core);
   const sandbox = new SandboxService(
@@ -71,7 +80,10 @@ test("negative 2: Timeout kills execution process tree and produces ROOT_CAUSE w
   });
 
   const elapsedMs = Date.now() - startMs;
-  assert.ok(elapsedMs < 4000, `Execution should terminate promptly near timeout (took ${elapsedMs}ms)`);
+  assert.ok(
+    elapsedMs < 4000,
+    `Execution should terminate promptly near timeout (took ${elapsedMs}ms)`,
+  );
   assert.equal(result.result, "ROOT_CAUSE");
   if (result.result !== "ROOT_CAUSE") throw new Error("expected ROOT_CAUSE");
 
@@ -89,7 +101,7 @@ test("negative 3: Command failure emits deterministic ROOT_CAUSE with exit code 
   const h = await harness("neg-failure");
   const runId = "neg-3-run";
   h.runs.create(runId);
-  const out = await h.runtime.run(runId, prompt(runId));
+  await h.runtime.run(runId, prompt(runId));
   const confirmed = await h.store.load<any>(runId, "confirmed");
 
   const failPlan = structuredClone(confirmed);
@@ -128,7 +140,7 @@ test("negative 4: Environment isolation filters out unauthorized secret variable
   const h = await harness("neg-env");
   const runId = "neg-4-run";
   h.runs.create(runId);
-  const out = await h.runtime.run(runId, prompt(runId));
+  await h.runtime.run(runId, prompt(runId));
   const confirmed = await h.store.load<any>(runId, "confirmed");
 
   // Set sensitive variable in process.env
@@ -174,7 +186,7 @@ test("negative 5: Resource bytes written limit triggers resource exhaustion ROOT
   const h = await harness("neg-resource");
   const runId = "neg-5-run";
   h.runs.create(runId);
-  const out = await h.runtime.run(runId, prompt(runId));
+  await h.runtime.run(runId, prompt(runId));
   const confirmed = await h.store.load<any>(runId, "confirmed");
 
   const writePlan = structuredClone(confirmed);
@@ -211,8 +223,7 @@ test("negative 6: Execution identifying research requirement emits ROOT_CAUSE wi
   const h = await harness("neg-research");
   const runId = "neg-6-run";
   h.runs.create(runId);
-  const out = await h.runtime.run(runId, prompt(runId));
-  const confirmed = await h.store.load<any>(runId, "confirmed");
+  await h.runtime.run(runId, prompt(runId));
 
   // Construct SandboxExecutionRootCause with ResearchRequest
   const researchReq = {
@@ -235,7 +246,7 @@ test("negative 7: Network access is isolated under DENY_ALL policy", async () =>
   const h = await harness("neg-net");
   const runId = "neg-7-run";
   h.runs.create(runId);
-  const out = await h.runtime.run(runId, prompt(runId));
+  await h.runtime.run(runId, prompt(runId));
   const confirmed = await h.store.load<any>(runId, "confirmed");
 
   const netPlan = structuredClone(confirmed);

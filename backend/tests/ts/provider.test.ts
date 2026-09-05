@@ -5,7 +5,7 @@ import { FixtureResearchProvider } from "../../role/researcher/tool/fixture-prov
 import { AdkGemmaResearchProvider } from "../../role/researcher/provider/adk-gemma2/provider.js";
 import { FeatherlessResearchProvider } from "../../role/researcher/provider/featherless/provider.js";
 
-test("ResearchProvider resolution separates sample, default local, and optional remote providers", async () => {
+test("ResearchProvider resolution separates sample, unconfigured production, and explicit remote providers", async () => {
   const saved = {
     mode: process.env.ONESHOT_MODE,
     provider: process.env.ONESHOT_RESEARCH_PROVIDER,
@@ -20,10 +20,15 @@ test("ResearchProvider resolution separates sample, default local, and optional 
         FixtureResearchProvider,
     );
 
+    // Production must not silently choose a model/provider. Binding is explicit.
     process.env.ONESHOT_MODE = "production";
-    const local = await resolveResearchProvider(process.cwd());
-    assert.ok(local instanceof AdkGemmaResearchProvider);
-    local.close?.();
+    delete process.env.ONESHOT_RESEARCH_PROVIDER;
+    const unconfigured = await resolveResearchProvider(process.cwd());
+    const readiness = await unconfigured.ready("provider-test");
+    assert.equal(readiness.ready, false);
+    assert.equal(readiness.provider, "unconfigured");
+    assert.match(readiness.detail || "", /not configured/i);
+    unconfigured.close?.();
 
     process.env.ONESHOT_RESEARCH_PROVIDER = "featherless";
     const remote = await resolveResearchProvider(process.cwd());

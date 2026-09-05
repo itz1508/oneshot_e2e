@@ -82,14 +82,14 @@ export class InitSkill {
           message: `Node.js version is ${process.version}`,
         });
 
-        // Check 3: Contract registry
-        const registryFile = join(root, "app/contract-registry.json");
+// Check 3: Contract registry (canonical location)
+        const registryFile = join(root, "backend", "schema", "contract-registry.json");
         checks.push({
           name: "contract_registry_exists",
           passed: existsSync(registryFile),
           message: existsSync(registryFile)
-            ? "contract-registry.json is present"
-            : "contract-registry.json is missing",
+            ? "schema/contract-registry.json is present"
+            : "schema/contract-registry.json is missing",
         });
 
         const healthy = checks.every((c) => c.passed);
