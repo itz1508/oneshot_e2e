@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { Server } from "node:http";
-import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { startHttpServer } from "../../server/http-server.js";
@@ -9,6 +9,89 @@ import { ProviderManager } from "../../runtime/provider-manager.js";
 import { LocalFileSecretStore } from "../../runtime/provider-secret-store.js";
 import { FileProviderRuntimeConfigStore } from "../../runtime/provider-runtime-config.js";
 import { AdkGemmaResearchProvider } from "../../role/researcher/provider/adk-gemma2/provider.js";
+import { ProcessingEventBus } from "../../runtime/event-bus.js";
+import { RunRepository } from "../../runtime/run-repository.js";
+import { ConversationStore } from "../../intent/conversation-store.js";
+import { IntentCollectionService } from "../../intent/intent-collection.js";
+import type { RunQueue } from "../../runtime/queue.js";
+
+test("production API: setup, all public provider names, write-only keys, activation, removal, and both submission routes", async () => {
+  const tmp = await mkdtemp(join(tmpdir(), "provider-lifecycle-"));
+  const savedToken = process.env.ONESHOT_API_TOKEN;
+  process.env.ONESHOT_API_TOKEN = TOKEN;
+  const savedEnv = Object.fromEntries(["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"].map(k => [k, process.env[k]]));
+  for (const k of Object.keys(savedEnv)) delete process.env[k];
+  const pm = new ProviderManager({ projectRoot: process.cwd(), mode: "production",
+    secretStore: new LocalFileSecretStore(join(tmp, "secrets")),
+    runtimeConfigStore: new FileProviderRuntimeConfigStore(join(tmp, "providers.json")) });
+  const jobs: any[] = [];
+  const queue = { addRun: async (job: unknown) => { jobs.push(structuredClone(job)); return { jobId: "test" }; },
+    getJobCounts: async () => ({ waiting: jobs.length, active: 0, failed: 0 }) } as unknown as RunQueue;
+  const events = new ProcessingEventBus();
+  const runs = new RunRepository(join(tmp, "runs"));
+  const intent = new IntentCollectionService(new ConversationStore());
+  let inline = 0;
+  const server = await startHttpServer({ run: async () => { inline++; } } as any,
+    runs, events, tmp, 0, undefined, intent, undefined,
+    { mode: "sample", provider: "FeatherlessResearchProvider" },
+    { workspaceRoot: tmp }, queue, pm, true);
+  const base = `http://127.0.0.1:${(server.address() as any).port}`;
+  const get = async (path: string) => (await fetch(base + path, { headers: AUTH })).json();
+  try {
+    const initial = await get("/api/health");
+    assert.equal(initial.provider, "<default>");
+    assert.equal(initial.mode, "production");
+    assert.equal(initial.providerConfiguration, "unconfigured");
+    assert.equal(initial.redis, "ok");
+    assert.equal(initial.queue, "ok");
+    assert.equal(initial.worker, "ok");
+    assert.equal((await postJson(base + "/api/runs", { intent: "test" })).status, 409);
+    const list = await get("/api/providers");
+    assert.deepEqual(list.providers.map((p: any) => p.displayName).sort(), ["Anthropic", "Gemini", "OpenAI"]);
+    for (const id of ["sample", "featherless", "adk_gemma2", "google"]) {
+      assert.equal((await fetch(base + "/api/providers/" + id, { headers: AUTH })).status, 404);
+    }
+    for (const [id, name] of [["openai", "OpenAI"], ["anthropic", "Anthropic"], ["gemini", "Gemini"]]) {
+      const key = "private-test-" + id;
+      assert.equal((await putJson(base + "/api/providers/" + id + "/credential", { value: key })).status, 200);
+      assert.equal((await postJson(base + "/api/providers/" + id + "/activate")).status, 200);
+      const health = await get("/api/health");
+      assert.equal(health.provider, name);
+      assert.equal(health.providerConfiguration, "configured");
+      for (const path of ["/api/health", "/api/providers", "/api/providers/" + id, "/api/runtime/queue"]) {
+        const body = JSON.stringify(await get(path));
+        assert.ok(!body.includes(key));
+        assert.doesNotMatch(body, /FeatherlessResearchProvider|OpenAIModelProvider|AnthropicModelProvider|GeminiModelProvider/);
+      }
+    }
+    await postJson(base + "/api/runs", { intent: "Run pinned configuration" });
+    const captured = structuredClone(jobs[0]);
+    const conversation = await (await postJson(base + "/api/conversations", {
+      message: "Build a compact media utility that accepts MP4 and MP3 files. Produce a validated implementation plan with deterministic validation evidence and a final hash proof.",
+    })).json();
+    const response = await postJson(base + "/api/conversations/" + conversation.conversation_id + "/run");
+    assert.equal(response.status, 202);
+    assert.equal(jobs.length, 2, "Generate must use BullMQ too");
+    assert.equal(inline, 0);
+    await pm.update("gemini", { model: "new-model" });
+    await pm.activate("openai");
+    assert.deepEqual(jobs[0], captured);
+    assert.equal(captured.providerId, "gemini");
+    assert.ok(captured.model);
+    assert.equal(captured.model, captured.settings.model);
+    assert.equal(typeof captured.revision, "number");
+    assert.ok(!JSON.stringify(jobs).includes("private-test-"));
+    await fetch(base + "/api/providers/openai/credential", { method: "DELETE", headers: AUTH });
+    assert.equal((await get("/api/health")).provider, "<default>");
+  } finally {
+    await closeServer(server);
+    if (savedToken === undefined) delete process.env.ONESHOT_API_TOKEN; else process.env.ONESHOT_API_TOKEN = savedToken;
+    for (const [k, v] of Object.entries(savedEnv)) {
+      if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    }
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
 
 const TOKEN = "provider-http-test";
 const AUTH = { Authorization: `Bearer ${TOKEN}` };
@@ -50,13 +133,17 @@ test("provider HTTP endpoints: list/get/update/test/activate + 404s", async () =
         version: 1,
         providers: {
           sample: { label: "OneShot Sample", type: "fixture", credentialType: "none" },
-          featherless: { label: "Featherless AI", type: "featherless", credentialType: "api_key", credentialEnv: "FEATHERLESS_API_KEY" },
+          openai: { label: "OpenAI", type: "openai", credentialType: "api_key", credentialEnv: "OPENAI_API_KEY" },
         },
       }),
     );
     await mkdir(uiRoot, { recursive: true });
+    await mkdir(join(projectRoot, "app/fixtures/product"), { recursive: true });
+    await writeFile(join(projectRoot, "app/fixtures/product/complete-success-seed.json"),
+      await readFile("app/fixtures/product/complete-success-seed.json"));
     await writeFile(join(uiRoot, "index.html"), "<html>ok</html>");
     const pm = new ProviderManager({
+      mode: "sample",
       projectRoot,
       secretStore: new LocalFileSecretStore(join(tmp, "secrets")),
       runtimeConfigStore: new FileProviderRuntimeConfigStore(join(tmp, "runtime-config", "providers.json")),
@@ -81,13 +168,14 @@ test("provider HTTP endpoints: list/get/update/test/activate + 404s", async () =
     assert.equal(updated.runtime.model, "fixture-x");
     const tested = await (await postJson(`${base}/api/providers/sample/test`, {})).json();
     assert.equal(tested.ok, true);
-    assert.equal(tested.provider, "sample");
+    assert.equal(tested.provider, "<default>");
     assert.ok(!JSON.stringify(tested).includes("apiKey"));
-    const activated = await (await postJson(`${base}/api/providers/featherless/activate`, {})).json();
-    assert.equal(activated.activeProvider, "featherless");
-    assert.equal(activated.provider.id, "featherless");
+    await putJson(`${base}/api/providers/openai/credential`, { value: "http-test-only-key" });
+    const activated = await (await postJson(`${base}/api/providers/openai/activate`, {})).json();
+    assert.equal(activated.activeProvider, "openai");
+    assert.equal(activated.provider.id, "openai");
     const list2 = await (await fetch(`${base}/api/providers`, { headers: AUTH })).json();
-    assert.equal(list2.activeProvider, "featherless");
+    assert.equal(list2.activeProvider, "openai");
     assert.equal((await fetch(`${base}/api/providers/unknown`, { headers: AUTH })).status, 404);
     assert.equal((await putJson(`${base}/api/providers/unknown`, { model: "x" })).status, 404);
     assert.equal((await postJson(`${base}/api/providers/unknown/activate`, {})).status, 404);

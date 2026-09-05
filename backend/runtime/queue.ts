@@ -33,6 +33,7 @@ import type { RunRepository } from "./run-repository.js";
 import type { ProcessingEventBus } from "./event-bus.js";
 import type { WorkflowRuntime } from "./workflow-runtime.js";
 import type { ResearchProvider } from "../role/researcher/provider.js";
+import type { ProviderRuntimeSettings } from "./provider-runtime-config.js";
 import { WorkflowRootCauseError } from "../core/root-cause-error.js";
 import {
   closeSharedRedis,
@@ -65,6 +66,7 @@ export interface RunJobProviderV1 {
   id: string;
   model?: string;
   configRevision?: number;
+  settings?: ProviderRuntimeSettings;
 }
 
 export interface RunJobV1 {
@@ -110,11 +112,14 @@ export function validateRunJobV1(data: unknown): { ok: boolean; errors: string[]
     return { ok: false, errors: ["payload is not an object"] };
   }
   const d = data as Record<string, unknown>;
-  for (const k of Object.keys(d)) {
-    if (SECRET_FIELD_RE.test(k)) {
-      errors.push(`secret-shaped field "${k}" must not be present in the job payload`);
+  const scan = (value: unknown): void => {
+    if (!value || typeof value !== "object") return;
+    for (const [k, v] of Object.entries(value)) {
+      if (SECRET_FIELD_RE.test(k)) errors.push("secret-shaped field must not be present in the job payload");
+      scan(v);
     }
-  }
+  };
+  scan(d);
   if (typeof d.runId !== "string" || !d.runId) {
     errors.push("runId must be a non-empty string");
   }
@@ -167,6 +172,7 @@ export interface RunQueue {
     providerId: string;
     revision: number;
     model?: string;
+    settings?: ProviderRuntimeSettings;
   }): Promise<{ jobId: string }>;
   getJob(runId: string): Promise<Job<RunJobData> | undefined>;
   getJobState(runId: string): Promise<RunJobState>;
@@ -195,6 +201,7 @@ export interface RunQueueDeps {
     providerId: string,
     events: ProcessingEventBus,
     runId: string,
+    captured?: RunJobProviderV1,
   ) => Promise<ResearchProvider>;
   projectRoot: string;
 }
@@ -377,6 +384,7 @@ export class BullMQRunQueue implements RunQueue {
     providerId: string;
     revision: number;
     model?: string;
+    settings?: ProviderRuntimeSettings;
   }): Promise<{ jobId: string }> {
     // Versioned v1 payload — no secrets. jobId = runId (BullMQ dedups by jobId,
     // so re-submitting the same runId never creates a duplicate queue entry).
@@ -387,10 +395,12 @@ export class BullMQRunQueue implements RunQueue {
       provider: {
         id: job.providerId,
         ...(job.model ? { model: job.model } : {}),
-        ...(job.revision ? { configRevision: job.revision } : {}),
+        configRevision: job.revision,
+        ...(job.settings ? { settings: structuredClone(job.settings) } : {}),
       },
       submittedAt: new Date().toISOString(),
     };
+    if (!validateRunJobV1(payload).ok) throw new Error("Invalid run job payload");
     // Fail fast when Redis is unreachable instead of parking the HTTP request
     // in ioredis's offline queue. The HTTP layer decides 503 vs inline fallback.
     const add = this.queue.add("oneshot-run", payload, {
@@ -504,8 +514,8 @@ export async function executeRunJob(
   const runId = typeof data.runId === "string" ? data.runId : "unknown";
   // Provider selector from either the v1 (`provider.{id,configRevision}`) or
   // legacy (`providerId`/`revision`) shape.
-  const providerId = data.providerId ?? data.provider?.id ?? "sample";
-  const revision = data.revision ?? data.provider?.configRevision ?? 0;
+  const providerId = data.provider?.id ?? data.providerId ?? "<default>";
+  const revision = data.provider?.configRevision ?? data.revision ?? 0;
   const prompt = data.prompt;
 
   // The run snapshot is created by the HTTP layer; ensure it exists so a
@@ -592,7 +602,8 @@ export async function executeRunJob(
     //   bound ONCE here; an already-active run is never re-bound mid-workflow.
     let provider: ResearchProvider;
     try {
-      provider = await deps.resolveProvider(providerId, deps.events, runId);
+      provider = await deps.resolveProvider(providerId, deps.events, runId,
+        data.provider ?? { id: providerId, configRevision: data.revision });
     } catch (err) {
       const wrc = err instanceof WorkflowRootCauseError
         ? err.rootCause

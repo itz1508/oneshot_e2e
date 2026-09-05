@@ -2,8 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { resolveResearchProvider } from "../../role/researcher/provider-resolver.js";
 import { FixtureResearchProvider } from "../../role/researcher/tool/fixture-provider.js";
-import { AdkGemmaResearchProvider } from "../../role/researcher/provider/adk-gemma2/provider.js";
-import { FeatherlessResearchProvider } from "../../role/researcher/provider/featherless/provider.js";
+import { OpenAIModelProvider } from "../../role/researcher/provider/openai/provider.js";
+import { AnthropicModelProvider } from "../../role/researcher/provider/anthropic/provider.js";
+import { GeminiModelProvider } from "../../role/researcher/provider/gemini/provider.js";
 
 test("ResearchProvider resolution separates sample, unconfigured production, and explicit remote providers", async () => {
   const saved = {
@@ -26,14 +27,28 @@ test("ResearchProvider resolution separates sample, unconfigured production, and
     const unconfigured = await resolveResearchProvider(process.cwd());
     const readiness = await unconfigured.ready("provider-test");
     assert.equal(readiness.ready, false);
-    assert.equal(readiness.provider, "unconfigured");
-    assert.match(readiness.detail || "", /not configured/i);
+    assert.equal(readiness.provider, "<default>");
+    assert.match(readiness.detail || "", /configure/i);
     unconfigured.close?.();
 
-    process.env.ONESHOT_RESEARCH_PROVIDER = "featherless";
-    const remote = await resolveResearchProvider(process.cwd());
-    assert.ok(remote instanceof FeatherlessResearchProvider);
-    remote.close?.();
+    process.env.ONESHOT_MODE = "test";
+    process.env.ONESHOT_RESEARCH_PROVIDER = "openai";
+    const openai = await resolveResearchProvider(process.cwd());
+    assert.ok(openai instanceof OpenAIModelProvider);
+    openai.close?.();
+
+    process.env.ONESHOT_RESEARCH_PROVIDER = "anthropic";
+    const anthropic = await resolveResearchProvider(process.cwd());
+    assert.ok(anthropic instanceof AnthropicModelProvider);
+    anthropic.close?.();
+
+    process.env.ONESHOT_RESEARCH_PROVIDER = "gemini";
+    process.env.GEMINI_DISTRIBUTION_MODEL = "test-distribution";
+    process.env.GEMINI_RESEARCH_MODEL = "test-research";
+    process.env.GEMINI_SYNTHESIS_MODEL = "test-synthesis";
+    const gemini = await resolveResearchProvider(process.cwd());
+    assert.ok(gemini instanceof GeminiModelProvider);
+    gemini.close?.();
   } finally {
     const names = {
       mode: "ONESHOT_MODE",

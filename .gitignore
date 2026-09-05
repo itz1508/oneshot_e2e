@@ -25,3 +25,9 @@ external/
 scripts/bootstrap/start.mjs
 scripts/bootstrap/health.mjs
 scripts/config/
+
+# Runtime noise (never migration baseline content)
+/.headless_profile/
+/runtime/
+/oneshot_e2e.runtimeserver*.log
+/ui_*.png

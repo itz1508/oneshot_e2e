@@ -7,9 +7,14 @@ import type {
 } from "./provider.js";
 import { FixtureResearchProvider } from "./tool/fixture-provider.js";
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
+import { GeminiModelProvider } from "./provider/gemini/provider.js";
+import { OpenAIModelProvider } from "./provider/openai/provider.js";
+import { AnthropicModelProvider } from "./provider/anthropic/provider.js";
+import type { ProcessingEventBus } from "../../runtime/event-bus.js";
+import { ProviderManager } from "../../runtime/provider-manager.js";
+import { getRuntimePaths } from "../../runtime/runtime-config.js";
 import { AdkGemmaResearchProvider } from "./provider/adk-gemma2/provider.js";
 import { FeatherlessResearchProvider } from "./provider/featherless/provider.js";
-import type { ProcessingEventBus } from "../../runtime/event-bus.js";
 
 function resolveSeedFixture(projectRoot: string): string {
   const p1 = resolve(projectRoot, "app/fixtures/product/complete-success-seed.json");
@@ -36,7 +41,7 @@ class MissingProductionResearchProvider implements ResearchProvider {
     throw new WorkflowRootCauseError({
       issue: "ResearchProvider is not configured",
       expected:
-        "An explicitly selected adk_gemma2, featherless, or custom production ResearchProvider",
+        "An explicitly selected openai, anthropic, gemini, or custom production ResearchProvider",
       actual: "No production ResearchProvider was selected",
       evidence_ids: [],
       required_correction:
@@ -51,7 +56,7 @@ export async function resolveResearchProvider(
   projectRoot: string,
   events?: ProcessingEventBus,
 ): Promise<ResearchProvider> {
-  const mode = (process.env.ONESHOT_MODE || "sample").toLowerCase();
+  const mode = (process.env.ONESHOT_MODE || "production").toLowerCase();
 
   if (mode === "sample") {
     return new FixtureResearchProvider(
@@ -61,6 +66,12 @@ export async function resolveResearchProvider(
 
   if (mode !== "production" && mode !== "test") {
     throw new Error(`Unknown ONESHOT_MODE ${mode}`);
+  }
+
+  // The normal Role pipeline shares the web-managed source of truth.
+  // Environment-selected adapters are only a compatibility/test entrypoint.
+  if (mode !== "test" && process.env.ONESHOT_LEGACY_PROVIDER_ENABLED !== "true") {
+    return new ProviderManager({ projectRoot, events, runtimePaths: getRuntimePaths(projectRoot) }).createProvider();
   }
 
   const modulePath = process.env.ONESHOT_RESEARCH_PROVIDER_MODULE;
@@ -76,9 +87,25 @@ export async function resolveResearchProvider(
     if (events) provider.attachEvents(events);
     return provider;
   }
-
   if (selected === "featherless" || selected === "featherless_gemma4") {
     const provider = new FeatherlessResearchProvider(projectRoot);
+    if (events) provider.attachEvents(events);
+    return provider;
+  }
+  if (selected === "gemini" || selected === "google") {
+    const provider = new GeminiModelProvider(projectRoot);
+    if (events) provider.attachEvents(events);
+    return provider;
+  }
+
+  if (selected === "openai") {
+    const provider = new OpenAIModelProvider(projectRoot);
+    if (events) provider.attachEvents(events);
+    return provider;
+  }
+
+  if (selected === "anthropic") {
+    const provider = new AnthropicModelProvider(projectRoot);
     if (events) provider.attachEvents(events);
     return provider;
   }

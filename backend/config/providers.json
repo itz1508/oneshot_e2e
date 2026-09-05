@@ -6,16 +6,23 @@
       "type": "fixture",
       "credentialType": "none"
     },
-    "featherless": {
-      "label": "Featherless AI",
-      "type": "featherless",
+    "openai": {
+      "label": "OpenAI",
+      "type": "openai",
       "credentialType": "api_key",
-      "credentialEnv": "FEATHERLESS_API_KEY"
+      "credentialEnv": "OPENAI_API_KEY"
     },
-    "adk_gemma2": {
-      "label": "Google ADK / Gemma",
-      "type": "adk_gemma2",
-      "credentialType": "api_key"
+    "anthropic": {
+      "label": "Anthropic",
+      "type": "anthropic",
+      "credentialType": "api_key",
+      "credentialEnv": "ANTHROPIC_API_KEY"
+    },
+    "gemini": {
+      "label": "Gemini",
+      "type": "gemini",
+      "credentialType": "api_key",
+      "credentialEnv": "GEMINI_API_KEY"
     }
   }
 }

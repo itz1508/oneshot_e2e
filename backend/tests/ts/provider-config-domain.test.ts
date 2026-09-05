@@ -7,42 +7,46 @@ import { FileProviderRuntimeConfigStore } from "../../runtime/provider-runtime-c
 test("catalog loads with all expected providers", async () => {
   const pm = new ProviderManager({
     projectRoot: ".",
+    mode: "sample",
     catalogPath: "backend/config/providers.json",
     secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
     runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
   });
   const providerIds = (await pm.list()).map((p) => p.id).sort();
-  assert.deepEqual(providerIds.sort(), ["adk_gemma2", "featherless", "sample"].sort());
+  assert.deepEqual(providerIds.sort(), ["anthropic", "gemini", "openai", "sample"].sort());
 });
 
 test("environment credential takes precedence over local secret store", async () => {
   const pm = new ProviderManager({
     projectRoot: ".",
+    mode: "sample",
     catalogPath: "backend/config/providers.json",
     secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
     runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
   });
   // Set environment credential
-  process.env.FEATHERLESS_API_KEY = "test-api-key";
-  const status = await pm.getProviderStatus("featherless");
+  process.env.OPENAI_API_KEY = "test-api-key";
+  const status = await pm.getProviderStatus("openai");
   assert.equal(status.credentialSource, "env-var");
-  delete process.env.FEATHERLESS_API_KEY;
+  delete process.env.OPENAI_API_KEY;
 });
 
 test("stable provider IDs", async () => {
   const pm = new ProviderManager({
     projectRoot: ".",
+    mode: "sample",
     catalogPath: "backend/config/providers.json",
     secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
     runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
   });
   const ids = (await pm.list()).map((p) => p.providerId).sort();
-  assert.deepEqual(ids, ["adk_gemma2", "featherless", "sample"]);
+  assert.deepEqual(ids, ["anthropic", "gemini", "openai", "sample"]);
 });
 
 test("active/configured/ready state is truthful", async () => {
   const pm = new ProviderManager({
     projectRoot: ".",
+    mode: "sample",
     catalogPath: "backend/config/providers.json",
     secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
     runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
@@ -54,9 +58,9 @@ test("active/configured/ready state is truthful", async () => {
   assert.equal(sample.credentialSource, "none");
   assert.equal(sample.active, true);
 
-  const featherless = (await pm.listProviderStatus()).find(
-    (s) => s.providerId === "featherless",
+  const openai = (await pm.listProviderStatus()).find(
+    (s) => s.providerId === "openai",
   )!;
-  assert.equal(featherless.configured, true);
-  assert.equal(featherless.credentialType, "api_key");
+  assert.equal(openai.configured, false);
+  assert.equal(openai.credentialType, "api_key");
 });

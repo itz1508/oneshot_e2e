@@ -1,4 +1,8 @@
-# OneShot Production E2E 1.1.0 — Google ADK + Gemma 2 Integration Verification
+# OneShot Production E2E — Verification Report
+
+**Last updated:** 2026-09-04
+**Version:** 1.4.0 (Phase 5 — failure-recovery workflow)
+**Branch:** `repair/runtime-provider-ui`
 
 ## Product result
 
@@ -6,7 +10,13 @@
 PASSED
 ```
 
-The canonical OneShot workflow remains unchanged. Google ADK + Gemma 2 is integrated only at the Researcher provider boundary.
+The canonical OneShot workflow remains unchanged. Phases 1–5 are complete and intact:
+- Phase 1: Provider management, queue infrastructure, run job contract
+- Phase 2: Sandbox execution, hardened admission
+- Phase 3: BYOK, Tavily evidence, researcher provider
+- Phase 4A/4B: Provider UI, provider failure normalization
+- Phase 4C: Runtime provider UI integration
+- Phase 5: Failure-recovery workflow (`backend/recovery/`)
 
 ## Canonical chain exercised
 
@@ -14,17 +24,23 @@ The canonical OneShot workflow remains unchanged. Google ADK + Gemma 2 is integr
 Prompt_id
 → Researcher
 → Researcher(id)
+   ├── plan_id
+   ├── schema_id
+   ├── fixture_id
+   ├── goal_id
+   └── validation_id
 → Planner
 → audit_id
 → Refactor
-→ same plan_id
+→ same logical plan_id
 → Gap Analysis
 → gap_0 + plan_id
 → Evaluation
 → plan_id
-→ Schema Validation
-→ Fixture Validation
-→ Goal Validation
+→ Triple Validation
+   ├── Schema Validation  → VALID | NOT_VALID
+   ├── Fixture Validation → VALID | NOT_VALID
+   └── Goal Validation    → VALID | NOT_VALID
 → all VALID
 → CONFIRMED
 → CREATE HASH
@@ -32,68 +48,72 @@ Prompt_id
 → DONE
 ```
 
-## Integrated provider path
+## Failure-recovery chain (Phase 5)
 
 ```text
-ResearcherWorkflow (TypeScript)
-→ AdkGemmaResearchProvider (TypeScript)
-→ persistent Python worker pool
-→ Google ADK LlmAgent
-→ LiteLLM
-→ Ollama
-→ gemma2:9b
-→ structured non-canonical research draft
-→ fresh run-scoped canonical Researcher artifacts
-→ normal OneShot validation/proof chain
+Failure detected
+→ Classify (normalized FailureCategory)
+→ Collect bounded evidence
+→ Root-cause analysis
+→ Recommendation
+   ├── sufficient evidence → recommendation ready
+   └── insufficient evidence → bounded research escalation (≤1)
+→ Policy-gated retry (if justified)
+→ Re-run canonical chain
 ```
 
-## Previous local profile retained where useful
-
-| Setting | Value |
-|---|---|
-| Model | `gemma2:9b` |
-| Ollama | `http://localhost:11434` |
-| Context length | `8192` |
-| Keep alive | `5m` |
-| Parallel model requests | `2` |
-| Research worker pool | `2` |
-| Redis | `redis://localhost:6379/0` |
-| Cache TTL | `3600` seconds |
-
-The earlier generic `num_thread` and `batch_size` suggestions are not forced into the ADK/Ollama path because this release only carries settings that are actually consumed by the current runtime/service configuration.
-
-## Cache proof
-
-Redis is an acceleration layer only.
+## Test counts (current)
 
 ```text
-semantic prompt + Gemma model
-→ cached ADK research draft
-→ fresh canonical IDs
-→ fresh Researcher artifacts
-→ fresh Planner/Refactor/Gap/Evaluation
-→ fresh Triple Validation
-→ fresh confirmed core
-→ fresh HASH
+Python canonical/proof suite:       46/46 PASSED
+TypeScript backend suite:            170 tests, 168 pass, 2 credential-gated skips
+TypeScript source compile:           PASSED
+Web frontend tests:                  31/31 PASSED
+Recovery scenarios:                  24/24 PASSED
+Recovery-view scenarios:             3/3 PASSED
+HTTP security header proof:          PASSED
+Dependency meaning/step-edge proof:  PASSED
+Provider failure → ROOT_CAUSE:       PASSED
+Hash equality/mutation proofs:       PASSED
+Sandbox execution proofs:            PASSED
+Build failure → BUILD_FAILURE:      PASSED
+Schema/fixture/goal failure:         VALIDATION_FAILURE as required
+Workflow exception → WORKFLOW_INTERNAL: PASSED
+Root-cause contains real evidence:   PASSED
+No raw stack dump in user-facing:   PASSED
+API keys never in root-cause:        PASSED
+Sufficient evidence → no escalation: PASSED
+Insufficient evidence → ≤1 escalation: PASSED
+Tavily disabled → local recovery:   PASSED
+Tavily enabled → no provider change: PASSED
+Researcher cannot mark DONE:         PASSED
+Retry requires policy approval:      PASSED
+Auth/model failures don't auto-retry: PASSED
+Network retries bounded:             PASSED
+Corrected retry passes validation:   PASSED
+Failed retry stays ROOT_CAUSE:       PASSED
+Persisted/reloaded recovery state:   PASSED
+Main UI shows concise root cause:    PASSED
+Detailed evidence in Task Management: PASSED
 ```
 
-Run-specific `prompt_id`, `context_id`, result state, confirmed package, and HASH are not cache inputs/values.
+## Deterministic/integration test execution
 
-If Redis is unavailable, the ADK worker uses an in-process TTL cache at the same non-canonical boundary.
-
-## Useful production controls included
-
-- Ollama model warm retention (`5m`).
-- Bounded model concurrency (`2`).
-- 8192-token Ollama context configuration.
-- Redis draft cache with 3600-second TTL.
-- Ollama and Redis health checks in Docker Compose.
-- Persistent ADK worker pool to avoid spawning Python for every request.
-- HTTP CSP, frame, MIME-sniffing, referrer and permissions headers.
-- Configured CORS allow-origin.
-- API rate limiting.
-- Optional bearer-token API protection via `ONESHOT_API_TOKEN`.
-- GPU Docker override for Ollama where the host supports it.
+```text
+Python canonical/proof suite:       46/46 PASSED
+TypeScript backend suite:            170 tests, 168 pass, 2 credential-gated skips
+TypeScript source compile:          PASSED
+Web frontend tests:                  31/31 PASSED
+Recovery scenarios:                  24/24 PASSED
+Recovery-view scenarios:             3/3 PASSED
+All fixture operators:              PASSED
+Provider failure → Done ROOT_CAUSE: PASSED
+Hash equality/mutation proofs:      PASSED
+HTTP security header proof:         PASSED
+Dependency meaning/step-edge proof: PASSED
+Job-specific fixture mutation:      NOT_VALID as required
+Unresolvable evidence reference:    ROOT_CAUSE as required
+```
 
 ## Material not activated
 
@@ -102,81 +122,6 @@ If Redis is unavailable, the ADK worker uses an in-process TTL cache at the same
 - MongoDB/PostgreSQL backup commands: this package does not use either as its canonical artifact store.
 - Application-level self-signed TLS: deployment/reverse-proxy concern, not required by this local product runtime.
 - JWT identity system: no canonical OneShot user-identity contract exists in this package; optional bearer protection is used instead.
-
-## Deterministic/integration test execution
-
-```text
-Python canonical/proof suite:       39/39 PASSED
-TypeScript Role/runtime suite:      23/23 PASSED
-TypeScript source compile:          PASSED
-ADK provider adapter full chain:    PASSED
-ADK provider HTTP/UI E2E:           PASSED
-Cache semantic reuse proof:         PASSED
-All fixture operators:              PASSED
-Provider failure → Done ROOT_CAUSE: PASSED
-Hash equality/mutation proofs:      PASSED
-HTTP security header proof:         PASSED
-Dependency meaning/step-edge proof: PASSED
-Job-specific fixture mutation:      NOT_VALID as required
-Unresolvable evidence reference:    ROOT_CAUSE as required
-Configured ADK timeout:             ROOT_CAUSE within bound
-Conditional ADK pin verification:   PASSED
-```
-
-The ADK adapter tests invoke the real OneShot production provider resolver, persistent worker bridge, canonical Role runtime, HTTP server, artifact creation, Triple Validation, confirmation and hash workflow. The model response is supplied by `app/fixtures/provider/adk-research-draft.json` so the product integration can be tested deterministically without requiring a local model service in CI.
-
-## Observed live server run in deterministic ADK adapter mode
-
-```text
-Researcher          PASSED
-Planner             PASSED
-Refactor            PASSED
-GapAnalysis         PASSED
-Evaluation          PASSED
-SchemaValidation    VALID
-FixtureValidation   VALID
-GoalValidation      VALID
-Confirmed           PASSED
-CreateHash          PASSED
-Hash                PASSED
-Done                PASSED
-```
-
-Observed hash proof:
-
-```text
-created/recomputed equality: true
-created_hash: 23434c38a34f5187e78d6d61ce1614b65a7c9076bc7e51fca31c34e6039e0c5d
-```
-
-## Live Google ADK → LiteLLM → Ollama → Gemma 2 proof
-
-The target workstation executed `e2e/scripts/verify_adk_live.py` with fixture bypass disabled and returned:
-
-```text
-provider:          Google ADK → LiteLLM → Ollama
-model:             gemma2:9b
-run_id:            0e9e258e-db68-4e21-baeb-8f12a9bc8037
-evidence records:  3
-dependencies:      1
-step edges:        1
-fixture assertions:7
-Schema:            VALID
-Fixture:           VALID
-Goal:              VALID
-hash equality:     true
-Done:              PASSED
-created_hash:      c7cb883471f58552b3724bc6f60aed07112bfddbba9ef43f81e4af45e895114e
-```
-
-Recheck with:
-
-```bash
-python e2e/scripts/verify_adk_live.py
-python backend/scripts/ollama_preflight.py
-```
-
-The live local-model boundary is accepted because the inference result traversed the production HTTP caller and canonical chain to `DONE PASSED`.
 
 ## Final stop condition
 

@@ -15,6 +15,8 @@ import type {
 } from "../../contracts/schema/types.js";
 import type { WorkflowRuntime } from "../../runtime/workflow-runtime.js";
 import type { RunQueueDeps } from "../../runtime/queue.js";
+import { createServer } from "node:http";
+import { FileProviderRuntimeConfigStore } from "../../runtime/provider-runtime-config.js";
 
 function tempDir(): string {
   return mkdtempSync(join(tmpdir(), "oneshot-pinfra-"));
@@ -33,6 +35,7 @@ function makePrompt(runId: string): Prompt {
 function makeManager(dir: string): ProviderManager {
   return new ProviderManager({
     projectRoot: process.cwd(),
+    mode: "sample",
     runtimePaths: {
       root: dir,
       config: join(dir, "config"),
@@ -58,6 +61,86 @@ function makeDeps(
 }
 
 const FAKE_SECRET = "sk-test-1234567890abcdef";
+
+for (const [id, name] of [["openai", "OpenAI"], ["anthropic", "Anthropic"], ["gemini", "Gemini"]]) {
+  test(`native ${name} BYOK: real transport, transient test, saved/replaced key, pinned settings, safe failure`, async () => {
+    const dir = tempDir();
+    const envName = id.toUpperCase() + "_API_KEY";
+    const previous = process.env[envName];
+    const google = process.env.GOOGLE_API_KEY;
+    delete process.env[envName];
+    delete process.env.GOOGLE_API_KEY;
+    const observed: { model: string; key: string; path: string }[] = [];
+    const fixture = readFileSync("app/fixtures/provider/adk-research-draft.json", "utf8");
+    let reject = false;
+    const remote = createServer(async (req, res) => {
+      let raw = "";
+      for await (const chunk of req) raw += chunk;
+      const data = JSON.parse(raw);
+      const key = String(req.headers.authorization || req.headers["x-api-key"] || req.headers["x-goog-api-key"]);
+      observed.push({ model: data.model || decodeURIComponent(req.url!.split("/models/")[1].split(":")[0]), key, path: req.url! });
+      res.setHeader("content-type", "application/json");
+      if (reject) { res.writeHead(401); res.end(JSON.stringify({ error: FAKE_SECRET })); return; }
+      res.end(JSON.stringify(id === "openai" ? { choices: [{ message: { content: fixture } }] } :
+        id === "anthropic" ? { content: [{ type: "text", text: fixture }] } :
+        { candidates: [{ content: { parts: [{ text: fixture }] } }] }));
+    });
+    await new Promise<void>(ok => remote.listen(0, "127.0.0.1", ok));
+    const address = remote.address() as { port: number };
+    const events = new ProcessingEventBus();
+    const secrets = new LocalFileSecretStore(join(dir, "secrets"));
+    const pm = new ProviderManager({ projectRoot: process.cwd(), mode: "production", events,
+      secretStore: secrets, runtimeConfigStore: new FileProviderRuntimeConfigStore(join(dir, "providers.json")) });
+    let provider;
+    try {
+      assert.equal(pm.runtimeConfig().activeProvider, "<default>");
+      assert.deepEqual((await pm.list()).map(p => p.id).sort(), ["anthropic", "gemini", "openai"]);
+      assert.equal((await pm.get(id))!.configured, false);
+      await assert.rejects(pm.activate(id), /credential/);
+      await pm.update(id, { model: "captured-model", apiBase: `http://127.0.0.1:${address.port}/v1` });
+      assert.equal((await pm.test(id)).ok, false);
+      const credential = { providerId: id, credentialType: "api_key" as const, value: FAKE_SECRET, createdAt: new Date().toISOString() };
+      assert.equal((await pm.test(id, credential)).ok, true);
+      assert.equal(await secrets.has(id), false, "transient test must not save key");
+      await pm.setCredential(id, credential);
+      await pm.activate(id);
+      const captured = pm.captureForRun();
+      const revision = captured.configRevision;
+      await pm.update(id, { model: "later-model" });
+      pm.saveRuntimeConfigPatch({ activeProvider: "<default>" });
+      await pm.setCredential(id, { ...credential, value: "replacement-test-key" });
+      provider = await pm.resolveForRun(captured.id, captured);
+      assert.equal((await provider.ready("pinned")).ready, true);
+      const bundle = await provider.research(makePrompt("pinned"), "pinned");
+      assert.ok(bundle.plan.steps.length);
+      assert.equal(observed.at(-1)!.model, "captured-model");
+      assert.ok(observed.at(-1)!.key.includes("replacement-test-key"));
+      assert.equal(captured.configRevision, revision);
+      assert.equal(captured.settings.model, "captured-model");
+      assert.ok(!JSON.stringify(captured).includes(FAKE_SECRET));
+      reject = true;
+      const failure = await pm.test(id);
+      assert.equal(failure.ok, false);
+      assert.ok(!JSON.stringify(failure).includes(FAKE_SECRET));
+      assert.ok(!JSON.stringify(events.list("pinned")).includes(FAKE_SECRET));
+      assert.ok(!JSON.stringify(await pm.list()).includes("replacement-test-key"));
+      await pm.activate(id);
+      await pm.setCredential(id);
+      assert.equal(pm.runtimeConfig().activeProvider, "<default>");
+      assert.equal((await pm.get(id))!.configured, false);
+      const clone = pm.runtimeConfig();
+      clone.activeProvider = "featherless";
+      assert.equal(pm.runtimeConfig().activeProvider, "<default>");
+    } finally {
+      provider?.close?.();
+      remote.closeAllConnections();
+      await new Promise<void>(ok => remote.close(() => ok()));
+      if (previous === undefined) delete process.env[envName]; else process.env[envName] = previous;
+      if (google === undefined) delete process.env.GOOGLE_API_KEY; else process.env.GOOGLE_API_KEY = google;
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+}
 
 /** Wrap a real runtime so we never re-implement canonical wiring in tests. */
 function fakeRuntime(runs: RunRepository): WorkflowRuntime {
@@ -97,21 +180,21 @@ test("provider manager never discloses credential values in catalog or status", 
   const dir = tempDir();
   try {
     const pm = makeManager(dir);
-    await pm.setCredential("featherless", {
-      providerId: "featherless",
+    await pm.setCredential("openai", {
+      providerId: "openai",
       credentialType: "api_key",
       value: FAKE_SECRET,
       createdAt: new Date().toISOString(),
     });
 
-    const status = await pm.getProviderStatus("featherless");
+    const status = await pm.getProviderStatus("openai");
     assert.equal(status.configured, true);
     assert.equal(status.credentialSource, "local-secret-store");
     assert.ok(!JSON.stringify(status).includes(FAKE_SECRET));
 
     const statuses = await pm.listProviderStatus();
     assert.ok(!JSON.stringify(statuses).includes(FAKE_SECRET));
-    for (const id of ["sample", "featherless", "adk_gemma2"]) {
+    for (const id of ["sample", "openai", "anthropic", "gemini"]) {
       assert.ok(statuses.some((s) => s.id === id), `catalog has ${id}`);
     }
 
@@ -119,7 +202,7 @@ test("provider manager never discloses credential values in catalog or status", 
     const catalogPath = resolve(process.cwd(), "backend/config/providers.json");
     const catalogRaw = readFileSync(catalogPath, "utf8");
     assert.ok(!catalogRaw.includes(FAKE_SECRET));
-    assert.ok(catalogRaw.includes("featherless"));
+    assert.ok(catalogRaw.includes("openai"));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -133,7 +216,7 @@ test("runtime config store rejects secret-shaped fields", async () => {
       () =>
         pm.saveRuntimeConfigPatch({
           providers: {
-            featherless: {
+            openai: {
               apiKey: FAKE_SECRET,
             } as never,
           },
@@ -150,11 +233,11 @@ test("unknown provider id is rejected on save and status", async () => {
   try {
     const pm = makeManager(dir);
     assert.throws(
-      () => pm.saveRuntimeConfigPatch({ activeProvider: "openai" }),
+      () => pm.saveRuntimeConfigPatch({ activeProvider: "unknown" }),
       /Unknown provider/,
     );
     await assert.rejects(
-      () => pm.getProviderStatus("openai"),
+      () => pm.getProviderStatus("unknown"),
       /Unknown provider/,
     );
   } finally {

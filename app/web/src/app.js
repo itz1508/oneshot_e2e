@@ -24,7 +24,13 @@ const runPanel = createActiveRunPanel();
 const providerPanel = createProviderPanel({
   apiFetch,
   toast,
-  onChanged: () => { /* provider changes are picked up per-run by the worker */ },
+  onChanged: async () => {
+    const response = await apiFetch('/api/health');
+    if (response.ok) {
+      const health = await response.json();
+      setConnection('connected', [health.mode, health.provider].filter(Boolean).join(' · '));
+    }
+  },
 });
 const live=createLiveActivity();live.bindDivider();
 const view=createStateMachine($('#app'),{onChange:s=>{live.setLiveVisible(s!=='IDLE');if(s!=='IDLE'&&$('#app').classList.contains('sidebar-off')){$('#app').classList.remove('sidebar-off');syncSide();syncLayout()}}});

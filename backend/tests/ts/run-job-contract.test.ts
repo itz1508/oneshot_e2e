@@ -8,6 +8,9 @@ import { join } from "node:path";
 import { startHttpServer } from "../../server/http-server.js";
 import { ProcessingEventBus } from "../../runtime/event-bus.js";
 import { RunRepository } from "../../runtime/run-repository.js";
+import { ProviderManager } from "../../runtime/provider-manager.js";
+import { LocalFileSecretStore } from "../../runtime/provider-secret-store.js";
+import { FileProviderRuntimeConfigStore } from "../../runtime/provider-runtime-config.js";
 import { AppendOnlyProcessingEventStore } from "../../task/event/event-store.js";
 import {
   executeRunJob,
@@ -335,8 +338,73 @@ test("GET /api/health reports redis/queue/worker/providerConfiguration; sample m
     assert.equal(h.providerConfiguration, "disabled");
     assert.equal(h.workflow, "oneshot-canonical-workflow");
     assert.equal(h.mode, "sample");
+    // In sample mode (no provider configured) the provider should be <default>
+    assert.equal(h.provider, "<default>");
   } finally {
     await s.cleanup();
+  }
+});
+
+test("GET /api/health provider name reflects the active provider's public name", async () => {
+  // Test with OpenAI active
+  const s1 = await setupServer({
+    runQueue: fakeQueue({}),
+    queueReady: true,
+  });
+  // Override runtimeInfo provider to simulate activated OpenAI
+  try {
+    // Use a server with a ProviderManager that has OpenAI activated
+    const tmp = await mkdtemp(join(tmpdir(), "oneshot-health-openai-"));
+    const uiRoot = join(tmp, "ui");
+    await mkdir(uiRoot, { recursive: true });
+    await writeFile(join(uiRoot, "index.html"), "<html>ok</html>");
+    await mkdir(join(tmp, "backend", "config"), { recursive: true });
+    await writeFile(
+      join(tmp, "backend", "config", "providers.json"),
+      JSON.stringify({
+        version: 1,
+        providers: {
+          sample: { label: "OneShot Sample", type: "fixture", credentialType: "none" },
+          openai: { label: "OpenAI", type: "openai", credentialType: "api_key", credentialEnv: "OPENAI_API_KEY" },
+        },
+      }),
+    );
+        const pm = new ProviderManager({
+      projectRoot: tmp,
+      catalogPath: join(tmp, "backend", "config", "providers.json"),
+      secretStore: new LocalFileSecretStore(join(tmp, "secrets")),
+      runtimeConfigStore: new FileProviderRuntimeConfigStore(join(tmp, "rt", "providers.json")),
+    });
+    // Clear any leftover env var that could affect test
+    const savedKey = process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    try {
+      await pm.setCredential("openai", { providerId: "openai", credentialType: "api_key", value: "health-test-only-key", createdAt: new Date().toISOString() });
+      await pm.activate("openai");
+      const server = await startHttpServer(
+        {} as never, {} as never, {} as never, uiRoot, 0, undefined,
+        undefined, undefined, undefined, { workspaceRoot: tmp }, fakeQueue({}),
+        pm, true,
+      );
+      try {
+        const a = server.address();
+        assert.ok(a && typeof a === "object");
+        const h = await (await fetch(`http://127.0.0.1:${(a as any).port}/api/health`, { headers: AUTH })).json();
+        assert.equal(h.provider, "OpenAI");
+        assert.equal(h.mode, "production");
+        // openai not configured (no key) → degraded
+        assert.equal(h.providerConfiguration, "configured");
+      } finally {
+        server.closeAllConnections?.();
+        await new Promise<void>((ok) => server.close(() => ok()));
+      }
+    } finally {
+      if (savedKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = savedKey;
+      await rm(tmp, { recursive: true, force: true });
+    }
+  } finally {
+    await s1.cleanup();
   }
 });
 
@@ -737,7 +805,7 @@ test("executeRunJob surfaces a provider-readiness failure as ProviderBinding ROO
 // Spec §16 — Provider changes while jobs are queued: the product REBINDS.
 // ---------------------------------------------------------------------------
 
-test("executeRunJob rebinds to the active provider at execution time (captured selector is diagnostic only; an already-active run is bound once and never mutated mid-run)", async () => {
+test("executeRunJob passes the captured provider model and configuration revision to the resolver", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rjc-rebind-"));
   try {
     const events = new ProcessingEventBus();
@@ -751,9 +819,11 @@ test("executeRunJob rebinds to the active provider at execution time (captured s
       runs,
       events,
       projectRoot: dir,
-      resolveProvider: async (_providerId: string) => {
+      resolveProvider: async (providerId: string, _events: unknown, _runId: string, captured: any) => {
         resolveCalls++;
-        return { id: activeProvider } as never;
+        assert.equal(captured.model, "captured-model");
+        assert.equal(captured.configRevision, 1);
+        return { id: providerId } as never;
       },
       createRuntime: async (provider: any) =>
         ({
@@ -773,7 +843,7 @@ test("executeRunJob rebinds to the active provider at execution time (captured s
         version: 1,
         runId: "rebind-1",
         prompt: makePrompt("rebind-1"),
-        provider: { id: "alpha", configRevision: 1 },
+        provider: { id: "alpha", model: "captured-model", configRevision: 1 },
         submittedAt: "t",
       } as never,
       updateProgress: async () => {},
@@ -789,8 +859,8 @@ test("executeRunJob rebinds to the active provider at execution time (captured s
     assert.ok(researcher, "Researcher/RUNNING event emitted");
     assert.match(
       String(researcher.message),
-      /bound=beta/,
-      "bound the ACTIVE provider at execution time, not the captured 'alpha'",
+      /bound=alpha/,
+      "bound the captured provider despite a later activation",
     );
     assert.equal(
       resolveCalls,

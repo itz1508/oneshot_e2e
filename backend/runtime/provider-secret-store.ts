@@ -121,10 +121,8 @@ export class LocalFileSecretStore implements ProviderSecretStore {
   }
 
   private pathFor(providerId: string): string {
-    // providerId is a catalog key ("sample", "featherless", "adk_gemma2") —
-    // a short identifier, never user input that can escape.
-    const safe = providerId.replace(/[^a-z0-9_-]/g, "_");
-    return join(this.secretsDir, `${safe}.json`);
+    if (!/^[a-z][a-z0-9_-]*$/.test(providerId)) throw new Error("Invalid provider identifier");
+    return join(this.secretsDir, `${providerId}.json`);
   }
 
   async has(providerId: string): Promise<boolean> {
@@ -139,8 +137,8 @@ export class LocalFileSecretStore implements ProviderSecretStore {
       const parsed = JSON.parse(raw) as ProviderCredential;
       // Structural validation only — we never log `value`.
       if (
-        typeof parsed?.providerId === "string" &&
-        typeof parsed?.value === "string" &&
+        parsed?.providerId === providerId &&
+        typeof parsed?.value === "string" && parsed.value.trim().length > 0 &&
         typeof parsed?.credentialType === "string"
       ) {
         return parsed;
@@ -167,11 +165,7 @@ export class LocalFileSecretStore implements ProviderSecretStore {
   async delete(providerId: string): Promise<void> {
     const p = this.pathFor(providerId);
     if (existsSync(p)) {
-      try {
-        unlinkSync(p);
-      } catch {
-        /* ignore */
-      }
+      unlinkSync(p);
     }
   }
 

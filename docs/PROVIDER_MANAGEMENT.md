@@ -72,8 +72,9 @@ Non-secret configuration (model, apiBase, timeout, parallelism) is stored in `.r
 | ID | Label | Type | Credential | Credential Env |
 |---|---|---|---|---|
 | `sample` | OneShot Sample | fixture | none | - |
-| `featherless` | Featherless AI | featherless | api_key | `FEATHERLESS_API_KEY` |
-| `adk_gemma2` | Google ADK / Gemma | adk_gemma2 | api_key | - |
+| `openai` | OpenAI | openai | api_key | `OPENAI_API_KEY` |
+| `anthropic` | Anthropic | anthropic | api_key | `ANTHROPIC_API_KEY` |
+| `gemini` | Gemini | gemini | api_key | - |
 
 ## File Locations
 

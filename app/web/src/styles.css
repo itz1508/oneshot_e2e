@@ -1384,6 +1384,13 @@ button {
 }
 
 /* ── Provider Configuration (drawer #providers) ───────────────────────── */
+#providers-drawer { z-index: 12; width: min(460px, calc(100vw - 64px)); max-height: 100%; }
+#providers-drawer .prov-row { display: grid; gap: 10px; }
+#providers-drawer label { display: grid; gap: 5px; font-size: 12px; }
+#providers-drawer input { min-width: 0; width: 100%; padding: 8px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.prov-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.prov-summary, .prov-advanced { padding: 12px 16px; }
+[data-result] { overflow-wrap: anywhere; font-size: 12px; }
 .prov-row {
   padding: 12px 16px;
   border-bottom: 1px solid var(--line);

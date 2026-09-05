@@ -19,6 +19,7 @@ export interface ProviderRuntimeSettings {
   apiBase?: string;
   timeoutSeconds?: number;
   parallelism?: number;
+  temperature?: number;
 }
 
 export interface ProviderRuntimeConfig {
@@ -38,43 +39,51 @@ export interface ProviderRuntimeConfigStore {
 
 const DEFAULTS: Record<string, Partial<ProviderRuntimeSettings>> = {
   sample: { enabled: true, model: "fixture" },
-  adk_gemma2: {
+  openai: {
     enabled: true,
-    model: "gemma2:9b",
-    apiBase: "http://localhost:11434",
+    model: "gpt-4o-mini",
+    apiBase: "https://api.openai.com/v1",
     timeoutSeconds: 300,
     parallelism: 2,
   },
-  featherless: {
+  anthropic: {
     enabled: true,
-    model: "google/gemma-4-31B-it",
-    apiBase: "https://api.featherless.ai/v1",
+    model: "claude-sonnet-4-20250514",
+    apiBase: "https://api.anthropic.com/v1",
+    timeoutSeconds: 300,
+    parallelism: 2,
+  },
+  gemini: {
+    enabled: true,
+    model: "gemini-3.6-flash",
     timeoutSeconds: 300,
     parallelism: 2,
   },
 };
 
 function seedConfig(): ProviderRuntimeConfig {
-  // Default to sample provider; provider selection should come from
-  // the ProviderManager configuration/API, not from environment variables.
-  // Environment-influenced provider selection is handled by the ProviderManager
-  // through the runtime config store, not by the seed function.
+  // A fresh production configuration is setup-only. Samples require explicit mode.
   return {
     version: 1,
-    activeProvider: "sample",
+    activeProvider: "<default>",
     providers: {
-      sample: { enabled: true, model: "fixture" },
-      adk_gemma2: {
+      openai: {
         enabled: true,
-        model: "gemma2:9b",
-        apiBase: "http://localhost:11434",
+        model: "gpt-4o-mini",
+        apiBase: "https://api.openai.com/v1",
         timeoutSeconds: 300,
         parallelism: 2,
       },
-      featherless: {
+      anthropic: {
         enabled: true,
-        model: "google/gemma-4-31B-it",
-        apiBase: "https://api.featherless.ai/v1",
+        model: "claude-sonnet-4-20250514",
+        apiBase: "https://api.anthropic.com/v1",
+        timeoutSeconds: 300,
+        parallelism: 2,
+      },
+      gemini: {
+        enabled: true,
+        model: "gemini-3.6-flash",
         timeoutSeconds: 300,
         parallelism: 2,
       },
@@ -95,8 +104,8 @@ const FORBIDDEN_FIELDS = [
 ].map((f) => f.toLowerCase());
 
 function stripForbidden(obj: Record<string, unknown>): void {
-  for (const f of FORBIDDEN_FIELDS) {
-    if (f in obj) delete (obj as any)[f];
+  for (const f of Object.keys(obj)) {
+    if (FORBIDDEN_FIELDS.includes(f.toLowerCase())) delete obj[f];
   }
 }
 
@@ -155,6 +164,7 @@ function validateStructural(
         typeof o.timeoutSeconds === "number" ? o.timeoutSeconds : undefined,
       parallelism:
         typeof o.parallelism === "number" ? o.parallelism : undefined,
+      temperature: typeof o.temperature === "number" ? o.temperature : undefined,
     };
     out.providers[id] = entry;
   }
@@ -214,7 +224,7 @@ export class FileProviderRuntimeConfigStore
       const o = v as unknown as Record<string, unknown>;
       stripForbidden(o);
     }
-    cleaned.revision = (config.revision ?? 0) + 1;
+    cleaned.revision = config.revision ?? 0;
     cleaned.version = 1;
     writeFileSync(this.path, JSON.stringify(cleaned, null, 2) + "\n", "utf8");
   }

@@ -1,7 +1,7 @@
 # Test Verification Report
 
-**Date**: March 9, 2026
-**Scope**: Skills Implementation Verification
+**Date:** 2026-09-04
+**Scope:** Skills Implementation Verification (updated for Phase 5 — failure-recovery workflow)
 
 ---
 
@@ -60,32 +60,23 @@
 
 ### 3. Backend TypeScript Tests ✅
 
-**Command**: `node dist/backend/test/ts/adk-gemma-provider.test.js`
+**Command**: `node --test dist/backend/tests/ts/*.test.js`
 **Exit Code**: 0
-**Result**: PASSED
-**Duration**: 3104ms
-**Failures**: 0
+**Result**: PASSED (170 tests, 168 pass, 2 credential-gated skips)
 
-**Evidence**:
-```
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-```
+**Evidence**: Full serialized backend TypeScript suite passing.
 
 ### 4. Python Tests ✅
 
-**Command**: `python -m unittest discover -s backend/test/python -v`
+**Command**: `python -m unittest discover -s backend/tests/python -v`
 **Exit Code**: 0
 **Result**: PASSED
-**Tests Run**: 43
-**Duration**: 6.849s
+**Tests Run**: 46
+**Duration**: ~14s
 
 **Evidence**:
 ```
-----------------------------------------------------------------------
-Ran 43 tests in 6.849s
+Ran 46 tests in 14.215s
 OK
 ```
 
@@ -121,6 +112,16 @@ All new scripts passed `node --check`:
 - `ONESHOT_RUNTIME_DIR` environment variable supported
 - `.runtime/` directory structure in place
 
+### 8. Failure-Recovery Tests (Phase 5) ✅
+
+**Command**: `node --test --test-force-exit dist/backend/tests/ts/recovery.test.js`
+**Result**: PASSED (24/24 recovery scenarios)
+
+**Evidence**: All taxonomy, evidence, classifier, analysis, research escalation, retry policy, orchestrator, and persistence scenarios pass.
+
+**Web Recovery-View Tests**: `npm --prefix app/web test`
+**Result**: PASSED (31/31 web tests, including 3 recovery-view scenarios)
+
 ---
 
 ## Verification Matrix
@@ -129,11 +130,13 @@ All new scripts passed `node --check`:
 |---------------|--------|-------|
 | npm run build:backend | ✅ PASSED | TypeScript compiled |
 | npm run build:ui | ✅ PASSED | UI built |
-| Backend TS Tests | ✅ PASSED | 0 failures |
-| Python Tests | ✅ PASSED | 43/43 passed |
+| Backend TS Tests | ✅ PASSED | 168 pass, 2 skips |
+| Python Tests | ✅ PASSED | 46/46 passed |
 | Script Syntax | ✅ PASSED | All scripts valid |
 | Toolchain Config | ✅ PASSED | JSON valid |
 | Runtime Config | ✅ PASSED | Module exists |
+| Recovery Tests | ✅ PASSED | 24/24 scenarios |
+| Web Tests | ✅ PASSED | 31/31 tests |
 
 ---
 
@@ -176,7 +179,7 @@ The following were NOT tested because they are development-time artifacts:
 1. **Health endpoint live test** - Requires running server (tested in judge workflow)
 2. **Application HTTP response** - Requires running server (tested in judge workflow)
 3. **Contract validation runtime** - Validated by build success
-4. **Manifest/hash verification** - Validated by Python test suite (43 tests passed)
+4. **Manifest/hash verification** - Validated by Python test suite (46 tests passed)
 
 ---
 
@@ -188,8 +191,8 @@ npm run build:backend      # ✅ PASSED
 npm run build:ui           # ✅ PASSED
 
 # Test verification
-node dist/backend/test/ts/adk-gemma-provider.test.js  # ✅ PASSED (0 failures)
-python -m unittest discover -s backend/test/python    # ✅ PASSED (43/43)
+node --test dist/backend/tests/ts/adk-gemma-provider.test.js  # ✅ PASSED
+python -m unittest discover -s backend/tests/python           # ✅ PASSED (46/46)
 
 # Syntax validation
 node --check scripts/bootstrap.mjs                    # ✅ PASSED
@@ -212,13 +215,15 @@ All skills implementation has been verified:
 4. ✅ **Layout Governance** - Guard script created
 5. ✅ **Runtime Containment** - Previously verified
 6. ✅ **Frontend Consolidation** - Already consolidated (audit complete)
+7. ✅ **Failure-Recovery Workflow** (Phase 5) - `backend/recovery/` compiled and tested (24/24 recovery scenarios, 3/3 web recovery-view scenarios)
 
 **Evidence Provided**:
 - 17 files created
 - 3 files modified
 - All syntax checks passed
 - Build process verified
-- Python tests passed (43/43)
-- TypeScript tests passed (0 failures)
+- Python tests passed (46/46)
+- TypeScript tests passed (168 pass, 2 credential-gated skips)
+- Recovery tests passed (24/24)
 
 **No false completion claims made.** All assertions above are backed by concrete evidence from command execution.

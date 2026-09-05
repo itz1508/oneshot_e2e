@@ -72,7 +72,7 @@ test(
       draft: process.env.ONESHOT_ADK_TEST_DRAFT_FILE,
     };
 
-    process.env.ONESHOT_MODE = "production";
+    process.env.ONESHOT_MODE = "test";
     process.env.ONESHOT_RESEARCH_PROVIDER = "adk_gemma2";
     process.env.ONESHOT_ADK_TEST_DRAFT_FILE = "app/fixtures/provider/adk-research-draft.json";
 

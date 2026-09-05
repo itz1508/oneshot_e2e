@@ -19,6 +19,7 @@ import type { ResearchProvider } from "./role/researcher/provider.js";
 import { createDynamicDependencyFactory } from "./workflow/adk/dynamic-dependencies.js";
 import {
   BullMQRunQueue,
+  executeRunJob,
   RUN_QUEUE_NAME,
   type RunQueueDeps,
 } from "./runtime/queue.js";
@@ -100,11 +101,14 @@ const providerManager = new ProviderManager({
   catalogPath: resolve(projectRoot, "backend/config/providers.json"),
   runtimePaths: runtimePaths,
 });
-const provider = await providerManager.createProvider(projectRoot, events);
+
 
 // --- Runtime Info (mode + provider name for health endpoint / UI) ---
-const runtimeMode = (process.env.ONESHOT_MODE || "sample").toLowerCase();
-const providerName = provider.constructor?.name || "UnknownProvider";
+const runtimeMode = providerManager.mode;
+// Resolve the public provider name from the ProviderManager, NOT the
+// implementation class name. Returns "<default>" when unconfigured.
+const activeProviderId = providerManager.runtimeConfig().activeProvider || "sample";
+const publicProviderName = providerManager.publicNameFor(activeProviderId);
 
 // --- Deterministic Triple Validation ---
 const deterministic = new DeterministicValidationRuntime(validationLanes);
@@ -129,7 +133,10 @@ const bindDependencies = createDynamicDependencyFactory({
   contracts,
   sandbox,
   triple,
-  provider,
+  provider: {
+    ready: async () => ({ ready: false, provider: "<default>", models: [] }),
+    research: async () => { throw new Error("Per-run provider binding required"); },
+  },
 });
 const runtime = new WorkflowRuntime(
   events,
@@ -154,18 +161,12 @@ const queueDeps: RunQueueDeps = {
   runs,
   events,
   projectRoot,
-  resolveProvider: async (providerId: string, _ev: ProcessingEventBus, runId: string) => {
-    // Provider binding happens per run inside the worker, immediately before the
-    // canonical workflow consumes the provider. Use ProviderManager's
-    // resolveForRun to create the ResearchProvider from catalog entry.
-    return providerManager.resolveForRun(providerId);
-  },
-  createRuntime: async () =>
+  resolveProvider: async (providerId, _ev, _runId, captured) =>
+    providerManager.resolveForRun(providerId, captured),
+  createRuntime: async (provider) =>
     new WorkflowRuntime(
-      events,
-      runs,
-      new FileArtifactStore(runtimePaths.runs),
-      bindDependencies,
+      events, runs, new FileArtifactStore(runtimePaths.runs),
+      createDynamicDependencyFactory({ projectRoot, events, contracts, sandbox, triple, provider }),
     ),
 };
 const runQueue = new BullMQRunQueue(RUN_QUEUE_NAME, queueDeps, {
@@ -187,7 +188,7 @@ try {
 // --- Runtime Info (mode + provider name for health endpoint / UI) ---
 const runtimeInfo: RuntimeInfo = {
   mode: runtimeMode,
-  provider: providerName,
+  provider: publicProviderName,
   queue: queueReady,
 };
 
@@ -208,7 +209,9 @@ const server = await startHttpServer(
   intent,
   sandbox,
   runtimeInfo,
-  { workspaceRoot },
+  { workspaceRoot, executeInline: (job) => executeRunJob({
+    data: job, updateProgress: async () => {},
+  }, queueDeps) },
   runQueue,
   providerManager,
   queueReady,
@@ -225,7 +228,7 @@ console.log(
 const shutdown = async () => {
   server.close(async () => {
     try { await runQueue.close(); } catch { /* ignore */ }
-    provider.close?.();
+
     providerManager.close();
     validationLanes.close();
     bridge.close();

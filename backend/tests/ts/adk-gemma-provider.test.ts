@@ -12,7 +12,7 @@ test("Google ADK Researcher pipeline executes canonical chain in deterministic a
     draft: process.env.ONESHOT_ADK_TEST_DRAFT_FILE,
     parallel: process.env.GEMMA2_NUM_PARALLEL,
   };
-  process.env.ONESHOT_MODE = "production";
+  process.env.ONESHOT_MODE = "test";
   process.env.ONESHOT_RESEARCH_PROVIDER = "adk_gemma2";
   process.env.ONESHOT_ADK_TEST_DRAFT_FILE =
     "app/fixtures/provider/adk-research-draft.json";

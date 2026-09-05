@@ -8,8 +8,8 @@ import type {
 import { WorkflowRootCauseError } from "../../../../core/root-cause-error.js";
 import { ResearchEvidenceCollector } from "../../tool/evidence/collector.js";
 import { structuredDraftToResearchBundle } from "../structured-draft.js";
-import { AdkGemmaWorker } from "./worker-bridge.js";
-import type { AdkGemmaConfig, AdkResearchDraft } from "./types.js";
+import { GeminiWorker } from "./worker-bridge.js";
+import type { GeminiConfig, GeminiResearchDraft } from "./types.js";
 
 function positiveInt(value: string | undefined, fallback: number) {
   const n = Number(value);
@@ -24,19 +24,19 @@ function envTrue(name: string): boolean {
   return /^(?:1|true|yes)$/i.test((process.env[name] || "").trim());
 }
 
-export function loadAdkGemmaConfig(projectRoot: string): AdkGemmaConfig {
-  const testDraftFile = process.env.ONESHOT_MODE === "test" && process.env.ONESHOT_ADK_TEST_DRAFT_FILE
-    ? resolve(projectRoot, process.env.ONESHOT_ADK_TEST_DRAFT_FILE)
+export function loadGeminiConfig(projectRoot: string, model?: string): GeminiConfig {
+  const testDraftFile = process.env.ONESHOT_MODE === "test" && process.env.ONESHOT_GEMINI_TEST_DRAFT_FILE
+    ? resolve(projectRoot, process.env.ONESHOT_GEMINI_TEST_DRAFT_FILE)
     : undefined;
 
   const distributionModel =
-    configuredModel("GEMINI_DISTRIBUTION_MODEL") ||
+    model || configuredModel("GEMINI_DISTRIBUTION_MODEL") ||
     (testDraftFile ? "test-distribution" : "");
   const researchModel =
-    configuredModel("GEMINI_RESEARCH_MODEL") ||
+    model || configuredModel("GEMINI_RESEARCH_MODEL") ||
     (testDraftFile ? "test-research" : "");
   const synthesisModel =
-    configuredModel("GEMINI_SYNTHESIS_MODEL") ||
+    model || configuredModel("GEMINI_SYNTHESIS_MODEL") ||
     (testDraftFile ? "test-synthesis" : "");
 
   if (!testDraftFile) {
@@ -49,12 +49,12 @@ export function loadAdkGemmaConfig(projectRoot: string): AdkGemmaConfig {
       .map(([name]) => name);
     if (missing.length) {
       throw new Error(
-        `Google ADK Researcher pipeline is not bound: missing ${missing.join(", ")}`,
+        `Gemini Researcher pipeline is not bound: missing ${missing.join(", ")}`,
       );
     }
-    if (new Set([distributionModel, researchModel, synthesisModel]).size !== 3) {
+    if (!model && new Set([distributionModel, researchModel, synthesisModel]).size !== 3) {
       throw new Error(
-        "Google ADK Researcher pipeline requires three distinct Gemini model bindings: distribution, research, synthesis",
+        "Gemini Researcher pipeline requires three distinct model bindings: distribution, research, synthesis",
       );
     }
   }
@@ -75,23 +75,23 @@ export function loadAdkGemmaConfig(projectRoot: string): AdkGemmaConfig {
   };
 }
 
-export class AdkGemmaResearchProvider implements ResearchProvider {
-  private workers: AdkGemmaWorker[];
+export class GeminiModelProvider implements ResearchProvider {
+  private workers: GeminiWorker[];
   private cursor = 0;
   private events?: ProcessingEventBus;
   private evidence: ResearchEvidenceCollector;
 
   constructor(
     private projectRoot: string,
-    private config = loadAdkGemmaConfig(projectRoot),
+    private config = loadGeminiConfig(projectRoot),
   ) {
     this.evidence = new ResearchEvidenceCollector(projectRoot);
     this.workers = Array.from(
       { length: config.workerPoolSize },
       () =>
-        new AdkGemmaWorker(projectRoot, config, (runId, event) =>
-          this.events?.emit(runId, `ADK:${event.node}`, event.state, {
-            scope: "ADK",
+        new GeminiWorker(projectRoot, config, (runId, event) =>
+          this.events?.emit(runId, `Provider:gemini:${event.node}`, event.state, {
+            scope: "SUPPORT",
             message: event.message,
           }),
         ),
@@ -106,9 +106,9 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
     if (!this.workers.length) {
       return {
         ready: false,
-        provider: "google-adk",
+        provider: "gemini",
         models: [],
-        detail: "ADK Gemini worker pool is empty",
+        detail: "Gemini worker pool is empty",
       };
     }
     try {
@@ -122,7 +122,7 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
     } catch (error) {
       return {
         ready: false,
-        provider: "google-adk",
+        provider: "gemini",
         models: [
           this.config.distributionModel,
           this.config.researchModel,
@@ -139,25 +139,25 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
     evidence: Awaited<ReturnType<ResearchEvidenceCollector["collect"]>>,
   ) {
     if (!this.workers.length)
-      throw new Error("ADK Gemini worker pool is empty");
+      throw new Error("Gemini worker pool is empty");
     const worker = this.workers[this.cursor++ % this.workers.length];
     return await worker.research({ prompt, run_id: runId, evidence });
   }
 
   async research(prompt: Prompt, runId: string): Promise<ResearchBundle> {
     const gathered = await this.evidence.collect(prompt);
-    let d: AdkResearchDraft;
+    let d: GeminiResearchDraft;
     try {
       d = await this.draft(prompt, runId, gathered);
     } catch (error) {
       throw new WorkflowRootCauseError({
-        issue: "ADK Researcher model pipeline failed",
+        issue: "Gemini Researcher model pipeline failed",
         expected:
-          "Google ADK distribution -> research -> synthesis pipeline returns one structured research draft",
+          "Gemini distribution -> research -> synthesis pipeline returns one structured research draft",
         actual: error instanceof Error ? error.message : String(error),
         evidence_ids: [],
         required_correction:
-          "Correct the three GEMINI_* model bindings, Google authentication/Vertex configuration, ADK runtime, or structured model response",
+          "Correct the three GEMINI_* model bindings, Google authentication/Vertex configuration, or structured model response",
         recheck_target: runId,
       });
     }
@@ -173,13 +173,13 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
       runId,
       draft: d,
       gathered,
-      providerSource: `google-adk-pipeline:${models.join("->")}`,
+      providerSource: `gemini-pipeline:${models.join("->")}`,
       providerProvenance: this.config.useVertexAi
-        ? "vertex-ai-native-adk"
-        : "gemini-api-native-adk",
-      incompleteIssue: "ADK research draft incomplete",
+        ? "vertex-ai-native-gemini"
+        : "gemini-api-native",
+      incompleteIssue: "Gemini research draft incomplete",
       incompleteCorrection:
-        "Correct Researcher ADK pipeline instructions or model response",
+        "Correct Researcher Gemini pipeline instructions or model response",
     });
   }
 

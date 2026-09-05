@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveResearchProvider } from "../../role/researcher/provider-resolver.js";
 import { FeatherlessResearchProvider } from "../../role/researcher/provider/featherless/provider.js";
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
 import { harness, prompt } from "./harness.js";
@@ -8,20 +7,24 @@ import { harness, prompt } from "./harness.js";
 test("Featherless Gemma provider boundary executes canonical chain in deterministic adapter mode", async () => {
   const saved = {
     mode: process.env.ONESHOT_MODE,
-    provider: process.env.ONESHOT_RESEARCH_PROVIDER,
     draft: process.env.ONESHOT_FEATHERLESS_TEST_DRAFT_FILE,
     parallel: process.env.FEATHERLESS_NUM_PARALLEL,
     model: process.env.FEATHERLESS_MODEL,
   };
   process.env.ONESHOT_MODE = "test";
-  process.env.ONESHOT_RESEARCH_PROVIDER = "featherless";
   process.env.ONESHOT_FEATHERLESS_TEST_DRAFT_FILE =
     "app/fixtures/provider/adk-research-draft.json";
   process.env.FEATHERLESS_NUM_PARALLEL = "2";
   delete process.env.FEATHERLESS_MODEL;
 
-  const provider = await resolveResearchProvider(process.cwd());
-  assert.ok(provider instanceof FeatherlessResearchProvider);
+  const provider = new FeatherlessResearchProvider(process.cwd(), {
+    testDraftFile: process.env.ONESHOT_FEATHERLESS_TEST_DRAFT_FILE,
+    model: "google/gemma-4-31B-it",
+    baseUrl: "https://api.featherless.ai/v1",
+    workerPoolSize: 1,
+    timeoutSeconds: 30,
+    maxTokens: 4096,
+  });
   const runtime = await harness("featherless-provider", provider);
   const runId = "featherless-provider";
   runtime.runs.create(runId);
@@ -54,12 +57,11 @@ test("Featherless Gemma provider boundary executes canonical chain in determinis
           event.state === "COMPLETE",
       ),
     );
-  } finally {
+    } finally {
     provider.close?.();
     runtime.bridge.close();
     const names = {
       mode: "ONESHOT_MODE",
-      provider: "ONESHOT_RESEARCH_PROVIDER",
       draft: "ONESHOT_FEATHERLESS_TEST_DRAFT_FILE",
       parallel: "FEATHERLESS_NUM_PARALLEL",
       model: "FEATHERLESS_MODEL",
@@ -108,18 +110,21 @@ test("Featherless provider reports a safe root cause when server-side authentica
 test("Production Featherless failure produces ROOT_CAUSE and never silently falls back to fixture", async () => {
   const saved = {
     mode: process.env.ONESHOT_MODE,
-    provider: process.env.ONESHOT_RESEARCH_PROVIDER,
     key: process.env.FEATHERLESS_API_KEY,
     draft: process.env.ONESHOT_FEATHERLESS_TEST_DRAFT_FILE,
   };
   process.env.ONESHOT_MODE = "production";
-  process.env.ONESHOT_RESEARCH_PROVIDER = "featherless";
   delete process.env.FEATHERLESS_API_KEY;
   process.env.ONESHOT_FEATHERLESS_TEST_DRAFT_FILE = "app/fixtures/product/complete-success-seed.json";
 
+  const provider = new FeatherlessResearchProvider(process.cwd(), {
+    model: "google/gemma-4-31B-it",
+    baseUrl: "https://api.featherless.ai/v1",
+    workerPoolSize: 1,
+    timeoutSeconds: 10,
+    maxTokens: 4096,
+  });
   try {
-    const provider = await resolveResearchProvider(process.cwd());
-    assert.ok(provider instanceof FeatherlessResearchProvider);
     const runtime = await harness("featherless-no-fallback", provider);
     const runId = "featherless-no-fallback";
     runtime.runs.create(runId);
@@ -136,8 +141,6 @@ test("Production Featherless failure produces ROOT_CAUSE and never silently fall
   } finally {
     if (saved.mode === undefined) delete process.env.ONESHOT_MODE;
     else process.env.ONESHOT_MODE = saved.mode;
-    if (saved.provider === undefined) delete process.env.ONESHOT_RESEARCH_PROVIDER;
-    else process.env.ONESHOT_RESEARCH_PROVIDER = saved.provider;
     if (saved.key === undefined) delete process.env.FEATHERLESS_API_KEY;
     else process.env.FEATHERLESS_API_KEY = saved.key;
     if (saved.draft === undefined) delete process.env.ONESHOT_FEATHERLESS_TEST_DRAFT_FILE;

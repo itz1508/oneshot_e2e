@@ -13,6 +13,7 @@
  * durable RunRepository snapshot.
  */
 
+import "../environment.js";
 import { resolve } from "node:path";
 import { ProcessingEventBus } from "../runtime/event-bus.js";
 import { RunRepository } from "../runtime/run-repository.js";
@@ -101,8 +102,8 @@ async function main() {
     runs,
     events,
     projectRoot,
-    resolveProvider: async (_providerId, ev, runId) =>
-      providerManager.createProvider(projectRoot, ev, runId),
+    resolveProvider: async (providerId, _ev, _runId, captured) =>
+      providerManager.resolveForRun(providerId, captured),
     createRuntime: async (provider) => {
       const bindDependencies = createDynamicDependencyFactory({
         projectRoot,

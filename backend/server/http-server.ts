@@ -16,7 +16,7 @@ import { RunRepository } from "../runtime/run-repository.js";
 import { ProcessingEventBus } from "../runtime/event-bus.js";
 import { WorkflowRuntime } from "../runtime/workflow-runtime.js";
 import type { TaskManagement } from "../task/task-management.js";
-import { QUEUE_PREFIX, RUN_QUEUE_NAME, type RunQueue } from "../runtime/queue.js";
+import { QUEUE_PREFIX, RUN_QUEUE_NAME, type RunQueue, type RunJobV1 } from "../runtime/queue.js";
 import type { ProviderManager } from "../runtime/provider-manager.js";
 import type { ProviderRuntimeSettings } from "../runtime/provider-runtime-config.js";
 import type { ProviderCredential } from "../runtime/provider-secret-store.js";
@@ -211,6 +211,7 @@ export interface RuntimeInfo {
 
 export interface HttpServerOptions {
   workspaceRoot?: string;
+  executeInline?: (job: RunJobV1) => Promise<unknown>;
 }
 
 export async function startHttpServer(
@@ -245,6 +246,39 @@ export async function startHttpServer(
     options.workspaceRoot || process.env.ONESHOT_WORKSPACE_ROOT || process.cwd(),
   );
   const workspacePolicy = await WorkspacePathPolicy.create(workspaceRoot);
+
+  async function submitRun(runId: string, prompt: Prompt, res: ServerResponse, extra: Record<string, unknown> = {}) {
+    const queueRequired = process.env.ONESHOT_QUEUE_REQUIRED === "true";
+    if (queueRequired && (!runQueue || !queueReady)) {
+      runs.create(runId);
+      markRunQueueUnavailable(runId, runs, events);
+      return json(res, 503, { error: "runtime queue unavailable", run_id: runId });
+    }
+    let selector;
+    try {
+      selector = providerManager?.captureForRun() ?? { id: "sample", configRevision: 0, model: "fixture" };
+    } catch {
+      return json(res, 409, { error: "Configure and activate a provider before starting a run" });
+    }
+    runs.create(runId);
+    const job: RunJobV1 = { version: 1, runId, prompt, provider: selector, submittedAt: new Date().toISOString() };
+    if (runQueue && queueReady) {
+      try {
+        await runQueue.addRun({ runId, prompt, providerId: selector.id,
+          revision: selector.configRevision, model: selector.model,
+          settings: "settings" in selector ? selector.settings : undefined });
+        return json(res, 202, { run_id: runId, queued: true, ...extra });
+      } catch {
+        if (queueRequired) {
+          markRunQueueUnavailable(runId, runs, events);
+          return json(res, 503, { error: "runtime queue unavailable", run_id: runId });
+        }
+      }
+    }
+    if (options.executeInline) void options.executeInline(job);
+    else void runtime.run(runId, prompt);
+    return json(res, 202, { run_id: runId, queued: false, ...extra });
+  }
 
   const server = createServer(
     async (req: IncomingMessage, res: ServerResponse) => {
@@ -340,7 +374,9 @@ export async function startHttpServer(
         // Health
         // ---------------------------------------------------------------
                 if (req.method === "GET" && url.pathname === "/api/health") {
-          const mode = runtimeInfo?.mode || process.env.ONESHOT_MODE || "sample";
+          const activeId = providerManager?.runtimeConfig().activeProvider || "<default>";
+          const mode = providerManager?.mode ?? runtimeInfo?.mode ?? "production";
+          const publicName = providerManager?.publicNameFor(activeId) || "<default>";
           const redis: "ok" | "unavailable" | "disabled" = !runQueue
             ? "disabled"
             : queueReady
@@ -356,23 +392,22 @@ export async function startHttpServer(
             : queueReady
               ? "ok"
               : "degraded";
-          // Be precise: Sample Mode is valid without production credentials —
-          // do not mark the server unhealthy just because Featherless is unset.
           let providerConfiguration:
-            | "ready"
+            | "configured"
+            | "unconfigured"
             | "sample"
             | "degraded"
             | "disabled" = "disabled";
-          if (providerManager) {
+                    if (providerManager) {
             try {
-              const rc = providerManager.runtimeConfig();
-              const activeId = rc.activeProvider || "sample";
-              if (activeId === "sample" || mode === "sample") {
+              if (activeId === "<default>") {
+                providerConfiguration = "unconfigured";
+              } else if (activeId === "sample" && mode !== "production") {
                 providerConfiguration = "sample";
               } else {
                 const status = await providerManager.get(activeId);
-                providerConfiguration = status?.configured
-                  ? "ready"
+                providerConfiguration = status?.credential?.configured
+                  ? "configured"
                   : "degraded";
               }
             } catch {
@@ -389,7 +424,7 @@ export async function startHttpServer(
             status,
             workflow: "oneshot-canonical-workflow",
             mode,
-            provider: runtimeInfo?.provider || "unknown",
+            provider: publicName,
             redis,
             queue,
             worker,
@@ -537,10 +572,7 @@ export async function startHttpServer(
 
           if (made.result !== "PASSED") return json(res, 409, made);
 
-          runs.create(runId);
-          void runtime.run(runId, made.prompt);
-          return json(res, 202, {
-            run_id: runId,
+          return submitRun(runId, made.prompt, res, {
             prompt_id: made.prompt.prompt_id,
             intent_id: made.intent.intent_id,
             intent_revision: made.intent.revision,
@@ -582,8 +614,6 @@ export async function startHttpServer(
         if (req.method === "POST" && url.pathname === "/api/runs") {
           const input = await body(req);
           const runId = newRunId();
-          runs.create(runId);
-
           const prompt: Prompt = {
             prompt_id: id("prompt", runId),
             intent: String(
@@ -607,67 +637,7 @@ export async function startHttpServer(
               : ["contracts", "proof"],
           };
 
-          // Queue submission policy. ONESHOT_QUEUE_REQUIRED=true makes BullMQ
-          // mandatory: if Redis is down at submission, return 503 and mark the
-          // run failed/queue-unavailable (no ghost run, no silent inline exec).
-          // Default (unset/false) keeps the local-dev inline fallback so runs are
-          // never lost and existing tests keep working without Redis.
-          const queueRequired = process.env.ONESHOT_QUEUE_REQUIRED === "true";
-          const enqueueInputs = (): {
-            providerId: string;
-            revision: number;
-            model?: string;
-          } => {
-            let providerId = "sample";
-            let revision = 0;
-            let model: string | undefined;
-            if (providerManager) {
-              try {
-                const rc = providerManager.runtimeConfig();
-                providerId = rc.activeProvider || "sample";
-                revision = rc.revision ?? 0;
-                const rt = rc.providers[providerId];
-                model =
-                  rt?.model && rt.model !== "fixture" ? rt.model : undefined;
-              } catch {
-                providerId = "sample";
-              }
-            }
-            return { providerId, revision, model };
-          };
-
-          if (runQueue && queueReady) {
-            const { providerId, revision, model } = enqueueInputs();
-            try {
-              await runQueue.addRun({ runId, prompt, providerId, revision, model });
-              return json(res, 202, { run_id: runId, queued: true });
-            } catch {
-              // Enqueue failed AFTER the run record was created.
-              if (queueRequired) {
-                markRunQueueUnavailable(runId, runs, events);
-                return json(res, 503, {
-                  error: "runtime queue unavailable",
-                  run_id: runId,
-                });
-              }
-              // Local-dev fallback (queue not required): execute inline.
-              void runtime.run(runId, prompt);
-              return json(res, 202, { run_id: runId, queued: false });
-            }
-          }
-
-          if (runQueue && !queueReady && queueRequired) {
-            // Redis unavailable at submission and BullMQ is required → 503.
-            markRunQueueUnavailable(runId, runs, events);
-            return json(res, 503, {
-              error: "runtime queue unavailable",
-              run_id: runId,
-            });
-          }
-
-          // No queue, or queue-not-required + not ready → inline execution.
-          void runtime.run(runId, prompt);
-          return json(res, 202, { run_id: runId });
+          return submitRun(runId, prompt, res);
         }
 
         // ---------------------------------------------------------------
@@ -741,6 +711,7 @@ export async function startHttpServer(
               version: providerManager.runtimeConfig().version,
               providers: statuses,
               activeProvider: rc.activeProvider,
+              advancedResearch: { tavily: { configured: Boolean(process.env.TAVILY_API_KEY), enabled: Boolean(process.env.TAVILY_API_KEY) && process.env.ONESHOT_TAVILY_MODE !== "off" } },
               revision: rc.revision ?? 0,
             });
           } catch (e) {
@@ -786,7 +757,7 @@ export async function startHttpServer(
               error: "provider does not require a credential",
             });
           const credBody = await body(req);
-          const value = String(credBody.value ?? credBody.apiKey ?? "");
+          const value = typeof (credBody.value ?? credBody.apiKey) === "string" ? String(credBody.value ?? credBody.apiKey).trim() : "";
           if (!value.trim())
             return json(res, 400, { error: "credential value is required" });
           try {
@@ -843,6 +814,10 @@ export async function startHttpServer(
             return json(res, 503, { error: "provider management unavailable" });
           const rcBody = await body(req);
           try {
+            if (typeof rcBody.activeProvider === "string" && rcBody.activeProvider !== "<default>") {
+              const target = await providerManager.get(rcBody.activeProvider);
+              if (!target?.configured || !target.enabled) return json(res, 400, { error: "Provider requires an enabled configuration and credential" });
+            }
             const updated = providerManager.saveRuntimeConfigPatch({
               activeProvider:
                 typeof rcBody.activeProvider === "string"
@@ -878,6 +853,7 @@ export async function startHttpServer(
               model: typeof input.model === "string" ? input.model : undefined,
               apiBase:
                 typeof input.apiBase === "string" ? input.apiBase : undefined,
+              temperature: typeof input.temperature === "number" ? input.temperature : undefined,
             });
             return json(res, 200, summary);
           } catch (e) {
@@ -909,7 +885,10 @@ export async function startHttpServer(
                 }
               : undefined;
           try {
-            const result = await providerManager.test(pid, transient);
+            const result = await providerManager.test(pid, transient, {
+              ...(typeof testBody.model === "string" ? { model: testBody.model } : {}),
+              ...(typeof testBody.temperature === "number" ? { temperature: testBody.temperature } : {}),
+            });
             return json(res, 200, result);
           } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);

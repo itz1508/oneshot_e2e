@@ -98,10 +98,12 @@ Provider selection is governed by **one** config authority: `ProviderManager`. I
 {
   "version": 1,
   "providers": {
-    "sample":      { "label": "OneShot Sample",           "type": "fixture",    "credentialType": "none" },
-    "featherless": { "label": "Featherless AI",           "type": "featherless", "credentialType": "api_key",
-                     "credentialEnv": "FEATHERLESS_API_KEY" },
-    "adk_gemma2":  { "label": "Google ADK / Gemma",       "type": "adk_gemma2",  "credentialType": "api_key" }
+    "sample":      { "label": "OneShot Sample",     "type": "fixture",   "credentialType": "none" },
+    "openai":      { "label": "OpenAI",             "type": "openai",    "credentialType": "api_key",
+                     "credentialEnv": "OPENAI_API_KEY" },
+    "anthropic":   { "label": "Anthropic",          "type": "anthropic", "credentialType": "api_key",
+                     "credentialEnv": "ANTHROPIC_API_KEY" },
+    "gemini":      { "label": "Gemini",             "type": "gemini",    "credentialType": "api_key" }
   }
 }
 ```
@@ -109,8 +111,9 @@ Provider selection is governed by **one** config authority: `ProviderManager`. I
 Available providers:
 
 - **`sample`** — deterministic `FixtureResearchProvider`. No keys. Default.
-- **`featherless`** — OpenAI-compatible cloud API. Set `FEATHERLESS_API_KEY`.
-- **`adk_gemma2`** — Google ADK native Gemini pipeline. Requires three distinct model bindings (`GEMINI_DISTRIBUTION_MODEL`, `GEMINI_RESEARCH_MODEL`, `GEMINI_SYNTHESIS_MODEL`) and Google auth/Vertex (see `app/env/.env.example`).
+- **`openai`** — OpenAI cloud API. Set `OPENAI_API_KEY`.
+- **`anthropic`** — Anthropic Claude. Set `ANTHROPIC_API_KEY`.
+- **`gemini`** — Google Gemini pipeline. Requires three distinct model bindings (`GEMINI_DISTRIBUTION_MODEL`, `GEMINI_RESEARCH_MODEL`, `GEMINI_SYNTHESIS_MODEL`) and Google auth/Vertex (see `app/env/.env.example`).
 
 Select the active provider and (re)submit credentials from the **Provider Configuration drawer** in the web UI, or via the HTTP provider endpoints. Credentials are stored write-only in the secret store (never served back) — see `app/env/.env.example` for `ONESHOT_SECRETS_DIR`. Env-provided keys take precedence over the secret store; do **not** commit real keys.
 

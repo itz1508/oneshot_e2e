@@ -55,12 +55,12 @@ services:
         condition: service_healthy
     environment:
       REDIS_URL: redis://redis:6379
-      ONESHOT_MODE: ${ONESHOT_MODE:-sample}
+      ONESHOT_MODE: ${ONESHOT_MODE:-production}
       # Set ONESHOT_QUEUE_REQUIRED=true to require Redis-backed scheduling (the
       # app will not fall back to inline execution).
       ONESHOT_QUEUE_REQUIRED: ${ONESHOT_QUEUE_REQUIRED:-false}
       # Provider credentials: pass at runtime — NEVER bake into the image.
-      #   env: FEATHERLESS_API_KEY / GOOGLE_APPLICATION_CREDENTIALS
+      #   env: OPENAI_API_KEY / ANTHROPIC_API_KEY / GEMINI_API_KEY
       #   secret mount: ONESHOT_SECRETS_DIR=/secrets
       ONESHOT_SECRETS_DIR: ${ONESHOT_SECRETS_DIR:-}
     ports:
