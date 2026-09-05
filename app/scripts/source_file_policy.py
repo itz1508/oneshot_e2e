@@ -9,6 +9,7 @@ EXCLUDED_DIRECTORY_NAMES = frozenset(
         ".git",
         ".ollama",
         ".pytest_cache",
+        ".runtime",
         ".venv",
         "__pycache__",
         "data",

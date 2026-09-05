@@ -57,7 +57,13 @@ COPY docs/license/LICENSE docs/license/NOTICE ./docs/license/
 ENV PYTHONPATH=/app/backend/validation/python:/app/app
 
 # Create durable/evidence directories
-RUN mkdir -p data/runs data/run-state data/task-events data/checkpoints data/conversations data/sandbox-workspaces
+RUN mkdir -p .runtime/runs .runtime/run-state .runtime/task-events .runtime/checkpoints .runtime/conversations .runtime/sandbox-workspaces .runtime/cache .runtime/uploads .runtime/qc
+
+# Provider credentials never live in the image or the mounted workspace.
+# Mount a docker secret and point ONESHOT_SECRETS_DIR at it, e.g.:
+#   docker run --mount type=bind,src=/var/lib/oneshot/secrets,dst=/secrets \
+#     -e ONESHOT_SECRETS_DIR=/secrets -p 8787:8787 oneshot:local
+# Web-submitted credentials land in the directory above (never web-served).
 
 ENV ONESHOT_BIND_HOST=0.0.0.0
 ENV PORT=8787

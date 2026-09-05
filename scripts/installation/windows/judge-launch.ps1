@@ -1,4 +1,4 @@
-# scripts/judge-launch.ps1
+﻿# scripts/judge-launch.ps1
 # Deterministic OneShot Judge Launcher for PowerShell (Windows)
 [CmdletBinding()]
 param(
@@ -58,8 +58,8 @@ $Rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
 $Rng.GetBytes($TokenBytes)
 $LocalToken = [System.BitConverter]::ToString($TokenBytes).Replace("-", "").ToLowerInvariant()
 
-$TmpEnvFile = Join-Path $RepoRoot "data\judge.env.tmp"
-New-Item -ItemType Directory -Force -Path (Join-Path $RepoRoot "data") | Out-Null
+$TmpEnvFile = Join-Path $RepoRoot ".runtime\judge.env.tmp"
+New-Item -ItemType Directory -Force -Path (Join-Path $RepoRoot ".runtime\) | Out-Null
 Set-Content -Path $TmpEnvFile -Value "ONESHOT_API_TOKEN=$LocalToken`nONESHOT_BIND_HOST=0.0.0.0`nPORT=$Port`nONESHOT_MODE=sample" -Encoding ascii
 
 # 4. Remove stale container if running

@@ -37,8 +37,10 @@ fi
 
 # 3. Generate a cryptographically random local ONESHOT_API_TOKEN
 LOCAL_TOKEN="$(head -c 32 /dev/urandom | xxd -p | tr -d '\n' 2>/dev/null || openssl rand -hex 32)"
-mkdir -p "${REPO_ROOT}/data"
-TMP_ENV="${REPO_ROOT}/data/judge.env.tmp"
+# Use .runtime/ directory for runtime artifacts (not data/)
+RUNTIME_DIR="${REPO_ROOT}/.runtime"
+mkdir -p "${RUNTIME_DIR}"
+TMP_ENV="${RUNTIME_DIR}/judge.env.tmp"
 cat <<EOF > "${TMP_ENV}"
 ONESHOT_API_TOKEN=${LOCAL_TOKEN}
 ONESHOT_BIND_HOST=0.0.0.0

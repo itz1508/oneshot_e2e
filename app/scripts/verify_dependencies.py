@@ -52,6 +52,11 @@ def verify_node_lock() -> list[str]:
     for name in ("@types/node", "typescript", "undici-types"):
         if name not in deps:
             errors.append(f"node lock missing {name}")
+    # Runtime modules required by the BullMQ run-queue integration.
+    installed = lock.get("packages", {})
+    for name in ("bullmq", "ioredis"):
+        if f"node_modules/{name}" not in installed:
+            errors.append(f"node lock missing runtime module {name}")
     return errors
 
 

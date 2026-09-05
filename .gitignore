@@ -11,7 +11,7 @@ __pycache__/
 *.pfx
 credentials*
 secrets*
-/data/
+/.runtime/
 dist/
 .venv/
 .ollama/
@@ -19,3 +19,9 @@ dist/
 
 app/web/node_modules/
 app/web/dist/
+data/
+# Dev/experimental integration scratch (not part of the tracked tree)
+external/
+scripts/bootstrap/start.mjs
+scripts/bootstrap/health.mjs
+scripts/config/

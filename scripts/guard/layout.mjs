@@ -11,20 +11,34 @@
  */
 
 import { readdirSync, statSync } from "node:fs";
-import { pathToFileURL } from "node:url";
 import { resolve, join } from "node:path";
 
-const ROOT = resolve(import.meta.dirname || ".", "..", "..");
+const ROOT = resolve(import.meta.dirname, "..", "..");
 
 /**
  * Approved root directories that may exist
+ * - Product directories
+ * - External dependencies (cloned Google ADK)
+ * - Infrastructure / runtime directories
+ * - Approved infrastructure
+ * - Evidence / generated
  */
+
 const APPROVED_DIRECTORIES = new Set([
   // Product directories
   "backend",
   "app",
   "docs",
   "scripts",
+
+  // External dependencies (cloned Google ADK)
+  "external",
+
+  // Infrastructure / runtime directories
+  "bootstrap",
+  "config",
+  "e2e",
+  "guard",
 
   // Approved infrastructure
   ".agents",
@@ -43,6 +57,7 @@ const APPROVED_DIRECTORIES = new Set([
 /**
  * Approved root files that may exist
  */
+
 const APPROVED_FILES = new Set([
   ".gitignore",
   "package.json",
@@ -56,6 +71,14 @@ const APPROVED_FILES = new Set([
   "README_POSTGRESQL.md",
   "MANIFEST.sha256",
   "RUNTIME_CONTAINMENT_IMPLEMENTATION.md",
+  "IMPLEMENTATION_REPORT.md",
+
+  // Runtime scripts
+  "bootstrap.mjs",
+  "judge-launch.ps1",
+  "judge-launch.sh",
+  "judge.mjs",
+  "oneshot.mjs",
 ]);
 
 const C = {
@@ -72,15 +95,15 @@ function log(msg) {
 }
 
 function pass(msg) {
-  console.log(`${C.green}âœ“${C.reset} ${msg}`);
+  console.log(`${C.green}✔${C.reset} ${msg}`);
 }
 
 function warn(msg) {
-  console.log(`${C.yellow}âš ${C.reset} ${msg}`);
+  console.log(`${C.yellow}⚠${C.reset} ${msg}`);
 }
 
 function error(msg) {
-  console.error(`${C.red}âœ—${C.reset} ${msg}`);
+  console.error(`${C.red}✘${C.reset} ${msg}`);
 }
 
 function checkLayout() {
@@ -126,12 +149,12 @@ function report(violations, warnings, enforce = false) {
   const hasIssues = violations.length > 0 || warnings.length > 0;
 
   if (hasIssues) {
-    console.log(`\n${C.bold}Layout Report:${C.reset}\n`);
+    console.log(`${C.bold}Layout Report:${C.reset}\n`);
 
     if (violations.length > 0) {
       console.log(`${C.red}Violations (unapproved directories):${C.reset}`);
       for (const v of violations) {
-        console.log(`  ${C.red}âœ—${C.reset} ${v.type}: ${v.name}`);
+        console.log(`  ${C.red}✘${C.reset} ${v.type}: ${v.name}`);
       }
       console.log("");
     }
@@ -139,14 +162,14 @@ function report(violations, warnings, enforce = false) {
     if (warnings.length > 0) {
       console.log(`${C.yellow}Warnings (unapproved files):${C.reset}`);
       for (const w of warnings) {
-        console.log(`  ${C.yellow}âš ${C.reset} ${w.type}: ${w.name}`);
+        console.log(`  ${C.yellow}⚠${C.reset} ${w.type}: ${w.name}`);
       }
       console.log("");
     }
 
     if (enforce && violations.length > 0) {
       error("\nLayout violations detected. Please remove or move the unapproved directories.");
-      console.log(`\n${C.reset}Approved directories:${C.reset} ${Array.from(APPROVED_DIRECTORIES).join(", ")}`);
+      console.log(`${C.reset}Approved directories:${C.reset} ${Array.from(APPROVED_DIRECTORIES).join(", ")}`);
       console.log(`${C.reset}Approved files:${C.reset} ${Array.from(APPROVED_FILES).join(", ")}\n`);
       return false;
     }
