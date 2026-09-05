@@ -1,4 +1,4 @@
-# OneShot Init Skill
+﻿# OneShot Init Skill
 
 ## Purpose
 
@@ -12,7 +12,7 @@ Provide reusable repository initialization, directory provisioning, and environm
 
 ## Responsibilities
 
-- provision mandatory runtime data directories (`data/runs`, `data/checkpoints`, `data/task-events`, `data/run-state`, `data/conversations`, `data/sandbox-workspaces`)
+- provision mandatory runtime data directories (`.runtime/runs`, `.runtime/checkpoints`, `.runtime/task-events`, `.runtime/run-state`, `.runtime/conversations`, `.runtime/sandbox-workspaces`)
 - verify system dependencies (Python venv, Node.js version, environment configuration)
 - perform fast, non-destructive health checks
 

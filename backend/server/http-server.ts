@@ -10,12 +10,16 @@ import {
   normalize,
   resolve,
 } from "node:path";
-import type { Prompt } from "../contract/types.js";
+import type { Prompt, RootCause } from "../contracts/schema/types.js";
 import { id, newRunId } from "../core/id.js";
 import { RunRepository } from "../runtime/run-repository.js";
 import { ProcessingEventBus } from "../runtime/event-bus.js";
 import { WorkflowRuntime } from "../runtime/workflow-runtime.js";
 import type { TaskManagement } from "../task/task-management.js";
+import { QUEUE_PREFIX, RUN_QUEUE_NAME, type RunQueue } from "../runtime/queue.js";
+import type { ProviderManager } from "../runtime/provider-manager.js";
+import type { ProviderRuntimeSettings } from "../runtime/provider-runtime-config.js";
+import type { ProviderCredential } from "../runtime/provider-secret-store.js";
 import { projectAdkGraph } from "../graph/adk-graph.js";
 import { projectAuthorityGraph } from "../graph/authority-graph.js";
 import { projectIntentGraph } from "../graph/intent-graph.js";
@@ -28,6 +32,7 @@ import {
   WorkspacePathDeniedError,
   WorkspacePathPolicy,
   WorkspacePathTraversalError,
+  isSensitiveWorkspacePath,
 } from "./workspace-path-policy.js";
 
 // ---------------------------------------------------------------------------
@@ -50,6 +55,37 @@ function json(
     "cache-control": "no-store",
   });
   res.end(JSON.stringify(value));
+}
+
+/**
+ * Mark a run as failed/queue-unavailable when ONESHOT_QUEUE_REQUIRED is active
+ * and BullMQ/Redis could not accept the job. The run is finalized as ROOT_CAUSE
+ * so it never lingers as a permanent "queued" ghost. No secrets in the event.
+ */
+function markRunQueueUnavailable(
+  runId: string,
+  runs: RunRepository,
+  events: ProcessingEventBus,
+): void {
+  const rootCause: RootCause = {
+    issue: "runtime queue unavailable",
+    expected: "Redis/BullMQ available to accept the run job",
+    actual:
+      "Queue unavailable with ONESHOT_QUEUE_REQUIRED=true (no silent inline execution outside BullMQ)",
+    evidence_ids: [],
+    required_correction:
+      "Start Redis/BullMQ, or set ONESHOT_QUEUE_REQUIRED=false for local inline execution",
+    recheck_target: runId,
+  };
+  const snap = runs.get(runId);
+  if (snap && !snap.result) {
+    runs.finish(runId, "ROOT_CAUSE", undefined, rootCause);
+  }
+  events.emit(runId, "RunWorker", "COMPLETE", {
+    scope: "SUPPORT",
+    result: "ROOT_CAUSE",
+    message: "runtime queue unavailable",
+  });
 }
 
 const MIME: Record<string, string> = {
@@ -169,6 +205,8 @@ async function buildFileTree(
 export interface RuntimeInfo {
   mode: string;
   provider: string;
+  /** Whether the BullMQ run queue (Redis) is available. */
+  queue?: boolean;
 }
 
 export interface HttpServerOptions {
@@ -186,6 +224,14 @@ export async function startHttpServer(
   sandbox?: SandboxService,
   runtimeInfo?: RuntimeInfo,
   options: HttpServerOptions = {},
+  /**
+   * Optional BullMQ run queue. When present, `POST /api/runs` enqueues the run
+   * instead of executing inline. When absent (e.g. tests), runs execute inline
+   * via `runtime`, preserving the original behavior.
+   */
+  runQueue?: RunQueue,
+  providerManager?: ProviderManager,
+  queueReady?: boolean,
 ): Promise<ReturnType<typeof createServer>> {
   const bindHost = (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
   const apiToken = (process.env.ONESHOT_API_TOKEN || "").trim();
@@ -293,18 +339,114 @@ export async function startHttpServer(
         // ---------------------------------------------------------------
         // Health
         // ---------------------------------------------------------------
-        if (req.method === "GET" && url.pathname === "/api/health") {
+                if (req.method === "GET" && url.pathname === "/api/health") {
+          const mode = runtimeInfo?.mode || process.env.ONESHOT_MODE || "sample";
+          const redis: "ok" | "unavailable" | "disabled" = !runQueue
+            ? "disabled"
+            : queueReady
+              ? "ok"
+              : "unavailable";
+          const queue: "ok" | "unavailable" | "disabled" = !runQueue
+            ? "disabled"
+            : queueReady
+              ? "ok"
+              : "unavailable";
+          const worker: "ok" | "degraded" | "disabled" = !runQueue
+            ? "disabled"
+            : queueReady
+              ? "ok"
+              : "degraded";
+          // Be precise: Sample Mode is valid without production credentials —
+          // do not mark the server unhealthy just because Featherless is unset.
+          let providerConfiguration:
+            | "ready"
+            | "sample"
+            | "degraded"
+            | "disabled" = "disabled";
+          if (providerManager) {
+            try {
+              const rc = providerManager.runtimeConfig();
+              const activeId = rc.activeProvider || "sample";
+              if (activeId === "sample" || mode === "sample") {
+                providerConfiguration = "sample";
+              } else {
+                const status = await providerManager.get(activeId);
+                providerConfiguration = status?.configured
+                  ? "ready"
+                  : "degraded";
+              }
+            } catch {
+              providerConfiguration = "degraded";
+            }
+          }
+          const infraOk =
+            (redis === "ok" || redis === "disabled") &&
+            (queue === "ok" || queue === "disabled") &&
+            (worker === "ok" || worker === "disabled");
+          const status =
+            infraOk && providerConfiguration !== "degraded" ? "ok" : "degraded";
           return json(res, 200, {
-            status: "ok",
+            status,
             workflow: "oneshot-canonical-workflow",
-            mode: runtimeInfo?.mode || process.env.ONESHOT_MODE || "sample",
+            mode,
             provider: runtimeInfo?.provider || "unknown",
+            redis,
+            queue,
+            worker,
+            providerConfiguration,
+            run_queue: {
+              enabled: Boolean(runQueue),
+              redis_available: queueReady ?? false,
+            },
             task_management: Boolean(task),
             intent_collection: Boolean(intent),
             sandbox_service: Boolean(sandbox),
+            provider_management: Boolean(providerManager),
             adk_graph: "oneshot-adk-researcher-v1",
             authority_graph: "oneshot-authority-trace-v1",
             sandbox_graph: "oneshot-sandbox-execution-v1",
+          });
+        }
+
+        // ---------------------------------------------------------------
+        // Queue status (operational; never exposes Redis host/credentials)
+        // ---------------------------------------------------------------
+        if (req.method === "GET" && url.pathname === "/api/runtime/queue") {
+          const backend = "bullmq";
+          const queueName = `${QUEUE_PREFIX}:${RUN_QUEUE_NAME}`;
+          if (!runQueue) {
+            return json(res, 200, {
+              available: false,
+              backend,
+              redis: "disabled",
+              queue: queueName,
+              waiting: 0,
+              active: 0,
+              failed: 0,
+            });
+          }
+          let redis: "ok" | "unavailable" = queueReady ? "ok" : "unavailable";
+          let waiting = 0;
+          let active = 0;
+          let failed = 0;
+          if (queueReady && runQueue.getJobCounts) {
+            try {
+              const c = await runQueue.getJobCounts();
+              waiting = c.waiting;
+              active = c.active;
+              failed = c.failed;
+            } catch {
+              redis = "unavailable";
+            }
+          }
+          return json(res, 200, {
+            available: queueReady && redis === "ok",
+            backend,
+            redis,
+            queue: queueName,
+            waiting,
+            active,
+            failed,
           });
         }
 
@@ -465,8 +607,336 @@ export async function startHttpServer(
               : ["contracts", "proof"],
           };
 
+          // Queue submission policy. ONESHOT_QUEUE_REQUIRED=true makes BullMQ
+          // mandatory: if Redis is down at submission, return 503 and mark the
+          // run failed/queue-unavailable (no ghost run, no silent inline exec).
+          // Default (unset/false) keeps the local-dev inline fallback so runs are
+          // never lost and existing tests keep working without Redis.
+          const queueRequired = process.env.ONESHOT_QUEUE_REQUIRED === "true";
+          const enqueueInputs = (): {
+            providerId: string;
+            revision: number;
+            model?: string;
+          } => {
+            let providerId = "sample";
+            let revision = 0;
+            let model: string | undefined;
+            if (providerManager) {
+              try {
+                const rc = providerManager.runtimeConfig();
+                providerId = rc.activeProvider || "sample";
+                revision = rc.revision ?? 0;
+                const rt = rc.providers[providerId];
+                model =
+                  rt?.model && rt.model !== "fixture" ? rt.model : undefined;
+              } catch {
+                providerId = "sample";
+              }
+            }
+            return { providerId, revision, model };
+          };
+
+          if (runQueue && queueReady) {
+            const { providerId, revision, model } = enqueueInputs();
+            try {
+              await runQueue.addRun({ runId, prompt, providerId, revision, model });
+              return json(res, 202, { run_id: runId, queued: true });
+            } catch {
+              // Enqueue failed AFTER the run record was created.
+              if (queueRequired) {
+                markRunQueueUnavailable(runId, runs, events);
+                return json(res, 503, {
+                  error: "runtime queue unavailable",
+                  run_id: runId,
+                });
+              }
+              // Local-dev fallback (queue not required): execute inline.
+              void runtime.run(runId, prompt);
+              return json(res, 202, { run_id: runId, queued: false });
+            }
+          }
+
+          if (runQueue && !queueReady && queueRequired) {
+            // Redis unavailable at submission and BullMQ is required → 503.
+            markRunQueueUnavailable(runId, runs, events);
+            return json(res, 503, {
+              error: "runtime queue unavailable",
+              run_id: runId,
+            });
+          }
+
+          // No queue, or queue-not-required + not ready → inline execution.
           void runtime.run(runId, prompt);
           return json(res, 202, { run_id: runId });
+        }
+
+        // ---------------------------------------------------------------
+        // Run cancellation — DELETE /api/runs/:id
+        // Distinguishes queued-job cancellation from active-workflow
+        // cancellation and from browser SSE disconnect. Closing the browser
+        // only unsubscribes SSE (see the events handler) — it NEVER cancels
+        // the BullMQ job. Active cancellation is NOT supported until
+        // WorkflowRuntime supports cooperative cancellation; report honestly.
+        // ---------------------------------------------------------------
+        const runCancel = url.pathname.match(/^\/api\/runs\/([^/]+)$/);
+        if (req.method === "DELETE" && runCancel) {
+          const runId = decodeURIComponent(runCancel[1]);
+          const snap = runs.get(runId);
+          if (!snap) return json(res, 404, { error: "run not found" });
+          if (!runQueue) {
+            return json(res, 501, {
+              error: "cancellation not available (run queue disabled)",
+              run_id: runId,
+            });
+          }
+          try {
+            const job = await runQueue.getJob(runId);
+            if (!job) {
+              return json(res, 200, {
+                run_id: runId,
+                canceled: false,
+                state: snap.result ? "terminal" : "not-queued",
+              });
+            }
+            const state = await runQueue.getJobState(runId);
+            if (state === "waiting" || state === "delayed") {
+              await job.remove();
+              return json(res, 200, {
+                run_id: runId,
+                canceled: true,
+                state: "queued",
+              });
+            }
+            if (state === "active") {
+              return json(res, 501, {
+                error: "active cancellation not supported",
+                run_id: runId,
+                state: "active",
+              });
+            }
+            return json(res, 200, {
+              run_id: runId,
+              canceled: false,
+              state,
+            });
+          } catch (e) {
+            return json(res, 500, {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        // ---------------------------------------------------------------
+        // Provider management endpoints (web-managed configuration)
+        // ---------------------------------------------------------------
+        //
+        // GET /api/providers — catalog + non-secret runtime status (no secrets)
+        if (req.method === "GET" && url.pathname === "/api/providers") {
+          if (!providerManager)
+            return json(res, 503, { error: "provider management unavailable" });
+          try {
+            const statuses = await providerManager.list();
+            const rc = providerManager.runtimeConfig();
+            return json(res, 200, {
+              version: providerManager.runtimeConfig().version,
+              providers: statuses,
+              activeProvider: rc.activeProvider,
+              revision: rc.revision ?? 0,
+            });
+          } catch (e) {
+            return json(res, 500, {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        // GET /api/providers/:id — status only (never returns a credential)
+        const providerGet = url.pathname.match(/^\/api\/providers\/([^/]+)$/);
+        if (req.method === "GET" && providerGet) {
+          if (!providerManager)
+            return json(res, 503, { error: "provider management unavailable" });
+          const pid = decodeURIComponent(providerGet[1]);
+          try {
+            const status = await providerManager.get(pid);
+            if (!status) return json(res, 404, { error: `Unknown provider: ${pid}` });
+            return json(res, 200, status);
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            return json(res, msg.includes("Unknown provider") ? 404 : 500, {
+              error: msg,
+            });
+          }
+        }
+
+        // PUT /api/providers/:id/credential — submit a credential (WRITE ONLY)
+        // The browser may submit a credential but can never retrieve it.
+        const providerCredPut = url.pathname.match(
+          /^\/api\/providers\/([^/]+)\/credential$/,
+        );
+        if (req.method === "PUT" && providerCredPut) {
+          if (!providerManager)
+            return json(res, 503, { error: "provider management unavailable" });
+          const pid = decodeURIComponent(providerCredPut[1]);
+          const status = await providerManager.get(pid);
+          if (!status)
+            return json(res, 404, { error: `Unknown provider: ${pid}` });
+          const entry = status; // Use status for credential check
+          if (entry.credential?.type === "none")
+            return json(res, 400, {
+              error: "provider does not require a credential",
+            });
+          const credBody = await body(req);
+          const value = String(credBody.value ?? credBody.apiKey ?? "");
+          if (!value.trim())
+            return json(res, 400, { error: "credential value is required" });
+          try {
+            await providerManager.setCredential(pid, {
+              providerId: pid,
+              credentialType: entry.credentialType as ProviderCredential["credentialType"],
+              value,
+              createdAt: new Date().toISOString(),
+            });
+            // Return ONLY a status confirmation — never the credential.
+            return json(res, 200, {
+              providerId: pid,
+              credentialSource: "local-secret-store",
+              stored: true,
+            });
+          } catch (e) {
+            return json(res, 500, {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        // DELETE /api/providers/:id/credential — remove a stored credential
+        const providerCredDel = url.pathname.match(
+          /^\/api\/providers\/([^/]+)\/credential$/,
+        );
+        if (req.method === "DELETE" && providerCredDel) {
+          if (!providerManager)
+            return json(res, 503, { error: "provider management unavailable" });
+          const pid = decodeURIComponent(providerCredDel[1]);
+          try {
+            await providerManager.setCredential(pid);
+            const refreshed = await providerManager.getProviderStatus(pid);
+            return json(res, 200, {
+              providerId: pid,
+              configured: refreshed.configured,
+              credentialSource: refreshed.credentialSource,
+              deleted: true,
+            });
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            return json(res, msg.includes("Unknown provider") ? 404 : 500, {
+              error: msg,
+            });
+          }
+        }
+
+        // POST /api/providers/runtime-config — update non-secret runtime config
+        if (
+          req.method === "POST" &&
+          url.pathname === "/api/providers/runtime-config"
+        ) {
+          if (!providerManager)
+            return json(res, 503, { error: "provider management unavailable" });
+          const rcBody = await body(req);
+          try {
+            const updated = providerManager.saveRuntimeConfigPatch({
+              activeProvider:
+                typeof rcBody.activeProvider === "string"
+                  ? rcBody.activeProvider
+                  : undefined,
+              providers:
+                rcBody.providers && typeof rcBody.providers === "object"
+                  ? (rcBody.providers as Record<
+                      string,
+                      Partial<ProviderRuntimeSettings>
+                    >)
+                  : undefined,
+            });
+            return json(res, 200, { runtime: updated });
+          } catch (e) {
+            return json(res, 500, {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        // PUT /api/providers/:id — update non-secret runtime settings (model, apiBase)
+        const providerUpdate = url.pathname.match(
+          /^\/api\/providers\/([^/]+)$/,
+        );
+        if (req.method === "PUT" && providerUpdate) {
+          if (!providerManager)
+            return json(res, 503, { error: "provider management unavailable" });
+          const pid = decodeURIComponent(providerUpdate[1]);
+          const input = await body(req);
+          try {
+            const summary = await providerManager.update(pid, {
+              model: typeof input.model === "string" ? input.model : undefined,
+              apiBase:
+                typeof input.apiBase === "string" ? input.apiBase : undefined,
+            });
+            return json(res, 200, summary);
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            return json(res, msg.includes("not found") ? 404 : 500, {
+              error: msg,
+            });
+          }
+        }
+
+        // POST /api/providers/:id/test — test connection (transient credential,
+        // never persisted or logged)
+        const providerTest = url.pathname.match(
+          /^\/api\/providers\/([^/]+)\/test$/,
+        );
+        if (req.method === "POST" && providerTest) {
+          if (!providerManager)
+            return json(res, 503, { error: "provider management unavailable" });
+          const pid = decodeURIComponent(providerTest[1]);
+          const testBody = await body(req);
+          const transient =
+            typeof testBody.value === "string" ||
+            typeof testBody.apiKey === "string"
+              ? {
+                  providerId: pid,
+                  credentialType: "api_key" as const,
+                  value: String(testBody.value ?? testBody.apiKey ?? ""),
+                  createdAt: new Date().toISOString(),
+                }
+              : undefined;
+          try {
+            const result = await providerManager.test(pid, transient);
+            return json(res, 200, result);
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            return json(res, msg.includes("not found") ? 404 : 500, {
+              error: msg,
+            });
+          }
+        }
+
+        // POST /api/providers/:id/activate — set the active provider for upcoming runs
+        const providerActivate = url.pathname.match(
+          /^\/api\/providers\/([^/]+)\/activate$/,
+        );
+        if (req.method === "POST" && providerActivate) {
+          if (!providerManager)
+            return json(res, 503, { error: "provider management unavailable" });
+          const pid = decodeURIComponent(providerActivate[1]);
+          try {
+            await providerManager.activate(pid);
+            const provider = await providerManager.get(pid);
+            return json(res, 200, { activeProvider: pid, provider });
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            return json(res, msg.includes("not found") ? 404 : 500, {
+              error: msg,
+            });
+          }
         }
 
         // GET /api/runs/:id — run snapshot
@@ -634,18 +1104,41 @@ export async function startHttpServer(
             "content-type": "text/event-stream",
             "cache-control": "no-cache",
             connection: "keep-alive",
+            "x-content-type-options": "nosniff",
           });
 
-          // Replay existing events
-          for (const e of snapshot.events) {
+          // SSE wire format: `id: <sequence>` + `event: processing` + `data:{...}`.
+          // The id lets a reconnecting client send Last-Event-ID so we replay only
+          // events after that sequence (no duplicate replay). The frontend keys
+          // on event_id so it tolerates repeated events regardless.
+          const sendEvent = (e: { sequence: number }) => {
+            res.write(`id: ${e.sequence}\n`);
+            res.write(`event: processing\n`);
             res.write(`data: ${JSON.stringify(e)}\n\n`);
+          };
+
+          const lastHeader = req.headers["last-event-id"];
+          const lastSeq =
+            typeof lastHeader === "string" ? Number(lastHeader) : NaN;
+          const replayFrom = Number.isFinite(lastSeq) ? lastSeq : -1;
+          for (const e of snapshot.events) {
+            if (e.sequence > replayFrom) sendEvent(e);
           }
 
-          // Subscribe to new events
-          const unsub = events.subscribe(runId, (e) =>
-            res.write(`data: ${JSON.stringify(e)}\n\n`),
-          );
-          req.on("close", unsub);
+          // Subscribe to live canonical events. Closing the browser only
+          // unsubscribes here — it NEVER cancels the BullMQ job/run.
+          const unsub = events.subscribe(runId, sendEvent);
+          const heartbeat = setInterval(() => {
+            try {
+              res.write(`: keep-alive\n\n`);
+            } catch {
+              /* connection already closed */
+            }
+          }, 15_000);
+          req.on("close", () => {
+            unsub();
+            clearInterval(heartbeat);
+          });
           return;
         }
 
@@ -659,6 +1152,15 @@ export async function startHttpServer(
             /^(\.\.(\/|\\|$))+/,
             "",
           );
+          const firstSegment = safe.split(/[\\/]/)[0] ?? "";
+          if (
+            firstSegment.startsWith(".") ||
+            isSensitiveWorkspacePath(safe)
+          ) {
+            // Deny HTTP reads of .env / .env.* / .git / .runtime / credential
+            // and secret files. Never reveal whether the path exists.
+            return json(res, 404, { error: "not found" });
+          }
           const p = join(uiRoot, safe);
           try {
             const data = await readFile(p);

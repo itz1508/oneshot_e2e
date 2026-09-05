@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { ToolRegistry } from "../tool/registry.js";
+import { getRuntimePaths } from "../runtime/runtime-config.js";
 
 export interface WorkspaceInitResult {
   initialized: boolean;
@@ -29,21 +30,21 @@ export class InitSkill {
       },
       async (input: { root?: string } = {}): Promise<WorkspaceInitResult> => {
         const root = resolve(input.root || process.env.ONESHOT_ROOT || process.cwd());
+        const runtimePaths = getRuntimePaths(root);
         const dirs = [
-          "data/runs",
-          "data/checkpoints",
-          "data/task-events",
-          "data/run-state",
-          "data/conversations",
-          "data/sandbox-workspaces",
+          { path: runtimePaths.runs, name: "runs" },
+          { path: runtimePaths.runState, name: "run-state" },
+          { path: runtimePaths.taskEvents, name: "task-events" },
+          { path: runtimePaths.checkpoints, name: "checkpoints" },
+          { path: runtimePaths.conversations, name: "conversations" },
+          { path: runtimePaths.sandboxWorkspaces, name: "sandbox-workspaces" },
         ];
 
         const created: string[] = [];
-        for (const rel of dirs) {
-          const full = join(root, rel);
-          if (!existsSync(full)) {
-            mkdirSync(full, { recursive: true });
-            created.push(rel);
+        for (const dir of dirs) {
+          if (!existsSync(dir.path)) {
+            mkdirSync(dir.path, { recursive: true });
+            created.push(dir.name);
           }
         }
 
