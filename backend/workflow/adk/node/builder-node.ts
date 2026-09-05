@@ -1,8 +1,10 @@
 import { node, type NodeContext } from "@google/adk";
 import type { ConfirmedPackage } from "../../../contracts/schema/types.js";
 import { BuilderRole } from "../../../role/builder/role.js";
-import type { BuilderWorkflow } from "../../../role/builder/workflow.js";
-import type { SandboxExecutionResult } from "../../../sandbox/types.js";
+import type {
+  BuilderWorkflow,
+  BuilderWorkflowResult,
+} from "../../../role/builder/workflow.js";
 
 export interface BuilderNodeInput {
   job_id: string;
@@ -12,7 +14,7 @@ export interface BuilderNodeInput {
 
 export function createBuilderNode(builder: BuilderWorkflow) {
   return node(
-    async (_ctx: NodeContext, input: BuilderNodeInput): Promise<SandboxExecutionResult> => {
+    async (_ctx: NodeContext, input: BuilderNodeInput): Promise<BuilderWorkflowResult> => {
       if (!/[A-Za-z]/.test(input.job_id)) {
         throw new Error("ADK job_id must contain at least one non-numeric character");
       }

@@ -121,7 +121,12 @@ export class WorkflowRuntime {
     );
   }
 
-  private finishPassed(runId: string, proof: HashProof): RunSnapshot {
+  private finishPassed(
+    runId: string,
+    proof: HashProof,
+    finalOutput: string | null = null,
+    outputStepId: string | null = null,
+  ): RunSnapshot {
     const current = this.runs.require(runId);
     if (current.result) return current;
 
@@ -130,7 +135,10 @@ export class WorkflowRuntime {
       result: "PASSED",
       artifact_id: proof.created_hash,
     });
-    return this.runs.finish(runId, "PASSED", proof);
+    return this.runs.finish(runId, "PASSED", proof, undefined, undefined, {
+      final_output: finalOutput,
+      output_step_id: outputStepId,
+    });
   }
 
   /** Execute one complete canonical job through ADK Workflow + ctx.runNode(). */
@@ -239,7 +247,12 @@ export class WorkflowRuntime {
         throw new Error("ADK dynamic Workflow completed without terminal output");
       }
       if (terminal.result === "PASSED") {
-        return this.finishPassed(runId, terminal.hash_proof);
+        return this.finishPassed(
+          runId,
+          terminal.hash_proof,
+          terminal.builder?.final_output ?? null,
+          terminal.builder?.output_step_id ?? null,
+        );
       }
       return this.finishRoot(
         runId,

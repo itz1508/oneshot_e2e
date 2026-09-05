@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type {
@@ -12,6 +13,8 @@ import type {
 } from "../../../contracts/schema/types.js";
 import { WorkflowRootCauseError } from "../../../core/root-cause-error.js";
 import type { GatheredEvidence } from "../tool/evidence/collector.js";
+
+export const BUILDER_OUTPUT_PREFIX = "ONESHOT_BUILDER_OUTPUT_BASE64:";
 
 export interface StructuredResearchDraft {
   summary: string;
@@ -29,6 +32,8 @@ export interface StructuredResearchDraft {
     expected_result: string;
     requirement_indexes: number[];
   }>;
+  /** Provider-generated final artifact. When present it is routed through Builder. */
+  deliverable?: string;
 }
 
 type BundleInput = {
@@ -177,6 +182,23 @@ export async function structuredDraftToResearchBundle(
       schema_refs: [schemaId],
     };
   });
+
+  const deliverable = draft.deliverable?.trim();
+  if (deliverable) {
+    const previous = steps.at(-1);
+    steps.push({
+      step_id: `step:${runId}:${steps.length + 1}`,
+      description:
+        BUILDER_OUTPUT_PREFIX +
+        Buffer.from(deliverable, "utf8").toString("base64"),
+      responsibility: "BuilderOutput",
+      depends_on: previous ? [previous.step_id] : [],
+      requirement_refs: requirements.map((item) => item.requirement_id),
+      goal_refs: criteria.map((item) => item.criterion_id),
+      fixture_refs: [],
+      schema_refs: [schemaId],
+    });
+  }
 
   const assertions: PlanAssertion[] = [];
   const assertionsByStep: string[][] = steps.map(() => []);

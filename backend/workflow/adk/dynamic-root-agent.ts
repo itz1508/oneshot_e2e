@@ -14,7 +14,10 @@ import type {
 } from "../../contracts/schema/types.js";
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
 import { validationFeedback } from "../../role/gap-analysis/tool/validation-feedback.js";
-import type { BuilderWorkflow } from "../../role/builder/workflow.js";
+import type {
+  BuilderWorkflow,
+  BuilderWorkflowResult,
+} from "../../role/builder/workflow.js";
 import type { EvaluationWorkflow } from "../../role/evaluation/workflow.js";
 import type { GapAnalysisWorkflow } from "../../role/gap-analysis/workflow.js";
 import type { PlannerWorkflow } from "../../role/planner/workflow.js";
@@ -71,7 +74,7 @@ export interface OneShotDynamicPassed {
   triple: TripleValidation;
   confirmed: ConfirmedPackage;
   created_hash: string;
-  builder: Extract<SandboxExecutionResult, { result: "PASSED" }>;
+  builder: BuilderWorkflowResult;
   hash_proof: HashProof;
 }
 
@@ -84,7 +87,7 @@ export interface OneShotDynamicRootCause {
   gap?: GapAnalysis;
   evaluation?: Evaluation;
   triple?: TripleValidation;
-  builder?: SandboxExecutionResult;
+  builder?: BuilderWorkflowResult;
   hash_proof?: HashProof;
 }
 
@@ -409,7 +412,7 @@ export function createOneShotDynamicWorkflow(
         builderNode,
         { job_id: jobId, confirmed, hash: createdHash },
         { runId: `${jobId}-builder` },
-      )).output as SandboxExecutionResult;
+      )).output as BuilderWorkflowResult;
       await save(effects, jobId, "builder-result", builder);
       effects.event?.(jobId, "Builder", "COMPLETE", {
         result: builder.result,

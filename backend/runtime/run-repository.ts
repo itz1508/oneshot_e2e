@@ -108,12 +108,17 @@ export class RunRepository {
     hashProof?: HashProof,
     rootCause?: RootCause,
     helpRequest?: HelpRequest,
+    output?: { final_output: string | null; output_step_id: string | null },
   ): RunSnapshot {
     const r = this.require(runId);
     r.result = result;
     r.hash_proof = hashProof;
     r.root_cause = rootCause;
     r.help_request = helpRequest;
+    if (output) {
+      r.final_output = output.final_output;
+      r.output_step_id = output.output_step_id;
+    }
     this.persist(r);
     return r;
   }

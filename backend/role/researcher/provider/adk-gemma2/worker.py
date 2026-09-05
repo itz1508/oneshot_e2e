@@ -41,6 +41,7 @@ class ResearchDraft(Strict):
     plan_steps: list[DraftStep] = Field(min_length=1)
     success_meaning: str
     success_criteria: list[DraftCriterion] = Field(min_length=1)
+    deliverable: str = Field(min_length=1)
 
 
 TEST_DRAFT = os.getenv("ONESHOT_ADK_TEST_DRAFT_FILE", "").strip()
@@ -408,6 +409,9 @@ async def _build_runner():
             "When the user explicitly asks for executable sandbox implementation, every plan_steps.description must be a directly executable command beginning with the exact command prefix requested by the user; never use Markdown or explanatory prose. "
             "Preserve literal verification strings requested by the user so execution evidence can prove behavior. "
             "If refinement_feedback exists, correct that prior NOT_VALID defect and preserve all explicit user value. "
+            "The deliverable field is the complete, production-quality user-requested artifact that Builder must return after canonical validation and execution. "
+            "Generate the deliverable from the user's requested outcome; do not merely repeat the requirement bullets. "
+            "For evaluation or judging artifacts, distinguish observed evidence from inference and never fabricate verification results. "
             "Correct inconsistencies without inventing unsupported facts."
         ),
         generate_content_config=types.GenerateContentConfig(
