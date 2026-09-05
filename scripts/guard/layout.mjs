@@ -48,6 +48,10 @@ const APPROVED_DIRECTORIES = new Set([
   ".venv",           // Python virtual environment
   "dist",            // Build output
   "node_modules",    // Node dependencies
+  ".headless_profile", // Local browser profile (ignored)
+  ".pytest_cache",   // Local pytest cache (ignored)
+  "data",            // Local data directory (ignored)
+  "runtime",         // Local runtime state (ignored)
 
   // Evidence / generated
   "evidence",
@@ -67,11 +71,8 @@ const APPROVED_FILES = new Set([
   "Dockerfile",
   ".dockerignore",
   "docker-compose.local.yml",
-  "POSTGRES_MIGRATION.md",
-  "README_POSTGRESQL.md",
+  "README.md",
   "MANIFEST.sha256",
-  "RUNTIME_CONTAINMENT_IMPLEMENTATION.md",
-  "IMPLEMENTATION_REPORT.md",
 
   // Runtime scripts
   "bootstrap.mjs",

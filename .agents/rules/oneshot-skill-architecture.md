@@ -1,251 +1,47 @@
-# OneShot Reusable Skill vs. Role Architecture — Core Rules
+# OneShot Agent, IAM Role, Skill and Workflow Boundaries
 
-## 1. Three-Way Responsibility Partition
+## Authority and definitions
 
-| Category | Location | Purpose & Boundary | Examples |
-| :--- | :--- | :--- | :--- |
-| **Pipeline Roles** | `backend/role/<role>/` | **Workflow responsibility owners.** Own defined responsibilities in the canonical pipeline. They are not registered as generic reusable Skills. | `Researcher`, `Planner`, `Refactor`, `GapAnalysis`, `Evaluation` |
-| **Subsystem Domains** | `backend/task/`, `backend/intent/`, `backend/sandbox/` | **Subsystem responsibility owners.** Own domain state, persistence, execution, replay, or infrastructure behavior. They are not forced into Pipeline Roles or converted wholesale into Skills. | Task Event Store, Conversation Store, Sandbox Runtime |
-| **Reusable Skills** | `skill/<name>/` + runtime integration under `backend/skills/` when required | **Cross-cutting capabilities.** Reusable procedures callable by multiple authorized callers without transferring workflow responsibility. | Existing examples: `canonical-contracts`, `init`; illustrative future examples: `schema-inspection`, `dependency-discovery` |
+The user's architecture definition governs this repository: **Role is IAM identity.**
 
-A subsystem may expose a reusable Skill surface when part of its capability is genuinely reusable. That does not transfer ownership of the subsystem to the Skill.
+| Concept | Responsibility | Placement |
+|---|---|---|
+| Agent | Executes behavior and owns its workflow outputs | `backend/role/<name>/` (current implementation location) |
+| Role | IAM identity associated with access permissions | No IAM implementation exists yet; do not fabricate one |
+| Workflow | Controls execution order, transitions and routing | `backend/workflow/` |
+| Skill | Reusable capability/procedure available to authorized callers | Existing discovery and bindings under `backend/skills/` |
+| Tool | Performs a concrete operation | Shared registry or owning agent/subsystem |
+| Subsystem | Owns domain state, persistence or execution services | `backend/task/`, `backend/intent/`, `backend/sandbox/`, runtime services |
 
-### Role `SKILL.md`
+Agent, Role, Skill, Tool and Workflow remain distinct. An agent name or an artifact ownership list does not establish IAM authorization. Do not invent an IAM backend or claim permission enforcement from a directory name.
 
-```text
-backend/role/<role>/SKILL.md
-```
+## Current boundary
 
-is **Role Operating Instructions (SOP)**.
+Workflow execution is implemented under `backend/role/`; a role-named path is not an IAM identity, and do not invent an IAM backend or claim permission enforcement from a directory name.
 
-It defines how that Role performs its responsibility, including:
+## Agent instructions and reusable skills
 
-* evidence handling;
-* provenance;
-* validation expectations;
-* inputs and outputs;
-* allowed operations;
-* forbidden operations;
-* Role-specific execution rules.
+`backend/role/<name>/SKILL.md` files contain agent operating instructions (SOPs). They are not IAM definitions and must not automatically become globally discoverable reusable skills.
 
-It is **not** a globally discoverable reusable Skill.
+Before exposing a capability as a reusable skill, determine whether multiple authorized callers can use it without inheriting an agent's workflow responsibility. Keep agent-private operations with the agent and subsystem-private operations with the subsystem. A reusable surface does not transfer ownership of the underlying subsystem.
 
----
+The current reusable-skill catalog discovers `backend/skills/*/SKILL.md`. Keep discovery documentation aligned with real callers; do not create a second root merely for symmetry.
 
-## 2. Placement Invariant — Reusability Test
+## Skill lifecycle and execution
 
-Before adding a capability, ask:
+Preserve the lifecycle: discover -> catalog -> resolve exact -> activate -> invoke.
 
-> **Can multiple authorized callers reuse this capability without inheriting a Role's workflow responsibility?**
+- Discovery indexes available definitions; it does not authorize execution.
+- Resolve the requested identity/capability exactly; never silently substitute a similar skill.
+- A governed resolve-or-create path must validate and register the required capability before invocation.
+- Activation binds a real runtime and callable surface. A descriptor without an executable factory is not proof of a runnable skill.
+- Tools may use TypeScript, Python, deterministic scripts or another implementation justified by the actual consumer. A ToolRegistry wrapper is not mandatory for structural symmetry.
+- Skills return results to their caller. They do not gain authority to change canonical workflow order or grant IAM permissions.
 
-### YES
+Agents should reuse capabilities where the contracts genuinely match. Do not duplicate implementations merely to prefix them with an agent name.
 
-Create or resolve a reusable Skill:
+## Scripts and process boundaries
 
-```text
-skill/<name>/
-backend/skills/<runtime-or-binding> (when required)
-```
+Add standalone scripts for concrete consumers such as CLI invocation, deterministic validation, hashing, external workers or integration tests. Do not require every skill to contain a scripts directory.
 
-### NO — Role-dependent
-
-Keep the capability private to the Role:
-
-```text
-backend/role/<role>/tool/
-```
-
-### NO — Subsystem-dependent
-
-Keep it inside the subsystem that owns it:
-
-```text
-backend/intent/
-backend/task/
-backend/sandbox/
-```
-
-Do not force every capability into the Skill Catalog.
-
----
-
-## 3. Authority Separation
-
-When a Pipeline Role invokes a reusable Skill:
-
-```text
-Workflow
-   ↓
-Role
-   ↓
-Skill Registry
-   ↓
-Skill
-   ↓
-Tool / Runtime
-```
-
-Other authorized callers may invoke the same reusable Skill without a Pipeline Role:
-
-```text
-CLI / MCP / Operator / Subsystem / Authorized Runtime
-   ↓
-Skill Registry
-   ↓
-Skill
-   ↓
-Tool / Runtime
-```
-
-Core distinction:
-
-```text
-ROLE ≠ SKILL ≠ TOOL ≠ WORKFLOW
-```
-
-### Responsibilities
-
-* **Workflow** determines canonical execution ordering and Role routing.
-* **Role** owns its assigned workflow responsibility.
-* **Skill Registry** discovers, resolves, and activates reusable capabilities.
-* **Skill** defines a reusable procedure/capability.
-* **Tool / Runtime** performs the concrete operation.
-
-A reusable Skill does not gain authority to alter canonical workflow ordering, route workflow transitions, or take ownership of a Role's responsibility merely because that Role invokes it.
-
----
-
-## 4. Dynamic Five-Stage Skill Lifecycle
-
-```text
-DISCOVER
-   ↓
-CATALOG
-   ↓
-RESOLVE EXACT
-   ↓
-ACTIVATE
-   ↓
-INVOKE
-```
-
-### 1. DISCOVER
-
-Find valid Skill definitions and available runtime/tool surfaces across registered discovery locations.
-
-Discovery does not authorize execution.
-
-### 2. CATALOG
-
-Index validated Skill descriptors.
-
-The catalog is not required to be a permanently hard-coded list.
-
-### 3. RESOLVE EXACT
-
-Resolve the requested capability against the catalog using its exact required contract.
-
-```text
-exact match
-→ resolve
-
-no exact match
-→ unresolved
-```
-
-Never silently substitute a merely similar Skill.
-
-If supported:
-
-```text
-no exact match
-↓
-resolveOrCreate
-↓
-create / validate / register exact capability
-↓
-resolve exact
-```
-
-`resolveOrCreate` is a separate governed path, not fuzzy matching.
-
-### 4. ACTIVATE
-
-Bind the resolved Skill to its applicable runtime and callable surface.
-
-Depending on the Skill, this may involve:
-
-* `ToolRegistry`;
-* direct TypeScript runtime;
-* Python runtime;
-* deterministic scripts;
-* another appropriate implementation surface.
-
-`ToolRegistry` is not mandatory merely for structural symmetry.
-
-### 5. INVOKE
-
-Execute the resolved capability and return its typed result to the authorized caller.
-
----
-
-## 5. Role Skill Composition — Actual Reuse
-
-Roles should compose reusable capabilities rather than duplicate them.
-
-```text
-Researcher (Role)                    Planner (Role)
-├── Role SOP                         ├── Role SOP
-│   evidence/provenance              │   audit/review rules
-│                                    │
-├── repository-audit Skill (future)  ├── repository-audit Skill (future)
-├── dependency-discovery Skill       ├── dependency-discovery Skill
-├── schema-inspection Skill          └── schema-inspection Skill
-└── evidence-collection Skill
-```
-
-A capability such as `schema-inspection` is implemented once and reused.
-
-Do not create `researcher-schema-inspection` and `planner-schema-inspection` unless their actual contracts and responsibilities are genuinely different.
-
----
-
-## 6. No Forced Symmetry for Scripts
-
-Standalone `scripts/` are **consumer-driven**, not cosmetic.
-
-Use an independent script or adapter only when there is a real execution requirement such as:
-
-* deterministic Python validation;
-* canonicalization or hashing;
-* CLI invocation;
-* MCP invocation;
-* external worker execution;
-* integration testing;
-* process-boundary execution.
-
-Therefore:
-
-```text
-Skill A
-├── SKILL.md
-├── TypeScript runtime
-└── Tool surface
-```
-
-can be completely valid without `scripts/`.
-
-Likewise:
-
-```text
-oneshot-canonical-contracts/
-└── scripts/*.py
-```
-
-can legitimately have standalone scripts because its deterministic Python operations benefit from independent invocation.
-
-The rule is:
-
-> **Add an external script/adapter because a real consumer requires it—not because another Skill has one.**
-
-A Skill is complete when its required contract, resolution/activation path, runtime behavior, validation, and tests are complete for its responsibility. The presence of a `scripts/` directory does not determine completeness.
+When moving code, reconcile imports, runtime resource paths, Python module roots, fixtures, tests, packaging and launchers in the same bounded change. Preserve canonical artifact IDs and result vocabulary. Distinguish an applied file move from verified runtime behavior.

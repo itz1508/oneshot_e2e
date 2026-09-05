@@ -2,7 +2,7 @@
 
 OneShot is an agentic build-and-prove system. It takes a goal and runs study → plan → refactor → gap-analysis → triple-validation → confirmation → sandbox-build → hash-verification as one canonical workflow, reporting `PASSED` only when it can produce a machine-verifiable hash proof. Execution is driven by a Google ADK dynamic workflow, research can be augmented by Tavily evidence, and provider/model selection is governed by a single configuration authority.
 
-> Last verification: 118 tests · 116 pass · 0 fail · 2 credential-gated skips.
+> Last verification: 124 tests · 122 pass · 0 fail · 2 credential-gated skips.
 
 ---
 
@@ -141,7 +141,7 @@ Execution runs in a hardened sandbox:
 - **Process runner** (default): OS-isolated commands with environment allowlists, network policy, output/resource limits, and full cleanup.
 - **Container runner**: select with `ONESHOT_SANDBOX_RUNNER=container` against a Sandbox image.
 
-Sandbox admission requires an authentic confirmed package and an exact canonical hash before anything executes. See `RUNTIME_CONTAINMENT_IMPLEMENTATION.md`.
+Sandbox admission requires an authentic confirmed package and an exact canonical hash before anything executes.
 
 ---
 
@@ -190,4 +190,4 @@ docs/               architecture, judge, provider, run-job-contract documentatio
 
 ## License
 
-OneShot-owned source is provided under the [OneShot Evaluator License](LICENSE). Third-party software remains under its own upstream licenses; see [NOTICE](NOTICE) and [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES/).
+OneShot-owned source is provided under the [Apache License, Version 2.0](docs/license/LICENSE). Third-party software remains under its own upstream licenses; see [NOTICE](docs/license/NOTICE) and [app/legal/third-party/](app/legal/third-party).
