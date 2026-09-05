@@ -1,7 +1,7 @@
-import { randomUUID } from "node:crypto";
+﻿import { randomUUID } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import type { HashProof, RootCause } from "../contract/types.js";
+import type { HashProof, RootCause } from "../contracts/schema/types.js";
 import { WorkflowRootCauseError } from "../core/root-cause-error.js";
 import type { ProcessingEventBus } from "../runtime/event-bus.js";
 import type { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
@@ -73,7 +73,7 @@ export class SandboxService {
     private contracts: CanonicalContractSkill,
     private events?: ProcessingEventBus,
     private runner: SandboxRunner = new HardenedProcessRunner(),
-    private root = resolve(process.env.ONESHOT_ROOT || process.cwd(), "data/sandbox-workspaces"),
+    private root = resolve(process.env.ONESHOT_ROOT || process.cwd(), ".runtime/sandbox-workspaces"),
   ) {
     mkdirSync(this.root, { recursive: true });
   }
