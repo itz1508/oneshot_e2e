@@ -5,16 +5,16 @@ on:
     branches: [main, handoff-native-gemini-e2e-20260902]
     paths:
       - '.github/workflows/tmp-adk-live-real-e2e.yml'
-      - '.env.example'
+      - 'app/env/**'
       - 'backend/intent/**'
       - 'backend/role/researcher/provider/adk-gemma2/**'
-      - 'config/gemini.env.example'
-      - 'tests/test_adk_gemma_worker.py'
-      - 'tests_ts/intent-collection.test.ts'
-      - 'tests_ts/prompt-generator.test.ts'
-      - 'tests_ts/session-transcript-e2e.test.ts'
-      - 'tests_ts/native-gemini-session-e2e.test.ts'
-      - 'requirements.txt'
+      - 'app/env/gemini.env.example'
+      - 'backend/tests/python/test_adk_gemma_worker.py'
+      - 'backend/tests/ts/intent-collection.test.ts'
+      - 'backend/tests/ts/prompt-generator.test.ts'
+      - 'backend/tests/ts/session-transcript-e2e.test.ts'
+      - 'backend/tests/ts/native-gemini-session-e2e.test.ts'
+      - 'app/requirements/**'
       - 'scripts/**'
       - 'MANIFEST.sha256'
 
@@ -52,6 +52,9 @@ jobs:
         with:
           node-version: '24.13.0'
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            app/web/package-lock.json
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v7
@@ -62,32 +65,32 @@ jobs:
         run: npm install --global npm@11.8.0 --no-audit --no-fund
 
       - name: Install root dependencies
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Install web dependencies
-        run: npm --prefix web ci --no-audit --no-fund
+        run: npm --prefix app/web ci --ignore-scripts --no-audit --no-fund
 
       - name: Install Python dependencies
         run: |
-          python -m pip install --disable-pip-version-check -r requirements.txt
-          python -m pip install --disable-pip-version-check -r requirements-workspace-api.txt
+          python -m pip install --disable-pip-version-check -r app/requirements/base.txt
+          python -m pip install --disable-pip-version-check -r app/requirements/workspace-api.txt
 
       - name: Compile full product
         run: npm run build
 
       - name: Run all Python tests
-        run: python -m unittest discover -s tests -p 'test_*.py' -v
+        run: python -m unittest discover -s backend/tests/python -p 'test_*.py' -v
 
       - name: Run all compiled TypeScript tests
-        run: node --test dist/tests_ts/*.test.js
+        run: node --test dist/backend/tests/ts/*.test.js
 
       - name: Verify canonical contracts and manifest
         run: npm run verify
 
       - name: Print focused PromptGenerator and complete session transcript
         run: |
-          node --test dist/tests_ts/prompt-generator.test.js
-          node --test dist/tests_ts/session-transcript-e2e.test.js
+          node --test dist/backend/tests/ts/prompt-generator.test.js
+          node --test dist/backend/tests/ts/session-transcript-e2e.test.js
 
       - name: Report live Gemini credential availability
         run: |
@@ -105,4 +108,4 @@ jobs:
           ONESHOT_LIVE_GEMINI_E2E: 'true'
           ONESHOT_MODE: production
           ONESHOT_RESEARCH_PROVIDER: adk_gemma2
-        run: node --test --test-force-exit dist/tests_ts/native-gemini-session-e2e.test.js
+        run: node --test --test-force-exit dist/backend/tests/ts/native-gemini-session-e2e.test.js

@@ -1,70 +1,90 @@
-# OneShot Installation
+# OneShot
 
-## Prompt to Agent
+OneShot is a production E2E research pipeline built on a Google ADK 2.0 workflow graph. It orchestrates planner, researcher, and synthesis roles across pluggable providers (native Gemini / Google ADK, Featherless, Tavily-backed evidence research), exposes a workspace HTTP API, and ships with a web UI, a Python runtime bridge, and a full verification suite.
 
-```text
-You are the OneShot installation and evaluation agent.
+## Requirements
 
-Install OneShot using the shortest supported route, verify it, and return one evidence-backed report.
+- Node.js >= 24.13.0
+- npm >= 11.8.0
+- Python >= 3.11
+- Git (for cloning) — Docker optional
 
-ROUTE 1 — CHECK
-- Confirm the OneShot repository root.
-- Check Node.js >= 24.13.0, npm >= 11.8.0, Python >= 3.11.
-- Check Git or Docker only if that route is needed.
+## Install
 
-ROUTE 2 — ACQUIRE
-If the repository is not already available, choose one:
+One command bootstrap (installs everything and verifies the environment):
 
-ZIP:
-https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip
-
-Git:
-git clone https://github.com/itz1508/oneshot_e2e.git
-cd oneshot_e2e
-
-ROUTE 3 — INSTALL
+```bash
 npm run oneshot
+```
 
-If installation fails, stop and report the exact ROOT CAUSE.
+Manual install, if you prefer step by step:
 
-ROUTE 4 — DEMONSTRATE
-Default sample mode — no API key:
+```bash
+npm ci --ignore-scripts --no-audit --no-fund
+npm --prefix app/web ci --ignore-scripts --no-audit --no-fund
+python -m pip install --disable-pip-version-check -r app/requirements/base.txt
+python -m pip install --disable-pip-version-check -r app/requirements/workspace-api.txt
+npm run build
+```
+
+## Run
+
+Sample mode — no API key required:
+
+```bash
 npm run demo
+```
 
-Production Featherless mode — only when a valid key is available:
+Production mode with a real provider — set the environment, then run the same command.
 
-PowerShell:
+PowerShell (Featherless):
+
+```powershell
 $env:ONESHOT_MODE="production"
 $env:ONESHOT_RESEARCH_PROVIDER="featherless"
 $env:FEATHERLESS_API_KEY="your_featherless_api_key"
 npm run demo
+```
 
-Linux/macOS:
-ONESHOT_MODE=production ONESHOT_RESEARCH_PROVIDER=featherless FEATHERLESS_API_KEY="your_featherless_api_key" npm run demo
+Linux/macOS (native Gemini):
 
-ROUTE 5 — VERIFY
-npm test
-python scripts/verify_all.py
+```bash
+ONESHOT_MODE=production ONESHOT_RESEARCH_PROVIDER=adk_gemma2 GEMINI_API_KEY="your_gemini_api_key" npm run demo
+```
 
-ROUTE 6 — DOCKER
-Only when Docker is available:
+Provider and model configuration lives in `app/env/` (see `gemini.env.example`, `featherless.env.example`, and friends).
+
+## Verify
+
+```bash
+npm test          # build backend + run full TypeScript test suite
+npm run verify    # run Python production verification
+```
+
+## Docker
+
+```bash
 docker build -t oneshot:latest .
 docker run -d -p 8787:8787 --name oneshot-runner oneshot:latest
+```
 
-ROUTE 7 — REPORT
-Return:
-- environment
-- route used
-- commands executed
-- demonstration mode/provider
-- verification results
-- Docker result if used
-- failures or discrepancies
-- final observed result
+## Project layout
 
-Do not claim anything that was not executed or verified.
+```
+app/
+  bootstrap/     one-command setup + demo entry points
+  env/           provider/model environment examples
+  fixtures/      deterministic fixtures for tests and demos
+  requirements/  pinned Python dependency sets (base, workspace-api, ...)
+  scripts/       Python runtime + verification scripts
+  web/           web UI (React + Vite)
+  workspace_api/ workspace HTTP API
+backend/         TypeScript backend: ADK workflow graph, roles, providers, skills, tests
+scripts/         Node tooling (oneshot bootstrap, judge, layout guard)
+docs/            architecture and integration notes
 ```
 
 ## License
 
-OneShot-owned source is provided under the [OneShot Evaluator License](LICENSE). Third-party software remains under its own upstream licenses; see [NOTICE](NOTICE) and [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES/).
+Apache-2.0 — see the `license` field in [package.json](package.json).
+
