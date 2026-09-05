@@ -1,4 +1,4 @@
-import type { ConfirmedPackage, HashProof } from "../contract/types.js";
+import type { ConfirmedPackage, HashProof } from "../contracts/schema/types.js";
 import { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 
 /** Canonical H1/H2 proof operations. */

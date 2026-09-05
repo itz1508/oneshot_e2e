@@ -5,7 +5,7 @@ import type {
   ResearchBundle,
   SchemaValidationResult,
   TripleValidation,
-} from "../contract/types.js";
+} from "../contracts/schema/types.js";
 import { ValidationLanePool } from "./validation-lane-pool.js";
 
 /**

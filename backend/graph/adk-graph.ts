@@ -1,4 +1,4 @@
-import type { ProcessingEvent } from "../contract/types.js";
+import type { ProcessingEvent } from "../contracts/schema/types.js";
 
 export type GraphNodeState = "PENDING" | "RUNNING" | "COMPLETE";
 

@@ -9,7 +9,7 @@ import type {
   ResearchBundle,
   Requirement,
   SuccessCriterion,
-} from "../../../contract/types.js";
+} from "../../../contracts/schema/types.js";
 import { WorkflowRootCauseError } from "../../../core/root-cause-error.js";
 import type { GatheredEvidence } from "../tool/evidence/collector.js";
 

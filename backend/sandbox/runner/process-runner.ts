@@ -8,7 +8,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
-import type { Plan } from "../../contract/types.js";
+import type { Plan } from "../../contracts/schema/types.js";
 import type {
   ExecutionAuthorization,
   FileChangeEvidence,

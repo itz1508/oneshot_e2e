@@ -1,4 +1,4 @@
-import type { ConfirmedPackage } from "../../contract/types.js";
+import type { ConfirmedPackage } from "../../contracts/schema/types.js";
 import type { SandboxExecutionResult } from "../../sandbox/types.js";
 import { SandboxService } from "../../sandbox/sandbox-service.js";
 import { BuilderRole } from "./role.js";

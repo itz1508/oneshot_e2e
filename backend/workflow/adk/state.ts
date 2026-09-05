@@ -13,7 +13,7 @@ import type {
   RootCause,
   SchemaValidationResult,
   TripleValidation,
-} from "../../contract/types.js";
+} from "../../contracts/schema/types.js";
 import type { SandboxExecutionResult } from "../../sandbox/types.js";
 import type { GapFinding } from "../../role/gap-analysis/tool/coverage.js";
 

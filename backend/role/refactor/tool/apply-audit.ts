@@ -1,4 +1,4 @@
-import type { Audit, Plan, ResearchBundle } from "../../../contract/types.js";
+import type { Audit, Plan, ResearchBundle } from "../../../contracts/schema/types.js";
 import { clone, unique } from "../../../core/clone.js";
 import { WorkflowRootCauseError } from "../../../core/root-cause-error.js";
 function applyToStep(plan:Plan,stepId:string,field:"requirement_refs"|"goal_refs"|"fixture_refs"|"schema_refs",value:string):boolean{ const s=plan.steps.find(x=>x.step_id===stepId); if(!s)return false; const before=s[field].length;s[field]=unique([...s[field],value]);return s[field].length!==before; }

@@ -1,5 +1,5 @@
 import { SequentialAgent } from "@google/adk";
-import type { HashProof, RootCause } from "../../contract/types.js";
+import type { HashProof, RootCause } from "../../contracts/schema/types.js";
 import type { BuilderWorkflow } from "../../role/builder/workflow.js";
 import type { EvaluationWorkflow } from "../../role/evaluation/workflow.js";
 import type { GapAnalysisWorkflow } from "../../role/gap-analysis/workflow.js";

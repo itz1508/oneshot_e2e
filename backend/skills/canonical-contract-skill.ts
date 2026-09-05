@@ -1,4 +1,4 @@
-import type { ConfirmedCore, HashProof } from "../contract/types.js";
+import type { ConfirmedCore, HashProof } from "../contracts/schema/types.js";
 import { ToolRegistry } from "../tool/registry.js";
 import { PythonBridge } from "../validation/python-bridge.js";
 import { SkillCatalog } from "./catalog.js";

@@ -5,7 +5,7 @@ import type {
   ResearchBundle,
   SchemaValidationResult,
   TripleValidation,
-} from "../contract/types.js";
+} from "../contracts/schema/types.js";
 import { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 import { DeterministicValidationRuntime } from "../validation/deterministic-validation.js";
 

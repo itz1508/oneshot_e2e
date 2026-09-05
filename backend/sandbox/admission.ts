@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { HashProof } from "../contract/types.js";
+import type { HashProof } from "../contracts/schema/types.js";
 import { WorkflowRootCauseError } from "../core/root-cause-error.js";
 import type { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 import type { SandboxExecutionInput } from "./types.js";

@@ -1,4 +1,4 @@
-import type { Prompt, ResearchBundle } from "../../contract/types.js";
+import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";
 import { researcherTools } from "./tool/registry.js";
 import type { ResearchProvider } from "./provider.js";
 import { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";

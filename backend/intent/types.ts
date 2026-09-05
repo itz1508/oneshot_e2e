@@ -1,4 +1,4 @@
-import type { Prompt, RootCause } from "../contract/types.js";
+import type { Prompt, RootCause } from "../contracts/schema/types.js";
 
 /** A single classified statement extracted from user input. */
 export interface IntentStatement {

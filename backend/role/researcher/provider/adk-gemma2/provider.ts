@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import type { Prompt, ResearchBundle } from "../../../../contract/types.js";
+import type { Prompt, ResearchBundle } from "../../../../contracts/schema/types.js";
 import type { ProcessingEventBus } from "../../../../runtime/event-bus.js";
 import type { ResearchProvider } from "../../provider.js";
 import { WorkflowRootCauseError } from "../../../../core/root-cause-error.js";

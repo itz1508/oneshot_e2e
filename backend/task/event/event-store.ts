@@ -6,7 +6,7 @@ import {
   readdirSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
-import type { ProcessingEvent } from "../../contract/types.js";
+import type { ProcessingEvent } from "../../contracts/schema/types.js";
 
 function safeRunId(runId: string): string {
   return runId.replace(/[^a-zA-Z0-9._-]/g, "_");

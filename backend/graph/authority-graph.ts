@@ -1,4 +1,4 @@
-import type { ProcessingEvent } from "../contract/types.js";
+import type { ProcessingEvent } from "../contracts/schema/types.js";
 import { BuilderRole } from "../role/builder/role.js";
 import { EvaluationRole } from "../role/evaluation/role.js";
 import { GapAnalysisRole } from "../role/gap-analysis/role.js";

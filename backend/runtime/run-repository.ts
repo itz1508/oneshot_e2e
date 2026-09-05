@@ -13,7 +13,7 @@ import type {
   RootCause,
   RunSnapshot,
   WorkflowResult,
-} from "../contract/types.js";
+} from "../contracts/schema/types.js";
 import type { HelpRequest } from "../intent/types.js";
 
 /**

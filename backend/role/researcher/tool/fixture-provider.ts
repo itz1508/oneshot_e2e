@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import type { Prompt, ResearchBundle } from "../../../contract/types.js";
+import type { Prompt, ResearchBundle } from "../../../contracts/schema/types.js";
 import type { ResearchProvider } from "../provider.js";
 import { clone } from "../../../core/clone.js";
 

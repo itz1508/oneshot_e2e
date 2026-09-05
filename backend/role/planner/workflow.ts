@@ -1,4 +1,4 @@
-import type { Audit, ResearchBundle } from "../../contract/types.js";
+import type { Audit, ResearchBundle } from "../../contracts/schema/types.js";
 import { id } from "../../core/id.js";
 import { plannerFindings, PLANNER_REVIEW_AREAS } from "./tool/coverage.js";
 import { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";
