@@ -1,4 +1,4 @@
-import type { StructuredResearchDraft } from "../structured-draft.js";
+import type { StructuredResearchDraft } from "../../structured-draft.js";
 
 export type AdkResearchDraft = StructuredResearchDraft;
 

@@ -7,7 +7,7 @@ import type {
   ResearchProviderReadiness,
 } from "../../provider.js";
 import { ResearchEvidenceCollector } from "../../tool/evidence/collector.js";
-import { structuredDraftToResearchBundle } from "../structured-draft.js";
+import { structuredDraftToResearchBundle } from "../../structured-draft.js";
 import type {
   FeatherlessConfig,
   FeatherlessResearchDraft,

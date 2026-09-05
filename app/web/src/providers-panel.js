@@ -9,9 +9,19 @@
 const $ = (s, r = document) => r.querySelector(s);
 
 const CREDENTIAL_HINTS = {
-  api_key: 'Featherless API key',
-  google: 'Google ADK / Gemma — local Ollama, no key required',
+  openai: 'OpenAI API key',
+  anthropic: 'Anthropic API key',
+  gemini: 'Gemini API key',
+  featherless: 'Featherless API key',
+  api_key: 'API key',
   none: '',
+};
+
+// The Gemini (ADK) readiness probe executes one live model generation per
+// configured pipeline model — make the paid-quota cost explicit in the UI.
+const TEST_HINTS = {
+  gemini:
+    'Gemini probe runs one live model generation per pipeline model — this consumes paid API quota.',
 };
 
 const TEST_LABELS = {
@@ -75,13 +85,13 @@ export function createProviderPanel({ apiFetch, toast, onChanged } = {}) {
         ${p.credentialType !== 'none' ? `
         <div class="prov-cred" data-cred-for="${esc(p.id)}">
           <input type="password" autocomplete="off" data-cred-input="${esc(p.id)}"
-                 placeholder="${esc(CREDENTIAL_HINTS[p.credentialType] || 'Credential value')}"
+                 placeholder="${esc(CREDENTIAL_HINTS[p.id] || CREDENTIAL_HINTS[p.credentialType] || 'Credential value')}"
                  aria-label="Credential for ${esc(p.label)}">
           <button class="btn small" data-cred-save="${esc(p.id)}">Save credential</button>
           ${p.configured && p.credentialSource === 'local-secret-store' ? `<button class="btn small danger" data-cred-delete="${esc(p.id)}">Remove</button>` : ''}
         </div>` : ''}
         <div class="prov-test">
-          <button class="btn small" data-test-btn="${esc(p.id)}">Test connection</button>
+          <button class="btn small" data-test-btn="${esc(p.id)}" title="${esc(TEST_HINTS[p.id] || '')}">Test connection</button>
           <span class="ptest-status" data-test-status="${esc(p.id)}" aria-live="polite"></span>
         </div>
       </div>`;

@@ -111,7 +111,7 @@ test("provider manager never discloses credential values in catalog or status", 
 
     const statuses = await pm.listProviderStatus();
     assert.ok(!JSON.stringify(statuses).includes(FAKE_SECRET));
-    for (const id of ["sample", "featherless", "adk_gemma2"]) {
+    for (const id of ["sample", "featherless", "gemini", "openai", "anthropic"]) {
       assert.ok(statuses.some((s) => s.id === id), `catalog has ${id}`);
     }
 
@@ -150,11 +150,11 @@ test("unknown provider id is rejected on save and status", async () => {
   try {
     const pm = makeManager(dir);
     assert.throws(
-      () => pm.saveRuntimeConfigPatch({ activeProvider: "openai" }),
+      () => pm.saveRuntimeConfigPatch({ activeProvider: "nonexistent" }),
       /Unknown provider/,
     );
     await assert.rejects(
-      () => pm.getProviderStatus("openai"),
+      () => pm.getProviderStatus("nonexistent"),
       /Unknown provider/,
     );
   } finally {

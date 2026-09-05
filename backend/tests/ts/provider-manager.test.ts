@@ -12,7 +12,13 @@ test("returns configured providers", async () => {
     runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
   });
   const ids = (await pm.list()).map((p) => p.id).sort();
-  assert.deepEqual(ids, ["adk_gemma2", "featherless", "sample"]);
+  assert.deepEqual(ids, [
+    "anthropic",
+    "featherless",
+    "gemini",
+    "openai",
+    "sample",
+  ]);
 });
 
 test("never returns credential values", async () => {

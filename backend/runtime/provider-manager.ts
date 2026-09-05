@@ -15,15 +15,10 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { ProcessingEventBus } from "./event-bus.js";
 import type { ResearchProvider } from "../role/researcher/provider.js";
-import { FixtureResearchProvider } from "../role/researcher/tool/fixture-provider.js";
 import {
-  AdkGemmaResearchProvider,
-  loadAdkGemmaConfig,
-} from "../role/researcher/provider/adk-gemma2/provider.js";
-import {
-  FeatherlessResearchProvider,
-  loadFeatherlessConfig,
-} from "../role/researcher/provider/featherless/provider.js";
+  createProviderAdapter,
+  resolveProviderId,
+} from "../role/researcher/provider/registry.js";
 import type {
   ProviderCredential,
   ProviderSecretStore,
@@ -165,6 +160,11 @@ export class ProviderManager {
     return DEFAULTS[id] ?? {};
   }
 
+  /** Central historical-id alias resolution (e.g. adk_gemma2 → google). */
+  private resolveId(id: string): string {
+    return resolveProviderId(id);
+  }
+
   private runtimeSettings(id: string): ProviderRuntimeSettings {
     const s = this.runtimeState.providers[id];
     const d = this.runtimeDefaults(id);
@@ -281,15 +281,17 @@ export class ProviderManager {
   }
 
   async getProviderStatus(providerId: string): Promise<ProviderStatus> {
-    if (!this.catalog.providers[providerId]) {
+    const id = this.resolveId(providerId);
+    if (!this.catalog.providers[id]) {
       throw new Error(`Unknown provider: ${providerId}`);
     }
-    return this.buildStatus(providerId);
+    return this.buildStatus(id);
   }
 
   async get(providerId: string): Promise<ProviderStatus | undefined> {
-    if (!this.catalog.providers[providerId]) return undefined;
-    return this.buildStatus(providerId);
+    const id = this.resolveId(providerId);
+    if (!this.catalog.providers[id]) return undefined;
+    return this.buildStatus(id);
   }
 
   runtimeConfig(): ProviderRuntimeConfig {
@@ -306,15 +308,17 @@ export class ProviderManager {
   }): ProviderRuntimeConfig {
     assertNoForbiddenFields(patch.providers ?? {});
     if (patch.activeProvider !== undefined && patch.activeProvider !== "") {
-      if (!this.catalog.providers[patch.activeProvider]) {
+      const active = this.resolveId(patch.activeProvider);
+      if (!this.catalog.providers[active]) {
         throw new Error(`Unknown provider: ${patch.activeProvider}`);
       }
-      this.runtimeState.activeProvider = patch.activeProvider;
+      this.runtimeState.activeProvider = active;
     }
     if (patch.providers) {
-      for (const [id, changes] of Object.entries(patch.providers)) {
+      for (const [rawId, changes] of Object.entries(patch.providers)) {
+        const id = this.resolveId(rawId);
         if (!this.catalog.providers[id]) {
-          throw new Error(`Unknown provider: ${id}`);
+          throw new Error(`Unknown provider: ${rawId}`);
         }
         const current: ProviderRuntimeSettings =
           this.runtimeState.providers[id] ?? { enabled: true, model: "fixture" };
@@ -342,33 +346,36 @@ export class ProviderManager {
     providerId: string,
     patch: { model?: string; apiBase?: string },
   ): Promise<ProviderStatus> {
-    if (!this.catalog.providers[providerId]) {
+    const id = this.resolveId(providerId);
+    if (!this.catalog.providers[id]) {
       throw new Error(`Provider ${providerId} not found`);
     }
     const apply: Partial<ProviderRuntimeSettings> = {};
     if (patch.model !== undefined) apply.model = patch.model;
     if (patch.apiBase !== undefined) apply.apiBase = patch.apiBase;
     if (Object.keys(apply).length > 0) {
-      this.saveRuntimeConfigPatch({ providers: { [providerId]: apply } });
+      this.saveRuntimeConfigPatch({ providers: { [id]: apply } });
     }
-    return this.buildStatus(providerId);
+    return this.buildStatus(id);
   }
 
   async activate(providerId: string): Promise<ProviderStatus> {
-    if (!this.catalog.providers[providerId]) {
+    const id = this.resolveId(providerId);
+    if (!this.catalog.providers[id]) {
       throw new Error(`Provider ${providerId} not found`);
     }
-    this.saveRuntimeConfigPatch({ activeProvider: providerId });
-    return this.buildStatus(providerId);
+    this.saveRuntimeConfigPatch({ activeProvider: id });
+    return this.buildStatus(id);
   }
 
   async test(
     providerId: string,
     transient?: ProviderCredential | null,
   ): Promise<ProviderTestResult> {
-    const entry = this.catalog.providers[providerId];
+    const id = this.resolveId(providerId);
+    const entry = this.catalog.providers[id];
     if (!entry) throw new Error(`Provider ${providerId} not found`);
-    const settings = this.runtimeSettings(providerId);
+    const settings = this.runtimeSettings(id);
     const model = entry.adapter === "fixture" ? undefined : settings.model;
 
     // Resolve the credential WITHOUT persisting a transient one. Precedence:
@@ -379,7 +386,7 @@ export class ProviderManager {
       if (transient && typeof transient.value === "string" && transient.value) {
         credentialValue = transient.value;
       } else {
-        const stored = await this.secretStore.get(providerId);
+        const stored = await this.secretStore.get(id);
         credentialValue = stored?.value;
       }
     }
@@ -387,14 +394,14 @@ export class ProviderManager {
     let provider: ResearchProvider;
     try {
       provider = this.constructProvider(
-        providerId,
+        id,
         this.options.projectRoot,
         credentialValue,
       );
     } catch (error) {
       return {
         ok: false,
-        provider: providerId,
+        provider: id,
         model,
         category: "PROVIDER_CONFIGURATION_FAILURE",
         message: PROVIDER_TEST_MESSAGES.PROVIDER_CONFIGURATION_FAILURE,
@@ -405,13 +412,13 @@ export class ProviderManager {
 
     try {
       const readiness = await withTimeout(
-        provider.ready(`provider-test:${providerId}`),
+        provider.ready(`provider-test:${id}`),
         probeTimeoutMs(settings.timeoutSeconds),
       );
       if (readiness.ready) {
         return {
           ok: true,
-          provider: providerId,
+          provider: id,
           model: readiness.models?.[0] ?? model,
           message:
             readiness.detail ||
@@ -426,7 +433,7 @@ export class ProviderManager {
       const category = classifyProbeFailure(detail);
       return {
         ok: false,
-        provider: providerId,
+        provider: id,
         model,
         category,
         message: PROVIDER_TEST_MESSAGES[category],
@@ -438,7 +445,7 @@ export class ProviderManager {
       const category = classifyProbeFailure(detail);
       return {
         ok: false,
-        provider: providerId,
+        provider: id,
         model,
         category,
         message: PROVIDER_TEST_MESSAGES[category],
@@ -461,15 +468,19 @@ export class ProviderManager {
     providerId: string,
     credential?: ProviderCredential,
   ): Promise<ProviderStatus> {
-    if (!this.catalog.providers[providerId]) {
+    const id = this.resolveId(providerId);
+    if (!this.catalog.providers[id]) {
       throw new Error(`Provider ${providerId} not found`);
     }
     if (credential) {
-      await this.secretStore.set(providerId, credential);
+      await this.secretStore.set(id, {
+        ...credential,
+        providerId: id,
+      });
     } else {
-      await this.secretStore.delete(providerId);
+      await this.secretStore.delete(id);
     }
-    return this.buildStatus(providerId);
+    return this.buildStatus(id);
   }
 
   async createProvider(
@@ -477,7 +488,9 @@ export class ProviderManager {
     _events?: ProcessingEventBus,
     _runId?: string,
   ): Promise<ResearchProvider> {
-    const active = this.runtimeState.activeProvider || "sample";
+    const active = this.resolveId(
+      this.runtimeState.activeProvider || "sample",
+    );
     return this.constructProvider(
       active,
       projectRoot ?? this.options.projectRoot,
@@ -485,7 +498,8 @@ export class ProviderManager {
   }
 
   async resolveForRun(providerId?: string): Promise<ResearchProvider> {
-    const id = providerId || this.runtimeState.activeProvider || "sample";
+    const requested = providerId || this.runtimeState.activeProvider || "sample";
+    const id = this.resolveId(requested);
     return this.constructProvider(id, this.options.projectRoot);
   }
 
@@ -496,38 +510,13 @@ export class ProviderManager {
   ): ResearchProvider {
     const entry = this.catalog.providers[providerId];
     if (!entry) throw new Error(`Unknown provider: ${providerId}`);
-    const settings = this.runtimeSettings(providerId);
-    const adapter = entry.adapter;
-    if (adapter === "fixture") {
-      return new FixtureResearchProvider();
-    }
-    if (adapter === "adk_gemma2") {
-      const base = loadAdkGemmaConfig(projectRoot);
-      const config = {
-        ...base,
-        apiKey: credentialValue ?? base.apiKey,
-        workerPoolSize: settings.parallelism ?? base.workerPoolSize,
-        timeoutSeconds: settings.timeoutSeconds ?? base.timeoutSeconds,
-      };
-      const provider = new AdkGemmaResearchProvider(projectRoot, config);
-      if (this.options.events) provider.attachEvents?.(this.options.events);
-      return provider;
-    }
-    if (adapter === "featherless") {
-      const base = loadFeatherlessConfig(projectRoot);
-      const config = {
-        ...base,
-        model: settings.model || base.model,
-        baseUrl: settings.apiBase || base.baseUrl,
-        apiKey: credentialValue ?? base.apiKey,
-        workerPoolSize: settings.parallelism ?? base.workerPoolSize,
-        timeoutSeconds: settings.timeoutSeconds ?? base.timeoutSeconds,
-      };
-      const provider = new FeatherlessResearchProvider(projectRoot, config);
-      if (this.options.events) provider.attachEvents?.(this.options.events);
-      return provider;
-    }
-    throw new Error(`Unknown provider adapter: ${adapter}`);
+    // Provider-specific construction details live in the adapter registry.
+    return createProviderAdapter(entry.adapter, {
+      projectRoot,
+      settings: this.runtimeSettings(providerId),
+      credentialValue,
+      events: this.options.events,
+    });
   }
 
   close(): void {
@@ -636,6 +625,8 @@ function protocolFor(adapter: string): string {
     case "fixture":
       return "fixture://";
     case "featherless":
+    case "openai":
+    case "anthropic":
       return "https";
     case "adk_gemma2":
       return "ollama";

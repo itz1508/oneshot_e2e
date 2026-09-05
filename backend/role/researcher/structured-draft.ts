@@ -10,9 +10,9 @@ import type {
   ResearchBundle,
   Requirement,
   SuccessCriterion,
-} from "../../../contracts/schema/types.js";
-import { WorkflowRootCauseError } from "../../../core/root-cause-error.js";
-import type { GatheredEvidence } from "../tool/evidence/collector.js";
+} from "../../contracts/schema/types.js";
+import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
+import type { GatheredEvidence } from "./tool/evidence/collector.js";
 
 export const BUILDER_OUTPUT_PREFIX = "ONESHOT_BUILDER_OUTPUT_BASE64:";
 

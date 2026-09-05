@@ -12,7 +12,13 @@ test("catalog loads with all expected providers", async () => {
     runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
   });
   const providerIds = (await pm.list()).map((p) => p.id).sort();
-  assert.deepEqual(providerIds.sort(), ["adk_gemma2", "featherless", "sample"].sort());
+  assert.deepEqual(providerIds.sort(), [
+    "anthropic",
+    "featherless",
+    "gemini",
+    "openai",
+    "sample",
+  ].sort());
 });
 
 test("environment credential takes precedence over local secret store", async () => {
@@ -37,7 +43,7 @@ test("stable provider IDs", async () => {
     runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
   });
   const ids = (await pm.list()).map((p) => p.providerId).sort();
-  assert.deepEqual(ids, ["adk_gemma2", "featherless", "sample"]);
+  assert.deepEqual(ids, ["anthropic", "featherless", "gemini", "openai", "sample"]);
 });
 
 test("active/configured/ready state is truthful", async () => {

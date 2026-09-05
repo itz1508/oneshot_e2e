@@ -12,10 +12,23 @@
       "credentialType": "api_key",
       "credentialEnv": "FEATHERLESS_API_KEY"
     },
-    "adk_gemma2": {
-      "label": "Google ADK / Gemma",
+    "gemini": {
+      "label": "Google Gemini (ADK)",
       "type": "adk_gemma2",
-      "credentialType": "api_key"
+      "credentialType": "api_key",
+      "credentialEnv": "GEMINI_API_KEY"
+    },
+    "openai": {
+      "label": "OpenAI",
+      "type": "openai",
+      "credentialType": "api_key",
+      "credentialEnv": "OPENAI_API_KEY"
+    },
+    "anthropic": {
+      "label": "Anthropic",
+      "type": "anthropic",
+      "credentialType": "api_key",
+      "credentialEnv": "ANTHROPIC_API_KEY"
     }
   }
 }

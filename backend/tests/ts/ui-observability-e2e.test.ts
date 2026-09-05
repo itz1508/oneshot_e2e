@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";
 import type { ResearchProvider } from "../../role/researcher/provider.js";
-import { structuredDraftToResearchBundle } from "../../role/researcher/provider/structured-draft.js";
+import { structuredDraftToResearchBundle } from "../../role/researcher/structured-draft.js";
 import { HardenedProcessRunner } from "../../sandbox/runner/process-runner.js";
 import { startHttpServer } from "../../server/http-server.js";
 import { harness } from "./harness.js";

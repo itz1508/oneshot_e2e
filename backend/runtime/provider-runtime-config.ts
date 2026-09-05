@@ -38,6 +38,13 @@ export interface ProviderRuntimeConfigStore {
 
 const DEFAULTS: Record<string, Partial<ProviderRuntimeSettings>> = {
   sample: { enabled: true, model: "fixture" },
+  gemini: {
+    enabled: true,
+    model: "gemma2:9b",
+    apiBase: "http://localhost:11434",
+    timeoutSeconds: 300,
+    parallelism: 2,
+  },
   adk_gemma2: {
     enabled: true,
     model: "gemma2:9b",
@@ -49,6 +56,20 @@ const DEFAULTS: Record<string, Partial<ProviderRuntimeSettings>> = {
     enabled: true,
     model: "google/gemma-4-31B-it",
     apiBase: "https://api.featherless.ai/v1",
+    timeoutSeconds: 300,
+    parallelism: 2,
+  },
+  openai: {
+    enabled: true,
+    model: "gpt-4o-mini",
+    apiBase: "https://api.openai.com/v1",
+    timeoutSeconds: 300,
+    parallelism: 2,
+  },
+  anthropic: {
+    enabled: true,
+    model: "claude-sonnet-4-5",
+    apiBase: "https://api.anthropic.com",
     timeoutSeconds: 300,
     parallelism: 2,
   },

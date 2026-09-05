@@ -7,7 +7,7 @@ import type {
 } from "../../provider.js";
 import { WorkflowRootCauseError } from "../../../../core/root-cause-error.js";
 import { ResearchEvidenceCollector } from "../../tool/evidence/collector.js";
-import { structuredDraftToResearchBundle } from "../structured-draft.js";
+import { structuredDraftToResearchBundle } from "../../structured-draft.js";
 import { AdkGemmaWorker } from "./worker-bridge.js";
 import type { AdkGemmaConfig, AdkResearchDraft } from "./types.js";
 
