@@ -69,6 +69,30 @@ class SourceFilePolicyTests(unittest.TestCase):
                 {"safe.txt", "app/env/.env.example", "app/env/.env.workspace.example"},
             )
 
+    def test_root_level_ignored_directories_are_excluded_but_nested_source_is_not(self) -> None:
+        with tempfile.TemporaryDirectory() as source_temp:
+            root = Path(source_temp)
+            fixtures = {
+                "safe.txt": "safe",
+                "backend/runtime/queue.ts": "backend source",
+                "runtime/server.log": "local runtime noise",
+                "external/intergration/google_adk/agent.ts": "local scratch clone",
+                ".headless_profile/Crashpad/settings.dat": "local browser state",
+            }
+            for relative_path, content in fixtures.items():
+                target = root / relative_path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(content, encoding="utf-8")
+
+            self.assertEqual(generate_manifest(root), 2)
+            manifest = root / "MANIFEST.sha256"
+            listed = {
+                line.split("  ", 1)[1]
+                for line in manifest.read_text(encoding="utf-8").splitlines()
+            }
+            self.assertEqual(listed, {"safe.txt", "backend/runtime/queue.ts"})
+            self.assertEqual(verify_manifest(root), [])
+
 
 if __name__ == "__main__":
     unittest.main()

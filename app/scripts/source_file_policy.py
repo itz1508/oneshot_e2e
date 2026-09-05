@@ -22,12 +22,18 @@ PUBLIC_ENV_TEMPLATE_DIRECTORY = ("app", "env")
 PUBLIC_ENV_TEMPLATE_NAMES = frozenset({".env.example", ".env.workspace.example"})
 GENERATED_SOURCE_FILES = frozenset({"MANIFEST.sha256"})
 IGNORED_LOCAL_FILES = frozenset({".DS_Store"})
+# Local-only scratch/runtime directories at the repository root. Root-anchored
+# on purpose: "runtime" must only exclude /runtime, never legitimate nested
+# source directories such as backend/runtime/.
+ROOT_LEVEL_EXCLUDED_DIRECTORIES = frozenset({"external", "runtime", ".headless_profile"})
 
 
 def source_path_is_forbidden(relative_path: str | PurePosixPath) -> bool:
     path = PurePosixPath(str(relative_path).replace("\\", "/"))
     parts = tuple(part for part in path.parts if part not in {"", "."})
     if path.is_absolute() or not parts or ".." in parts:
+        return True
+    if parts[0] in ROOT_LEVEL_EXCLUDED_DIRECTORIES:
         return True
 
     lowered = tuple(part.lower() for part in parts)
