@@ -1,29 +1,24 @@
 # OneShot
 
-Agentic build-and-prove system. Study → plan → refactor → gap-analysis → triple-validation → sandbox-build → hash-verification.
+Get OneShot running on this machine.
 
-## Requirements
+## 1. Requirements
+node --version  # >= 24.13.0
+npm --version   # >= 11.8.0
+python --version  # >= 3.11
+Missing? Tell user. Stop.
 
-- Node.js >= 24.13.0
-- npm >= 11.8.0
-- Python >= 3.11
-- Redis 7.x (optional)
+## 2. Source (pick one)
+git clone https://github.com/itz1508/oneshot_e2e.git
+docker build -t oneshot:latest .
+Download ZIP -> extract
 
-## Install (choose one)
+## 3. Install
+npm ci && npm --prefix app/web ci && npm run build
 
-1. `git clone https://github.com/itz1508/oneshot_e2e.git && cd oneshot_e2e`
-2. `docker build -t oneshot:latest . && docker run -d -p 8787:8787 oneshot:latest`
-3. Download ZIP → extract
+## 4. Verify
+npm run verify
 
-## After install
-
-`npm ci && npm --prefix app/web ci && npm run build`
-
-## Verify
-
-`npm run verify`
-
-## Run
-
-`npm start`          # server (http://localhost:8787)
-`npm run judge`      # judge/evaluation
+## 5. Launch
+npm start      # server (http://localhost:8787)
+npm run judge  # judge/evaluation view
