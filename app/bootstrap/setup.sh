@@ -73,6 +73,15 @@ npm ci --offline --ignore-scripts --no-audit --no-fund 2>/dev/null || {
 npm --prefix app/web install --no-audit --no-fund 2>/dev/null
 echo "       Node deps installed"
 
+# ── Redis (optional, enables the BullMQ run queue) ───────────────
+echo ""
+if command -v redis-cli &>/dev/null && redis-cli ping >/dev/null 2>&1; then
+    echo "       Redis reachable — runs will be scheduled via BullMQ"
+else
+    echo "       NOTE: Redis not detected — OneShot will execute runs inline (still fully functional)."
+    echo "       To enable the run queue: docker run -p 6379:6379 redis:7  (then set REDIS_URL if non-default)"
+fi
+
 # ── Build ────────────────────────────────────────────────────────
 echo ""
 echo "[5/6] Building TypeScript..."
@@ -81,17 +90,17 @@ echo "       Build complete"
 
 # ── Tests ────────────────────────────────────────────────────────
 echo ""
-echo "[6/6] Running test suite (94 tests)..."
+echo "[6/6] Running test suite..."
 echo ""
 
-$PYTHON_CMD -m unittest discover -s backend/test/python -v 2>&1
+$PYTHON_CMD -m unittest discover -s backend/tests/python -v 2>&1
 
 echo ""
-node --test --test-force-exit dist/backend/test/ts/*.test.js
+node --test --test-force-exit dist/backend/tests/ts/*.test.js
 
 echo ""
 echo " ============================================================"
-echo "  SETUP COMPLETE - All 94 tests passed!"
+echo "  SETUP COMPLETE - All tests passed!"
 echo " ============================================================"
 echo ""
 echo "  Next steps:"

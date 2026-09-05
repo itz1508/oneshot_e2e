@@ -1,4 +1,4 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
@@ -8,7 +8,7 @@ import { RunRepository } from "../../runtime/run-repository.js";
 import { TaskRuntimeSkill } from "../../skills/task-runtime-skill.js";
 
 test("HTTP/UI product runs chain and durable run snapshot reloads", async () => {
-  const root = resolve("data/test-state/server");
+  const root = resolve(".runtime/test-harness/state/server");
   await rm(root, { recursive: true, force: true });
   const h = await harness("server");
   const server = await startHttpServer(
@@ -74,7 +74,7 @@ test("HTTP/UI product runs chain and durable run snapshot reloads", async () => 
       ),
     );
     assert.equal((await fetch(`${base}/`)).status, 200);
-    const reloaded = new RunRepository(resolve("data/test-state/server"));
+    const reloaded = new RunRepository(resolve(".runtime/test-harness/state/server"));
     const durable = reloaded.get(start.run_id);
     assert.equal(durable?.result, "PASSED");
     assert.ok(

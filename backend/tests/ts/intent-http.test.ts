@@ -1,4 +1,4 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
@@ -8,7 +8,7 @@ import { ConversationStore } from "../../intent/conversation-store.js";
 import { IntentCollectionService } from "../../intent/intent-collection.js";
 
 test("Chat intent help path revises same Intent then runs canonical Task-managed chain", async () => {
-  const root = resolve(`data/test-conversation-http/${process.pid}`);
+  const root = resolve(`.runtime/test-harness/conversation-http/${process.pid}`);
   await rm(root, { recursive: true, force: true });
   const h = await harness("intent-http");
   const intent = new IntentCollectionService(new ConversationStore(root));

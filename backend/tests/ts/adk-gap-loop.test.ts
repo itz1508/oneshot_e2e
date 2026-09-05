@@ -5,7 +5,7 @@ import type {
   Plan,
   ResearchBundle,
   ResolvedGap,
-} from "../../contract/types.js";
+} from "../../contracts/schema/types.js";
 import type { GapFinding } from "../../role/gap-analysis/tool/coverage.js";
 import { GapAnalysisWorkflow } from "../../role/gap-analysis/workflow.js";
 import { createGapAnalysisAgent } from "../../workflow/adk/gap-loop.js";

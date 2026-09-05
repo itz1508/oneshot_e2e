@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import type { Plan, ResearchBundle } from "../../contract/types.js";
+import type { Plan, ResearchBundle } from "../../contracts/schema/types.js";
 import { PythonBridge } from "../../validation/python-bridge.js";
 import { ValidationLanePool } from "../../validation/validation-lane-pool.js";
 import { DeterministicValidationRuntime } from "../../validation/deterministic-validation.js";

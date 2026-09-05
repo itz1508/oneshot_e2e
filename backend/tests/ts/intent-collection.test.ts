@@ -1,4 +1,4 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
@@ -8,7 +8,7 @@ import { projectIntentGraph } from "../../graph/intent-graph.js";
 import { IntentCollectionSkill } from "../../skills/intent-collection-skill.js";
 
 test("multi-turn Intent keeps identity, asks targeted help, then creates Prompt(id)", async () => {
-  const root = resolve(`data/test-intent/${process.pid}`);
+  const root = resolve(`.runtime/test-harness/intent/${process.pid}`);
   await rm(root, { recursive: true, force: true });
   const svc = new IntentCollectionService(new ConversationStore(root));
   const a = svc.start("I want to build something");
@@ -65,7 +65,7 @@ test("multi-turn Intent keeps identity, asks targeted help, then creates Prompt(
 });
 
 test("Intent accepts the IDE audit command as a concrete goal", async () => {
-  const root = resolve(`data/test-intent-audit/${process.pid}`);
+  const root = resolve(`.runtime/test-harness/intent-audit/${process.pid}`);
   await rm(root, { recursive: true, force: true });
   const svc = new IntentCollectionService(new ConversationStore(root));
   const conversation = svc.start(
@@ -81,7 +81,7 @@ test("Intent accepts the IDE audit command as a concrete goal", async () => {
 });
 
 test("Intent automatically derives sufficient intent from natural conversational requests without rigid keywords", async () => {
-  const root = resolve(`data/test-intent-natural/${process.pid}`);
+  const root = resolve(`.runtime/test-harness/intent-natural/${process.pid}`);
   await rm(root, { recursive: true, force: true });
   const svc = new IntentCollectionService(new ConversationStore(root));
 
@@ -111,4 +111,3 @@ test("Intent automatically derives sufficient intent from natural conversational
     assert.equal(prompt3.help_request.required_information[0], "goal");
   }
 });
-

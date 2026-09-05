@@ -93,6 +93,20 @@ if %ERRORLEVEL% neq 0 (
 call npm --prefix app/web install --no-audit --no-fund >nul 2>&1
 echo        Node deps installed
 
+rem ── Redis (optional, enables the BullMQ run queue) ───────────────
+where redis-cli >nul 2>&1
+if %ERRORLEVEL% equ 0 (
+    redis-cli ping >nul 2>&1
+    if %ERRORLEVEL% equ 0 (
+        echo        Redis reachable — runs will be scheduled via BullMQ
+    ) else (
+        echo        NOTE: Redis installed but not responding — OneShot will execute runs inline.
+    )
+) else (
+    echo        NOTE: Redis not detected — OneShot will execute runs inline (still fully functional^).
+    echo        To enable the run queue: docker run -p 6379:6379 redis:7  (then set REDIS_URL if non-default^)
+)
+
 REM ── Build ──────────────────────────────────────────────────────
 echo.
 echo [5/6] Building TypeScript...
@@ -105,10 +119,10 @@ echo        Build complete
 
 REM ── Tests ──────────────────────────────────────────────────────
 echo.
-echo [6/6] Running test suite (94 tests)...
+echo [6/6] Running test suite...
 echo.
 
-python -m unittest discover -s backend/test/python -v 2>&1
+python -m unittest discover -s backend/tests/python -v 2>&1
 if %ERRORLEVEL% neq 0 (
     echo.
     echo  !! Python tests failed.
@@ -116,7 +130,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo.
-node --test --test-force-exit dist/backend/test/ts/*.test.js
+node --test --test-force-exit dist/backend/tests/ts/*.test.js
 if %ERRORLEVEL% neq 0 (
     echo.
     echo  !! TypeScript tests failed.
@@ -125,7 +139,7 @@ if %ERRORLEVEL% neq 0 (
 
 echo.
 echo  ============================================================
-echo   SETUP COMPLETE - All 94 tests passed!
+echo   SETUP COMPLETE - All tests passed!
 echo  ============================================================
 echo.
 echo   Next steps:

@@ -1,4 +1,4 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
@@ -8,7 +8,7 @@ import { detectOrderingIssues } from "../../task/guard/ordering.js";
 import { projectAdkGraph } from "../../graph/adk-graph.js";
 
 test("Task event stream is append-only, replayable, traced, and ADK-projectable", async () => {
-  const root = resolve(`data/test-task-store/${process.pid}`);
+  const root = resolve(`.runtime/test-harness/task-store/${process.pid}`);
   await rm(root, { recursive: true, force: true });
   const store = new AppendOnlyProcessingEventStore(root),
     bus = new ProcessingEventBus(store);

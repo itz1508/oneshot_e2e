@@ -1,6 +1,6 @@
-import { rmSync } from "node:fs";
+﻿import { rmSync } from "node:fs";
 import { resolve } from "node:path";
-import type { Prompt } from "../../contract/types.js";
+import type { Prompt } from "../../contracts/schema/types.js";
 import type { ResearchProvider } from "../../role/researcher/provider.js";
 import { ProcessingEventBus } from "../../runtime/event-bus.js";
 import { AppendOnlyProcessingEventStore } from "../../task/event/event-store.js";
@@ -29,7 +29,7 @@ import type {
   SandboxRunner,
 } from "../../sandbox/runner/runner.js";
 import type { ExecutionAuthorization } from "../../sandbox/types.js";
-import type { Plan } from "../../contract/types.js";
+import type { Plan } from "../../contracts/schema/types.js";
 
 class DeterministicTestSandboxRunner implements SandboxRunner {
   async execute(
@@ -82,13 +82,13 @@ export async function harness(
   sandboxRunner: SandboxRunner = new DeterministicTestSandboxRunner(),
 ) {
   const taskStore = new AppendOnlyProcessingEventStore(
-    resolve(`data/test-task-events/${name}-${process.pid}`),
+    resolve(`.runtime/test-harness/task-events/${name}-${process.pid}`),
   );
   const events = new ProcessingEventBus(taskStore);
-  const runs = new RunRepository(resolve(`data/test-state/${name}`));
+  const runs = new RunRepository(resolve(`.runtime/test-harness/state/${name}`));
   const task = new TaskManagement(
     taskStore,
-    new CheckpointStore(resolve(`data/test-checkpoints/${name}-${process.pid}`)),
+    new CheckpointStore(resolve(`.runtime/test-harness/checkpoints/${name}-${process.pid}`)),
   );
 
   events.observe((e) => {
@@ -125,13 +125,13 @@ export async function harness(
   const triple = new TripleValidationWorkflow(validation, contracts);
   const confirmation = new ConfirmationWorkflow(contracts);
   const hash = new HashWorkflow(contracts);
-  const store = new FileArtifactStore(resolve(`data/test-runs/${name}`));
+  const store = new FileArtifactStore(resolve(`.runtime/test-harness/runs/${name}`));
 
   const sandbox = new SandboxService(
     contracts,
     events,
     sandboxRunner,
-    resolve(`data/test-builder-sandbox/${name}-${process.pid}`),
+    resolve(`.runtime/test-harness/sandbox/${name}-${process.pid}`),
   );
   const builder = new BuilderWorkflow(sandbox);
 

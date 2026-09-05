@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { clone } from "../../core/clone.js";
-import type { Fixture, ResearchBundle } from "../../contract/types.js";
+import type { Fixture, ResearchBundle } from "../../contracts/schema/types.js";
 import type { ResearchProvider } from "../../role/researcher/provider.js";
 import { harness, prompt } from "./harness.js";
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import type { Prompt, ResearchBundle } from "../../contract/types.js";
+import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";
 import type { ResearchProvider } from "../../role/researcher/provider.js";
 import { WorkflowInformationRequiredError } from "../../core/information-required-error.js";
 import { harness, prompt } from "./harness.js";

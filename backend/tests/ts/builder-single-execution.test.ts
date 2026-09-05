@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { rmSync } from "node:fs";
-import type { Plan } from "../../contract/types.js";
+import type { Plan } from "../../contracts/schema/types.js";
 import type { ExecutionAuthorization } from "../../sandbox/types.js";
 import type {
   RunnerExecutionResult,

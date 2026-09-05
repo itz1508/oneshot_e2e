@@ -1,4 +1,4 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
@@ -10,7 +10,7 @@ import { projectSandboxGraph } from "../../sandbox/graph/sandbox-graph.js";
 import type { SandboxExecutionInput } from "../../sandbox/types.js";
 
 test("external Sandbox executes confirmed package, records evidence, verifies HASH == hash_sandbox, and cleans up", async () => {
-  const sbxRoot = resolve(`data/test-sandbox-exec/${process.pid}`);
+  const sbxRoot = resolve(`.runtime/test-harness/sandbox-exec/${process.pid}`);
   await rm(sbxRoot, { recursive: true, force: true });
 
   const h = await harness("sandbox-execution-e2e");

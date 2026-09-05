@@ -1,4 +1,4 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
@@ -38,7 +38,7 @@ test("negative 1: Hash mismatch halts execution before sandbox workspace or runn
 });
 
 test("negative 2: Timeout kills execution process tree and produces ROOT_CAUSE with timeout evidence", async () => {
-  const sbxRoot = resolve(`data/test-neg-timeout/${process.pid}`);
+  const sbxRoot = resolve(`.runtime/test-harness/neg-timeout/${process.pid}`);
   await rm(sbxRoot, { recursive: true, force: true });
   const h = await harness("neg-timeout");
   const runId = "neg-2-run";
@@ -84,7 +84,7 @@ test("negative 2: Timeout kills execution process tree and produces ROOT_CAUSE w
 });
 
 test("negative 3: Command failure emits deterministic ROOT_CAUSE with exit code diagnostics", async () => {
-  const sbxRoot = resolve(`data/test-neg-failure/${process.pid}`);
+  const sbxRoot = resolve(`.runtime/test-harness/neg-failure/${process.pid}`);
   await rm(sbxRoot, { recursive: true, force: true });
   const h = await harness("neg-failure");
   const runId = "neg-3-run";
@@ -123,7 +123,7 @@ test("negative 3: Command failure emits deterministic ROOT_CAUSE with exit code 
 });
 
 test("negative 4: Environment isolation filters out unauthorized secret variables", async () => {
-  const sbxRoot = resolve(`data/test-neg-env/${process.pid}`);
+  const sbxRoot = resolve(`.runtime/test-harness/neg-env/${process.pid}`);
   await rm(sbxRoot, { recursive: true, force: true });
   const h = await harness("neg-env");
   const runId = "neg-4-run";
@@ -169,7 +169,7 @@ test("negative 4: Environment isolation filters out unauthorized secret variable
 });
 
 test("negative 5: Resource bytes written limit triggers resource exhaustion ROOT_CAUSE", async () => {
-  const sbxRoot = resolve(`data/test-neg-resource/${process.pid}`);
+  const sbxRoot = resolve(`.runtime/test-harness/neg-resource/${process.pid}`);
   await rm(sbxRoot, { recursive: true, force: true });
   const h = await harness("neg-resource");
   const runId = "neg-5-run";
@@ -230,7 +230,7 @@ test("negative 6: Execution identifying research requirement emits ROOT_CAUSE wi
 });
 
 test("negative 7: Network access is isolated under DENY_ALL policy", async () => {
-  const sbxRoot = resolve(`data/test-neg-net/${process.pid}`);
+  const sbxRoot = resolve(`.runtime/test-harness/neg-net/${process.pid}`);
   await rm(sbxRoot, { recursive: true, force: true });
   const h = await harness("neg-net");
   const runId = "neg-7-run";
@@ -262,4 +262,3 @@ test("negative 7: Network access is isolated under DENY_ALL policy", async () =>
   h.bridge.close();
   await rm(sbxRoot, { recursive: true, force: true });
 });
-
