@@ -73,7 +73,11 @@ Non-secret configuration (model, apiBase, timeout, parallelism) is stored in `.r
 |---|---|---|---|---|
 | `sample` | OneShot Sample | fixture | none | - |
 | `featherless` | Featherless AI | featherless | api_key | `FEATHERLESS_API_KEY` |
-| `adk_gemma2` | Google ADK / Gemma | adk_gemma2 | api_key | - |
+| `gemini` | Google Gemini | gemini | api_key | `GEMINI_API_KEY` |
+| `openai` | OpenAI | openai | api_key | `OPENAI_API_KEY` |
+| `anthropic` | Anthropic | anthropic | api_key | `ANTHROPIC_API_KEY` |
+
+Historical ids `google` and `adk_gemma2` remain supported internally as aliases of `gemini`; they are never shown in the UI.
 
 ## File Locations
 

@@ -17,7 +17,7 @@ const CREDENTIAL_HINTS = {
   none: '',
 };
 
-// The Gemini (ADK) readiness probe executes one live model generation per
+// The Gemini readiness probe executes one live model generation per
 // configured pipeline model — make the paid-quota cost explicit in the UI.
 const TEST_HINTS = {
   gemini:

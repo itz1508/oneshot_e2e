@@ -70,7 +70,7 @@ export interface ProviderCatalogEntry {
   /** Alias of `id`, kept for compatibility with older callers. */
   providerId: string;
   displayName: string;
-  /** Catalog adapter type: "fixture" | "adk_gemma2" | "featherless". */
+  /** Catalog adapter type: "fixture" | "gemini" | "featherless" | "openai" | "anthropic". */
   adapter: string;
   protocol: string;
   apiBaseUrl: string;
@@ -160,7 +160,7 @@ export class ProviderManager {
     return DEFAULTS[id] ?? {};
   }
 
-  /** Central historical-id alias resolution (e.g. adk_gemma2 → google). */
+  /** Central historical-id alias resolution (e.g. google/adk_gemma2 → gemini). */
   private resolveId(id: string): string {
     return resolveProviderId(id);
   }
@@ -628,8 +628,8 @@ function protocolFor(adapter: string): string {
     case "openai":
     case "anthropic":
       return "https";
-    case "adk_gemma2":
-      return "ollama";
+    case "gemini":
+      return "google-genai";
     default:
       return "unknown";
   }

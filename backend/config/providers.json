@@ -13,8 +13,8 @@
       "credentialEnv": "FEATHERLESS_API_KEY"
     },
     "gemini": {
-      "label": "Google Gemini (ADK)",
-      "type": "adk_gemma2",
+      "label": "Google Gemini",
+      "type": "gemini",
       "credentialType": "api_key",
       "credentialEnv": "GEMINI_API_KEY"
     },

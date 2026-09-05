@@ -52,9 +52,13 @@ export function resolveProviderId(id: string): string {
 const FACTORIES: Record<string, AdapterFactory> = {
   fixture: () => new FixtureResearchProvider(),
 
-  // Gemini: the historical, working Google ADK pipeline normalized behind
-  // the gemini identity. Not duplicated — the adapter delegates to the ADK
-  // worker and its draft flows through the ONE shared canonical parser.
+  // Gemini: the working Google Gemini pipeline normalized behind the gemini
+  // identity. Not duplicated — the adapter delegates to the existing
+  // implementation and its draft flows through the ONE shared canonical
+  // parser. "adk_gemma2" remains only as an internal legacy alias.
+  gemini: (ctx) => createGeminiResearchProvider(ctx),
+
+  // Internal legacy alias for the historical adapter key. Never surfaced.
   adk_gemma2: (ctx) => createGeminiResearchProvider(ctx),
 
   featherless: (ctx) => {
@@ -125,6 +129,3 @@ function createGeminiResearchProvider(
     events: ctx.events,
   });
 }
-
-// Historical adapter keys resolve to the same normalized implementation.
-FACTORIES["gemini"] = FACTORIES["adk_gemma2"];

@@ -86,7 +86,7 @@ test("registry resolves openai, anthropic, and gemini catalog entries", async ()
   const anthropic = await pm.get("anthropic");
   assert.ok(anthropic && anthropic.adapter === "anthropic");
   const gemini = await pm.get("gemini");
-  assert.ok(gemini && gemini.adapter === "adk_gemma2");
+  assert.ok(gemini && gemini.adapter === "gemini");
 });
 
 test("google and adk_gemma2 aliases resolve to the gemini ADK implementation", async () => {
