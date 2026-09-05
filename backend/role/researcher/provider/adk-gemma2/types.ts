@@ -14,6 +14,13 @@ export interface AdkGemmaConfig {
   cacheTtlSeconds: number;
   timeoutSeconds: number;
   testDraftFile?: string;
+  /**
+   * Probe/run credential. Supplied per-run or per-probe by the ProviderManager
+   * (transient or server-side stored). Never persisted by the adapter and
+   * never logged; overrides the GEMINI_API_KEY environment variable when
+   * Vertex AI is disabled.
+   */
+  apiKey?: string;
 }
 
 export interface AdkProviderHealth {

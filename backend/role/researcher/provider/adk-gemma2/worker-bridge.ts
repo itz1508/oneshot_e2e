@@ -50,6 +50,9 @@ export class AdkGemmaWorker {
     );
     const env = {
       ...process.env,
+      ...(this.config.apiKey && !this.config.useVertexAi
+        ? { GEMINI_API_KEY: this.config.apiKey }
+        : {}),
       GEMINI_DISTRIBUTION_MODEL: this.config.distributionModel,
       GEMINI_RESEARCH_MODEL: this.config.researchModel,
       GEMINI_SYNTHESIS_MODEL: this.config.synthesisModel,

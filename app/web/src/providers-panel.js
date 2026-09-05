@@ -14,6 +14,14 @@ const CREDENTIAL_HINTS = {
   none: '',
 };
 
+const TEST_LABELS = {
+  PROVIDER_AUTH_FAILURE: 'Authentication failed',
+  PROVIDER_MODEL_FAILURE: 'Model unavailable',
+  PROVIDER_NETWORK_FAILURE: 'Network failure',
+  PROVIDER_CONFIGURATION_FAILURE: 'Configuration incomplete',
+  PROVIDER_INTERNAL_FAILURE: 'Provider error',
+};
+
 const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -72,6 +80,10 @@ export function createProviderPanel({ apiFetch, toast, onChanged } = {}) {
           <button class="btn small" data-cred-save="${esc(p.id)}">Save credential</button>
           ${p.configured && p.credentialSource === 'local-secret-store' ? `<button class="btn small danger" data-cred-delete="${esc(p.id)}">Remove</button>` : ''}
         </div>` : ''}
+        <div class="prov-test">
+          <button class="btn small" data-test-btn="${esc(p.id)}">Test connection</button>
+          <span class="ptest-status" data-test-status="${esc(p.id)}" aria-live="polite"></span>
+        </div>
       </div>`;
   }
 
@@ -166,6 +178,48 @@ export function createProviderPanel({ apiFetch, toast, onChanged } = {}) {
         } catch (e) {
           toast(`Credential removal failed: ${e.message || e}`);
         } finally {
+          btn.disabled = false;
+        }
+      };
+    });
+
+    root.querySelectorAll('[data-test-btn]').forEach((btn) => {
+      btn.onclick = async () => {
+        const pid = btn.getAttribute('data-test-btn');
+        const status = $(`[data-test-status="${pid}"]`, root);
+        const input = $(`[data-cred-input="${pid}"]`, root);
+        const value = input ? input.value : '';
+        const set = (cls, text) => {
+          if (status) {
+            status.className = `ptest-status ${cls}`;
+            status.textContent = text;
+            status.title = '';
+          }
+        };
+        btn.disabled = true;
+        set('testing', 'Testing…');
+        try {
+          const r = await apiFetch(`/api/providers/${encodeURIComponent(pid)}/test`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(value ? { value } : {}),
+          });
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) {
+            throw new Error(d.error || `HTTP ${r.status}`);
+          }
+          if (d.ok) {
+            set('ok', 'Connected');
+          } else {
+            set('fail', TEST_LABELS[d.category] || d.message || 'Test failed');
+          }
+          if (status && d.detail) status.title = d.detail;
+          if (status && d.message) status.title = d.detail ? `${d.message} — ${d.detail}` : d.message;
+        } catch (e) {
+          set('fail', `Test failed: ${e.message || e}`);
+        } finally {
+          // A transient credential typed for the probe is never persisted.
+          if (input) input.value = '';
           btn.disabled = false;
         }
       };

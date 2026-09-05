@@ -10,6 +10,12 @@ export interface FeatherlessConfig {
   maxTokens: number;
   appUrl?: string;
   testDraftFile?: string;
+  /**
+   * Probe/run credential. Supplied per-run or per-probe by the ProviderManager
+   * (transient or server-side stored). Never persisted by the adapter and
+   * never logged; overrides the FEATHERLESS_API_KEY environment variable.
+   */
+  apiKey?: string;
 }
 
 export interface FeatherlessWorkerEvent {

@@ -26,6 +26,8 @@ export interface FeatherlessHealth {
   model: string;
   api_base: string;
   detail?: string;
+  /** Optional normalized failure category hint from the worker probe. */
+  category_hint?: string;
 }
 
 export class FeatherlessWorker {
@@ -60,6 +62,9 @@ export class FeatherlessWorker {
       cwd: this.projectRoot,
       env: {
         ...process.env,
+        ...(this.config.apiKey
+          ? { FEATHERLESS_API_KEY: this.config.apiKey }
+          : {}),
         FEATHERLESS_API_BASE: this.config.baseUrl,
         FEATHERLESS_MODEL: this.config.model,
         FEATHERLESS_TIMEOUT_SECONDS: String(this.config.timeoutSeconds),

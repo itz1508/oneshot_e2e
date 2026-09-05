@@ -88,7 +88,9 @@ export class FeatherlessResearchProvider implements ResearchProvider {
         ready: health.ready,
         provider: health.provider,
         models: [health.model],
-        detail: health.detail || health.api_base,
+        detail: health.category_hint
+          ? `${health.category_hint}: ${health.detail || health.api_base}`
+          : health.detail || health.api_base,
       };
     } catch (error) {
       return {

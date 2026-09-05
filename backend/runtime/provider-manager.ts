@@ -45,6 +45,30 @@ import type {
 // Shared types
 // ---------------------------------------------------------------------------
 
+/** Failure categories for provider connection/readiness probes (Phase 4A). */
+export type ProviderTestCategory =
+  | "PROVIDER_AUTH_FAILURE"
+  | "PROVIDER_MODEL_FAILURE"
+  | "PROVIDER_NETWORK_FAILURE"
+  | "PROVIDER_CONFIGURATION_FAILURE"
+  | "PROVIDER_INTERNAL_FAILURE";
+
+/**
+ * Normalized connection-test result. `ok: true` means the provider's real
+ * readiness probe executed successfully — never merely that the catalog
+ * entry, credential, or configuration exists. Never contains secrets.
+ */
+export interface ProviderTestResult {
+  ok: boolean;
+  provider: string;
+  model?: string;
+  category?: ProviderTestCategory;
+  message: string;
+  /** Safe, non-secret diagnostic detail from the probe. */
+  detail?: string;
+  retryable: boolean;
+}
+
 export interface ProviderCatalogEntry {
   /** Catalog id (stable, git-tracked). Mirrors `providerId`. */
   id: string;
@@ -340,12 +364,97 @@ export class ProviderManager {
 
   async test(
     providerId: string,
-    _transient?: ProviderCredential | null,
-  ): Promise<{ ok: boolean; provider: string; error?: string }> {
-    if (!this.catalog.providers[providerId]) {
-      throw new Error(`Provider ${providerId} not found`);
+    transient?: ProviderCredential | null,
+  ): Promise<ProviderTestResult> {
+    const entry = this.catalog.providers[providerId];
+    if (!entry) throw new Error(`Provider ${providerId} not found`);
+    const settings = this.runtimeSettings(providerId);
+    const model = entry.adapter === "fixture" ? undefined : settings.model;
+
+    // Resolve the credential WITHOUT persisting a transient one. Precedence:
+    // explicit transient value (probe-only) → server-side stored credential.
+    // The value is only handed to the provider adapter for the probe.
+    let credentialValue: string | undefined;
+    if (entry.credential.type !== "none") {
+      if (transient && typeof transient.value === "string" && transient.value) {
+        credentialValue = transient.value;
+      } else {
+        const stored = await this.secretStore.get(providerId);
+        credentialValue = stored?.value;
+      }
     }
-    return { ok: true, provider: providerId };
+
+    let provider: ResearchProvider;
+    try {
+      provider = this.constructProvider(
+        providerId,
+        this.options.projectRoot,
+        credentialValue,
+      );
+    } catch (error) {
+      return {
+        ok: false,
+        provider: providerId,
+        model,
+        category: "PROVIDER_CONFIGURATION_FAILURE",
+        message: PROVIDER_TEST_MESSAGES.PROVIDER_CONFIGURATION_FAILURE,
+        detail: safeProbeDetail(error),
+        retryable: false,
+      };
+    }
+
+    try {
+      const readiness = await withTimeout(
+        provider.ready(`provider-test:${providerId}`),
+        probeTimeoutMs(settings.timeoutSeconds),
+      );
+      if (readiness.ready) {
+        return {
+          ok: true,
+          provider: providerId,
+          model: readiness.models?.[0] ?? model,
+          message:
+            readiness.detail ||
+            "Provider readiness verified by live readiness probe",
+          retryable: false,
+        };
+      }
+      const detail = safeProbeDetail(
+        readiness.detail || "readiness probe returned not-ready",
+        credentialValue,
+      );
+      const category = classifyProbeFailure(detail);
+      return {
+        ok: false,
+        provider: providerId,
+        model,
+        category,
+        message: PROVIDER_TEST_MESSAGES[category],
+        detail,
+        retryable: category === "PROVIDER_NETWORK_FAILURE",
+      };
+    } catch (error) {
+      const detail = safeProbeDetail(error, credentialValue);
+      const category = classifyProbeFailure(detail);
+      return {
+        ok: false,
+        provider: providerId,
+        model,
+        category,
+        message: PROVIDER_TEST_MESSAGES[category],
+        detail,
+        retryable:
+          category === "PROVIDER_NETWORK_FAILURE" ||
+          category === "PROVIDER_INTERNAL_FAILURE",
+      };
+    } finally {
+      // Probe resources (worker pools, child processes) are always released.
+      try {
+        provider.close?.();
+      } catch {
+        // close is best-effort; probe result already carries the outcome.
+      }
+    }
   }
 
   async setCredential(
@@ -380,9 +489,10 @@ export class ProviderManager {
     return this.constructProvider(id, this.options.projectRoot);
   }
 
-  private constructProvider(
+  protected constructProvider(
     providerId: string,
     projectRoot: string,
+    credentialValue?: string,
   ): ResearchProvider {
     const entry = this.catalog.providers[providerId];
     if (!entry) throw new Error(`Unknown provider: ${providerId}`);
@@ -395,6 +505,7 @@ export class ProviderManager {
       const base = loadAdkGemmaConfig(projectRoot);
       const config = {
         ...base,
+        apiKey: credentialValue ?? base.apiKey,
         workerPoolSize: settings.parallelism ?? base.workerPoolSize,
         timeoutSeconds: settings.timeoutSeconds ?? base.timeoutSeconds,
       };
@@ -408,6 +519,7 @@ export class ProviderManager {
         ...base,
         model: settings.model || base.model,
         baseUrl: settings.apiBase || base.baseUrl,
+        apiKey: credentialValue ?? base.apiKey,
         workerPoolSize: settings.parallelism ?? base.workerPoolSize,
         timeoutSeconds: settings.timeoutSeconds ?? base.timeoutSeconds,
       };
@@ -421,6 +533,102 @@ export class ProviderManager {
   close(): void {
     this.options = this.options;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Provider connection probe (Phase 4A)
+// ---------------------------------------------------------------------------
+
+const PROVIDER_TEST_MESSAGES: Record<ProviderTestCategory, string> = {
+  PROVIDER_AUTH_FAILURE:
+    "Authentication failed — the credential was rejected or is missing",
+  PROVIDER_MODEL_FAILURE:
+    "Model unavailable — the configured model was not accepted by the provider",
+  PROVIDER_NETWORK_FAILURE:
+    "Network failure — the provider could not be reached",
+  PROVIDER_CONFIGURATION_FAILURE:
+    "Configuration incomplete — required provider settings are missing or invalid",
+  PROVIDER_INTERNAL_FAILURE:
+    "Provider error — the readiness probe failed unexpectedly",
+};
+
+/**
+ * Classify a probe failure into the normalized Phase 4A category.
+ * Explicit category hints from worker health payloads take precedence;
+ * otherwise safe, non-secret message text is matched with ordered rules.
+ */
+export function classifyProbeFailure(
+  detail: string,
+): ProviderTestCategory {
+  const text = detail || "";
+  const explicit = text.match(
+    /PROVIDER_(AUTH|MODEL|NETWORK|CONFIGURATION|INTERNAL)_FAILURE/,
+  );
+  if (explicit) {
+    return `PROVIDER_${explicit[1]}_FAILURE` as ProviderTestCategory;
+  }
+  if (
+    /not configured|401|unauthorized|invalid[ _-]?api[ _-]?key|invalid_api_key|incorrect api key|authentication|api[ _-]?key|credential/i.test(
+      text,
+    )
+  ) {
+    return "PROVIDER_AUTH_FAILURE";
+  }
+  if (
+    /model[s]?[^.\n]{0,60}(not available|not found|unavailable|does not exist|invalid|decommissioned|not returned)|(not available|not found|unavailable|not returned)[^.\n]{0,60}model/i.test(
+      text,
+    )
+  ) {
+    return "PROVIDER_MODEL_FAILURE";
+  }
+  if (
+    /ENOTFOUND|ECONNREFUSED|ECONNRESET|ETIMEDOUT|EAI_AGAIN|getaddrinfo|fetch failed|network|unreachable|connection (error|refused|reset|timed out)|timed?[ _-]?out/i.test(
+      text,
+    )
+  ) {
+    return "PROVIDER_NETWORK_FAILURE";
+  }
+  if (/not set|missing|incomplete|invalid config|is required/i.test(text)) {
+    return "PROVIDER_CONFIGURATION_FAILURE";
+  }
+  return "PROVIDER_INTERNAL_FAILURE";
+}
+
+/** Non-secret, bounded diagnostic detail for probe results. Credential
+ * values must never appear in probe output — providers sometimes echo the
+ * rejected key in their error messages, so it is redacted here. */
+function safeProbeDetail(error: unknown, redact?: string): string {
+  let text = error instanceof Error ? error.message : String(error);
+  if (redact) {
+    text = text.split(redact).join("[REDACTED]");
+  }
+  return text.replace(/\s+/g, " ").trim().slice(0, 500);
+}
+
+function probeTimeoutMs(timeoutSeconds: number | undefined): number {
+  const seconds = Number(timeoutSeconds);
+  return Number.isFinite(seconds) && seconds > 0
+    ? Math.min(seconds, 120) * 1000
+    : 30_000;
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`provider readiness probe timed out after ${ms}ms`)),
+      ms,
+    );
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
 }
 
 function protocolFor(adapter: string): string {

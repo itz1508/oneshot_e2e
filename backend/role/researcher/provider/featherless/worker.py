@@ -88,6 +88,28 @@ def _client():
     return _client_instance
 
 
+def _health_category(text: str) -> str:
+    lowered = (text or "").lower()
+    if (
+        "401" in lowered
+        or "unauthorized" in lowered
+        or "invalid" in lowered and "key" in lowered
+        or "authentication" in lowered
+    ):
+        return "PROVIDER_AUTH_FAILURE"
+    if (
+        "enotfound" in lowered
+        or "econnrefused" in lowered
+        or "econnreset" in lowered
+        or "etimedout" in lowered
+        or "getaddrinfo" in lowered
+        or "connection" in lowered
+        or "timed out" in lowered
+    ):
+        return "PROVIDER_NETWORK_FAILURE"
+    return "PROVIDER_INTERNAL_FAILURE"
+
+
 def _health() -> dict[str, Any]:
     if TEST_DRAFT:
         return {
@@ -103,24 +125,43 @@ def _health() -> dict[str, Any]:
             "provider": "featherless",
             "model": MODEL,
             "api_base": BASE,
+            "category_hint": "PROVIDER_AUTH_FAILURE",
             "detail": "FEATHERLESS_API_KEY is not configured",
         }
     try:
-        _client()
+        client = _client()
+        available: list[str] = []
+        for remote_model in client.models.list():
+            model_id = str(getattr(remote_model, "id", "") or "")
+            if model_id:
+                available.append(model_id)
+            if len(available) >= 500:
+                break
     except Exception as error:
+        message = f"{type(error).__name__}: {error}"
         return {
             "ready": False,
             "provider": "featherless",
             "model": MODEL,
             "api_base": BASE,
-            "detail": f"{type(error).__name__}: {error}",
+            "category_hint": _health_category(message),
+            "detail": message,
+        }
+    if MODEL in available:
+        return {
+            "ready": True,
+            "provider": "featherless",
+            "model": MODEL,
+            "api_base": BASE,
+            "detail": "live Featherless probe verified: model available from the models endpoint",
         }
     return {
-        "ready": True,
+        "ready": False,
         "provider": "featherless",
         "model": MODEL,
         "api_base": BASE,
-        "detail": "client and credential binding ready",
+        "category_hint": "PROVIDER_MODEL_FAILURE",
+        "detail": f"configured model {MODEL} was not returned by the live Featherless models endpoint",
     }
 
 
