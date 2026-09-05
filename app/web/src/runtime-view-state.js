@@ -4,10 +4,15 @@
 export const WORKFLOW_STATES = ['IDLE', 'PLANNING', 'RUNNING', 'COMPLETE', 'ERROR'];
 
 const PLANNING_PROCESSORS = ['Researcher', 'Planner'];
-const TERMINAL_PROCESSOR = 'Done';
+const EXECUTING_PROCESSORS = ['Refactor', 'Gap Analysis', 'Evaluation', 'Schema Validation', 'Fixture Validation', 'Goal Validation', 'Builder', 'Hash Verification'];
+const TERMINAL_PROCESSORS = ['Confirmed', 'Done'];
 
 function isTerminalComplete(e) {
-  return e.processor === TERMINAL_PROCESSOR && (e.state === 'COMPLETE' || e.state === 'COMPLETED');
+  return TERMINAL_PROCESSORS.includes(e.processor) && (e.state === 'COMPLETE' || e.state === 'COMPLETED');
+}
+
+function isExecuting(e) {
+  return EXECUTING_PROCESSORS.includes(e.processor);
 }
 
 export function createStateMachine(app, { onChange } = {}) {
@@ -26,7 +31,7 @@ export function createStateMachine(app, { onChange } = {}) {
       for (const s of WORKFLOW_STATES) app.classList.remove(`state-${s.toLowerCase()}`);
       app.classList.add(`state-${next.toLowerCase()}`);
     }
-    onChange?.(next);
+    onChange?.(current);
   }
 
   function derive() {
@@ -44,7 +49,7 @@ export function createStateMachine(app, { onChange } = {}) {
         terminal = e.result === 'PASSED' ? 'COMPLETE' : 'ERROR';
       } else if (e.state === 'RUNNING') {
         if (PLANNING_PROCESSORS.includes(e.processor)) planning = true;
-        else executing = true;
+        else if (isExecuting(e)) executing = true;
       }
       set(derive());
     },
@@ -63,5 +68,23 @@ export function createStateMachine(app, { onChange } = {}) {
       set('IDLE');
     },
     current: () => current,
+    /** Get current phase from processor. */
+    getPhase(processor) {
+      const phaseMap = {
+        'Researcher': 'research',
+        'Planner': 'planning',
+        'Refactor': 'refactor',
+        'Gap Analysis': 'gap-analysis',
+        'Evaluation': 'evaluation',
+        'Schema Validation': 'validation',
+        'Fixture Validation': 'validation',
+        'Goal Validation': 'validation',
+        'Builder': 'building',
+        'Hash Verification': 'hashing',
+        'Confirmed': 'terminal',
+        'Done': 'success',
+      };
+      return phaseMap[processor] || 'idle';
+    },
   };
 }
