@@ -122,4 +122,16 @@ export class RunRepository {
     this.persist(r);
     return r;
   }
+
+  /**
+   * Phase 5: mutate the durable snapshot in place (recovery state attachment)
+   * and persist through the standard tmp+rename path.
+   */
+  update(runId: string, mutate: (snapshot: RunSnapshot) => void): RunSnapshot | undefined {
+    const r = this.get(runId);
+    if (!r) return undefined;
+    mutate(r);
+    this.persist(r);
+    return r;
+  }
 }

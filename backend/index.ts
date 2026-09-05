@@ -15,6 +15,8 @@ import { DeterministicValidationRuntime } from "./validation/deterministic-valid
 import { CanonicalContractSkill } from "./skills/canonical-contract-skill.js";
 import { createSkillSystem } from "./skills/bootstrap.js";
 import { ProviderManager } from "./runtime/provider-manager.js";
+import { RecoveryOrchestrator, LocalRecoveryResearcher } from "./recovery/index.js";
+
 import type { ResearchProvider } from "./role/researcher/provider.js";
 import { createDynamicDependencyFactory } from "./workflow/adk/dynamic-dependencies.js";
 import {
@@ -174,6 +176,13 @@ const queueDeps: RunQueueDeps = {
       new FileArtifactStore(runtimePaths.runs),
       bindDependencies,
     ),
+  // Phase 5: provider/config failures recover BEFORE sandbox execution.
+  recovery: new RecoveryOrchestrator({
+    runs,
+    events,
+    researcher: new LocalRecoveryResearcher(),
+  }),
+
 };
 const runQueue = new BullMQRunQueue(RUN_QUEUE_NAME, queueDeps, {
   concurrency: Number(process.env.ONESHOT_RUN_CONCURRENCY || 1),

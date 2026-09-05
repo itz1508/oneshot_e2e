@@ -16,6 +16,13 @@ import { RunRepository } from "../runtime/run-repository.js";
 import { ProcessingEventBus } from "../runtime/event-bus.js";
 import { WorkflowRuntime } from "../runtime/workflow-runtime.js";
 import type { TaskManagement } from "../task/task-management.js";
+import {
+  RecoveryOrchestrator,
+  LocalRecoveryResearcher,
+  type RecoveryReport,
+  type RecoverySnapshot,
+} from "../recovery/index.js";
+
 import { QUEUE_PREFIX, RUN_QUEUE_NAME, type RunQueue } from "../runtime/queue.js";
 import type { ProviderManager } from "../runtime/provider-manager.js";
 import type { ProviderRuntimeSettings } from "../runtime/provider-runtime-config.js";
@@ -56,6 +63,43 @@ function json(
     "cache-control": "no-store",
   });
   res.end(JSON.stringify(value));
+}
+
+// ---------------------------------------------------------------------------
+// Phase 5 recovery — user-facing status derivation (shared with tests)
+// ---------------------------------------------------------------------------
+
+/** Map a recovery snapshot's category/state into the user-facing status. */
+function recoveryStatusFor(recovery: RecoverySnapshot): RecoveryReport["status"] {
+  if (recovery.state === "RESEARCH_ESCALATION" || recovery.research_escalations.length > 0) {
+    return "ADDITIONAL_RESEARCH_PERFORMED";
+  }
+  if (
+    recovery.failure_category === "PROVIDER_AUTH_FAILURE" ||
+    recovery.failure_category === "PROVIDER_MODEL_FAILURE" ||
+    recovery.failure_category === "PROVIDER_CONFIGURATION_FAILURE"
+  ) {
+    return "NEEDS_CONFIGURATION_CHANGE";
+  }
+  if (recovery.retry.allowed) return "READY_TO_RETRY";
+  return "MANUAL_REVIEW_REQUIRED";
+}
+
+/** Run Context projection: normalized failure metadata without secrets. */
+function recoveryContext(recovery: RecoverySnapshot) {
+  return {
+    run_id: recovery.run_id,
+    state: recovery.state,
+    failure_category: recovery.failure_category,
+    failed_stage: recovery.failed_stage,
+    evidence_ids: recovery.evidence.map((e) => e.evidence_id),
+    retry_count: recovery.retry.attempts,
+    retry_allowed: recovery.retry.allowed,
+    research_escalated: recovery.research_escalations.length > 0,
+    research_sources: recovery.research_escalations.flatMap((r) => r.sources),
+    provider: recovery.provider,
+    updated_at: recovery.updated_at,
+  };
 }
 
 /**
@@ -1060,6 +1104,73 @@ export async function startHttpServer(
           return r
             ? json(res, 200, r)
             : json(res, 404, { error: "run not found" });
+        }
+
+        // GET /api/runs/:id/recovery — user-facing failure/recovery report
+        // (concise root cause + recommendation; NO raw traces, NO secrets).
+        // Detailed evidence stays in Task Management / Run Context surfaces.
+        const recoveryMatch = url.pathname.match(
+          /^\/api\/runs\/([^/]+)\/recovery$/,
+        );
+        if (req.method === "GET" && recoveryMatch) {
+          const runId = recoveryMatch[1];
+          const snap = runs.get(runId);
+          if (!snap) return json(res, 404, { error: "run not found" });
+          const orchestrator = new RecoveryOrchestrator({
+            runs,
+            events,
+            researcher: new LocalRecoveryResearcher(),
+          });
+          const recovery = orchestrator.get(runId);
+          if (!recovery) {
+            return json(res, 404, {
+              error: "no recovery state for run",
+              run_id: runId,
+            });
+          }
+          const status = recoveryStatusFor(recovery);
+          const report: RecoveryReport = {
+            run_id: recovery.run_id,
+            status,
+            what_failed: `${recovery.failed_stage} (${recovery.failure_category})`,
+            why: recovery.result.rootCause,
+            recommended_fix: recovery.result.recommendation,
+            retry: {
+              allowed: recovery.retry.allowed,
+              attempts: recovery.retry.attempts,
+              max_attempts: recovery.retry.max_attempts,
+              policy_reason: recovery.retry.policy_reason,
+            },
+            research: { escalated: recovery.research_escalations.length > 0 },
+            state: recovery.state,
+          };
+          return json(res, 200, report);
+        }
+
+        // GET /api/runs/:id/recovery/context — Run Context surface: normalized
+        // failure category, evidence ids, retry count, research escalation
+        // flag, provider/model snapshot. Evidence CONTENT stays bounded and
+        // non-secret; raw traces remain in Task Management.
+        const recoveryContextMatch = url.pathname.match(
+          /^\/api\/runs\/([^/]+)\/recovery\/context$/,
+        );
+        if (req.method === "GET" && recoveryContextMatch) {
+          const runId = recoveryContextMatch[1];
+          const snap = runs.get(runId);
+          if (!snap) return json(res, 404, { error: "run not found" });
+          const orchestrator = new RecoveryOrchestrator({
+            runs,
+            events,
+            researcher: new LocalRecoveryResearcher(),
+          });
+          const recovery = orchestrator.get(runId);
+          if (!recovery) {
+            return json(res, 404, {
+              error: "no recovery state for run",
+              run_id: runId,
+            });
+          }
+          return json(res, 200, recoveryContext(recovery));
         }
 
         // GET /api/runs/:id/task — task projection

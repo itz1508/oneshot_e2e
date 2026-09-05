@@ -14,6 +14,11 @@ import {
   toDynamicRootCause,
   type OneShotDynamicResult,
 } from "../workflow/adk/dynamic-root-agent.js";
+import {
+  RecoveryOrchestrator,
+  LocalRecoveryResearcher,
+  type RecoverySnapshot,
+} from "../recovery/index.js";
 import type { ArtifactStore } from "./artifact-store.js";
 import type { ProcessingEventBus } from "./event-bus.js";
 import type { RunRepository } from "./run-repository.js";
@@ -62,12 +67,50 @@ function unwrapAdkError(error: unknown): unknown {
  * ctx.runNode(); their typed outputs are passed directly to downstream nodes.
  */
 export class WorkflowRuntime {
+  private readonly _recovery: RecoveryOrchestrator;
+
   constructor(
     private events: ProcessingEventBus,
     private runs: RunRepository,
     readonly store: ArtifactStore,
     private bindDependencies: DynamicDependencyFactory,
-  ) {}
+  ) {
+    // Phase 5: recovery orchestrator over this runtime's bus + repository.
+    this._recovery = new RecoveryOrchestrator({
+      runs,
+      events,
+      researcher: new LocalRecoveryResearcher(),
+    });
+  }
+
+  /** Phase 5: recovery state machine for this runtime. */
+  get recovery(): RecoveryOrchestrator {
+    return this._recovery;
+  }
+
+  /**
+   * Phase 5: run the bounded failure/recovery cycle for a canonical
+   * RootCause failure. Preserves the canonical run result (ROOT_CAUSE) and
+   * persists the normalized recovery snapshot for the UI / Task Management.
+   */
+  private async recover(
+    runId: string,
+    rootCause: RootCause,
+  ): Promise<void> {
+    try {
+      const stage = (rootCause.recheck_target || runId) as string;
+      await this.recovery.handleFailure({
+        runId,
+        stage: stage.startsWith("run:") ? "Workflow" : stage,
+        message: rootCause.actual || rootCause.issue,
+        expected: rootCause.expected,
+        artifactIds: [rootCause.recheck_target].filter(Boolean),
+      });
+    } catch {
+      // Recovery analysis must never mask the canonical ROOT_CAUSE result —
+      // failures during recovery are recorded in Task Management only.
+    }
+  }
 
   private ev(
     runId: string,
@@ -88,12 +131,12 @@ export class WorkflowRuntime {
     return path;
   }
 
-  private finishRoot(
+  private async finishRoot(
     runId: string,
     rootCause: RootCause,
     proof?: HashProof,
     helpRequest?: HelpRequest,
-  ): RunSnapshot {
+  ): Promise<RunSnapshot> {
     const current = this.runs.require(runId);
     if (current.result) return current;
 
@@ -112,13 +155,18 @@ export class WorkflowRuntime {
       result: "ROOT_CAUSE",
       message: rootCause.actual,
     });
-    return this.runs.finish(
+    const snapshot = this.runs.finish(
       runId,
       "ROOT_CAUSE",
       proof,
       rootCause,
       helpRequest,
     );
+    // Phase 5: bounded failure/recovery cycle (classifies, collects evidence,
+    // optionally escalates research, produces the actionable recommendation).
+    // The run result stays ROOT_CAUSE — recovery never fakes success.
+    await this.recover(runId, rootCause);
+    return snapshot;
   }
 
   private finishPassed(
@@ -135,10 +183,14 @@ export class WorkflowRuntime {
       result: "PASSED",
       artifact_id: proof.created_hash,
     });
-    return this.runs.finish(runId, "PASSED", proof, undefined, undefined, {
+    const snapshot = this.runs.finish(runId, "PASSED", proof, undefined, undefined, {
       final_output: finalOutput,
       output_step_id: outputStepId,
     });
+    // Phase 5: a verified PASSED run closes any recovery record (RUNNING ->
+    // DONE). Only Hash-verified success can produce this transition.
+    this.recovery.clearOnSuccess(runId);
+    return snapshot;
   }
 
   /** Execute one complete canonical job through ADK Workflow + ctx.runNode(). */

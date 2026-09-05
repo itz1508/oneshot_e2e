@@ -14,6 +14,8 @@
  */
 
 import { resolve } from "node:path";
+import { RecoveryOrchestrator, LocalRecoveryResearcher } from "../recovery/index.js";
+
 import { ProcessingEventBus } from "../runtime/event-bus.js";
 import { RunRepository } from "../runtime/run-repository.js";
 import { FileArtifactStore } from "../runtime/artifact-store.js";
@@ -105,6 +107,12 @@ async function main() {
       // QUEUED snapshot semantics: use the captured provider id + model.
       return providerManager.resolveForRun(providerId, modelOverride);
     },
+    // Phase 5: provider/config failures recover BEFORE sandbox execution.
+    recovery: new RecoveryOrchestrator({
+      runs,
+      events,
+      researcher: new LocalRecoveryResearcher(),
+    }),
     createRuntime: async (provider) => {
       const bindDependencies = createDynamicDependencyFactory({
         projectRoot,

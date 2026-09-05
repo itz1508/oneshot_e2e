@@ -35,6 +35,10 @@ import type { WorkflowRuntime } from "./workflow-runtime.js";
 import type { ResearchProvider } from "../role/researcher/provider.js";
 import { WorkflowRootCauseError } from "../core/root-cause-error.js";
 import {
+  classifyFailure,
+  type RecoveryOrchestrator,
+} from "../recovery/index.js";
+import {
   closeSharedRedis,
   getProducerRedis,
   getSharedRedis,
@@ -200,6 +204,12 @@ export interface RunQueueDeps {
     modelOverride?: string,
   ) => Promise<ResearchProvider>;
   projectRoot: string;
+  /**
+   * Phase 5 (optional): recovery orchestrator for provider/config failures
+   * detected BEFORE sandbox execution. When absent, failures keep the
+   * canonical finalizeFailure behavior (tests + degraded inline mode).
+   */
+  recovery?: RecoveryOrchestrator;
 }
 
 /** Minimal structural view of a BullMQ job (keeps executeRunJob unit-testable). */
@@ -614,6 +624,29 @@ export async function executeRunJob(
         result: "ROOT_CAUSE",
         message: firstLine(actual),
       });
+      // Phase 5: provider/config failures are classified and recovered
+      // BEFORE any sandbox execution. The normalized provider category
+      // (Phase 4A/4B) maps into the taxonomy without duplicates.
+      if (deps.recovery) {
+        try {
+          await deps.recovery.handleFailure({
+            runId,
+            stage: "ProviderBinding",
+            message: firstLine(actual),
+            expected: wrc?.expected ?? "Provider binds cleanly before workflow execution",
+            providerStatus: {
+              category: classifyFailure({ runId, stage: "ProviderBinding", message: actual }),
+              message: firstLine(actual),
+            },
+            provider: {
+              id: providerId,
+              ...(data.provider?.model ? { model: data.provider.model } : {}),
+            },
+          });
+        } catch {
+          // Recovery never masks the canonical failure path.
+        }
+      }
       finalizeFailure(issue, actual);
       return { runId, status: "failed" };
     }

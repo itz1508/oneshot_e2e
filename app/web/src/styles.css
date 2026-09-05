@@ -597,6 +597,11 @@ button {
 }
 .work-card pre { white-space: pre-wrap; overflow: auto; }
 
+/* Phase 5 — failure recovery card */
+.recovery-card { border-left: 3px solid #d64545; }
+.recovery-card div { margin-top: 4px; }
+
+
 /* ===== Layer 3: Message OneShot (Operator Box) ===== */
 .operator {
   position: absolute;
