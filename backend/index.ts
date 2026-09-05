@@ -154,11 +154,18 @@ const queueDeps: RunQueueDeps = {
   runs,
   events,
   projectRoot,
-  resolveProvider: async (providerId: string, _ev: ProcessingEventBus, runId: string) => {
-    // Provider binding happens per run inside the worker, immediately before the
-    // canonical workflow consumes the provider. Use ProviderManager's
-    // resolveForRun to create the ResearchProvider from catalog entry.
-    return providerManager.resolveForRun(providerId);
+  resolveProvider: async (
+    providerId: string,
+    _ev: ProcessingEventBus,
+    runId: string,
+    modelOverride?: string,
+  ) => {
+    // Provider binding happens per run inside the worker, immediately before
+    // the canonical workflow consumes the provider. Use ProviderManager's
+    // resolveForRun to create the ResearchProvider from the QUEUED snapshot
+    // (captured providerId + model), never from the currently active
+    // selection. Credentials are resolved server-side at execution time.
+    return providerManager.resolveForRun(providerId, modelOverride);
   },
   createRuntime: async () =>
     new WorkflowRuntime(
@@ -234,3 +241,5 @@ const shutdown = async () => {
 };
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
+
+

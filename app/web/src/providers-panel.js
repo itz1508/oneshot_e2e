@@ -41,6 +41,7 @@ export function createProviderPanel({ apiFetch, toast, onChanged } = {}) {
   let items = [];
   let activeProvider = '';
   let revision = 0;
+  let researchTools = {};
   let busy = false;
 
   async function refresh() {
@@ -53,6 +54,9 @@ export function createProviderPanel({ apiFetch, toast, onChanged } = {}) {
     items = Array.isArray(data.providers) ? data.providers : [];
     activeProvider = String(data.activeProvider || '');
     revision = Number(data.revision || 0);
+    researchTools = data.researchTools && typeof data.researchTools === 'object'
+      ? data.researchTools
+      : {};
     return data;
   }
 
@@ -79,6 +83,11 @@ export function createProviderPanel({ apiFetch, toast, onChanged } = {}) {
           <div class="prov-status">
             ${statusHTML(p)}
             <span class="pmodel">model: ${esc(p.model || '—')}</span>
+            <label class="pmodel" title="Optional — omitted where unsupported">temp
+              <input type="number" step="0.1" min="0" max="2" style="width:56px"
+                     data-temp-for="${esc(p.id)}" value="${p.temperature ?? ''}"
+                     placeholder="—" aria-label="Temperature for ${esc(p.label)}">
+            </label>
             <label class="penabled"><input type="checkbox" data-enabled-for="${esc(p.id)}" ${p.enabled !== false ? 'checked' : ''}> enabled</label>
           </div>
         </div>
@@ -234,6 +243,156 @@ export function createProviderPanel({ apiFetch, toast, onChanged } = {}) {
         }
       };
     });
+
+    root.querySelectorAll('[data-temp-for]').forEach((el) => {
+      el.onchange = async () => {
+        if (busy) { render(); return; }
+        const pid = el.getAttribute('data-temp-for');
+        const raw = String(el.value ?? '').trim();
+        const temperature = raw === '' ? undefined : Number(raw);
+        if (raw !== '' && (!Number.isFinite(temperature) || temperature < 0 || temperature > 2)) {
+          toast('Temperature must be a number between 0 and 2.');
+          render();
+          return;
+        }
+        busy = true;
+        try {
+          const r = await apiFetch('/api/providers/runtime-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ providers: { [pid]: { temperature } } }),
+          });
+          if (!r.ok) {
+            const d = await r.json().catch(() => ({}));
+            throw new Error(d.error || `HTTP ${r.status}`);
+          }
+          toast(`Temperature saved for ${pid}`);
+        } catch (e) {
+          toast(`Temperature update failed: ${e.message || e}`);
+        } finally {
+          busy = false;
+          render();
+        }
+      };
+    });
+
+    // --- Advanced Research (Tavily) — a research TOOL, not a model provider.
+    const tavilyEnabled = $('#tavily-enabled');
+    if (tavilyEnabled) {
+      tavilyEnabled.checked = researchTools?.tavily?.enabled === true;
+      tavilyEnabled.onchange = async () => {
+        if (busy) { render(); return; }
+        busy = true;
+        try {
+          const r = await apiFetch('/api/providers/runtime-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              researchTools: { tavily: { enabled: tavilyEnabled.checked } },
+            }),
+          });
+          if (!r.ok) {
+            const d = await r.json().catch(() => ({}));
+            throw new Error(d.error || `HTTP ${r.status}`);
+          }
+          await refresh();
+          toast(`Web research ${tavilyEnabled.checked ? 'enabled' : 'disabled'}`);
+          if (onChanged) onChanged();
+        } catch (e) {
+          toast(`Update failed: ${e.message || e}`);
+        } finally {
+          busy = false;
+          render();
+        }
+      };
+    }
+
+    const tavilyStatus = (cls, text) => {
+      const el = $('#tavily-status');
+      if (el) {
+        el.className = `ptest-status ${cls}`;
+        el.textContent = text;
+        el.title = '';
+      }
+    };
+
+    const tavilySave = $('#tavily-save');
+    if (tavilySave) {
+      tavilySave.onclick = async () => {
+        const input = $('#tavily-key');
+        const value = input ? input.value : '';
+        if (!value.trim()) { toast('Enter a Tavily API key first.'); return; }
+        tavilySave.disabled = true;
+        try {
+          const r = await apiFetch('/api/research/tavily/credential', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ value }),
+          });
+          if (!r.ok) {
+            const d = await r.json().catch(() => ({}));
+            throw new Error(d.error || `HTTP ${r.status}`);
+          }
+          if (input) input.value = '';
+          tavilyStatus('ok', 'Tavily key stored (server-side only)');
+          toast('Tavily key stored (server-side only)');
+        } catch (e) {
+          if (input) input.value = '';
+          tavilyStatus('fail', `Save failed: ${e.message || e}`);
+        } finally {
+          tavilySave.disabled = false;
+        }
+      };
+    }
+
+    const tavilyRemove = $('#tavily-remove');
+    if (tavilyRemove) {
+      tavilyRemove.onclick = async () => {
+        tavilyRemove.disabled = true;
+        try {
+          const r = await apiFetch('/api/research/tavily/credential', { method: 'DELETE' });
+          if (!r.ok) {
+            const d = await r.json().catch(() => ({}));
+            throw new Error(d.error || `HTTP ${r.status}`);
+          }
+          tavilyStatus('', 'Tavily key removed');
+          toast('Tavily key removed');
+        } catch (e) {
+          tavilyStatus('fail', `Removal failed: ${e.message || e}`);
+        } finally {
+          tavilyRemove.disabled = false;
+        }
+      };
+    }
+
+    const tavilyTest = $('#tavily-test');
+    if (tavilyTest) {
+      tavilyTest.onclick = async () => {
+        const input = $('#tavily-key');
+        const value = input ? input.value : '';
+        tavilyTest.disabled = true;
+        tavilyStatus('testing', 'Testing…');
+        try {
+          const r = await apiFetch('/api/research/tavily/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(value ? { value } : {}),
+          });
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+          if (d.ok) tavilyStatus('ok', 'Connected');
+          else tavilyStatus('fail', TEST_LABELS[d.category] || d.message || 'Test failed');
+          const status = $('#tavily-status');
+          if (status && d.detail) status.title = d.detail;
+        } catch (e) {
+          tavilyStatus('fail', `Test failed: ${e.message || e}`);
+        } finally {
+          // A transient Tavily key typed for the probe is never persisted.
+          if (input) input.value = '';
+          tavilyTest.disabled = false;
+        }
+      };
+    }
 
     root.querySelectorAll('[data-enabled-for]').forEach((el) => {
       el.onchange = async () => {

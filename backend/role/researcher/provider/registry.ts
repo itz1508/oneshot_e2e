@@ -5,7 +5,10 @@
  * adapter factory.
  */
 import type { ProcessingEventBus } from "../../../runtime/event-bus.js";
-import type { ProviderRuntimeSettings } from "../../../runtime/provider-runtime-config.js";
+import type {
+  ProviderRuntimeSettings,
+  ResearchToolsConfig,
+} from "../../../runtime/provider-runtime-config.js";
 import type { ResearchProvider } from "../provider.js";
 import { FixtureResearchProvider } from "../tool/fixture-provider.js";
 import {
@@ -31,6 +34,12 @@ export interface ProviderAdapterContext {
   settings: ProviderRuntimeSettings;
   /** Probe/run credential resolved by the ProviderManager (never persisted here). */
   credentialValue?: string;
+  /** Optional captured model snapshot for queued runs. */
+  modelOverride?: string;
+  /** Non-secret research-tool configuration (Tavily). */
+  researchTools?: ResearchToolsConfig;
+  /** Server-resolved BYOK research-tool credentials (never persisted here). */
+  toolCredentials?: { tavily?: { apiKey?: string } };
   events?: ProcessingEventBus;
 }
 

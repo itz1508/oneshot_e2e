@@ -18,11 +18,27 @@ function envTrue(name: string): boolean {
   return /^(?:1|true|yes)$/i.test((process.env[name] || "").trim());
 }
 
+export interface TavilyCollectorOptions {
+  /** Explicit enablement — false disables collection entirely. */
+  enabled?: boolean;
+  /** BYOK key resolved server-side; overrides the environment variable. */
+  apiKey?: string;
+  searchDepth?: "basic" | "advanced";
+  maxResults?: number;
+}
+
 export class ResearchEvidenceCollector {
   private tavily: TavilyEvidenceCollector;
 
-  constructor(private projectRoot: string) {
-    this.tavily = new TavilyEvidenceCollector(projectRoot);
+  constructor(
+    private projectRoot: string,
+    tavilyOptions?: TavilyCollectorOptions,
+  ) {
+    this.tavily = new TavilyEvidenceCollector(
+      projectRoot,
+      undefined,
+      tavilyOptions,
+    );
   }
 
   async collect(prompt: Prompt): Promise<GatheredEvidence[]> {

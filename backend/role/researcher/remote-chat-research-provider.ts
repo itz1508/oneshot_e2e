@@ -36,6 +36,16 @@ export interface RemoteChatResearchProviderOptions {
   timeoutSeconds?: number;
   maxOutputTokens?: number;
   temperature?: number;
+  /**
+   * Optional research-tool configuration (Tavily). Tavily is a research TOOL:
+   * enabling it enriches evidence and never changes the model provider.
+   */
+  tavily?: {
+    enabled?: boolean;
+    apiKey?: string;
+    searchDepth?: "basic" | "advanced";
+    maxResults?: number;
+  };
   events?: ProcessingEventBus;
 }
 
@@ -44,7 +54,17 @@ export class RemoteChatResearchProvider implements ResearchProvider {
   private readonly events?: ProcessingEventBus;
 
   constructor(private readonly options: RemoteChatResearchProviderOptions) {
-    this.evidence = new ResearchEvidenceCollector(options.projectRoot);
+    this.evidence = new ResearchEvidenceCollector(
+      options.projectRoot,
+      options.tavily
+        ? {
+            enabled: options.tavily.enabled,
+            apiKey: options.tavily.apiKey,
+            searchDepth: options.tavily.searchDepth,
+            maxResults: options.tavily.maxResults,
+          }
+        : undefined,
+    );
     this.events = options.events;
   }
 

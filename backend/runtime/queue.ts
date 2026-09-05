@@ -190,11 +190,14 @@ export interface RunQueueDeps {
   events: ProcessingEventBus;
   /** Factory that builds a fresh WorkflowRuntime for a job (per-run binding). */
   createRuntime: (provider: ResearchProvider) => Promise<WorkflowRuntime>;
-  /** Resolves the provider for a given providerId (per-run binding). */
+  /** Resolves the provider for a given providerId (per-run binding).
+   * `modelOverride` pins the model captured when the run was queued so a
+   * later runtime-config change cannot drift an already-queued run. */
   resolveProvider: (
     providerId: string,
     events: ProcessingEventBus,
     runId: string,
+    modelOverride?: string,
   ) => Promise<ResearchProvider>;
   projectRoot: string;
 }
@@ -592,7 +595,12 @@ export async function executeRunJob(
     //   bound ONCE here; an already-active run is never re-bound mid-workflow.
     let provider: ResearchProvider;
     try {
-      provider = await deps.resolveProvider(providerId, deps.events, runId);
+      provider = await deps.resolveProvider(
+        providerId,
+        deps.events,
+        runId,
+        data.provider?.model,
+      );
     } catch (err) {
       const wrc = err instanceof WorkflowRootCauseError
         ? err.rootCause

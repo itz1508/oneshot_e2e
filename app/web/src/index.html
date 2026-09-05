@@ -90,7 +90,23 @@
 
     <aside class="drawer" id="providers-drawer" data-testid="provider-config" aria-label="Provider Configuration">
       <header><div><h2>Provider Configuration</h2><p>Runtime providers · credentials stay server-side</p></div><button data-close aria-label="Close Provider Configuration">×</button></header>
-      <div class="drawer-body"><div id="providers" data-testid="provider-list"><div class="prov-empty">Loading providers…</div></div></div>
+      <div class="drawer-body"><div id="providers" data-testid="provider-list"><div class="prov-empty">Loading providers…</div></div>
+      <details class="research-tools" id="research-tools">
+        <summary>Advanced Research</summary>
+        <div class="tool-body">
+          <label class="penabled"><input type="checkbox" id="tavily-enabled"> Enable web research (Tavily)</label>
+          <div class="prov-cred">
+            <input type="password" autocomplete="off" id="tavily-key" placeholder="Tavily API key" aria-label="Tavily API key">
+            <button class="btn small" id="tavily-save">Save key</button>
+            <button class="btn small danger" id="tavily-remove">Remove</button>
+          </div>
+          <div class="prov-test">
+            <button class="btn small" id="tavily-test">Test Search</button>
+            <span class="ptest-status" id="tavily-status" aria-live="polite"></span>
+          </div>
+        </div>
+      </details>
+    </div>
     </aside>
 
     <aside class="rail" id="rail" aria-label="Right rail guard">

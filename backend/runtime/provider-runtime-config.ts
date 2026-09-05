@@ -19,6 +19,17 @@ export interface ProviderRuntimeSettings {
   apiBase?: string;
   timeoutSeconds?: number;
   parallelism?: number;
+  /** Optional normalized inference parameter; omitted where unsupported. */
+  temperature?: number;
+}
+
+/** Non-secret configuration for OPTIONAL research tools (not model providers). */
+export interface ResearchToolsConfig {
+  tavily?: {
+    enabled?: boolean;
+    searchDepth?: "basic" | "advanced";
+    maxResults?: number;
+  };
 }
 
 export interface ProviderRuntimeConfig {
@@ -26,6 +37,8 @@ export interface ProviderRuntimeConfig {
   activeProvider: string;
   /** Per-provider non-secret settings. Keys are catalog provider IDs. */
   providers: Record<string, ProviderRuntimeSettings>;
+  /** Optional research-tool configuration (Tavily). Non-secret. */
+  researchTools?: ResearchToolsConfig;
   /** Monotonic revision counter for cache invalidation by the UI. */
   revision: number;
 }
@@ -141,6 +154,10 @@ export function assertNoForbiddenFields(
 }
 
 /** Validate the structural shape of a loaded runtime config (no secrets). */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function validateStructural(
   raw: unknown,
 ): ProviderRuntimeConfig | undefined {
@@ -176,8 +193,27 @@ function validateStructural(
         typeof o.timeoutSeconds === "number" ? o.timeoutSeconds : undefined,
       parallelism:
         typeof o.parallelism === "number" ? o.parallelism : undefined,
+      temperature:
+        typeof o.temperature === "number" ? o.temperature : undefined,
     };
     out.providers[id] = entry;
+  }
+
+  // Optional research-tool configuration (non-secret). Tavily enablement
+  // controls whether web evidence is collected; it never selects a model.
+  if (isRecord(r.researchTools) && isRecord(r.researchTools.tavily)) {
+    const t = r.researchTools.tavily as Record<string, unknown>;
+    out.researchTools = {
+      tavily: {
+        enabled: t.enabled === undefined ? undefined : Boolean(t.enabled),
+        searchDepth:
+          t.searchDepth === "basic" || t.searchDepth === "advanced"
+            ? t.searchDepth
+            : undefined,
+        maxResults:
+          typeof t.maxResults === "number" ? t.maxResults : undefined,
+      },
+    };
   }
 
   // Ensure the active provider exists, merging in defaults if absent.

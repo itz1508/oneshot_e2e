@@ -79,17 +79,50 @@ function clip(value: unknown): string {
   return typeof value === "string" ? value.slice(0, max) : "";
 }
 
+export interface TavilyCollectorOptions {
+  /** Explicit enablement — false disables collection entirely. */
+  enabled?: boolean;
+  /** BYOK key resolved server-side; overrides the environment variable. */
+  apiKey?: string;
+  searchDepth?: "basic" | "advanced";
+  maxResults?: number;
+}
+
 export class TavilyEvidenceCollector {
+  private runner: TavilyRunner;
+
   constructor(
     private projectRoot: string,
-    private runner: TavilyRunner = new TavilyPythonRunner(projectRoot),
-  ) {}
+    runner?: TavilyRunner,
+    private options: TavilyCollectorOptions = {},
+  ) {
+    // The default Python runner receives the BYOK key so the worker process
+    // gets it via its environment without mutating the server process env.
+    this.runner =
+      runner ??
+      new TavilyPythonRunner(projectRoot, undefined, options.apiKey);
+  }
+
+  /**
+   * Enablement precedence: explicit option (from runtime config / BYOK flow)
+   * wins; otherwise the historical environment-based mode applies.
+   */
+  private resolveMode(): TavilyMode {
+    if (this.options.enabled === false) return "off";
+    const configured = modeFromEnvironment();
+    if (this.options.enabled === true && configured === "off") {
+      return "search-extract";
+    }
+    return configured;
+  }
 
   async collect(prompt: Prompt): Promise<TavilyEvidence[]> {
-    const mode = modeFromEnvironment();
+    const mode = this.resolveMode();
     if (mode === "off") return [];
-    if (!(process.env.TAVILY_API_KEY || "").trim()) {
-      throw new Error(`TAVILY_API_KEY is required when ONESHOT_TAVILY_MODE=${mode}`);
+    const apiKey =
+      this.options.apiKey ?? (process.env.TAVILY_API_KEY || "").trim();
+    if (!apiKey) {
+      throw new Error(`Tavily API key is required when web research is enabled`);
     }
 
     const query = compactQuery(prompt);
@@ -119,12 +152,14 @@ export class TavilyEvidenceCollector {
     }
 
     const searchDepth =
-      (process.env.TAVILY_SEARCH_DEPTH || "advanced").trim() === "basic"
+      this.options.searchDepth ??
+      ((process.env.TAVILY_SEARCH_DEPTH || "advanced").trim() === "basic"
         ? "basic"
-        : "advanced";
+        : "advanced");
     const maxResults = Math.min(
       20,
-      positiveInt(process.env.TAVILY_MAX_RESULTS, 5),
+      this.options.maxResults ??
+        positiveInt(process.env.TAVILY_MAX_RESULTS, 5),
     );
     const search = await this.runner.run<SearchResponse>({
       op: "search",

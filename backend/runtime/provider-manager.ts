@@ -23,6 +23,7 @@ import type {
   ProviderCredential,
   ProviderSecretStore,
 } from "./provider-secret-store.js";
+import type { ResearchToolsConfig } from "./provider-runtime-config.js";
 import { LocalFileSecretStore } from "./provider-secret-store.js";
 import {
   DEFAULTS,
@@ -98,6 +99,8 @@ export interface ProviderStatus extends ProviderCatalogEntry {
   credentialSource: string;
   /** True when this catalog entry is configured (enabled). */
   configured: boolean;
+  /** Optional normalized inference parameter (non-secret). */
+  temperature?: number;
   /** True when this is the currently selected active provider. */
   active: boolean;
 }
@@ -252,6 +255,7 @@ export class ProviderManager {
       ...entry,
       active: this.runtimeState.activeProvider === id,
       configured: entry.enabled,
+      temperature: settings.temperature,
       credentialSource: source,
       credentialType: entry.credential.type,
       credential: {
@@ -305,6 +309,7 @@ export class ProviderManager {
   saveRuntimeConfigPatch(patch: {
     activeProvider?: string;
     providers?: Record<string, Partial<ProviderRuntimeSettings>>;
+    researchTools?: ResearchToolsConfig;
   }): ProviderRuntimeConfig {
     assertNoForbiddenFields(patch.providers ?? {});
     if (patch.activeProvider !== undefined && patch.activeProvider !== "") {
@@ -328,8 +333,22 @@ export class ProviderManager {
           apiBase: changes.apiBase ?? current.apiBase,
           timeoutSeconds: changes.timeoutSeconds ?? current.timeoutSeconds,
           parallelism: changes.parallelism ?? current.parallelism,
+          temperature: changes.temperature ?? current.temperature,
         };
       }
+    }
+    // Research-tool configuration is non-secret (Tavily enablement/params).
+    // Tavily is a research TOOL: enabling it never changes the model provider.
+    if (patch.researchTools) {
+      const tavily = patch.researchTools.tavily ?? {};
+      const current = this.runtimeState.researchTools?.tavily ?? {};
+      this.runtimeState.researchTools = {
+        tavily: {
+          enabled: tavily.enabled ?? current.enabled,
+          searchDepth: tavily.searchDepth ?? current.searchDepth,
+          maxResults: tavily.maxResults ?? current.maxResults,
+        },
+      };
     }
     this.bumpRevisionAndPersist();
     return this.runtimeState;
@@ -483,6 +502,38 @@ export class ProviderManager {
     return this.buildStatus(id);
   }
 
+  /**
+   * Research-TOOL credential boundary (Tavily). Deliberately separate from
+   * model providers: tools never appear in the ModelProvider registry, the
+   * provider catalog, queue payloads, or run snapshots. Write-only from the
+   * browser's perspective.
+   */
+  async setToolCredential(
+    toolId: string,
+    credential?: ProviderCredential,
+  ): Promise<void> {
+    if (toolId !== "tavily") {
+      throw new Error(`Unknown research tool: ${toolId}`);
+    }
+    if (credential) {
+      await this.secretStore.set(toolId, {
+        ...credential,
+        providerId: toolId,
+      });
+    } else {
+      await this.secretStore.delete(toolId);
+    }
+  }
+
+  async getToolCredential(
+    toolId: string,
+  ): Promise<ProviderCredential | undefined> {
+    if (toolId !== "tavily") {
+      throw new Error(`Unknown research tool: ${toolId}`);
+    }
+    return this.secretStore.get(toolId);
+  }
+
   async createProvider(
     projectRoot?: string,
     _events?: ProcessingEventBus,
@@ -497,24 +548,55 @@ export class ProviderManager {
     );
   }
 
-  async resolveForRun(providerId?: string): Promise<ResearchProvider> {
+  async resolveForRun(
+    providerId?: string,
+    modelOverride?: string,
+  ): Promise<ResearchProvider> {
     const requested = providerId || this.runtimeState.activeProvider || "sample";
     const id = this.resolveId(requested);
-    return this.constructProvider(id, this.options.projectRoot);
+    const toolCredentials = await this.resolveResearchToolCredentials();
+    return this.constructProvider(
+      id,
+      this.options.projectRoot,
+      undefined,
+      modelOverride,
+      toolCredentials,
+    );
+  }
+
+  /**
+   * Server-side resolution of OPTIONAL research-tool credentials (BYOK).
+   * Tavily is a research TOOL, not a model provider: its key never enters
+   * the ModelProvider registry, queue payloads, or run snapshots.
+   */
+  private async resolveResearchToolCredentials(): Promise<{
+    tavily?: { apiKey?: string };
+  }> {
+    const tavily = await this.secretStore.get("tavily");
+    return { tavily: { apiKey: tavily?.value } };
   }
 
   protected constructProvider(
     providerId: string,
     projectRoot: string,
     credentialValue?: string,
+    modelOverride?: string,
+    toolCredentials?: { tavily?: { apiKey?: string } },
   ): ResearchProvider {
     const entry = this.catalog.providers[providerId];
     if (!entry) throw new Error(`Unknown provider: ${providerId}`);
     // Provider-specific construction details live in the adapter registry.
+    // A captured modelOverride pins the queued run's model snapshot.
+    const settings = this.runtimeSettings(providerId);
     return createProviderAdapter(entry.adapter, {
       projectRoot,
-      settings: this.runtimeSettings(providerId),
+      settings:
+        modelOverride !== undefined
+          ? { ...settings, model: modelOverride }
+          : settings,
       credentialValue,
+      researchTools: this.runtimeState.researchTools,
+      toolCredentials,
       events: this.options.events,
     });
   }

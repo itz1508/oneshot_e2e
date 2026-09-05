@@ -42,7 +42,15 @@ export class TavilyPythonRunner implements TavilyRunner {
   constructor(
     private projectRoot: string,
     private python = resolvePythonExecutable(projectRoot),
+    /** BYOK key override — injected into the worker env without touching the
+     * server process environment. */
+    private apiKeyOverride?: string,
   ) {}
+
+  private redact(text: string): string {
+    const key = this.apiKeyOverride ?? (process.env.TAVILY_API_KEY || "").trim();
+    return key ? text.split(key).join("[REDACTED]") : text;
+  }
 
   async run<T>(request: TavilyRequest): Promise<T> {
     const script = resolve(
@@ -54,7 +62,12 @@ export class TavilyPythonRunner implements TavilyRunner {
     return await new Promise<T>((resolvePromise, reject) => {
       const child = spawn(this.python, [script], {
         cwd: this.projectRoot,
-        env: process.env,
+        env: {
+          ...process.env,
+          ...(this.apiKeyOverride
+            ? { TAVILY_API_KEY: this.apiKeyOverride }
+            : {}),
+        },
         stdio: ["pipe", "pipe", "pipe"],
       });
       let stdout = "";
@@ -95,7 +108,7 @@ export class TavilyPythonRunner implements TavilyRunner {
 
         if (code !== 0 || !envelope?.ok) {
           const detail = envelope?.error || stderr || stdout || `exit code ${code}`;
-          finish(new Error(redactSecret(`Tavily ${request.op} failed: ${detail}`)));
+          finish(new Error(this.redact(`Tavily ${request.op} failed: ${detail}`)));
           return;
         }
         finish(undefined, envelope.result as T);
@@ -105,3 +118,4 @@ export class TavilyPythonRunner implements TavilyRunner {
     });
   }
 }
+

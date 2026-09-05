@@ -19,6 +19,7 @@ import type { TaskManagement } from "../task/task-management.js";
 import { QUEUE_PREFIX, RUN_QUEUE_NAME, type RunQueue } from "../runtime/queue.js";
 import type { ProviderManager } from "../runtime/provider-manager.js";
 import type { ProviderRuntimeSettings } from "../runtime/provider-runtime-config.js";
+import type { ResearchToolsConfig } from "../runtime/provider-runtime-config.js";
 import type { ProviderCredential } from "../runtime/provider-secret-store.js";
 import { projectAdkGraph } from "../graph/adk-graph.js";
 import { projectAuthorityGraph } from "../graph/authority-graph.js";
@@ -742,6 +743,8 @@ export async function startHttpServer(
               providers: statuses,
               activeProvider: rc.activeProvider,
               revision: rc.revision ?? 0,
+              // Non-secret research-tool configuration (Tavily enablement).
+              researchTools: rc.researchTools ?? {},
             });
           } catch (e) {
             return json(res, 500, {
@@ -855,6 +858,10 @@ export async function startHttpServer(
                       Partial<ProviderRuntimeSettings>
                     >)
                   : undefined,
+              researchTools:
+                rcBody.researchTools && typeof rcBody.researchTools === "object"
+                  ? (rcBody.researchTools as ResearchToolsConfig)
+                  : undefined,
             });
             return json(res, 200, { runtime: updated });
           } catch (e) {
@@ -915,6 +922,113 @@ export async function startHttpServer(
             const msg = e instanceof Error ? e.message : String(e);
             return json(res, msg.includes("not found") ? 404 : 500, {
               error: msg,
+            });
+          }
+        }
+
+        // ------------------------------------------------------------------
+        // Advanced Research (Tavily) — a research TOOL, not a model provider.
+        // BYOK: the key is write-only, stored server-side under the "tavily"
+        // secret id, and never returned to the browser.
+        // ------------------------------------------------------------------
+        const tavilyCred = url.pathname.match(
+          /^\/api\/research\/tavily\/credential$/,
+        );
+        if (
+          tavilyCred &&
+          (req.method === "PUT" || req.method === "DELETE") &&
+          providerManager
+        ) {
+          try {
+            if (req.method === "PUT") {
+              const credBody = await body(req);
+              const value =
+                typeof credBody.value === "string" ? credBody.value : "";
+              if (!value.trim()) {
+                return json(res, 400, { error: "credential value required" });
+              }
+              await providerManager.setToolCredential("tavily", {
+                providerId: "tavily",
+                credentialType: "api_key",
+                value,
+                createdAt: new Date().toISOString(),
+              });
+            } else {
+              await providerManager.setToolCredential("tavily");
+            }
+            return json(res, 200, {
+              stored: req.method === "PUT",
+              provider: "tavily",
+            });
+          } catch (e) {
+            return json(res, 500, {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        // POST /api/research/tavily/test — Test Search with the submitted
+        // TRANSIENT BYOK key (probe-only, never persisted). Performs one real
+        // minimal Tavily search and normalizes the outcome.
+        if (
+          req.method === "POST" &&
+          url.pathname === "/api/research/tavily/test" &&
+          providerManager
+        ) {
+          try {
+            const testBody = await body(req);
+            const transientKey =
+              typeof testBody.value === "string" ? testBody.value : "";
+            const stored = await providerManager.getToolCredential("tavily");
+            const apiKey = transientKey || stored?.value || "";
+            if (!apiKey) {
+              return json(res, 200, {
+                ok: false,
+                provider: "tavily",
+                category: "PROVIDER_AUTH_FAILURE",
+                message: "Tavily API key is not configured",
+                detail: "submit a Tavily API key to test web research",
+                retryable: false,
+              });
+            }
+            const { TavilyEvidenceCollector } = await import(
+              "../role/researcher/tool/tavily/evidence.js"
+            );
+            const collector = new TavilyEvidenceCollector(
+              resolve(process.cwd()),
+              undefined,
+              { enabled: true, apiKey },
+            );
+            const evidence = await collector.collect({
+              prompt_id: "prompt:tavily-connection-test",
+              intent: "OneShot Tavily connection test",
+              requested_outcome: "Verify the Tavily credential with one minimal search",
+              context: [],
+              research_direction: ["connection test"],
+            });
+            return json(res, 200, {
+              ok: true,
+              provider: "tavily",
+              message: "live Tavily search probe verified",
+              detail: `collected ${evidence.length} evidence item(s); credential never persisted`,
+              retryable: false,
+            });
+          } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            const category = /api key|401|unauthorized|forbidden/i.test(message)
+              ? "PROVIDER_AUTH_FAILURE"
+              : /ENOTFOUND|ECONNREFUSED|ETIMEDOUT|timed out|network|fetch/i.test(
+                    message,
+                  )
+                ? "PROVIDER_NETWORK_FAILURE"
+                : "PROVIDER_INTERNAL_FAILURE";
+            return json(res, 200, {
+              ok: false,
+              provider: "tavily",
+              category,
+              message: "Tavily search probe failed",
+              detail: message.slice(0, 300),
+              retryable: category === "PROVIDER_NETWORK_FAILURE",
             });
           }
         }

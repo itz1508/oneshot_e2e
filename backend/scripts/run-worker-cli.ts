@@ -101,8 +101,10 @@ async function main() {
     runs,
     events,
     projectRoot,
-    resolveProvider: async (_providerId, ev, runId) =>
-      providerManager.createProvider(projectRoot, ev, runId),
+    resolveProvider: async (providerId, ev, runId, modelOverride) => {
+      // QUEUED snapshot semantics: use the captured provider id + model.
+      return providerManager.resolveForRun(providerId, modelOverride);
+    },
     createRuntime: async (provider) => {
       const bindDependencies = createDynamicDependencyFactory({
         projectRoot,
@@ -141,3 +143,4 @@ main().catch((err) => {
   console.error("run-worker failed:", err instanceof Error ? err.message : err);
   process.exit(1);
 });
+
