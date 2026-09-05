@@ -45,6 +45,17 @@ interface RunJobV1 {
     refusing to silently restart"), **never** restart from the beginning.
   - **fresh** → execute.
 
+**Phase 5 corrective retries** are a separate, bounded layer: a failed run is
+classified into a normalized category and given a recommendation. A retry may
+only occur after the retry-policy gate approves it (`backend/recovery/policy.ts`):
+- Provider **auth/model/config** failures → no automatic retry until the
+  credential/model/config is actually changed.
+- **Build/validation/sandbox** failures → retry only after a concrete correction
+  is applied.
+- **Network** failures → bounded backoff, retryability from the normalized
+  provider result.
+- Hard ceiling `MAX_RETRY_ATTEMPTS = 3` per failure cycle.
+
 ## 4. Worker deployment
 
 - **Stage A (current default)**: the HTTP server process hosts API + BullMQ `Queue`
@@ -188,6 +199,13 @@ run submitted → capture provider selection (job metadata, non-secret)
   the real `issue`/`actual`. Any `WorkflowRootCauseError` (provider or otherwise)
   preserves its real root cause; the generic "Run worker failure" message is used
   only for unexpected non-root-cause errors.
+- **Phase 5 recovery for provider failures**: when `queueDeps.recovery` is wired,
+  the failure is also routed through the recovery orchestrator **before** any
+  sandbox execution. The Phase 4A/4B normalized provider category maps into the
+  taxonomy (`PROVIDER_AUTH|MODEL|NETWORK|CONFIGURATION_FAILURE`) without
+  duplicates, evidence is collected (`provider` source only — no sandbox), and a
+  user-facing report is produced. Provider failures therefore stop before sandbox
+  and are never auto-retried without a corrective action or explicit retryability.
 
 ## 16. Provider changes while jobs are queued
 

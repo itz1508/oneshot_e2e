@@ -16,6 +16,14 @@ It persists append-only processing events with:
 - audit projection and canonical ordering checks
 - support events such as targeted HelpRequest metadata
 
+Failure/recovery stages are surfaced as real task stages with `PENDING |
+RUNNING | COMPLETED | FAILED | SKIPPED | COMPLETE` state — `FailureDetected`,
+`RootCauseAnalysis`, `ResearchEscalation`, `Recommendation`, `Retry`, in
+addition to the canonical `Builder`, `Sandbox`, and `Validation` stages. Once a
+run fails, the recovery snapshot that records the normalized category, evidence
+references, research escalations, and retry count is persisted on the run
+snapshot (`GET /api/runs/:id/recovery` and `/recovery/context`).
+
 All Task data remains outside `confirmed_package.core`.
 
 ## Google ADK Researcher graph
@@ -42,6 +50,8 @@ A second projection maps actual processors to authority, responsibility, Skill, 
 - `GET /api/runs/:run_id/task`
 - `GET /api/runs/:run_id/audit`
 - `GET /api/runs/:run_id/events`
+- `GET /api/runs/:run_id/recovery` (concise user-facing failure report)
+- `GET /api/runs/:run_id/recovery/context` (Run Context failure metadata)
 - `GET /api/graphs/adk`
 - `GET /api/runs/:run_id/adk-graph`
 - `GET /api/graphs/authority`

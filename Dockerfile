@@ -1,9 +1,8 @@
-# OneShot multi-stage runtime with Google ADK TypeScript workflow support
+# OneShot multi-stage runtime — failure-recovery workflow (Phase 5)
 FROM node:24.13.0-slim AS node-builder
 WORKDIR /app
 
-# Install root runtime + build dependencies. @google/adk is a registry package;
-# the old offline vendor directory does not contain its dependency closure.
+# Install root runtime + build dependencies
 COPY package*.json tsconfig.json ./
 COPY app/vendor ./app/vendor
 RUN npm install --ignore-scripts --no-audit --no-fund
@@ -35,22 +34,19 @@ RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 COPY app/requirements ./app/requirements
 RUN pip install --no-cache-dir -r app/requirements/base.txt
 
-# Runtime dependencies are required because the compiled backend imports
-# @google/adk at execution time.
+# Runtime dependencies
 COPY package*.json ./
 COPY --from=node-builder /app/node_modules ./node_modules
 
 # Copy compiled backend and Web IDE assets
 COPY --from=node-builder /app/dist ./dist
 COPY --from=node-builder /app/app/web/dist ./app/web/dist
-# Schema, Python validation package, reusable skills, and workflow live under backend/
+# Schema, Python validation package, reusable skills, recovery, and workflow live under backend/
 COPY backend ./backend
 # Deterministic fixture provider reads the canonical seed bundle at app/fixtures/
 COPY app/fixtures ./app/fixtures
 # Third-party and platform legal notices
 COPY app/legal ./app/legal
-COPY app/contract-registry.json ./app/contract-registry.json
-COPY docs/Project.Workflow.md ./docs/Project.Workflow.md
 COPY docs/license/LICENSE docs/license/NOTICE ./docs/license/
 
 # Python import roots: `validation` lives at backend/validation/python; `workspace_api` lives at app

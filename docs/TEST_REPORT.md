@@ -1,5 +1,7 @@
 # OneShot Production E2E 1.1.0 — Google ADK + Gemma 2 Integration Verification
 
+> **Historical artifact** — This report documents the v1.1.0 ADK + Gemma 2 integration verification (2026-09-04). The repository is now at **v1.4.0 (Phase 5 — failure-recovery workflow)** on branch `repair/runtime-provider-ui`. Current test counts: 46 Python, 170 backend TS (168 pass + 2 credential-gated skips), 31 web. For current verification see `docs/architecture/TEST_VERIFICATION.md`.
+
 ## Product result
 
 ```text

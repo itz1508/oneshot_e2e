@@ -44,6 +44,8 @@ Prompt_id
 Workflow operations: `PASSED | ROOT_CAUSE`.
 Validation operations: `VALID | NOT_VALID`.
 
+A run is only `DONE`/`PASSED` through the verified `Builder → Sandbox → Validation → Hash` chain. When the workflow fails it produces a `ROOT_CAUSE`, and the failure-recovery layer (Phase 5) classifies the failure into a normalized category, collects bounded evidence, determines a root cause, and emits an actionable recommendation. Recovery **never** marks a failed run `PASSED` — only the verified canonical chain can do that.
+
 ## External execution verification boundary
 
 The confirmed immutable package and its created hash may be handed to the external Builder/Sandbox boundary. Verification uses the same canonical comparable representation and direct equality:

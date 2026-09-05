@@ -1,23 +1,6 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: oneshot-postgres
-    environment:
-      POSTGRES_USER: oneshot
-      POSTGRES_PASSWORD: oneshot_local_dev
-      POSTGRES_DB: oneshot
-    ports:
-      - "5432:5432"
-    volumes:
-      - oneshot_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U oneshot"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   # BullMQ run-queue transport. OneShot degrades to inline run execution when
   # Redis is unreachable; point REDIS_URL here to enable queue-backed scheduling
   # and live queue progress.
@@ -60,7 +43,7 @@ services:
       # app will not fall back to inline execution).
       ONESHOT_QUEUE_REQUIRED: ${ONESHOT_QUEUE_REQUIRED:-false}
       # Provider credentials: pass at runtime — NEVER bake into the image.
-      #   env: FEATHERLESS_API_KEY / GOOGLE_APPLICATION_CREDENTIALS
+      #   env: FEATHERLESS_API_KEY / GEMINI_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY
       #   secret mount: ONESHOT_SECRETS_DIR=/secrets
       ONESHOT_SECRETS_DIR: ${ONESHOT_SECRETS_DIR:-}
     ports:
@@ -69,5 +52,4 @@ services:
       - ./.runtime:/app/.runtime
 
 volumes:
-  oneshot_postgres_data:
   oneshot_redis_data:

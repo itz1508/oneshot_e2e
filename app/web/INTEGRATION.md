@@ -11,6 +11,8 @@
 | Run snapshot/result/hash proof | `GET /api/runs/:id` |
 | Task stages/events | ordered/deduplicated `GET /api/runs/:id/events` SSE |
 | Researcher activity | exposed SSE `activity` only |
+| Failure report (main workspace) | `GET /api/runs/:id/recovery` — concise what/why/recommended-fix/status |
+| Run Context (failure metadata) | `GET /api/runs/:id/recovery/context` — category, evidence ids, retry count, research flag |
 | Run Context | context fields actually present in the run snapshot; no invented context endpoint |
 | Workspace tree/file | `/v1/workspace/*` |
 | Authentication | existing same-origin session or Bearer token; no invented auth route |

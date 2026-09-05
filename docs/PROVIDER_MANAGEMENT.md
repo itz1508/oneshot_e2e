@@ -132,6 +132,13 @@ Worker dequeues → ProviderManager.createProvider() → resolves credential ser
 - **Worker crash mid-workflow:** No auto-retry; partial execution detected and refused
 - **Server restart with Redis running:** Waiting jobs remain queued; worker resumes
 - **Browser disconnect:** Only SSE subscription cancelled; BullMQ job continues
+- **Phase 5 failure recovery:** a workflow/sandbox/build/validation/provider
+  failure is classified into a normalized `FailureCategory`, evidence is
+  collected, a root cause is analyzed, and an actionable recommendation is
+  produced (`backend/recovery/`). Provider/config failures are classified before
+  sandbox execution. Research escalation is bounded (≤1 per failure) and Tavily
+  remains optional. Retries are policy-gated and bounded — see
+  `docs/RUN_JOB_CONTRACT.md` §3.
 
 ## Never Do These Things
 

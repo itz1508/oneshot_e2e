@@ -104,6 +104,7 @@ oneshot/
 ├── backend/                  # TypeScript runtime & canonical workflow
 │   ├── graph/               # Canonical workflow graph & state machine
 │   ├── role/                # Role definitions (Researcher, Planner, Refactor, Evaluator)
+│   ├── recovery/            # Failure taxonomy, root cause, research escalation, retry policy
 │   ├── sandbox/             # Hardened process execution & boundary admission
 │   ├── schema/              # JSON Schema Draft 2020-12 contract authorities
 │   ├── server/              # HTTP server, SSE event streaming & security
