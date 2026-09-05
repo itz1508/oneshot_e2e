@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OneShot</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div class="app sidebar-off" id="app">
+  <canvas id="ambient-particles" class="ambient-particles" aria-hidden="true"></canvas>
+  <header class="topbar" id="topbar">
+    <button class="icon-btn" id="sidebar-toggle" aria-label="Toggle sidebar" aria-expanded="false">☰</button>
+    <b class="brand"><span class="brand-mark">1S</span><span>OneShot</span></b>
+    <div class="top-context"><strong>Workspace</strong><span id="runtime-label">Connecting</span></div>
+    <div class="top-actions">
+      <div id="readiness" data-testid="readiness" aria-label="Readiness">
+        <span id="ready-label">Connecting</span>
+        <span class="leds" aria-hidden="true"><i></i><i></i><i></i></span>
+        <button class="primary" id="generate" data-testid="generate-button" disabled>Generate</button>
+      </div>
+    </div>
+  </header>
+  <button class="top-handle" id="top-handle" aria-label="Collapse top bar" aria-expanded="true">⌃</button>
+
+  <div class="shell" id="shell">
+    <aside class="sidebar" id="sidebar" aria-label="Workspace navigation">
+      <div class="sidebar-normal" id="sidebar-normal">
+        <nav><button class="nav active" data-view="chat">Chat</button><button class="nav" data-view="work">Work</button></nav>
+        <h3>Workspace</h3>
+        <div id="workspace-state" class="workspace-state">Loading workspace…</div>
+        <div id="workspace-tree" data-testid="workspace-tree"></div>
+      </div>
+      <div class="sidebar-live" id="sidebar-live" hidden aria-label="Live run activity">
+        <div class="live-pane" id="live-action-pane">
+          <h3 class="live-title">Run Status</h3>
+          <div id="run-status-label" class="run-status">Waiting for run...</div>
+          <div id="processor-timeline" class="processor-timeline"></div>
+          <div class="live-divider-mini" id="action-divider"></div>
+          <div class="live-action-feed" id="live-action-feed">
+            <div class="live-rows" id="live-action"><div class="live-empty">Actions will appear when the run starts.</div></div>
+          </div>
+        </div>
+        <div class="live-divider" id="live-divider" role="separator" aria-orientation="horizontal" aria-label="Adjust live activity split"></div>
+        <div class="live-pane" id="live-files-pane">
+          <h3 class="live-title">Run Artifacts</h3>
+          <div class="live-rows" id="run-artifacts"><div class="live-empty">No artifacts reported yet.</div></div>
+        </div>
+      </div>
+    </aside>
+    <button class="side-handle" id="side-handle" aria-label="Open sidebar" aria-expanded="false">›</button>
+
+    <main class="workspace" id="workspace">
+      <section class="chat" id="chat" data-testid="chat-view" aria-live="polite">
+        <div class="welcome" id="welcome"><b>1S</b><h1>What should OneShot build?</h1><p>Describe the engineering outcome. Runtime responses appear here.</p></div>
+      </section>
+      <section class="work-view" id="work-view" data-testid="work-view" hidden>
+        <div class="work-empty" id="work-empty">A real run will appear here after Generate starts execution.</div>
+        <div id="work-content"></div>
+      </section>
+
+      <section class="operator" id="operator" data-testid="message-oneshot">
+        <header id="operator-handle">Message OneShot</header>
+        <textarea id="message" aria-label="Message OneShot" placeholder="Describe the engineering outcome, constraints, or verification target…"></textarea>
+        <footer><span>Enter to submit · Shift+Enter for a new line</span><button id="send">Send</button></footer>
+        <i data-resize="n"></i><i data-resize="s"></i><i data-resize="e"></i><i data-resize="w"></i>
+        <i data-resize="ne"></i><i data-resize="nw"></i><i data-resize="se"></i><i data-resize="sw"></i>
+      </section>
+    </main>
+
+    <aside class="drawer" id="tasks" data-testid="task-management" aria-label="Task Management">
+      <header><div><h2>Task Management</h2><p id="run-meta">Waiting for a real run</p></div><button data-close aria-label="Close Task Management">×</button></header>
+      <div class="drawer-body">
+        <details class="researcher role-group" id="researcher" data-testid="researcher-stage" data-role="Researcher">
+          <summary><span class="role-name">Researcher</span><em>PENDING</em></summary>
+          <div id="researcher-activity" data-testid="researcher-activity"></div>
+          <div class="role-tasks" data-role-tasks="Researcher" aria-label="Researcher tasks"></div>
+        </details>
+        <div id="stages"></div>
+        <div id="task-plan-extras"></div>
+        <section id="run-result" data-testid="run-result"></section>
+      </div>
+    </aside>
+
+    <aside class="drawer" id="context" data-testid="run-context" aria-label="Run Context">
+      <header><div><h2>Run Context</h2><p>Agent / runtime input · read only</p></div><button data-close aria-label="Close Run Context">×</button></header>
+      <div class="drawer-body"><pre id="context-value">No runtime context received.</pre></div>
+    </aside>
+
+    <aside class="drawer" id="providers-drawer" data-testid="provider-config" aria-label="Provider Configuration">
+      <header><div><h2>Provider Configuration</h2><p>Runtime providers · credentials stay server-side</p></div><button data-close aria-label="Close Provider Configuration">×</button></header>
+      <div class="drawer-body"><div id="providers" data-testid="provider-list"><div class="prov-empty">Loading providers…</div></div></div>
+    </aside>
+
+    <aside class="rail" id="rail" aria-label="Right rail guard">
+      <div class="rail-stack" id="rail-stack">
+        <button class="rail-btn" id="tasks-button" aria-label="Task Management" title="Task Management">☷</button>
+        <button class="rail-btn" id="context-button" aria-label="Run Context" title="Run Context">⌘</button>
+        <button class="rail-btn" id="providers-button" aria-label="Provider Configuration" title="Provider Configuration" aria-haspopup="dialog" aria-expanded="false">⚡</button>
+        <button class="rail-btn" id="settings-button" aria-label="Visual Settings" title="Visual Settings" aria-haspopup="dialog" aria-expanded="false">✦</button>
+      </div>
+      <i class="rail-status" id="rail-status" aria-label="Runtime status"></i>
+    </aside>
+  </div>
+</div>
+
+<div class="auth-overlay" id="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+  <form class="auth-card" id="auth-form">
+    <h2 id="auth-title">OneShot authentication required</h2>
+    <p>Enter the local OneShot access token. It is stored only for this browser tab.</p>
+    <input id="auth-token" type="password" autocomplete="off" placeholder="ONESHOT_API_TOKEN">
+    <div id="auth-error"></div>
+    <div class="auth-actions"><button type="button" id="auth-cancel">Cancel</button><button type="submit" class="primary">Authenticate</button></div>
+  </form>
+</div>
+<aside class="settings-popover" id="settings-popover" role="dialog" aria-label="Visual Settings" hidden></aside>
+<div id="toast" role="status" aria-live="polite"></div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+const t = await (await fetch("http://127.0.0.1:9222/json/list")).json();
+const p = t.find((x) => x.type === "page");
+const ws = new WebSocket(p.webSocketDebuggerUrl);
+await new Promise((ok, e) => { ws.onopen = ok; ws.onerror = e; });
+let id = 1; const pend = new Map();
+ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id && pend.has(d.id)) { pend.get(d.id)(d.result); pend.delete(d.id); } };
+const send = (method, params = {}) => new Promise((r) => { const i = id++; pend.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
+const ev = async (x) => (await send("Runtime.evaluate", { expression: x, returnByValue: true, awaitPromise: true })).result?.value;
+const info = await ev(`JSON.stringify({readyLabel:(document.getElementById('ready-label')?.textContent||''), genDisabled:document.getElementById('generate')?.disabled, msgs:[].slice.call(document.querySelectorAll('[data-testid^="chat-message-"]')).map(function(x){return {tid:x.dataset.testid||'',t:x.innerText.slice(0,60)}}), url:location.href, runId:(localStorage.getItem('oneshot.currentRunId')||'')})`);
+console.log("STATE=" + info);
+process.exit(0);

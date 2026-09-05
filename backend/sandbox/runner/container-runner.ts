@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import type { Plan } from "../../contract/types.js";
+import type { Plan } from "../../contracts/schema/types.js";
 import type { ExecutionAuthorization } from "../types.js";
 import type { RunnerExecutionResult, SandboxRunner } from "./runner.js";
 

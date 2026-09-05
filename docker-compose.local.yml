@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: oneshot-postgres
+    environment:
+      POSTGRES_USER: oneshot
+      POSTGRES_PASSWORD: oneshot_local_dev
+      POSTGRES_DB: oneshot
+    ports:
+      - "5432:5432"
+    volumes:
+      - oneshot_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oneshot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # BullMQ run-queue transport. OneShot degrades to inline run execution when
+  # Redis is unreachable; point REDIS_URL here to enable queue-backed scheduling
+  # and live queue progress.
+  redis:
+    image: redis:7-alpine
+    container_name: oneshot-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    # 6379 host mapping is LOCAL DEVELOPMENT ONLY and bound to loopback. Production
+    # MUST NOT expose Redis publicly — omit this `ports:` block so Redis stays
+    # internal to the compose network (the `oneshot` service reaches it at redis:6379).
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - oneshot_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # OneShot application. Depends on Redis being healthy before starting so the
+  # BullMQ run queue is ready when the first run is submitted. Provider
+  # credentials are NEVER baked into the image — pass them via env, Docker
+  # secrets, or a secret mount (ONESHOT_SECRETS_DIR; see Dockerfile).
+  oneshot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: oneshot:local
+    container_name: oneshot-app
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_URL: redis://redis:6379
+      ONESHOT_MODE: ${ONESHOT_MODE:-sample}
+      # Set ONESHOT_QUEUE_REQUIRED=true to require Redis-backed scheduling (the
+      # app will not fall back to inline execution).
+      ONESHOT_QUEUE_REQUIRED: ${ONESHOT_QUEUE_REQUIRED:-false}
+      # Provider credentials: pass at runtime — NEVER bake into the image.
+      #   env: FEATHERLESS_API_KEY / GOOGLE_APPLICATION_CREDENTIALS
+      #   secret mount: ONESHOT_SECRETS_DIR=/secrets
+      ONESHOT_SECRETS_DIR: ${ONESHOT_SECRETS_DIR:-}
+    ports:
+      - "8787:8787"
+    volumes:
+      - ./.runtime:/app/.runtime
+
+volumes:
+  oneshot_postgres_data:
+  oneshot_redis_data:

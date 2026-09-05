@@ -12,15 +12,29 @@ import { IntentCollectionService } from "./intent/intent-collection.js";
 import { PythonBridge } from "./validation/python-bridge.js";
 import { ValidationLanePool } from "./validation/validation-lane-pool.js";
 import { DeterministicValidationRuntime } from "./validation/deterministic-validation.js";
-import { CanonicalContractSkill } from "./skill/canonical-contract-skill.js";
-import { createSkillSystem } from "./skill/bootstrap.js";
+import { CanonicalContractSkill } from "./skills/canonical-contract-skill.js";
+import { createSkillSystem } from "./skills/bootstrap.js";
+import { ProviderManager } from "./runtime/provider-manager.js";
+import type { ResearchProvider } from "./role/researcher/provider.js";
 import { createDynamicDependencyFactory } from "./workflow/adk/dynamic-dependencies.js";
+import {
+  BullMQRunQueue,
+  RUN_QUEUE_NAME,
+  type RunQueueDeps,
+} from "./runtime/queue.js";
+import { ResearcherWorkflow } from "./role/researcher/workflow.js";
+import { PlannerWorkflow } from "./role/planner/workflow.js";
+import { RefactorWorkflow } from "./role/refactor/workflow.js";
+import { GapAnalysisWorkflow } from "./role/gap-analysis/workflow.js";
+import { EvaluationWorkflow } from "./role/evaluation/workflow.js";
+import { BuilderWorkflow } from "./role/builder/workflow.js";
 import { TripleValidationWorkflow } from "./workflow/triple-validation.js";
 import { WorkflowRuntime } from "./runtime/workflow-runtime.js";
 import { SandboxService } from "./sandbox/sandbox-service.js";
 import { HardenedProcessRunner } from "./sandbox/runner/process-runner.js";
 import { ContainerSandboxRunner } from "./sandbox/runner/container-runner.js";
 import { startHttpServer, type RuntimeInfo } from "./server/http-server.js";
+import { getRuntimePaths, ensureRuntimeDirectories } from "./runtime/runtime-config.js";
 
 // ---------------------------------------------------------------------------
 // Bootstrap
@@ -28,20 +42,24 @@ import { startHttpServer, type RuntimeInfo } from "./server/http-server.js";
 
 const projectRoot = process.env.ONESHOT_ROOT || process.cwd();
 
+// --- Runtime Directory Initialization ---
+const runtimePaths = getRuntimePaths(projectRoot);
+ensureRuntimeDirectories(runtimePaths);
+
 // --- Task Management infrastructure ---
 const taskEventStore = new AppendOnlyProcessingEventStore(
-  resolve(projectRoot, "data/task-events"),
+  runtimePaths.taskEvents,
 );
 const events = new ProcessingEventBus(taskEventStore);
-const runs = new RunRepository(resolve(projectRoot, "data/run-state"));
+const runs = new RunRepository(runtimePaths.runState);
 const task = new TaskManagement(
   taskEventStore,
-  new CheckpointStore(resolve(projectRoot, "data/checkpoints")),
+  new CheckpointStore(runtimePaths.checkpoints),
 );
 
 // --- Intent Collection infrastructure ---
 const intent = new IntentCollectionService(
-  new ConversationStore(resolve(projectRoot, "data/conversations")),
+  new ConversationStore(runtimePaths.conversations),
 );
 
 // --- Global event observer: wires events into run snapshots + task checkpoints ---
@@ -75,16 +93,18 @@ if (!(contracts instanceof CanonicalContractSkill)) {
 }
 await contracts.verifyStatic();
 
-// --- Runtime Info ---
-// Provider/model readiness is deliberately not claimed at bootstrap. Each job
-// resolves and probes its Researcher provider before ADK invokes Researcher.
+// --- Research Provider (web-managed selection via ProviderManager) ---
+const providerManager = new ProviderManager({
+  projectRoot,
+  events,
+  catalogPath: resolve(projectRoot, "backend/config/providers.json"),
+  runtimePaths: runtimePaths,
+});
+const provider = await providerManager.createProvider(projectRoot, events);
+
+// --- Runtime Info (mode + provider name for health endpoint / UI) ---
 const runtimeMode = (process.env.ONESHOT_MODE || "sample").toLowerCase();
-const providerName =
-  runtimeMode === "sample"
-    ? "fixture"
-    : (process.env.ONESHOT_RESEARCH_PROVIDER ||
-        (process.env.ONESHOT_RESEARCH_PROVIDER_MODULE ? "module" : "unconfigured"));
-const runtimeInfo: RuntimeInfo = { mode: runtimeMode, provider: providerName };
+const providerName = provider.constructor?.name || "UnknownProvider";
 
 // --- Deterministic Triple Validation ---
 const deterministic = new DeterministicValidationRuntime(validationLanes);
@@ -97,7 +117,7 @@ const sandbox = new SandboxService(
   process.env.ONESHOT_SANDBOX_RUNNER === "container"
     ? new ContainerSandboxRunner()
     : new HardenedProcessRunner(),
-  resolve(projectRoot, "data/sandbox-workspaces"),
+  runtimePaths.sandboxWorkspaces,
 );
 
 // --- Google ADK Dynamic Workflow Runtime ---
@@ -109,11 +129,12 @@ const bindDependencies = createDynamicDependencyFactory({
   contracts,
   sandbox,
   triple,
+  provider,
 });
 const runtime = new WorkflowRuntime(
   events,
   runs,
-  new FileArtifactStore(resolve(projectRoot, "data/runs")),
+  new FileArtifactStore(runtimePaths.runs),
   bindDependencies,
 );
 
@@ -125,8 +146,53 @@ await skills.activation.activate({ skill_id: "oneshot-intent-collection" }, runt
 await skills.activation.activate({ skill_id: "oneshot-sandbox-runtime" }, runtimeCtx);
 await skills.activation.activate({ skill_id: "oneshot-init" }, runtimeCtx);
 
+// --- BullMQ Run Queue + Worker (scheduling/execution lifecycle) ---
+// Provider binding is per-run inside the worker, immediately before the
+// canonical workflow executes. RunRepository remains the durable source of
+// truth; Redis/BullMQ only transports scheduling + live progress.
+const queueDeps: RunQueueDeps = {
+  runs,
+  events,
+  projectRoot,
+  resolveProvider: async (providerId: string, _ev: ProcessingEventBus, runId: string) => {
+    // Provider binding happens per run inside the worker, immediately before the
+    // canonical workflow consumes the provider. Use ProviderManager's
+    // resolveForRun to create the ResearchProvider from catalog entry.
+    return providerManager.resolveForRun(providerId);
+  },
+  createRuntime: async () =>
+    new WorkflowRuntime(
+      events,
+      runs,
+      new FileArtifactStore(runtimePaths.runs),
+      bindDependencies,
+    ),
+};
+const runQueue = new BullMQRunQueue(RUN_QUEUE_NAME, queueDeps, {
+  concurrency: Number(process.env.ONESHOT_RUN_CONCURRENCY || 1),
+});
+// Wait for Redis/Worker readiness before serving; degrade gracefully so local
+// development without Redis still works (inline fallback in the HTTP layer).
+let queueReady = true;
+try {
+  await runQueue.ready(Number(process.env.ONESHOT_QUEUE_READY_TIMEOUT || 8_000));
+} catch (err) {
+  queueReady = false;
+  const reason = err instanceof Error ? err.message : String(err);
+  console.warn(
+    `ONESHOT_QUEUE_REDIS_UNAVAILABLE (${reason}) — runs will execute inline in-process`,
+  );
+}
+
+// --- Runtime Info (mode + provider name for health endpoint / UI) ---
+const runtimeInfo: RuntimeInfo = {
+  mode: runtimeMode,
+  provider: providerName,
+  queue: queueReady,
+};
+
 // --- HTTP Server ---
-const webDistPath = resolve(projectRoot, "web/dist");
+const webDistPath = resolve(projectRoot, "app/web/dist");
 const uiRoot = existsSync(webDistPath) ? webDistPath : resolve(projectRoot, "ui");
 const workspaceRoot = resolve(
   process.env.ONESHOT_WORKSPACE_ROOT || projectRoot,
@@ -143,6 +209,9 @@ const server = await startHttpServer(
   sandbox,
   runtimeInfo,
   { workspaceRoot },
+  runQueue,
+  providerManager,
+  queueReady,
 );
 
 const address = server.address();
@@ -153,8 +222,11 @@ console.log(
 );
 
 // --- Graceful shutdown ---
-const shutdown = () => {
-  server.close(() => {
+const shutdown = async () => {
+  server.close(async () => {
+    try { await runQueue.close(); } catch { /* ignore */ }
+    provider.close?.();
+    providerManager.close();
     validationLanes.close();
     bridge.close();
     process.exit(0);

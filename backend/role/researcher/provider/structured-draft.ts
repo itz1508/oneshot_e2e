@@ -9,7 +9,7 @@ import type {
   ResearchBundle,
   Requirement,
   SuccessCriterion,
-} from "../../../contract/types.js";
+} from "../../../contracts/schema/types.js";
 import { WorkflowRootCauseError } from "../../../core/root-cause-error.js";
 import type { GatheredEvidence } from "../tool/evidence/collector.js";
 
@@ -224,7 +224,7 @@ export async function structuredDraftToResearchBundle(
   }));
 
   const canonicalSchema = JSON.parse(
-    await readFile(resolve(projectRoot, "schema/plan.schema.json"), "utf8"),
+    await readFile(resolve(projectRoot, "backend/schema/plan.schema.json"), "utf8"),
   ) as any;
   const schemaDocument = structuredClone(canonicalSchema);
   schemaDocument.$id = `urn:oneshot:research-schema:${runId}`;

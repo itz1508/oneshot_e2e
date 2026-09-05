@@ -11,7 +11,7 @@ import type {
   ProcessingEvent,
   ProcessingScope,
   RunSnapshot,
-} from "../../contract/types.js";
+} from "../../contracts/schema/types.js";
 import { CANONICAL_PROCESSORS } from "../guard/ordering.js";
 
 /** Persisted checkpoint — captures the last completed processor and what's next. */

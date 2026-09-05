@@ -2,7 +2,7 @@ import type {
   Plan,
   ResearchBundle,
   TripleValidation,
-} from "../../../contract/types.js";
+} from "../../../contracts/schema/types.js";
 import type { GapFinding } from "./coverage.js";
 
 export interface ValidationFeedback {

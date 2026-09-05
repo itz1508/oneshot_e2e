@@ -1,5 +1,5 @@
 import { node, type NodeContext } from "@google/adk";
-import type { Evaluation, Plan, ResearchBundle } from "../../../contract/types.js";
+import type { Evaluation, Plan, ResearchBundle } from "../../../contracts/schema/types.js";
 import { EvaluationRole } from "../../../role/evaluation/role.js";
 import type { EvaluationWorkflow } from "../../../role/evaluation/workflow.js";
 

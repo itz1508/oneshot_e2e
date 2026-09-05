@@ -5,10 +5,9 @@ import { GapAnalysisWorkflow } from "../../role/gap-analysis/workflow.js";
 import { PlannerWorkflow } from "../../role/planner/workflow.js";
 import { RefactorWorkflow } from "../../role/refactor/workflow.js";
 import type { ResearchProvider } from "../../role/researcher/provider.js";
-import { resolveResearchProvider } from "../../role/researcher/provider-resolver.js";
 import { ResearcherWorkflow } from "../../role/researcher/workflow.js";
 import type { SandboxService } from "../../sandbox/sandbox-service.js";
-import type { CanonicalContractSkill } from "../../skill/canonical-contract-skill.js";
+import type { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";
 import type { ProcessingEventBus } from "../../runtime/event-bus.js";
 import { ConfirmationWorkflow } from "../confirmation.js";
 import { HashWorkflow } from "../hash.js";
@@ -21,6 +20,7 @@ export interface DynamicDependencyFactoryInput {
   contracts: CanonicalContractSkill;
   sandbox: SandboxService;
   triple: TripleValidationWorkflow;
+  provider: ResearchProvider;
   confirmation?: ConfirmationWorkflow;
   hash?: HashWorkflow;
 }
@@ -45,7 +45,7 @@ export function createDynamicDependencyFactory(input: DynamicDependencyFactoryIn
 
     let provider: ResearchProvider | undefined;
     try {
-      provider = await resolveResearchProvider(input.projectRoot, input.events);
+      provider = input.provider;
       const readiness = await provider.ready(runId);
       if (!readiness.ready) {
         throw new WorkflowRootCauseError({

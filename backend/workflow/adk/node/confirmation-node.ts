@@ -7,7 +7,7 @@ import type {
   Plan,
   ResearchBundle,
   TripleValidation,
-} from "../../../contract/types.js";
+} from "../../../contracts/schema/types.js";
 import type { ConfirmationWorkflow } from "../../confirmation.js";
 
 export interface ConfirmationNodeInput {

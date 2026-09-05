@@ -4,7 +4,7 @@ import type {
   Prompt,
   RootCause,
   RunSnapshot,
-} from "../contract/types.js";
+} from "../contracts/schema/types.js";
 import { WorkflowInformationRequiredError } from "../core/information-required-error.js";
 import { WorkflowRootCauseError } from "../core/root-cause-error.js";
 import type { HelpRequest } from "../intent/types.js";

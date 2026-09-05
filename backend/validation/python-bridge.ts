@@ -5,7 +5,11 @@ import { resolvePythonExecutable } from "../python-runtime.js";
 const projectRoot = process.env.ONESHOT_ROOT || process.cwd();
 
 function pythonPath(): string {
-  const parts = [projectRoot, resolve(projectRoot, ".venv/Lib/site-packages")];
+  const parts = [
+    projectRoot,
+    resolve(projectRoot, "backend/validation/python"),
+    resolve(projectRoot, ".venv/Lib/site-packages"),
+  ];
   if (process.env.PYTHONPATH) parts.push(process.env.PYTHONPATH);
   return parts.filter(Boolean).join(delimiter);
 }

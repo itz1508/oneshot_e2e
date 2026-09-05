@@ -6,7 +6,7 @@ import type {
   ResearchBundle,
   SchemaValidationResult,
   TripleValidation,
-} from "../../../contract/types.js";
+} from "../../../contracts/schema/types.js";
 import type { TripleValidationWorkflow } from "../../triple-validation.js";
 
 export interface TripleValidationNodeInput {

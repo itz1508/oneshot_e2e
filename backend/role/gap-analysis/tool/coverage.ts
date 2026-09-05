@@ -1,4 +1,4 @@
-import type { Plan, ResearchBundle } from "../../../contract/types.js";
+import type { Plan, ResearchBundle } from "../../../contracts/schema/types.js";
 
 export interface GapFinding {
   key:string;
@@ -8,7 +8,6 @@ export interface GapFinding {
   evidence_ids?:string[];
   source?:"coverage"|"validation";
 }
-
 export function detectGaps(bundle:ResearchBundle,plan:Plan):GapFinding[]{
   const out:GapFinding[]=[];const target=plan.steps[0]?.step_id;
   const req=new Set(plan.steps.flatMap(s=>s.requirement_refs));for(const r of plan.requirements)if(!req.has(r.requirement_id))out.push({key:`requirement:${r.requirement_id}`,affected_branch:"requirement",ref_id:r.requirement_id,target_step_id:target,source:"coverage"});

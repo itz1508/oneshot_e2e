@@ -1,4 +1,4 @@
-import type { Evaluation, Plan, ResearchBundle } from "../../../contract/types.js";
+import type { Evaluation, Plan, ResearchBundle } from "../../../contracts/schema/types.js";
 import { detectGaps } from "../../gap-analysis/tool/coverage.js";
 export const EVALUATION_AREAS=["research alignment","requirement coverage","dependency coherence","plan coherence","goal traceability","success-criteria traceability","fixture traceability","schema traceability","execution meaning"] as const;
 export function evaluatePlan(bundle:ResearchBundle,plan:Plan):Evaluation{

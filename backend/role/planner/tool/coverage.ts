@@ -1,4 +1,4 @@
-import type { AuditFinding, ResearchBundle } from "../../../contract/types.js";
+import type { AuditFinding, ResearchBundle } from "../../../contracts/schema/types.js";
 export const PLANNER_REVIEW_AREAS=["evidence sufficiency","file or subject coverage","requirement coverage","dependency coverage","goal clarity","success criteria","fixture usability","schema applicability","validation traceability","plan structure","unresolved findings"] as const;
 const evidenceIds=(b:ResearchBundle)=>b.researcher.evidence.map(e=>e.evidence_id);
 const firstStep=(b:ResearchBundle)=>b.plan.steps[0]?.step_id;

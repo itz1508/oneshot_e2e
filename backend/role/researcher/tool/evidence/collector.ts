@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
-import type { Prompt } from "../../../../contract/types.js";
+import type { Prompt } from "../../../../contracts/schema/types.js";
 import { TavilyEvidenceCollector } from "../tavily/evidence.js";
 
 export interface GatheredEvidence {

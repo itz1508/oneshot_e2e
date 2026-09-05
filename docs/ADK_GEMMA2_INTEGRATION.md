@@ -40,7 +40,7 @@ cache               Redis localhost:6379/0
 cache TTL           3600 seconds
 ```
 
-`OLLAMA_CONTEXT_LENGTH=8192`, `OLLAMA_KEEP_ALIVE=5m`, and `OLLAMA_NUM_PARALLEL=2` are supplied in `config/local-ai.env.example` and the Docker Compose profile.
+`OLLAMA_CONTEXT_LENGTH=8192`, `OLLAMA_KEEP_ALIVE=5m`, and `OLLAMA_NUM_PARALLEL=2` are supplied in `app/env/local-ai.env.example` and the Docker Compose profile.
 
 ## Cache boundary
 
@@ -63,25 +63,25 @@ If Redis is unavailable, the provider worker uses an in-process TTL cache with t
 Base deterministic runtime:
 
 ```bash
-python scripts/bootstrap.py
+python app/scripts/bootstrap.py
 ```
 
 ADK provider dependencies:
 
 ```bash
-python scripts/bootstrap.py --with-adk
+python app/scripts/bootstrap.py --with-adk
 ```
 
-The ADK-specific pins are in `requirements-adk.txt`.
+The ADK-specific pins are in `app/requirements/adk.txt`.
 
 ## Local services
 
 ```bash
-docker compose -f deploy/docker/docker-compose.local-ai.yml up -d
+docker compose -f app/deploy/docker/docker-compose.local-ai.yml up -d
 ollama pull gemma2:9b
 ```
 
-Then load `config/local-ai.env.example` into the environment and start OneShot.
+Then load `app/env/local-ai.env.example` into the environment and start OneShot.
 
 ```bash
 npm start
@@ -90,15 +90,15 @@ npm start
 ## Live provider checks
 
 ```bash
-python scripts/verify_adk_live.py
-python scripts/ollama_preflight.py
+python scripts/e2e/scripts/verify_adk_live.py
+python backend/scripts/ollama_preflight.py
 ```
 
 `verify_adk_live.py` verifies exact ADK dependency availability, Ollama/model reachability, then starts the real OneShot production HTTP caller with fixture bypass disabled. It executes Google ADK → LiteLLM → Ollama → Gemma inference and requires evidence provenance, dependency edges, non-trivial fixtures, Triple Validation, hash equality, and `DONE PASSED`.
 
 `GEMMA2_TIMEOUT_SECONDS` bounds the complete ADK inference operation through `asyncio.wait_for`. Expiry is returned through the normal provider boundary and becomes workflow `ROOT_CAUSE`.
 
-When `ONESHOT_RESEARCH_PROVIDER=adk_gemma2`, `scripts/verify_dependencies.py` validates every exact pin in both `requirements.txt` and `requirements-adk.txt`.
+When `ONESHOT_RESEARCH_PROVIDER=adk_gemma2`, `app/scripts/verify_dependencies.py` validates every exact pin in both `app/requirements/base.txt` and `app/requirements/adk.txt`.
 
 ## HTTP boundary hardening
 

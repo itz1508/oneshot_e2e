@@ -1,0 +1,32 @@
+REBUILD LEDGER - Minimal Backend Foundation
+============================================
+
+CANONICAL SOURCES:
+  - schema/plan.schema.json: plan_id, requirements, steps
+  - schema/triple-validation.schema.json: all_valid, plan_id, schema_validation, fixture_validation, goal_validation
+  - schema/goal-validation.schema.json: plan_id, goal_id, criterion_results, result
+  - schema/fixture-validation.schema.json: plan_id, fixture_id, assertion_results, result
+  - schema/schema-validation.schema.json: plan_id, schema_id, result, evidence
+  - schema/common.schema.json: validation_result (VALID/NOT_VALID), evidence_ref, root_cause, workflow_result (PASSED/ROOT_CAUSE)
+  - Schema workflow: Prompt → Researcher → Planner → Refactor → Gap Analysis → Evaluation → Triple Validation → CONFIRMED → Builder → Hash → DONE
+
+RESPONSIBILITY: Minimal backend foundation for HTTP server, runtime/run management, canonical contracts, event/state handling, workflow orchestration, artifact persistence, Provider boundary, validation, hash verification
+
+CANONICAL_INPUT:
+  - Prompt text from HTTP request
+  - Plan ID from request or workflow context
+  - Provider configuration (researcher provider)
+
+CANONICAL_OUTPUT:
+  - Run state with events
+  - Terminal result (DONE or ROOT_CAUSE)
+  - Artifacts and hash
+  - HTTP response
+
+OWNER: Backend foundation module (new implementation)
+
+REQUIRED_TEST:
+  - SUCCESS workflow fixture: Researcher→Planner→Refactor→GapAnalysis→Evaluation→TripleValidation→CONFIRMED→Builder→Hash→DONE
+  - TRIPLE VALIDATION STOP FIXTURE: Mismatched plan_id → TripleValidation NOT_VALID → ROOT_CAUSE → stop (no Builder, no hash, no Done)
+  - EVENT SEQUENCE FIXTURE: Coherent monotonic event sequence, no overlap/leakage
+  - CONTRACT validation: All artifacts use canonical IDs matching schema requirements

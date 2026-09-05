@@ -1,5 +1,5 @@
 import { node, type NodeContext } from "@google/adk";
-import type { ConfirmedPackage, HashProof } from "../../../contract/types.js";
+import type { ConfirmedPackage, HashProof } from "../../../contracts/schema/types.js";
 import type { HashWorkflow } from "../../hash.js";
 
 export interface CreateHashNodeInput {

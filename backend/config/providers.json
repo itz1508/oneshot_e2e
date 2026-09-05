@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "providers": {
+    "sample": {
+      "label": "OneShot Sample",
+      "type": "fixture",
+      "credentialType": "none"
+    },
+    "featherless": {
+      "label": "Featherless AI",
+      "type": "featherless",
+      "credentialType": "api_key",
+      "credentialEnv": "FEATHERLESS_API_KEY"
+    },
+    "adk_gemma2": {
+      "label": "Google ADK / Gemma",
+      "type": "adk_gemma2",
+      "credentialType": "api_key"
+    }
+  }
+}

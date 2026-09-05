@@ -1,12 +1,12 @@
-import type { Prompt, ResearchBundle } from "../../contract/types.js";
+import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";
 import { researcherTools } from "./tool/registry.js";
 import type { ResearchProvider } from "./provider.js";
-import { CanonicalContractSkill } from "../../skill/canonical-contract-skill.js";
+import { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";
 import { ResearcherRole } from "./role.js";
 
 export class ResearcherWorkflow {
   readonly role = ResearcherRole;
-  private tools;
+  private tools: ReturnType<typeof researcherTools>;
   constructor(provider: ResearchProvider, private contracts: CanonicalContractSkill) {
     this.tools = researcherTools(provider);
   }

@@ -1,4 +1,4 @@
-import type { Prompt } from "../../../../contract/types.js";
+import type { Prompt } from "../../../../contracts/schema/types.js";
 import {
   TavilyPythonRunner,
   type TavilyRunner,

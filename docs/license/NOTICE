@@ -1,0 +1,36 @@
+OneShot E2E
+Copyright 2026 OneShot Authors. All rights reserved.
+
+OneShot-owned source code and materials are licensed under the Apache License,
+Version 2.0 (Apache-2.0), as set out in the repository root LICENSE file.
+OneShot-owned material is not licensed under any third-party license.
+
+========================================================================
+Third-Party Software Notice
+========================================================================
+
+Third-party software remains governed by its own upstream license terms.
+Those licenses do not apply to OneShot-owned material.
+
+1. Google ADK for TypeScript (@google/adk)
+   - Copyright Google LLC
+   - Licensed under the Apache License, Version 2.0
+   - Used by OneShot workflow orchestration.
+   - License copy:
+     app/legal/third-party/Google-ADK-Apache-2.0.txt
+
+2. Google ADK research-provider dependencies
+   - Used by the isolated researcher provider adapter under
+     backend/role/researcher/provider/adk-gemma2/
+   - Governed by their respective upstream licenses.
+   - Manifest: app/requirements/adk.txt
+
+3. LiteLLM (litellm)
+   - Copyright (c) BerriAI
+   - Governed by its applicable upstream license.
+   - Manifest: app/requirements/adk.txt
+
+4. Redis Client (redis-py)
+   - Copyright (c) Redis Ltd.
+   - Governed by its applicable upstream license.
+   - Manifest: app/requirements/adk.txt

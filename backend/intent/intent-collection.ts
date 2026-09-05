@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { RootCause } from "../contract/types.js";
+import type { Prompt, RootCause } from "../contracts/schema/types.js";
 import type {
   ConversationSnapshot,
   ConversationTurn,

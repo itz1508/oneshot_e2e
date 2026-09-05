@@ -1,6 +1,6 @@
 import { node, type NodeContext } from "@google/adk";
 
-import type { Audit, ResearchBundle } from "../../../contract/types.js";
+import type { Audit, ResearchBundle } from "../../../contracts/schema/types.js";
 import { PlannerRole } from "../../../role/planner/role.js";
 import type { PlannerWorkflow } from "../../../role/planner/workflow.js";
 

@@ -1,5 +1,5 @@
 import { node, type NodeContext } from "@google/adk";
-import type { ConfirmedPackage } from "../../../contract/types.js";
+import type { ConfirmedPackage } from "../../../contracts/schema/types.js";
 import { BuilderRole } from "../../../role/builder/role.js";
 import type { BuilderWorkflow } from "../../../role/builder/workflow.js";
 import type { SandboxExecutionResult } from "../../../sandbox/types.js";

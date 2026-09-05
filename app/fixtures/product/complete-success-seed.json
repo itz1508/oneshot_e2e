@@ -1,0 +1,168 @@
+{
+  "prompt": {
+    "prompt_id": "prompt:seed",
+    "intent": "Run canonical success sample",
+    "requested_outcome": "Execute the complete canonical workflow through DONE",
+    "context": [
+      {
+        "context_id": "ctx:seed",
+        "statement": "Canonical success fixture"
+      }
+    ],
+    "research_direction": [
+      "contracts",
+      "proof"
+    ]
+  },
+  "researcher": {
+    "researcher_id": "researcher:seed",
+    "prompt_id": "prompt:seed",
+    "plan_id": "plan:seed",
+    "schema_id": "schema:seed",
+    "fixture_id": "fixture:seed",
+    "goal_id": "goal:seed",
+    "validation_id": "validation:seed",
+    "requirement_ids": [
+      "req:seed"
+    ],
+    "evidence": [
+      {
+        "evidence_id": "evidence:seed",
+        "source": "canonical-success-fixture",
+        "statement": "The plan must preserve canonical workflow traceability.",
+        "provenance": "app/fixtures/product/complete-success-seed.json"
+      }
+    ],
+    "success_definition": {
+      "success_criteria_ids": [
+        "criterion:seed"
+      ],
+      "success_meaning": "The real backend chain reaches DONE with reproducible proof.",
+      "evidence_ids": [
+        "evidence:seed"
+      ]
+    }
+  },
+  "plan": {
+    "plan_id": "plan:seed",
+    "researcher_id": "researcher:seed",
+    "requirements": [
+      {
+        "requirement_id": "req:seed",
+        "statement": "Preserve canonical workflow traceability",
+        "evidence_ids": [
+          "evidence:seed"
+        ]
+      }
+    ],
+    "dependencies": [],
+    "steps": [
+      {
+        "step_id": "step:seed",
+        "description": "Execute canonical proof chain",
+        "responsibility": "CanonicalProof",
+        "depends_on": [],
+        "requirement_refs": [
+          "req:seed"
+        ],
+        "goal_refs": [
+          "criterion:seed"
+        ],
+        "fixture_refs": [
+          "assertion:seed"
+        ],
+        "schema_refs": [
+          "schema:seed"
+        ]
+      }
+    ],
+    "revision": 1,
+    "revision_evidence": []
+  },
+  "schema_artifact": {
+    "schema_id": "schema:seed",
+    "researcher_id": "researcher:seed",
+    "evidence_ids": [
+      "evidence:seed"
+    ],
+    "schema_document": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "required": [
+        "plan_id",
+        "researcher_id",
+        "requirements",
+        "dependencies",
+        "steps",
+        "revision",
+        "revision_evidence"
+      ],
+      "properties": {
+        "plan_id": {
+          "const": "plan:seed"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "target": "plan"
+  },
+  "fixture": {
+    "fixture_id": "fixture:seed",
+    "researcher_id": "researcher:seed",
+    "plan_assertions": [
+      {
+        "assertion_id": "assertion:seed",
+        "operator": "equals",
+        "target": "$.plan_id",
+        "expected": "plan:seed",
+        "evidence_ids": [
+          "evidence:seed"
+        ]
+      }
+    ]
+  },
+  "goal": {
+    "goal_id": "goal:seed",
+    "researcher_id": "researcher:seed",
+    "objective": "Complete canonical backend workflow",
+    "success_meaning": "All canonical responsibilities execute with deterministic proof.",
+    "success_criteria": [
+      {
+        "criterion_id": "criterion:seed",
+        "statement": "Plan maps researched requirement into a responsibility",
+        "measurement": "Criterion occurs in plan goal_refs",
+        "expected_result": "at least one mapped plan step",
+        "evidence_ids": [
+          "evidence:seed"
+        ]
+      }
+    ]
+  },
+  "validation": {
+    "validation_id": "validation:seed",
+    "researcher_id": "researcher:seed",
+    "plan_id": "plan:seed",
+    "schema_validation": {
+      "schema_id": "schema:seed",
+      "plan_id": "plan:seed"
+    },
+    "fixture_validation": {
+      "fixture_id": "fixture:seed",
+      "assertion_ids": [
+        "assertion:seed"
+      ],
+      "plan_id": "plan:seed"
+    },
+    "goal_validation": {
+      "goal_id": "goal:seed",
+      "criterion_ids": [
+        "criterion:seed"
+      ],
+      "plan_id": "plan:seed"
+    }
+  }
+}

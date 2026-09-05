@@ -8,7 +8,7 @@ import type { ResearchProvider } from "../role/researcher/provider.js";
 import { resolveResearchProvider } from "../role/researcher/provider-resolver.js";
 import { ResearcherWorkflow } from "../role/researcher/workflow.js";
 import type { SandboxService } from "../sandbox/sandbox-service.js";
-import type { CanonicalContractSkill } from "../skill/canonical-contract-skill.js";
+import type { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 import type { ProcessingEventBus } from "../runtime/event-bus.js";
 import { RolePipeline } from "./role-pipeline.js";
 

@@ -1,4 +1,4 @@
-import type { ProcessingEvent, RunSnapshot } from "../contract/types.js";
+import type { ProcessingEvent, RunSnapshot } from "../contracts/schema/types.js";
 import { AppendOnlyProcessingEventStore } from "./event/event-store.js";
 import { CheckpointStore } from "./checkpoint/checkpoint-store.js";
 import { projectTaskRun } from "./projection/run-projection.js";

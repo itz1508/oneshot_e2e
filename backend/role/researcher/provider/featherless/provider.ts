@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import type { Prompt, ResearchBundle } from "../../../../contract/types.js";
+import type { Prompt, ResearchBundle } from "../../../../contracts/schema/types.js";
 import { WorkflowRootCauseError } from "../../../../core/root-cause-error.js";
 import type { ProcessingEventBus } from "../../../../runtime/event-bus.js";
 import type {
@@ -124,7 +124,7 @@ export class FeatherlessResearchProvider implements ResearchProvider {
         actual: error instanceof Error ? error.message : String(error),
         evidence_ids: [],
         required_correction:
-          "Set FEATHERLESS_API_KEY, install requirements-featherless.txt, and correct the provider or model response",
+          "Set FEATHERLESS_API_KEY, install requirements/featherless.txt, and correct the provider or model response",
         recheck_target: runId,
       });
     }

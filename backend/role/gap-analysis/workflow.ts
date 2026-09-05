@@ -4,10 +4,10 @@ import type {
   ResearchBundle,
   ResolvedGap,
   RootCause,
-} from "../../contract/types.js";
+} from "../../contracts/schema/types.js";
 import { clone, unique } from "../../core/clone.js";
 import { detectGaps, type GapFinding } from "./tool/coverage.js";
-import { CanonicalContractSkill } from "../../skill/canonical-contract-skill.js";
+import { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";
 
 export interface GapFixResult {
   plan: Plan;

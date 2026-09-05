@@ -1,3 +1,3 @@
-import type { Audit, ConfirmedPackage, Evaluation, GapAnalysis, Plan, ResearchBundle, TripleValidation } from "../contract/types.js";
-import { CanonicalContractSkill } from "../skill/canonical-contract-skill.js";
+import type { Audit, ConfirmedPackage, Evaluation, GapAnalysis, Plan, ResearchBundle, TripleValidation } from "../contracts/schema/types.js";
+import { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 export class ConfirmationWorkflow { constructor(private contracts:CanonicalContractSkill){} async run(bundle:ResearchBundle,plan:Plan,audit:Audit,gap:GapAnalysis,evaluation:Evaluation,triple:TripleValidation):Promise<ConfirmedPackage>{if(!triple.all_valid)throw new Error("Triple Validation is not all VALID");const confirmed:ConfirmedPackage={confirmed:true,core:{researcher:bundle.researcher,plan,schema_artifact:bundle.schema_artifact,fixture:bundle.fixture,goal:bundle.goal,validation:bundle.validation,audit,gap_analysis:gap,evaluation,triple_validation:triple}};await this.contracts.validate("urn:oneshot:schema:confirmed-package:1",confirmed);await this.contracts.validateReferences(confirmed.core);return confirmed;} }

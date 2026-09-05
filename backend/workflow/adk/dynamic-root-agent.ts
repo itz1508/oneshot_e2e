@@ -11,7 +11,7 @@ import type {
   ResearchBundle,
   RootCause,
   TripleValidation,
-} from "../../contract/types.js";
+} from "../../contracts/schema/types.js";
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
 import { validationFeedback } from "../../role/gap-analysis/tool/validation-feedback.js";
 import type { BuilderWorkflow } from "../../role/builder/workflow.js";
