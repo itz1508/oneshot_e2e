@@ -5,7 +5,7 @@
  * the Task Management drawer. Raw payloads live here, never in the chat.
  * Ported from ui-e2e-observability e98a8fd (WorkflowTracePanel.tsx).
  */
-import { workflowTraceStore } from '/workflow-trace.js';
+import { workflowTraceStore } from './workflow-trace.js';
 
 function escapeText(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({

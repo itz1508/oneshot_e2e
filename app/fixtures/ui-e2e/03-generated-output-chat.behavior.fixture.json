@@ -1,0 +1,16 @@
+{
+  "classification": "UI_E2E_BEHAVIOR_FIXTURE",
+  "rules": {"canonical_workflow_only": true, "no_ad_hoc_execution": true, "no_chain_of_thought": true, "no_hardcoded_runtime_values": true, "no_fake_progress": true, "no_artificial_delays": true, "status_is_not_evidence": true, "runtime_values_are_authoritative": true},
+  "fixture_id": "ui-behavior:generated-output-chat",
+  "name": "Generated provider output rendered in chat",
+  "purpose": "Verify that the actual generated build/provider output is shown directly in the main localhost chat when canonical execution completes.",
+  "output_source": {"source": "canonical_builder_or_persisted_run_artifact", "content": "actual_runtime_generated_output", "format": "runtime_defined", "must_not_use": ["prewritten_markdown_file_as_primary_result", "fixture_embedded_expected_output", "frontend_generated_substitute"]},
+  "assertions": [
+    {"id": "output-001", "assert": "actual_generated_output_present_in_chat", "expected": true},
+    {"id": "output-002", "assert": "output_matches_persisted_runtime_artifact_or_builder_result", "expected": true},
+    {"id": "output-003", "assert": "judge_must_open_separate_md_file_to_see_primary_result", "expected": false},
+    {"id": "output-004", "assert": "frontend_fabricates_or_rewrites_provider_output", "expected": false},
+    {"id": "output-005", "assert": "output_is_copyable_after_completion", "expected": true}
+  ],
+  "failure_conditions": ["Terminal chat shows only a success summary and omits the generated output.", "Displayed output differs from the persisted canonical result.", "Primary result exists only as a file the judge must manually open."]
+}

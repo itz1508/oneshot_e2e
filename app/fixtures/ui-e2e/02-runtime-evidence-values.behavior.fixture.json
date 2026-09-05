@@ -1,0 +1,17 @@
+{
+  "classification": "UI_E2E_BEHAVIOR_FIXTURE",
+  "rules": {"canonical_workflow_only": true, "no_ad_hoc_execution": true, "no_chain_of_thought": true, "no_hardcoded_runtime_values": true, "no_fake_progress": true, "no_artificial_delays": true, "status_is_not_evidence": true, "runtime_values_are_authoritative": true},
+  "fixture_id": "ui-behavior:runtime-evidence-values",
+  "name": "Concrete runtime evidence values",
+  "purpose": "Verify that statuses such as PASSED or VALID are accompanied by the actual supporting values exposed by runtime artifacts/events.",
+  "value_resolution": {"ids": "actual_runtime_value", "provider": "actual_runtime_value", "model": "actual_runtime_value", "counts": "actual_runtime_value", "artifact_ids": "actual_runtime_value", "validation_details": "actual_runtime_value", "builder_execution": "actual_runtime_value", "hashes": "actual_runtime_value"},
+  "assertions": [
+    {"id": "evidence-001", "assert": "status_is_not_only_displayed_evidence", "expected": true},
+    {"id": "evidence-002", "assert": "artifact_id_visible_when_runtime_exposes_it", "expected": true},
+    {"id": "evidence-003", "assert": "validator_counts_or_errors_visible_when_runtime_exposes_them", "expected": true},
+    {"id": "evidence-004", "assert": "builder_exit_code_visible_when_runtime_exposes_it", "expected": true},
+    {"id": "evidence-005", "assert": "provider_and_model_visible_when_runtime_exposes_them", "expected": true},
+    {"id": "evidence-006", "assert": "runtime_value_is_replaced_by_fixture_constant", "expected": false}
+  ],
+  "failure_conditions": ["UI shows PASSED/VALID but drops concrete runtime values available in the event or artifact.", "Fixture expects literal IDs, counts, models, hashes, filenames, or timestamps.", "Frontend invents a value that is absent from runtime evidence."]
+}
