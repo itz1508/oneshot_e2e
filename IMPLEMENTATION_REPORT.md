@@ -2,9 +2,11 @@
 
 ## Baseline
 
-- **Branch:** `adk-workflow-v2`
-- **Starting SHA:** `4a37d90e8df92906f4b80c06686fa0dc5144d40d`
-- **Working tree state:** Modified (implementation in progress)
+- **Branch:** `repair/runtime-provider-ui`
+- **Starting SHA:** `4a37d90e8df92906f4b80c06686fa0dc5144d40d` (Phase 1); now at Phase 5 (failure-recovery workflow)
+- **Working tree state:** Modified (Phase 5 implementation in progress — recovery module + docs)
+
+> **Note:** Phases 1–4C (provider management, queue, sandbox, BYOK, Tavily, provider UI) are complete and intact. Phase 5 adds the failure-recovery layer (`backend/recovery/`) and updates documentation.
 
 ## Provider Implementation
 
@@ -23,6 +25,17 @@
 | `app/web/src/providers-panel.js` | Existing | Provider management UI |
 | `app/web/src/active-run-panel.js` | Existing | Active run panel |
 | `backend/tests/ts/provider-config-domain.test.ts` | **NEW** | Provider configuration tests |
+| `backend/recovery/types.ts` | **NEW** | Failure taxonomy, root-cause result, recovery snapshot, state machine |
+| `backend/recovery/evidence.ts` | **NEW** | Bounded/sanitized evidence collection |
+| `backend/recovery/classifier.ts` | **NEW** | Normalized failure classification |
+| `backend/recovery/analysis.ts` | **NEW** | Root-cause analysis + recommendations |
+| `backend/recovery/research-escalation.ts` | **NEW** | Bounded recovery-researcher interface |
+| `backend/recovery/policy.ts` | **NEW** | Retry gate + bounded backoff |
+| `backend/recovery/orchestrator.ts` | **NEW** | Recovery state machine + persistence |
+| `backend/recovery/index.ts` | **NEW** | Barrel export |
+| `backend/tests/ts/recovery.test.ts` | **NEW** | 24 recovery scenarios |
+| `app/web/src/recovery-view.js` | **NEW** | Main-workspace failure card |
+| `app/web/tests/recovery-view.test.mjs` | **NEW** | 3 recovery-view scenarios |
 
 ### Supported Providers
 
@@ -366,7 +379,7 @@ None identified - all deployment infrastructure is active and authoritative.
 
 1. **Separate multi-host BullMQ workers** intentionally deferred until RunRepository is migrated to concurrency-safe durable storage.
 
-2. **Automatic retry with exponential backoff** deferred until idempotency is proven for all workflow stages.
+2. **Automatic retry with exponential backoff** is now implemented in Phase 5 (`backend/recovery/policy.ts`) as a bounded, policy-gated layer — auth/model/config failures do not auto-retry; build/validation/sandbox failures retry only after a concrete correction; network failures retry with bounded backoff. Hard ceiling `MAX_RETRY_ATTEMPTS = 3`.
 
 3. **Redis password authentication** not explicitly tested in this environment.
 

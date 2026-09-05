@@ -1,7 +1,7 @@
 # Runtime Containment Implementation Summary
 
 ## Implementation Date
-March 9, 2026
+March 9, 2026 (updated 2026-09-04 for Phase 5 — failure-recovery workflow)
 
 ## Overview
 This document summarizes the implementation of runtime containment and architectural improvements to the OneShot Production E2E system.
@@ -18,8 +18,8 @@ This document summarizes the implementation of runtime containment and architect
 - All runtime data now flows through `.runtime/` directory
 
 **Files Modified**:
-- `scripts/judge-launch.sh` (lines 40-43)
-- `scripts/installation/mac/judge-launch.sh` (lines 40-43)
+- `scripts/judge-launch.sh`
+- `scripts/installation/mac/judge-launch.sh`
 
 **Directory Structure Enforced**:
 ```
@@ -94,6 +94,33 @@ This document summarizes the implementation of runtime containment and architect
 - Created `scripts/config/toolchain.json` as single source of truth
 - Documents version requirements for Node.js, npm, Python, TypeScript
 
+### 5. Failure-Recovery Workflow (Phase 5) ✅
+
+**Problem**: A legitimate sandbox/build/validation failure was the end of a run with no structured path to recovery.
+
+**Solution**:
+- Created `backend/recovery/` module: taxonomy (`types.ts`), bounded evidence collection (`evidence.ts`), normalized classification (`classifier.ts`), root-cause analysis (`analysis.ts`), bounded research escalation (`research-escalation.ts`), retry policy (`policy.ts`), state machine + persistence (`orchestrator.ts`).
+- Eight normalized failure categories: `PROVIDER_{CONFIGURATION,AUTH,MODEL,NETWORK}_FAILURE`, `WORKFLOW_INTERNAL_FAILURE`, `SANDBOX_EXECUTION_FAILURE`, `BUILD_FAILURE`, `VALIDATION_FAILURE`, `RESEARCH_EVIDENCE_INSUFFICIENT`.
+- Provider/config failures are classified before sandbox execution.
+- Research escalation is bounded (≤1 per failure) and Tavily remains optional.
+- Retries are policy-gated and bounded — auth/model/config failures do not auto-retry; build/validation/sandbox failures retry only after a concrete correction; network failures retry with bounded backoff.
+- Only verified canonical success (Builder → Sandbox → Validation → Hash Verification) can mark a run `DONE`; recovery **never** marks a failed run `PASSED`.
+
+**Files Created**:
+- `backend/recovery/types.ts`
+- `backend/recovery/evidence.ts`
+- `backend/recovery/classifier.ts`
+- `backend/recovery/analysis.ts`
+- `backend/recovery/research-escalation.ts`
+- `backend/recovery/policy.ts`
+- `backend/recovery/orchestrator.ts`
+- `backend/recovery/index.ts`
+- `backend/tests/ts/recovery.test.ts` (24 scenarios)
+- `app/web/src/recovery-view.js` (main-workspace failure card)
+- `app/web/tests/recovery-view.test.mjs` (3 scenarios)
+
+**Integration**: `backend/runtime/workflow-runtime.ts` (recovery on ROOT_CAUSE, clearOnSuccess on verified PASSED), `backend/runtime/queue.ts` (provider-binding failures recover before sandbox), `backend/runtime/run-repository.ts` (`update()` for durable recovery state), `backend/server/http-server.ts` (`/api/runs/:id/recovery` + `/recovery/context`).
+
 ## Package.json Scripts ✅
 
 **Added Scripts**:
@@ -115,15 +142,14 @@ This document summarizes the implementation of runtime containment and architect
 ### Legacy `data/` Directory
 
 **Current Status**:
-- Legacy `data/` directory contains historical runtime artifacts
-- `.runtime/` is now the authoritative runtime directory
-- All new scripts use `.runtime/`
+- `.runtime/` is the authoritative runtime directory for all new runs.
+- An orphaned `data/test-intent-prompt-direction/` directory still exists (19 conversation JSON files from an earlier experiment). No current source writes to it.
+- The `data/` directory is **not** part of the canonical runtime path and should not be referenced by any current script.
 
-**Next Steps** (Future):
-1. Verify no new writes to `data/`
-2. Backup `data/` contents
-3. Migrate any needed artifacts to `.runtime/`
-4. Remove legacy `data/` directory after verification
+**Recommended Next Steps**:
+1. Confirm no current source writes to `data/` (verified: no matches in `backend/**/*.ts`, `scripts/**/*.mjs`, `scripts/**/*.py`).
+2. Back up `data/` contents if historically needed.
+3. Remove the legacy `data/` directory.
 
 ## Usage
 
@@ -167,6 +193,8 @@ All critical runtime containment issues have been resolved. The system now:
 - Has unified bootstrap entry point
 - Documents version requirements centrally
 - Maintains clean separation of runtime data from source code
+
+**Note on Docker**: The Dockerfile and `docker-compose.local.yml` are provided and reference current paths. However, the Docker image has **NOT** been re-built or verified in this session — the Docker daemon is not currently running on this machine. The image build status is unverified. Run `docker build -t oneshot:latest .` and verify before claiming a working container image.
 
 
 **Files Created**:

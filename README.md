@@ -2,7 +2,9 @@
 
 OneShot is an agentic build-and-prove system. It takes a goal and runs study → plan → refactor → gap-analysis → triple-validation → confirmation → sandbox-build → hash-verification as one canonical workflow, reporting `PASSED` only when it can produce a machine-verifiable hash proof. Execution is driven by a Google ADK dynamic workflow, research can be augmented by Tavily evidence, and provider/model selection is governed by a single configuration authority.
 
-> Last verification: 118 tests · 116 pass · 0 fail · 2 credential-gated skips.
+> Last verification: 170 tests · 168 pass · 0 fail · 2 credential-gated skips.
+
+A legitimate sandbox/build/validation failure is not the end of a run. OneShot classifies the failure, collects bounded evidence, determines a root cause, produces an actionable recommendation, and — only when justified and policy-approved — retries. See [Failure recovery](#failure-recovery).
 
 ---
 
@@ -117,6 +119,27 @@ Select the active provider and (re)submit credentials from the **Provider Config
 All configuration placeholders live in `app/env/.env.example` — copy to `app/env/.env` and fill in only what you need.
 ---
 
+## Failure recovery
+
+A legitimate sandbox/build/validation failure is **not** the end of the run. OneShot runs a bounded failure-recovery workflow that explains **what failed, why, and what it recommends** — the technical traces remain in Task Management / Run Context, not the primary response.
+
+**Flow:** execution failure → classify → collect evidence → determine root cause → actionable recommendation. When evidence is insufficient OneShot escalates to the existing Researcher (with optional Tavily Advanced Research) at most once per failure, merges the extra evidence, and re-analyses. It retries **only** when a corrective action was applied or the failure is explicitly retryable under a bounded policy.
+
+**Normalized failure taxonomy:** `PROVIDER_CONFIGURATION_FAILURE`, `PROVIDER_AUTH_FAILURE`, `PROVIDER_MODEL_FAILURE`, `PROVIDER_NETWORK_FAILURE`, `WORKFLOW_INTERNAL_FAILURE`, `SANDBOX_EXECUTION_FAILURE`, `BUILD_FAILURE`, `VALIDATION_FAILURE`, `RESEARCH_EVIDENCE_INSUFFICIENT`. Provider/config failures (missing/invalid BYOK, invalid model, network outage) are classified **before** sandbox execution where possible — see `docs/RUN_JOB_CONTRACT.md`.
+
+**Boundaries:**
+
+- The user-facing root cause never contains API keys, raw stack dumps, internal prompts, full provider responses, or terminal logs.
+- Tavily stays optional — recovery never requires a Tavily key and never changes the selected `ModelProvider`.
+- Only verified workflow success (`Builder → Sandbox → Validation → Hash Verification`) may mark a run `DONE`. A failed run stays `ROOT_CAUSE` even after recovery completes; retries are policy-gated and bounded.
+- Recovery state is persisted in the run snapshot so a reconnecting UI reconstructs the failure/recovery state.
+
+**Main workspace:** on failure the UI shows *Failure detected · What failed · Why · Recommended fix · Status* (`Ready to retry`, `Needs configuration change`, `Additional research performed`, or `Manual review required`).
+
+**Run Context:** normalized failure category, evidence ids, retry count, whether research escalation occurred, and the selected provider/model snapshot (never secrets).
+
+---
+
 ## Optional run queue (Redis / BullMQ)
 
 By default the server executes runs inline. If Redis is available, runs are scheduled through a BullMQ worker (dedicated worker: `node dist/backend/scripts/run-worker-cli.js`). When Redis is unreachable OneShot logs `ONESHOT_QUEUE_REDIS_UNAVAILABLE` and falls back to inline execution — it remains fully functional.
@@ -166,6 +189,8 @@ docker run -d -p 8787:8787 --name oneshot-runner oneshot:latest
 
 Provider credentials never live inside the image. Mount a Docker secret and point `ONESHOT_SECRETS_DIR` at it (see `Dockerfile`).
 
+> **Status**: The Dockerfile and compose file reference current paths and dependencies. The Docker image build is **not verified** in this session — run `docker build -t oneshot:latest .` and confirm it succeeds before shipping.
+
 ---
 
 ## Repository layout
@@ -174,6 +199,7 @@ Provider credentials never live inside the image. Mount a Docker secret and poin
 backend/            TypeScript backend (workflow, roles, runtime, sandbox, server)
   contracts/        canonical shared types
   config/           provider catalog
+  recovery/         failure taxonomy, root cause, research escalation, retry policy
   runtime/          event bus, run repo, provider manager, queue, redis
   sandbox/          hardened execution + admission
   skills/           reusable skill system
