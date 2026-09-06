@@ -1,34 +1,12 @@
 # Agent Instruction Prompt
 
 ```text
-You are an autonomous setup agent. Your job is to install, build, verify, and launch OneShot on this machine.
+You are an autonomous setup agent.
 
-1. Ensure you are in the repository root. If not already cloned:
-   git clone https://github.com/itz1508/oneshot_e2e.git oneshot
-   cd oneshot
-
-2. Detect the operating system (Windows, Linux/macOS, or Docker) and verify minimum prerequisites:
-   - Node.js >= 24.13.0
-   - npm >= 11.8.0
-   - Python >= 3.11
-
-3. Follow the Installation steps below for your platform:
-   - Install Node dependencies: `npm ci` and `npm --prefix app/web ci`
-   - Create Python virtual environment `.venv` and install requirements:
-     `app/requirements/base.txt` and `app/requirements/workspace-api.txt`
-     (On Windows, invoke via `.venv\Scripts\python -m pip` to prevent PowerShell execution policy restrictions)
-   - Compile backend and frontend: `npm run build`
-   - Run verification: `npm run verify` (must complete with `ONESHOT_PRODUCTION_E2E_VERIFIED`)
-   - Launch application: `npm start` (serves at `http://localhost:8787`)
-
-4. If any step fails, autonomously inspect errors and logs, resolve dependencies or environment paths, and retry — do not stop to ask.
-
-5. When complete, confirm http://localhost:8787/api/health is responding and return:
-   ONESHOT_INSTALL_RESULT = PASSED
-   URL = http://localhost:8787
-   PLATFORM = <Windows | Linux/macOS | Docker>
-   VERIFICATION = ONESHOT_PRODUCTION_E2E_VERIFIED
-   HEALTH = PASSED
+1. Create a new working directory for this project.
+2. Follow the Installation steps below, using the variant that matches the machine's OS (Windows, Linux/macOS, or Docker).
+3. If a step fails, diagnose and fix it yourself before continuing — do not stop to ask.
+4. Finish by confirming the app is running and report the local URL.
 ```
 
 ---
@@ -37,32 +15,32 @@ You are an autonomous setup agent. Your job is to install, build, verify, and la
 
 ---
 
-<details>
-<summary>🖥️ Windows</summary>
+🖥️ Windows
 
 ```powershell
-# Step 1: Clone (if not already inside repository)
+# Step 1: Clone
 git clone https://github.com/itz1508/oneshot_e2e.git oneshot
 cd oneshot
 
 # Step 2: Check Requirements
-node --version    # >= 24.13.0
-npm --version     # >= 11.8.0
-python --version  # >= 3.11
+node --version
+npm --version
+python --version
 
 # Step 3: Install
 npm ci
 npm --prefix app/web ci
 python -m venv .venv
-.venv\Scripts\python -m pip install -r app/requirements/base.txt -r app/requirements/workspace-api.txt
+.venv\Scripts\Activate
+python -m pip install -r app/requirements/base.txt -r app/requirements/workspace-api.txt
 
 # Step 4: Build
 npm run build
 
-# Step 5: Verify (expects ONESHOT_PRODUCTION_E2E_VERIFIED)
+# Step 5: Verify
 npm run verify
 
-# Step 6: Launch (serves at http://localhost:8787)
+# Step 6: Launch
 npm start
 ```
 
@@ -72,28 +50,29 @@ npm start
 <summary>🐧 Linux/macOS</summary>
 
 ```bash
-# Step 1: Clone (if not already inside repository)
+# Step 1: Clone
 git clone https://github.com/itz1508/oneshot_e2e.git oneshot
 cd oneshot
 
 # Step 2: Check Requirements
-node --version    # >= 24.13.0
-npm --version     # >= 11.8.0
-python3 --version # >= 3.11
+node --version
+npm --version
+python3 --version
 
 # Step 3: Install
 npm ci
 npm --prefix app/web ci
 python3 -m venv .venv
-.venv/bin/pip install -r app/requirements/base.txt -r app/requirements/workspace-api.txt
+source .venv/bin/activate
+pip install -r app/requirements/base.txt -r app/requirements/workspace-api.txt
 
 # Step 4: Build
 npm run build
 
-# Step 5: Verify (expects ONESHOT_PRODUCTION_E2E_VERIFIED)
+# Step 5: Verify
 npm run verify
 
-# Step 6: Launch (serves at http://localhost:8787)
+# Step 6: Launch
 npm start
 ```
 
@@ -103,22 +82,22 @@ npm start
 <summary>🐳 Docker</summary>
 
 ```bash
-# Step 1: Clone (if not already inside repository)
+# Step 1: Clone
 git clone https://github.com/itz1508/oneshot_e2e.git oneshot
 cd oneshot
 
 # Step 2: Check Requirements
 docker --version
-docker compose version
+docker-compose --version
 
-# Step 3: Build Container Image
+# Step 3: Install
 docker build -t oneshot:local .
 
-# Step 4: Launch Container (serves at http://localhost:8787)
-docker run -d -p 8787:8787 --name oneshot-runner oneshot:local
+# Step 4: Verify
+docker run --rm oneshot:local node dist/backend/index.js --health
 
-# Step 5: Verify Container Health
-curl -f http://localhost:8787/api/health
+# Step 5: Launch
+docker run -p 8787:8787 oneshot:local
 ```
 
 </details>
