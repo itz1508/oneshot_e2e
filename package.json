@@ -10,8 +10,8 @@
   },
   "scripts": {
     "oneshot": "node scripts/oneshot.mjs",
-    "dev": "node --env-file=.env dist/backend/index.js",
-    "dev:worker": "node --env-file=.env dist/backend/scripts/run-pipeline-worker.js",
+    "dev": "node --env-file=app/env/.env dist/backend/index.js",
+    "dev:worker": "node --env-file=app/env/.env dist/backend/scripts/run-pipeline-worker.js",
     "agent:review": "npm run build:backend && node dist/app/bootstrap/readme.js",
     "build": "tsc -p tsconfig.json && npm --prefix app/web run build",
     "start": "node dist/backend/index.js",

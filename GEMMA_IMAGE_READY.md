@@ -4,7 +4,7 @@
 
 ✅ **Dockerfile.gemma** - Multi-stage build with Ollama + Gemma 7B  
 ✅ **docker-compose.gemma.yml** - One-command deployment  
-✅ **.env.gemma.example** - Configuration template  
+✅ **app/env/.env.gemma.example** - Configuration template  
 ✅ **scripts/docker-entrypoint-gemma.sh** - Smart startup script  
 ✅ **GEMMA_IMAGE_GUIDE.md** - Complete documentation  
 
@@ -194,7 +194,7 @@ docker save oneshot:gemma-latest -o oneshot-gemma.tar
 D:\oneshot_e2e\
 ├── Dockerfile.gemma                 # Build with Gemma
 ├── docker-compose.gemma.yml         # Run with one command
-├── .env.gemma.example               # Configuration template
+├── app/env/.env.gemma.example               # Configuration template
 ├── scripts/docker-entrypoint-gemma.sh  # Startup logic
 └── GEMMA_IMAGE_GUIDE.md             # Full user documentation
 ```

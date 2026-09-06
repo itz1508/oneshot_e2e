@@ -37,3 +37,8 @@ scripts/config/
 # Transient local test/run logs
 *.log
 /unit-log.txt
+
+# Package manager local artifacts
+pnpm-lock.yaml
+pnpm-workspace.yaml
+

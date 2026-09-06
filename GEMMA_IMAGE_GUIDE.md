@@ -270,7 +270,7 @@ curl http://localhost:11434/api/generate \
 1. **Build image:** See "Quick Start" above
 2. **Run container:** docker-compose recommended
 3. **Test locally:** Submit workflow via web UI
-4. **Configure providers:** Update `.env.gemma.example` as needed
+4. **Configure providers:** Update `app/env/.env.gemma.example` as needed
 5. **Share image:** `docker save` for offline distribution
 
 ---

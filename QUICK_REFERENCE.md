@@ -118,7 +118,7 @@ docker-compose -f docker-compose.gemma.yml restart
 |------|---------|
 | Dockerfile.gemma | Build image with Ollama + Gemma |
 | docker-compose.gemma.yml | One-command deployment |
-| .env.gemma.example | Config template for users |
+| app/env/.env.gemma.example | Config template for users |
 | scripts/docker-entrypoint-gemma.sh | Startup logic |
 | GEMMA_IMAGE_GUIDE.md | Full documentation |
 
