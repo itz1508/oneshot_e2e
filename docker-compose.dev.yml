@@ -12,7 +12,7 @@ services:
       - everysec
 
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
 
     volumes:
       - oneshot_redis_data:/data
@@ -36,13 +36,17 @@ services:
       - node
       - dist/backend/index.js
     ports:
-      - "8787:8787"
+      - "127.0.0.1:8787:8787"
     environment:
       REDIS_URL: redis://redis:6379
       ONESHOT_MODE: sample
+      PYTHON_REASONER_URL: http://reasoner:8000
+      ONESHOT_INTERNAL_TOKEN: local-development-secret
     depends_on:
       redis:
         condition: service_healthy
+      reasoner:
+        condition: service_started
 
   worker:
     build:
@@ -55,6 +59,21 @@ services:
     environment:
       REDIS_URL: redis://redis:6379
       ONESHOT_MODE: sample
+      PYTHON_REASONER_URL: http://reasoner:8000
+      ONESHOT_INTERNAL_TOKEN: local-development-secret
+    depends_on:
+      - redis
+      - reasoner
+
+  reasoner:
+    build:
+      context: .
+      dockerfile: backend/python/Dockerfile
+    container_name: oneshot-python-reasoner
+    ports:
+      - "127.0.0.1:8100:8000"
+    environment:
+      ONESHOT_INTERNAL_TOKEN: local-development-secret
     depends_on:
       - redis
 

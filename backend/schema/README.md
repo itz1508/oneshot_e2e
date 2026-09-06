@@ -20,15 +20,19 @@ backend/schema
 
 ## Consumers
 
-- `backend/typescript/reasoning/python-client.ts` compiles the JSON schemas
-  with AJV and validates every request/response crossing the TypeScript/Python
-  boundary.
-- `backend/python/app/models/reasoning.py` mirrors the same shapes with Pydantic
-  so the Python service validates on its side as well.
+- `backend/reasoning/python-client.ts` compiles the JSON schemas with AJV and
+  validates every request/response crossing the TypeScript/Python boundary.
+- `backend/python/app/models.py` mirrors the same shapes with Pydantic.
+- `backend/python/app/contracts.py` validates request/response JSON against
+  the actual `backend/schema/reasoning/*.json` files using `jsonschema`, so
+  Pydantic does not get to redefine the protocol independently.
 
 ## Changing a schema
 
-1. Edit the JSON schema file.
-2. Update the matching TypeScript interfaces and Pydantic models.
+1. Edit the authoritative JSON schemas here, then update the Pydantic models
+   in `backend/python/app/models.py`. `python -m app.export_schema` exports
+   comparison artifacts only; it does not overwrite these contracts.
+2. Update the matching TypeScript interfaces in
+   `backend/reasoning/python-client.ts`.
 3. Run the builds and tests on **both** runtimes.
 4. Do not merge until both sides agree on the new contract.

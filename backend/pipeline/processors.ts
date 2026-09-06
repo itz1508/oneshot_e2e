@@ -27,6 +27,11 @@ import type { ConfirmationWorkflow } from "../workflow/confirmation.js";
 import type { HashWorkflow } from "../workflow/hash.js";
 import { ProviderManager } from "../../app/web/cloud/provider-manager.js";
 import type { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
+import type {
+  PythonReasoner,
+  ReasoningRequest,
+} from "../reasoning/python-client.js";
+import type { Plan, ResearchBundle } from "../contracts/schema/types.js";
 
 export interface StageServices {
   events: ProcessingEventBus;
@@ -41,6 +46,11 @@ export interface StageServices {
   hash: HashWorkflow;
   builder: BuilderWorkflow;
   saveArtifact: typeof saveArtifact;
+  /**
+   * Optional Python reasoning addon client. When present, Evaluation runs
+   * Python as a canary second opinion without letting it fail the pipeline.
+   */
+  pythonReasoner?: PythonReasoner;
 }
 
 const CANONICAL_NAME: Record<
@@ -307,6 +317,15 @@ export async function runEvaluationStage(
     evaluation,
   );
 
+  if (services.pythonReasoner) {
+    await runPythonEvaluationCanary(
+      ctx,
+      services,
+      bundle,
+      plan,
+    );
+  }
+
   emitStage(ctx, services, "evaluation", "COMPLETE", {
     result: evaluation.result,
     artifact_id: evaluation.plan_id,
@@ -318,6 +337,76 @@ export async function runEvaluationStage(
     100,
     `Evaluation result: ${evaluation.result}`,
   );
+}
+
+async function runPythonEvaluationCanary(
+  ctx: PipelineContext,
+  services: StageServices,
+  bundle: ResearchBundle,
+  plan: Plan,
+): Promise<void> {
+  const reasoner = services.pythonReasoner;
+  if (!reasoner) {
+    return;
+  }
+
+  try {
+    const request = buildReasoningRequest(
+      ctx.runId,
+      bundle,
+      plan,
+    );
+
+    const response = await reasoner.reason(request);
+
+    await services.saveArtifact(
+      ctx,
+      "python-evaluation-canary",
+      response,
+    );
+  } catch (error) {
+    await services.saveArtifact(
+      ctx,
+      "python-evaluation-canary",
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : String(error),
+        status: "CANARY_FAILED",
+      },
+    );
+  }
+}
+
+export function buildReasoningRequest(
+  runId: string,
+  bundle: ResearchBundle,
+  plan: Plan,
+): ReasoningRequest {
+  return {
+    run_id: runId,
+    task: "evaluation",
+    goal: bundle.prompt.requested_outcome,
+    constraints: plan.requirements.map((requirement) => requirement.statement),
+    evidence: bundle.researcher.evidence.map((evidence) => ({
+      source: evidence.source,
+      content: evidence.statement,
+      // The canonical evidence has no confidence score; do not invent certainty.
+      confidence: 0,
+    })),
+    plan: {
+      id: plan.plan_id,
+      objective: bundle.prompt.requested_outcome,
+      status: "evaluation",
+      tasks: plan.steps.map((step) => ({
+        id: step.step_id,
+        title: step.responsibility,
+        action: step.description,
+        required: true,
+      })),
+    },
+  };
 }
 
 /* ============================================================

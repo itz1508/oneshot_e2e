@@ -22,6 +22,7 @@ import type { ProviderManager } from "../../app/web/cloud/provider-manager.js";
 import type { ProviderRuntimeSettings } from "../../app/web/cloud/provider-runtime-config.js";
 import type { ProviderCredential } from "../../app/web/cloud/provider-secret-store.js";
 import type { ArtifactStore } from "../runtime/artifact-store.js";
+import { getProducerRedis } from "../runtime/redis-connection.js";
 import {
   confirmPlan as pipelineConfirmPlan,
   enqueueStage,
@@ -441,11 +442,9 @@ export async function startHttpServer(
             : anyQueueReady
               ? "ok"
               : "unavailable";
-          const worker: "ok" | "degraded" | "disabled" = !(runQueue || options.pipeline)
-            ? "disabled"
-            : anyQueueReady
-              ? "ok"
-              : "degraded";
+          const worker = options.pipeline
+            ? pipelineReady ? await checkWorkerHealth(true) : "degraded"
+            : !runQueue ? "disabled" : legacyReady ? "ok" : "degraded";
           let providerConfiguration:
             | "configured"
             | "unconfigured"
@@ -1359,4 +1358,28 @@ export async function startHttpServer(
   return new Promise<ReturnType<typeof createServer>>((resolveServer) =>
     server.listen(port, bindHost, () => resolveServer(server)),
   );
+}
+
+async function checkWorkerHealth(
+  queueAvailable: boolean,
+): Promise<"ok" | "degraded" | "disabled"> {
+  if (!queueAvailable) {
+    return "disabled";
+  }
+
+  try {
+    const redis = getProducerRedis();
+    if (redis.status !== "ready") return "degraded";
+    let cursor = "0";
+    // Bound the health probe's work even in a large shared Redis database.
+    for (let page = 0; page < 10; page++) {
+      const [next, keys] = await redis.scan(cursor, "MATCH", "oneshot:worker:*:heartbeat", "COUNT", 100);
+      if (keys.length > 0) return "ok";
+      cursor = next;
+      if (cursor === "0") break;
+    }
+    return "degraded";
+  } catch {
+    return "degraded";
+  }
 }

@@ -1,12 +1,16 @@
 export {
   assertReasoningRequest,
   assertReasoningResponse,
-  callReasoning,
+  PythonReasoner,
 } from "./python-client.js";
 
 export type {
-  EvidenceItem,
-  Finding,
+  ReasoningTask,
+  ReasoningEvidence,
+  ReasoningPlanTask,
+  ReasoningPlan,
   ReasoningRequest,
+  ReasoningFinding,
   ReasoningResponse,
+  PythonReasonerOptions,
 } from "./python-client.js";

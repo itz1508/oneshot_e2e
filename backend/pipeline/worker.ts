@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Worker, type Job } from "bullmq";
 import type { Redis } from "ioredis";
 import type {
@@ -76,6 +77,24 @@ export function createPipelineWorker(
   } = input;
 
   const idempotency = new PipelineIdempotency(redis);
+
+  const workerId = randomUUID();
+  const heartbeatKey = `oneshot:worker:${workerId}:heartbeat`;
+  const heartbeatInterval = setInterval(async () => {
+    try {
+      await redis.set(
+        heartbeatKey,
+        new Date().toISOString(),
+        "EX",
+        15,
+      );
+    } catch (error) {
+      console.error(
+        "[OneShot] worker heartbeat failed:",
+        error instanceof Error ? error.message : error,
+      );
+    }
+  }, 5_000);
 
   const worker = new Worker<
     StageJobData,
@@ -200,6 +219,12 @@ export function createPipelineWorker(
       error,
     );
   });
+
+  const originalClose = worker.close.bind(worker);
+  worker.close = async (force?: boolean) => {
+    clearInterval(heartbeatInterval);
+    await originalClose(force);
+  };
 
   return worker;
 }

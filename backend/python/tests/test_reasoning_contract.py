@@ -1,16 +1,50 @@
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.models.reasoning import ReasoningRequest, ReasoningResponse
+from app.models import ReasoningRequest, ReasoningResponse
+
+TOKEN = "test-internal-token"
+os.environ["ONESHOT_INTERNAL_TOKEN"] = TOKEN
 
 client = TestClient(app)
+AUTH_HEADERS = {"authorization": f"Bearer {TOKEN}"}
 
 
 def test_health():
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.json() == {"status": "ok", "service": "oneshot-python"}
+
+
+@pytest.mark.parametrize("changes", [
+    {"evidence": [{"source": "test", "content": "test", "confidence": "0.9"}]},
+    {"evidence": [{"source": "test", "content": "test"}]},
+    {"unexpected": True},
+])
+def test_reason_rejects_wire_contract_mismatch(changes):
+    payload = {"run_id": "test", "task": "critic", "goal": "test",
+               "constraints": [], "evidence": []}
+    payload.update(changes)
+    assert client.post("/v1/reason", json=payload, headers=AUTH_HEADERS).status_code == 422
+
+
+@pytest.mark.parametrize("field", ["constraints", "evidence"])
+def test_reason_rejects_missing_required_collection(field):
+    payload = {"run_id": "test", "task": "critic", "goal": "test",
+               "constraints": [], "evidence": []}
+    del payload[field]
+    assert client.post("/v1/reason", json=payload, headers=AUTH_HEADERS).status_code == 422
+
+
+def test_unicode_invalid_token_is_rejected_without_crashing():
+    from app.main import verify_internal_token
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as error:
+        verify_internal_token("Bearer \u00e9")
+    assert error.value.status_code == 403
 
 
 def test_reason_accepts_valid_request_and_returns_valid_response():
@@ -26,10 +60,26 @@ def test_reason_accepts_valid_request_and_returns_valid_response():
                 "confidence": 0.95,
             }
         ],
-        "plan": {"steps": []},
+        "plan": {
+            "id": "plan_123",
+            "objective": "Implement feature",
+            "status": "refactored",
+            "tasks": [
+                {
+                    "id": "task_1",
+                    "title": "Implement",
+                    "action": "Implement requested behavior",
+                    "required": True,
+                }
+            ],
+        },
     }
 
-    response = client.post("/v1/reason", json=payload)
+    response = client.post(
+        "/v1/reason",
+        json=payload,
+        headers=AUTH_HEADERS,
+    )
     assert response.status_code == 200
 
     body = response.json()
@@ -43,6 +93,19 @@ def test_reason_accepts_valid_request_and_returns_valid_response():
     ReasoningResponse.model_validate(body)
 
 
+def test_reason_rejects_missing_authorization():
+    payload = {
+        "run_id": "run_123",
+        "task": "evaluation",
+        "goal": "Verify",
+        "constraints": [],
+        "evidence": [],
+    }
+
+    response = client.post("/v1/reason", json=payload)
+    assert response.status_code == 401
+
+
 def test_reason_rejects_invalid_task():
     payload = {
         "run_id": "run_123",
@@ -52,7 +115,11 @@ def test_reason_rejects_invalid_task():
         "evidence": [],
     }
 
-    response = client.post("/v1/reason", json=payload)
+    response = client.post(
+        "/v1/reason",
+        json=payload,
+        headers=AUTH_HEADERS,
+    )
     assert response.status_code == 422
 
 

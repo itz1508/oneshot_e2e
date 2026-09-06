@@ -51,6 +51,7 @@ import { HardenedProcessRunner } from "./sandbox/runner/process-runner.js";
 import { ContainerSandboxRunner } from "./sandbox/runner/container-runner.js";
 import { startHttpServer, type RuntimeInfo } from "./server/http-server.js";
 import { getRuntimePaths, ensureRuntimeDirectories } from "./runtime/runtime-config.js";
+import { createPythonReasoner } from "./reasoning/python-client.js";
 
 // ---------------------------------------------------------------------------
 // Bootstrap
@@ -151,6 +152,8 @@ const confirmation = new ConfirmationWorkflow(contracts);
 const hash = new HashWorkflow(contracts);
 const builder = new BuilderWorkflow(sandbox);
 
+const pythonReasoner = createPythonReasoner();
+
 const stageServices: StageServices = {
   events,
   providerManager,
@@ -164,6 +167,7 @@ const stageServices: StageServices = {
   hash,
   builder,
   saveArtifact,
+  pythonReasoner,
 };
 
 // --- Google ADK Dynamic Workflow Runtime (legacy inline fallback) ---

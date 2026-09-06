@@ -7,10 +7,11 @@
 # file then runs two containers from it: the HTTP API server and the BullMQ
 # worker, so a stage crash cannot kill the API.
 
-FROM node:22-alpine
+FROM node:24-alpine
 WORKDIR /app
 
 COPY package*.json ./
+COPY app/vendor/npm ./app/vendor/npm
 RUN npm ci --no-audit --no-fund
 
 COPY . .

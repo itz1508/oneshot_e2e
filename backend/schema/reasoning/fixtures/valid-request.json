@@ -1,0 +1,28 @@
+{
+  "run_id": "run_contract_test",
+  "task": "evaluation",
+  "goal": "Verify the implementation satisfies the requested outcome.",
+  "constraints": [
+    "Preserve existing public behavior"
+  ],
+  "evidence": [
+    {
+      "source": "repository",
+      "content": "Existing tests pass",
+      "confidence": 1
+    }
+  ],
+  "plan": {
+    "id": "plan_test",
+    "objective": "Implement requested behavior",
+    "status": "refactored",
+    "tasks": [
+      {
+        "id": "task_1",
+        "title": "Implement",
+        "action": "Implement requested behavior",
+        "required": true
+      }
+    ]
+  }
+}

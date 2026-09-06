@@ -19,7 +19,14 @@
       "type": "string"
     },
     "task": {
-      "type": "string"
+      "type": "string",
+      "enum": [
+        "researcher",
+        "planner",
+        "gap-analysis",
+        "evaluation",
+        "critic"
+      ]
     },
     "success": {
       "type": "boolean"
@@ -39,6 +46,7 @@
       "type": "array",
       "items": {
         "type": "object",
+        "additionalProperties": false,
         "required": [
           "code",
           "severity",

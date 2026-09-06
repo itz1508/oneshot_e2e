@@ -38,6 +38,7 @@ import { BuilderWorkflow } from "../agents/builder/workflow.js";
 import { TripleValidationWorkflow } from "../workflow/triple-validation.js";
 import { ConfirmationWorkflow } from "../workflow/confirmation.js";
 import { HashWorkflow } from "../workflow/hash.js";
+import { createPythonReasoner } from "../reasoning/python-client.js";
 
 const projectRoot = process.env.ONESHOT_ROOT || process.cwd();
 const runtimePaths = ensureRuntimeDirectories(getRuntimePaths(projectRoot));
@@ -107,6 +108,7 @@ async function main() {
     hash: hashWorkflow,
     builder: new BuilderWorkflow(sandbox),
     saveArtifact,
+    pythonReasoner: createPythonReasoner(),
   };
 
   const worker = createPipelineWorker({

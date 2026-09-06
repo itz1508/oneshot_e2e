@@ -16,6 +16,7 @@ export type FaultMode =
   | "fail-once"
   | "fail-always"
   | "delay"
+  | "crash-once"
   | "crash";
 
 export interface FaultConfig {

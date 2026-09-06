@@ -52,12 +52,39 @@ export class PipelineFaultController {
         return;
       }
 
+      case "crash-once": {
+        const key = `oneshot:fault:${runId}:${stage}:crash-consumed`;
+        const first = await this.redis.set(
+          key,
+          "1",
+          "EX",
+          60 * 60,
+          "NX",
+        );
+
+        if (first !== "OK") {
+          return;
+        }
+
+        /*
+         * Give stdout/Redis writes a tiny chance to flush before intentionally
+         * killing the worker process.
+         */
+        setTimeout(() => {
+          process.exit(91);
+        }, 50);
+
+        await new Promise<never>(() => {
+          // Intentionally never resolves. The worker process exits above.
+        });
+      }
+
       case "crash": {
         /*
          * Intended ONLY for local E2E testing.
          *
          * Killing the worker lets us verify that BullMQ eventually
-         * recovers the job.
+         * recovers the job. Use crash-once for deterministic recovery tests.
          */
         process.nextTick(() => {
           process.exit(91);

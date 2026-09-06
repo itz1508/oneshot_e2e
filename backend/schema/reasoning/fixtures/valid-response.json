@@ -1,0 +1,20 @@
+{
+  "run_id": "run_contract_test",
+  "task": "evaluation",
+  "success": true,
+  "confidence": 0.9,
+  "analysis": [
+    "Plan contains executable tasks.",
+    "Evidence supports the approach."
+  ],
+  "findings": [
+    {
+      "code": "EVAL-001",
+      "severity": "info",
+      "message": "No issues found."
+    }
+  ],
+  "risks": [],
+  "missing_evidence": [],
+  "recommendation": "Proceed to Triple Validation."
+}
