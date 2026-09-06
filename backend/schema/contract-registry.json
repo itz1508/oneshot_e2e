@@ -7,7 +7,7 @@
       "version": "2",
       "artifact_type": "audit",
       "schema_path": "schema/audit.schema.json",
-      "schema_digest": "faa555c767648d5068381d3eab3d411eb7dd3823b241d0625d43bae06d4d0a52",
+      "schema_digest": "7f16f5ece223acc5b905da2d29d529ce823d93bd51db9b4a55bd5d851f6b1978",
       "producer": "Planner",
       "consumers": [
         "Refactor"
@@ -29,7 +29,7 @@
       "version": "2",
       "artifact_type": "confirmed-package",
       "schema_path": "schema/confirmed-package.schema.json",
-      "schema_digest": "5c9984f0470a3dc5b4e6824de38a344d6d39cf78afd1d8131065abd917700b35",
+      "schema_digest": "82b09995d7e14abc7ce424bab689c0ce6c106b3c94e2b0ad89d913af6dd83505",
       "producer": "Confirmed",
       "consumers": [
         "CreateHash"
@@ -40,7 +40,7 @@
       "version": "2",
       "artifact_type": "contract-registry",
       "schema_path": "schema/contract-registry.schema.json",
-      "schema_digest": "cc511db0187d58f7b92cb2b1575a55285b11ffccc729539f4281c148fb26aa51",
+      "schema_digest": "2c05f23d210d00ad3c92679ab22ceeb7d9f2b538df42d8b1cd11129c4c913b79",
       "producer": "ContractSystem",
       "consumers": [
         "ContractResolver"
@@ -51,7 +51,7 @@
       "version": "2",
       "artifact_type": "evaluation",
       "schema_path": "schema/evaluation.schema.json",
-      "schema_digest": "4393c72679835cb554c1298dffd2e5ab20d4c9b819cfd9d1c725ecabb0320877",
+      "schema_digest": "a7e226f693adb81b8ea75f7d15c3b8b867e00add6cf1ab36b8ed813c42e020fb",
       "producer": "Evaluation",
       "consumers": [
         "SchemaValidation",
@@ -64,7 +64,7 @@
       "version": "2",
       "artifact_type": "execution-evidence",
       "schema_path": "schema/execution-evidence.schema.json",
-      "schema_digest": "1bfd993ae56a4890beb022d0294ed7d79f90624977ca467bff8ac320cf37f51d",
+      "schema_digest": "16d95b6e5ffd6517e9f3be03bf12d86dc654eb9679838a6b2fdc48156c56237c",
       "producer": "ExternalSandbox",
       "consumers": [
         "AuditStorage",
@@ -76,7 +76,7 @@
       "version": "2",
       "artifact_type": "fixture-validation",
       "schema_path": "schema/fixture-validation.schema.json",
-      "schema_digest": "0f8a9978b961217d31d124bb9afeac2fb78ab0b5dff840792f9f2c0228c143a2",
+      "schema_digest": "4370f5bf71be68e567ce342a1788c47dc1f6f2790fd8986fdca450313bacfddc",
       "producer": "FixtureValidation",
       "consumers": [
         "TripleValidation"
@@ -87,7 +87,7 @@
       "version": "2",
       "artifact_type": "fixture",
       "schema_path": "schema/fixture.schema.json",
-      "schema_digest": "7d69299f710942e7eccca7fefb53658564488e782da03338e61605aa11bda6b7",
+      "schema_digest": "35178c87d9b6981e6b3a5825d55eb9f62c3101e6c515625fcebdf80f731d9421",
       "producer": "Researcher",
       "consumers": [
         "FixtureValidation"
@@ -98,7 +98,7 @@
       "version": "2",
       "artifact_type": "gap",
       "schema_path": "schema/gap.schema.json",
-      "schema_digest": "3f96bfe4832283f287ee9d2a742440c5daafd5adf5a87675fcb6960d3ab42723",
+      "schema_digest": "dbd4ed2b99dbb3f2fbbc5a16f18afe7c437f7b7c79c6e0beb060143abff4f506",
       "producer": "GapAnalysis",
       "consumers": [
         "Evaluation"
@@ -109,7 +109,7 @@
       "version": "2",
       "artifact_type": "goal-validation",
       "schema_path": "schema/goal-validation.schema.json",
-      "schema_digest": "6e40bace98e3cb9c6d7dd18f246a862536b1ccb4b52cba92ce387ba0a7b6dca3",
+      "schema_digest": "375a5123a97496f8efa1b9ddaef1ee275d379d61fd79ec8084bfe7a48b477532",
       "producer": "GoalValidation",
       "consumers": [
         "TripleValidation"
@@ -120,7 +120,7 @@
       "version": "2",
       "artifact_type": "goal",
       "schema_path": "schema/goal.schema.json",
-      "schema_digest": "c8fbfebab8bb9a7630f323193bbf5695283495cc43acb966fc63b18f54aac9e8",
+      "schema_digest": "751907d1d2188e5188c80fe0cc1f513a5dd2288317d69730812331a3a15592ec",
       "producer": "Researcher",
       "consumers": [
         "GoalValidation"
@@ -131,7 +131,7 @@
       "version": "2",
       "artifact_type": "hash-proof",
       "schema_path": "schema/hash-proof.schema.json",
-      "schema_digest": "42a18ee98b996e5113ae9a55e27a2eca20676216e839bc2feda8ade06e1a2c90",
+      "schema_digest": "5252a2b0c6bded280f06cac8d6401d84af475afc82263efc125e7c92acedaa5a",
       "producer": "Hash",
       "consumers": [
         "Done"
@@ -142,7 +142,7 @@
       "version": "2",
       "artifact_type": "plan",
       "schema_path": "schema/plan.schema.json",
-      "schema_digest": "64b449c78fa108df47a60b383141ec589de9d3567243e86357542cd255257bad",
+      "schema_digest": "22f2ba821be27febae5d3dad9ca0bdcb94b2f32b33e24b9f0504748da7a5c080",
       "producer": "Researcher",
       "consumers": [
         "Planner",
@@ -172,7 +172,7 @@
       "version": "2",
       "artifact_type": "prompt",
       "schema_path": "schema/prompt.schema.json",
-      "schema_digest": "0f8e7d79d59442dd9cb78557a58fb370c2820c74a403e2d155cef52cb031dc6f",
+      "schema_digest": "71921e64e02fe3daf4d01e3790d39c2184ad84f231a0439075d4aba57e655bf7",
       "producer": "Prompt",
       "consumers": [
         "Researcher"
@@ -183,7 +183,7 @@
       "version": "2",
       "artifact_type": "researcher",
       "schema_path": "schema/researcher.schema.json",
-      "schema_digest": "cab1026b868bb293b4c7e2474f32919c2db4af76233b17cfd32bdfaa4e768306",
+      "schema_digest": "4d0d7ec60a8cf166d404bf9a167f761ab0752ebfe0e71b56ffe4581568489882",
       "producer": "Researcher",
       "consumers": [
         "Planner",
@@ -208,7 +208,7 @@
       "version": "2",
       "artifact_type": "sandbox-execution",
       "schema_path": "schema/sandbox-execution.schema.json",
-      "schema_digest": "ca1ab1497d988cc0b5ea61f1da34f0779ab20422a5379d870a18937d0a8ba475",
+      "schema_digest": "7638311c8dc62016e126a068ff4e62c13e5032f485e49087ce6825b93cf5161d",
       "producer": "OneShotControlPlane",
       "consumers": [
         "ExternalSandbox"
@@ -219,7 +219,7 @@
       "version": "2",
       "artifact_type": "schema-artifact",
       "schema_path": "schema/schema-artifact.schema.json",
-      "schema_digest": "aa2f9bf1b1708e388841e7c0bfeae545b53f0557e061b7f4e3f828fb84beecb5",
+      "schema_digest": "33dab149797c23c46f5bde8398e987686e5341fac8af35ded6122e11479497c2",
       "producer": "Researcher",
       "consumers": [
         "SchemaValidation"
@@ -230,7 +230,7 @@
       "version": "2",
       "artifact_type": "schema-validation",
       "schema_path": "schema/schema-validation.schema.json",
-      "schema_digest": "9f2bee2c9b76a9699eb72651c71597d54deb08c893924ec0bd1e3e23a93215f2",
+      "schema_digest": "9653e9c9d41c97798ad7694e2410f2687801478e16176c4c2e05473d36ebee3e",
       "producer": "SchemaValidation",
       "consumers": [
         "TripleValidation"
@@ -241,7 +241,7 @@
       "version": "2",
       "artifact_type": "triple-validation",
       "schema_path": "schema/triple-validation.schema.json",
-      "schema_digest": "e458318013dc191cb30016e854993013750cdd76441bc430acb128df178d5f1f",
+      "schema_digest": "2c83071f89904b0bbfebf5b592f4e615c877ceb4394c996c58f895d098491910",
       "producer": "TripleValidation",
       "consumers": [
         "Confirmed"
@@ -252,7 +252,7 @@
       "version": "2",
       "artifact_type": "validation",
       "schema_path": "schema/validation.schema.json",
-      "schema_digest": "025ca49dcf5778ee9e77a2b74fd5bcde9b7b573c7ec0bd8a6273e873b0387909",
+      "schema_digest": "b47ef99efec83123c51999334c3886ff8beb1af609c2014fec96a10fcfb0b3ed",
       "producer": "Researcher",
       "consumers": [
         "TripleValidation"
@@ -263,7 +263,7 @@
       "version": "2",
       "artifact_type": "workflow-graph",
       "schema_path": "schema/workflow-graph.schema.json",
-      "schema_digest": "5b399c587d53abe924cb6fec131a883247174acc9d8d5b5f1d51623bfa0646d0",
+      "schema_digest": "46344febab2cae680c7dcf41c5e1043371abcbf1543bcfa09979c72dd3316138",
       "producer": "WorkflowDefinition",
       "consumers": [
         "WorkflowVerifier"

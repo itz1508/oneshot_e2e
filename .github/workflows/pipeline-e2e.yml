@@ -35,6 +35,13 @@ jobs:
           node-version-file: package.json
           cache: npm
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install validation runtime
+        run: python -m pip install -r app/requirements/base.txt
+
       - name: Install
         run: npm ci
 
@@ -109,6 +116,13 @@ jobs:
           node-version-file: package.json
           cache: npm
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install validation runtime
+        run: python -m pip install -r app/requirements/base.txt
+
       - run: npm ci
 
       - run: npm run build:backend
@@ -170,6 +184,13 @@ jobs:
           node-version-file: package.json
           cache: npm
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install validation runtime
+        run: python -m pip install -r app/requirements/base.txt
+
       - run: npm ci
 
       - run: npm run build:backend
@@ -228,6 +249,13 @@ jobs:
           node-version-file: package.json
           cache: npm
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install validation runtime
+        run: python -m pip install -r app/requirements/base.txt
+
       - run: npm ci
 
       - run: npm run build:backend
@@ -283,6 +311,13 @@ jobs:
           node-version-file: package.json
           cache: npm
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install validation runtime
+        run: python -m pip install -r app/requirements/base.txt
+
       - run: npm ci
 
       - run: npm run build:backend
@@ -335,6 +370,13 @@ jobs:
         with:
           node-version-file: package.json
           cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install validation runtime
+        run: python -m pip install -r app/requirements/base.txt
 
       - run: npm ci
 

@@ -39,10 +39,12 @@ test('steps without descriptions are dropped; empty plan yields no groups', () =
 });
 
 test('per-step state chips exist only for real step_id-scoped events', () => {
-  assert.equal(stepStateFromEvent({ processor: 'Planner', state: 'RUNNING' }), null);
-  assert.deepEqual(stepStateFromEvent({ stepId: 's1', state: 'RUNNING' }), { stepId: 's1', state: 'RUNNING' });
-  const chip = stepStateFromEvent({ stepId: 's1', state: 'COMPLETED' });
-  assert.deepEqual(chip, { stepId: 's1', state: 'COMPLETE' });
+  assert.equal(stepStateFromEvent({ processor: 'Planner', state: 'Running' }), null);
+  assert.deepEqual(stepStateFromEvent({ stepId: 's1', state: 'Running' }), { stepId: 's1', state: 'Running' });
+  const chip = stepStateFromEvent({ stepId: 's1', state: 'Completed' });
+  assert.deepEqual(chip, { stepId: 's1', state: 'Completed' });
+  assert.deepEqual(stepStateFromEvent({ stepId: 's1', state: 'Failed' }), { stepId: 's1', state: 'Failed' });
+  assert.equal(stepStateFromEvent({ stepId: 's1', state: 'RUNNING' }), null);
   assert.equal(stepStateFromEvent({ stepId: 's1', state: 'SOMETHING' }), null);
   assert.equal(stepStateFromEvent(null), null);
 });

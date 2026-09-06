@@ -34,6 +34,7 @@ class DraftCriterion(Strict):
 
 
 class ResearchDraft(Strict):
+    deliverable: str | None = None
     summary: str
     requirements: list[str] = Field(min_length=1)
     dependencies: list[DraftDependency]

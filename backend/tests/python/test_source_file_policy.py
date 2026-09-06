@@ -76,6 +76,9 @@ class SourceFilePolicyTests(unittest.TestCase):
                 "safe.txt": "safe",
                 "backend/runtime/queue.ts": "backend source",
                 "runtime/server.log": "local runtime noise",
+                "oneshot-worker.log": "changing worker diagnostics",
+                "server.pid": "1234",
+                "download.tmp": "incomplete runtime output",
                 "external/intergration/google_adk/agent.ts": "local scratch clone",
                 ".headless_profile/Crashpad/settings.dat": "local browser state",
             }

@@ -12,7 +12,7 @@ export const AGENT_STAGES = {
   Result: ['Confirmed', 'Done'],
 };
 
-const STEP_STATES = ['Pending', 'Running', 'Completed', 'Completed', 'Failed'];
+const STEP_STATES = ['Pending', 'Running', 'Completed', 'Failed'];
 const PLAN_EMPTY = 'Plan record not yet provided by the runtime.';
 
 function escapeHtml(s) {
@@ -44,7 +44,7 @@ export function planToGroups(plan) {
 export function stepStateFromEvent(e) {
   if (!e || typeof e.stepId !== 'string' || !e.stepId.trim()) return null;
   if (!STEP_STATES.includes(e.state)) return null;
-  return { stepId: e.stepId, state: e.state === 'Completed' ? 'Completed' : e.state };
+  return { stepId: e.stepId, state: e.state };
 }
 
 /** Pure: map a plan step's real responsibility to its canonical Agent group.

@@ -36,6 +36,7 @@ class DraftCriterion(Strict):
 
 
 class ResearchDraft(Strict):
+    deliverable: str | None = None
     summary: str
     requirements: list[str] = Field(min_length=1)
     dependencies: list[DraftDependency]
@@ -152,6 +153,7 @@ def main():
                     text = ("You are OneShot Researcher. Return one JSON object matching output_schema. "
                             "Use only supplied evidence. Preserve all explicit user constraints and commands. "
                             "All requirement indexes are zero-based indexes into requirements. "
+                            "Supply the requested user-facing text artifact in deliverable when applicable. "
                             "Do not invent facts or unrelated architecture.\n" +
                             json.dumps({"prompt": payload["prompt"], "evidence": payload.get("evidence", []),
                                         "output_schema": ResearchDraft.model_json_schema()}))

@@ -2131,3 +2131,10 @@ textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible {
 
 .welcome b { display: none; }
 
+.trace-group, .trace-entry { border: 1px solid var(--line, #334155); border-radius: 8px; margin: 8px 0; padding: 8px; }
+.trace-group summary, .trace-entry summary { cursor: pointer; overflow-wrap: anywhere; }
+.trace-entry summary { display: flex; justify-content: space-between; gap: 12px; }
+.trace-details { font-size: 12px; }
+.trace-details dd { margin: 4px 0 10px; overflow-wrap: anywhere; }
+.trace-details pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+

@@ -42,7 +42,7 @@ export const HUE_TOKENS = {
   red: '#ef4444',
 };
 
-export const STATE_NAMES = ['Idle', 'Planning', 'Running', 'Completed', 'Error'];
+export const STATE_NAMES = Object.keys(VISUAL_DEFAULTS.stateColors);
 
 function clampStrength(n) {
   const x = Number(n);
