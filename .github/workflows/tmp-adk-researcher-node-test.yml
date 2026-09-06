@@ -14,6 +14,8 @@ on:
       - 'package-lock.json'
       - 'app/requirements/**'
       - 'tsconfig.json'
+      # Manifest-only commits must still be verified against the fresh checkout.
+      - 'MANIFEST.sha256'
 
 permissions:
   contents: read
