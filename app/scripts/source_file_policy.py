@@ -21,7 +21,15 @@ PRIVATE_KEY_SUFFIXES = frozenset({".pem", ".key", ".p12", ".pfx"})
 PUBLIC_ENV_TEMPLATE_DIRECTORY = ("app", "env")
 PUBLIC_ENV_TEMPLATE_NAMES = frozenset({".env.example", ".env.workspace.example"})
 GENERATED_SOURCE_FILES = frozenset({"MANIFEST.sha256"})
-IGNORED_LOCAL_FILES = frozenset({".DS_Store"})
+IGNORED_LOCAL_FILES = frozenset(
+    {
+        ".DS_Store",
+        # Transient test-runner output logs (.txt is a legitimate source suffix
+        # in general, so these are excluded by exact name, not by suffix).
+        "unit-log.txt",
+        "npmci-log.txt",
+    }
+)
 # Local-only scratch/runtime directories at the repository root. Root-anchored
 # on purpose: "runtime" must only exclude /runtime, never legitimate nested
 # source directories such as backend/runtime/.
