@@ -52,3 +52,24 @@ below was captured with repository tooling; A-Flow closure remains open.
 - Note: the first post-`npm ci` attempt crashed with a V8 "Zone Allocation
   failed" OOM inside `tsc -p tsconfig.json` at ~73MB (Node 24.17.0); a clean
   retry succeeded with no changes. Recorded as transient, no repair needed.
+- 2026-09-06T18:00Z — Incident during closure: unrelated uncommitted gemma
+  work (modified `Dockerfile.gemma`, `docker-compose.gemma.yml`; untracked
+  `BUILD_GEMMA_NOW.md`, `GEMMA_MODES_GUIDE.md`, `READY_TO_BUILD.txt`,
+  `VERIFICATION_CHECKLIST.txt`) appeared in the working tree and was briefly
+  hashed into the committed manifest (`592789e`). Canonical Runtime
+  Verification run `34050102802` correctly failed (`missing`/`hash mismatch`)
+  on that intermediate commit. Repairs: manifest regenerated from the
+  normalized committed tree (`0058430`); the gemma working files were backed
+  up unmodified to `D:\oneshot_gemma_stash\` and the tree restored to the
+  committed state. `MANIFEST.sha256` added to the CVR path filter so
+  manifest-only commits are verified (`52e2b18`).
+- 2026-09-06T18:03Z — Final tip `52e2b18`: Pipeline E2E run `34050288555`
+  success (all 7 jobs); Canonical Runtime Verification run `34050288562`
+  success (backend suite, frontend tests, committed-manifest check on a fresh
+  checkout). Local: `verify_manifest.py` → `MANIFEST_VERIFIED` (483 entries),
+  worktrees clean, `main`/`reconcile/all-into-main`/`migration/
+  oneshot-executable-v1` all = `52e2b18` locally and on origin. `closed`.
+- Governance note: A-Flow core MCP tools were unavailable in this session, so
+  the audit was executed and recorded manually per the append-only discipline
+  above; A-Flow reconciliation of this entry remains a formality to perform
+  when the tooling is connected.
