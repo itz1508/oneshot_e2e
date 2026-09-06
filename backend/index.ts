@@ -41,7 +41,9 @@ import {
   pipelineQueue,
   saveArtifact,
   type StageServices,
+  PipelineHistory,
 } from "./pipeline/index.js";
+import { getSharedRedis } from "./runtime/redis-connection.js";
 import type { QueueEvents } from "bullmq";
 import { WorkflowRuntime } from "./runtime/workflow-runtime.js";
 import { SandboxService } from "./sandbox/sandbox-service.js";
@@ -216,11 +218,14 @@ try {
 
 let pipelineWorker: ReturnType<typeof createPipelineWorker> | undefined;
 let pipelineQueueEvents: QueueEvents | undefined;
+const pipelineHistory = new PipelineHistory(getSharedRedis());
+
 if (pipelineReady) {
   pipelineWorker = createPipelineWorker({
     runs,
     store: artifactStore,
     services: stageServices,
+    history: pipelineHistory,
     concurrency: Number(process.env.ONESHOT_RUN_CONCURRENCY || 1),
   });
   pipelineQueueEvents = createPipelineQueueEvents({ events });
@@ -284,10 +289,12 @@ const server = await startHttpServer(
     pipeline: pipelineReady
       ? {
           queueReady: true,
-          enqueue: enqueueStage,
+          enqueue: (runId: string, stage) =>
+            enqueueStage(runId, stage, pipelineHistory),
           confirmPlan: async (runId: string) => {
-            await confirmPlan({ runId });
+            await confirmPlan({ runId, history: pipelineHistory });
           },
+          history: pipelineHistory,
           store: artifactStore,
           getQueueCounts: async () => {
             const c = await pipelineQueue.getJobCounts();

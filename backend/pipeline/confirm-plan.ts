@@ -9,6 +9,7 @@ import type {
 
 export async function confirmPlan({
   runId,
+  history,
 }: ConfirmPlanInput): Promise<ConfirmPlanResult> {
   const researcherJobId = stageJobId(
     runId,
@@ -33,6 +34,33 @@ export async function confirmPlan({
   }
 
   const plannerJobId = stageJobId(runId, "planner");
+  const existingPlannerJob =
+    await pipelineQueue.getJob(plannerJobId);
+  const existingState = existingPlannerJob
+    ? await existingPlannerJob.getState()
+    : null;
+
+  // Idempotent: a planner job that is waiting, delayed, active, or completed
+  // means the user already confirmed. Re-emitting "confirmed" is fine; we must
+  // NOT enqueue a second planner job.
+  if (
+    existingState === "waiting" ||
+    existingState === "delayed" ||
+    existingState === "active" ||
+    existingState === "completed"
+  ) {
+    await history?.append({
+      runId,
+      stage: "await-human",
+      type: "confirmed",
+      message: `Planner job ${plannerJobId} already exists (${existingState}); confirmation is idempotent`,
+    });
+    return {
+      runId,
+      plannerJobId,
+      status: "planner_already_queued",
+    };
+  }
 
   await pipelineQueue.add(
     "planner",
@@ -41,6 +69,13 @@ export async function confirmPlan({
       jobId: plannerJobId,
     },
   );
+
+  await history?.append({
+    runId,
+    stage: "await-human",
+    type: "confirmed",
+    message: `Enqueued planner job ${plannerJobId}`,
+  });
 
   return {
     runId,

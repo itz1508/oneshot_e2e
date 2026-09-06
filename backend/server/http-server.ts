@@ -27,6 +27,7 @@ import {
   enqueueStage,
   saveArtifact,
   type PipelineStage,
+  type PipelineHistory,
 } from "../pipeline/index.js";
 import { projectAdkGraph } from "../graph/adk-graph.js";
 import { projectAuthorityGraph } from "../graph/authority-graph.js";
@@ -227,6 +228,7 @@ export interface PipelineApi {
   enqueue: (runId: string, stage: PipelineStage) => Promise<string>;
   confirmPlan: (runId: string) => Promise<void>;
   store: ArtifactStore;
+  history: PipelineHistory;
   getQueueCounts?: () => Promise<{ waiting: number; active: number; failed: number }>;
 }
 
@@ -485,6 +487,17 @@ export async function startHttpServer(
               redis_available: anyQueueReady,
               pipeline: Boolean(options.pipeline),
               legacy: Boolean(runQueue),
+            },
+            runtime: {
+              preferred: "pipeline",
+              pipeline: {
+                available: Boolean(options.pipeline),
+                active: pipelineReady,
+              },
+              legacy: {
+                available: Boolean(runQueue),
+                active: Boolean(!pipelineReady && queueReady),
+              },
             },
             task_management: Boolean(task),
             intent_collection: Boolean(intent),
@@ -810,6 +823,34 @@ export async function startHttpServer(
                 ? 409
                 : 500;
             return json(res, status, {
+              error: e instanceof Error ? e.message : String(e),
+              run_id: runId,
+            });
+          }
+        }
+
+        // GET /api/runs/:id/history — deterministic per-stage execution log
+        const runHistory = url.pathname.match(
+          /^\/api\/runs\/([^/]+)\/history$/,
+        );
+        if (req.method === "GET" && runHistory) {
+          const runId = decodeURIComponent(runHistory[1]);
+          const snap = runs.get(runId);
+          if (!snap) return json(res, 404, { error: "run not found" });
+          if (!options.pipeline?.queueReady) {
+            return json(res, 501, {
+              error: "pipeline history requires the per-stage pipeline",
+              run_id: runId,
+            });
+          }
+          try {
+            const history = await options.pipeline.history.list(runId);
+            return json(res, 200, {
+              run_id: runId,
+              history,
+            });
+          } catch (e) {
+            return json(res, 500, {
               error: e instanceof Error ? e.message : String(e),
               run_id: runId,
             });

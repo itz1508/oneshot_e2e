@@ -49,3 +49,5 @@ export {
 export { createPipelineWorker } from "./worker.js";
 export { confirmPlan } from "./confirm-plan.js";
 export { createPipelineQueueEvents, closePipelineQueueEvents } from "./events.js";
+export { PipelineHistory } from "./history.js";
+export type { PipelineHistoryEvent, PipelineHistoryEventType } from "./history.js";

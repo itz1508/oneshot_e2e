@@ -7,6 +7,7 @@ import type {
   PipelineStage,
   StageJobData,
 } from "./types.js";
+import { PipelineHistory } from "./history.js";
 
 export const PIPELINE_QUEUE = "oneshot-pipeline";
 
@@ -54,13 +55,21 @@ export function stageJobId(
 export async function enqueueStage(
   runId: string,
   stage: PipelineStage,
+  history?: PipelineHistory,
 ): Promise<string> {
   const job = await pipelineQueue.add(
     stage,
     { runId },
     { jobId: stageJobId(runId, stage) },
   );
-  return job.id ?? stageJobId(runId, stage);
+  const jobId = job.id ?? stageJobId(runId, stage);
+  await history?.append({
+    runId,
+    stage,
+    type: "queued",
+    jobId,
+  });
+  return jobId;
 }
 
 export async function closePipelineQueue(): Promise<void> {

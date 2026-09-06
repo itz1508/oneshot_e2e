@@ -1,0 +1,31 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: oneshot-redis
+    restart: unless-stopped
+
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - oneshot_redis_data:/data
+
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 3s
+      timeout: 2s
+      retries: 20
+      start_period: 2s
+
+volumes:
+  oneshot_redis_data:

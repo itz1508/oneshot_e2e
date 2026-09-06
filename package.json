@@ -23,7 +23,11 @@
     "judge": "node scripts/judge.mjs",
     "bootstrap": "node scripts/bootstrap.mjs",
     "guard:layout": "node scripts/guard/layout.mjs",
-    "guard:layout:enforce": "node scripts/guard/layout.mjs --enforce"
+    "guard:layout:enforce": "node scripts/guard/layout.mjs --enforce",
+    "redis:up": "docker compose -f docker-compose.dev.yml up -d redis",
+    "redis:down": "docker compose -f docker-compose.dev.yml down",
+    "redis:logs": "docker compose -f docker-compose.dev.yml logs -f redis",
+    "test:pipeline:e2e": "node backend/scripts/test-pipeline-e2e.mjs"
   },
   "dependencies": {
     "@google/adk": "2.0.0",

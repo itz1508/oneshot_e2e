@@ -36,10 +36,11 @@ export interface StageProgress {
 
 export interface ConfirmPlanInput {
   runId: string;
+  history?: import("./history.js").PipelineHistory;
 }
 
 export interface ConfirmPlanResult {
   runId: string;
   plannerJobId: string;
-  status: "planner_queued";
+  status: "planner_queued" | "planner_already_queued";
 }
