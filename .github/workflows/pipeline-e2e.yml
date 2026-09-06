@@ -240,6 +240,9 @@ jobs:
     env:
       REDIS_URL: redis://127.0.0.1:6379
       ONESHOT_MODE: sample
+      # The recovery scripts poll /api/runs/:id/history every 500ms (2 requests
+      # per poll), far exceeding the product default of 100 requests/15min.
+      API_RATE_LIMIT_MAX: "100000"
 
     steps:
       - uses: actions/checkout@v4
@@ -302,6 +305,8 @@ jobs:
       PIPELINE_FAULTS_ENABLED: "true"
       PIPELINE_FAULT_STAGE: evaluation
       PIPELINE_FAULT_MODE: crash-after-checkpoint
+      # Recovery scripts poll history every 500ms; lift the API rate limit for CI.
+      API_RATE_LIMIT_MAX: "100000"
 
     steps:
       - uses: actions/checkout@v4
@@ -362,6 +367,8 @@ jobs:
       ONESHOT_MODE: sample
       PIPELINE_FAULTS_ENABLED: "true"
       PIPELINE_FAULTS: '[{"stage":"triple-validation","mode":"refine-once"},{"stage":"evaluation","mode":"crash-after-checkpoint","minIteration":1}]'
+      # Recovery scripts poll history every 500ms; lift the API rate limit for CI.
+      API_RATE_LIMIT_MAX: "100000"
 
     steps:
       - uses: actions/checkout@v4
