@@ -39,8 +39,12 @@ export interface ConfirmPlanInput {
   history?: import("./history.js").PipelineHistory;
 }
 
-export interface ConfirmPlanResult {
-  runId: string;
-  plannerJobId: string;
-  status: "planner_queued" | "planner_already_queued";
-}
+export type ConfirmPlanResult =
+  | {
+      status: "confirmed";
+      plannerQueued: true;
+    }
+  | {
+      status: "already_confirmed";
+      plannerQueued: false;
+    };

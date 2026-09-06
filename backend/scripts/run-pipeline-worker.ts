@@ -27,6 +27,7 @@ import { DeterministicValidationRuntime } from "../validation/deterministic-vali
 import { PythonBridge } from "../validation/python-bridge.js";
 import { getRuntimePaths, ensureRuntimeDirectories } from "../runtime/runtime-config.js";
 import { createPipelineWorker } from "../pipeline/worker.js";
+import { getSharedRedis } from "../runtime/redis-connection.js";
 import type { StageServices } from "../pipeline/processors.js";
 import { saveArtifact } from "../pipeline/context.js";
 import { PlannerWorkflow } from "../agents/planner/workflow.js";
@@ -112,6 +113,7 @@ async function main() {
     runs,
     store: new FileArtifactStore(runtimePaths.runs),
     services,
+    redis: getSharedRedis(),
     concurrency: Number(process.env.ONESHOT_PIPELINE_CONCURRENCY || 1),
   });
 

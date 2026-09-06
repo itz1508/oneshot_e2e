@@ -26,6 +26,9 @@ const POLL_INTERVAL_MS = 500;
 const RESEARCHER_TIMEOUT_MS = 120_000;
 const PIPELINE_TIMEOUT_MS = 300_000;
 
+const FAULT_STAGE = process.env.PIPELINE_FAULT_STAGE?.trim() ?? "";
+const FAULT_MODE = process.env.PIPELINE_FAULT_MODE?.trim() ?? "";
+
 const AUTH = API_TOKEN ? { Authorization: `Bearer ${API_TOKEN}` } : {};
 
 async function requestJson(path, options = {}) {
@@ -225,48 +228,77 @@ async function waitForHumanGate(runId) {
 
 async function confirmPlan(runId) {
   console.log("4. Confirming plan...");
-  await requestJson(`/api/runs/${encodeURIComponent(runId)}/confirm-plan`, {
-    method: "POST",
-    body: JSON.stringify({
-      confirmed: true,
-      notes: "Approved automatically by E2E wiring test.",
-    }),
-  });
-  console.log("   ✔ Plan confirmed");
+  const body = await requestJson(
+    `/api/runs/${encodeURIComponent(runId)}/confirm-plan`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        confirmed: true,
+        notes: "Approved automatically by E2E wiring test.",
+      }),
+    },
+  );
+  if (body.status !== "confirmed" || !body.planner_queued) {
+    throw new Error(
+      `Unexpected confirm-plan response: ${JSON.stringify(body)}`,
+    );
+  }
+  console.log("   ✔ Plan confirmed, planner queued");
 }
 
 async function verifyDuplicateConfirmation(runId) {
   console.log("5. Testing idempotent confirmation...");
-  const response = await fetch(
-    `${API_URL}/api/runs/${encodeURIComponent(runId)}/confirm-plan`,
+  const body = await requestJson(
+    `/api/runs/${encodeURIComponent(runId)}/confirm-plan`,
     {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        ...AUTH,
-      },
       body: JSON.stringify({
         confirmed: true,
         notes: "Duplicate E2E confirmation",
       }),
     },
   );
-  if (!response.ok && response.status !== 409) {
+  if (body.status !== "already_confirmed" || body.planner_queued) {
     throw new Error(
-      `Duplicate confirmation returned unexpected status ${response.status}`,
+      `Duplicate confirmation must report already_confirmed with plannerQueued=false: ${JSON.stringify(body)}`,
     );
   }
-  console.log(`   ✔ Duplicate handled with HTTP ${response.status}`);
+  console.log("   ✔ Duplicate confirmation idempotent (planner already queued)");
 }
 
 
-async function waitForCompletion(runId) {
-  console.log("6. Waiting for complete pipeline...");
+async function waitForPipelineEnd(runId) {
+  const isValidationFailure =
+    FAULT_STAGE === "triple-validation" &&
+    FAULT_MODE === "fail-always";
+
+  if (isValidationFailure) {
+    console.log("6. Waiting for validation failure to block pipeline...");
+  } else {
+    console.log("6. Waiting for complete pipeline...");
+  }
+
   return waitUntil(
-    "pipeline completion",
+    isValidationFailure
+      ? "validation failure exhaustion"
+      : "pipeline completion",
     async () => {
       const events = await getHistory(runId);
-      const failed = events.find((event) => event.type === "failed");
+
+      if (isValidationFailure) {
+        const failures = countEvent(events, FAULT_STAGE, "failed");
+        if (failures >= 3) {
+          return { run: await getRun(runId), events };
+        }
+        return false;
+      }
+
+      const failed = events.find(
+        (event) =>
+          event.type === "failed" &&
+          // A planner retry is expected when fail-once is configured.
+          !(FAULT_STAGE === "planner" && FAULT_MODE === "fail-once" && event.stage === "planner"),
+      );
       if (failed) {
         throw new Error(
           `Pipeline failed at ${failed.stage}: ${failed.message ?? ""}`,
@@ -281,7 +313,7 @@ async function waitForCompletion(runId) {
         status === "succeeded" ||
         status === "done"
       ) {
-        return run;
+        return { run, events };
       }
       return false;
     },
@@ -300,6 +332,28 @@ async function verifyPipelineHistory(runId) {
       job: event.jobId ?? "",
     })),
   );
+
+  // Validation-failure mode: the deterministic validation stage fails forever,
+  // so builder/confirmation/hash must never execute.
+  if (
+    FAULT_STAGE === "triple-validation" &&
+    FAULT_MODE === "fail-always"
+  ) {
+    if (!hasEvent(events, FAULT_STAGE, "failed")) {
+      throw new Error(
+        `Fault injection expected ${FAULT_STAGE} to fail`,
+      );
+    }
+    for (const stage of ["builder", "build", "confirmation", "hash"]) {
+      if (countEvent(events, stage, "started") > 0) {
+        throw new Error(
+          `${stage} must NOT start after validation failure`,
+        );
+      }
+    }
+    console.log("   ✔ Validation failure correctly blocked downstream stages");
+    return;
+  }
 
   const requiredStages = [
     "researcher",
@@ -372,12 +426,18 @@ async function verifyPipelineHistory(runId) {
     { stage: "builder", type: "started" },
   );
 
-  if (countEvent(events, "planner", "started") !== 1) {
-    throw new Error("Planner must be started exactly once even after duplicate confirmation");
+  const plannerStarts = countEvent(events, "planner", "started");
+  const expectedPlannerStarts =
+    FAULT_STAGE === "planner" && FAULT_MODE === "fail-once" ? 2 : 1;
+
+  if (plannerStarts !== expectedPlannerStarts) {
+    throw new Error(
+      `Planner started ${plannerStarts} time(s), expected ${expectedPlannerStarts}`,
+    );
   }
 
   console.log("   ✔ Stage ordering verified");
-  console.log("   ✔ No duplicate Planner execution");
+  console.log("   ✔ No duplicate logical Planner execution");
 }
 
 async function verifyBuild(run) {
@@ -410,15 +470,24 @@ async function main() {
   await waitForHumanGate(runId);
   await confirmPlan(runId);
   await verifyDuplicateConfirmation(runId);
-  const finalRun = await waitForCompletion(runId);
+  const { run: finalRun } = await waitForPipelineEnd(runId);
   await verifyPipelineHistory(runId);
-  await verifyBuild(finalRun);
+
+  const isValidationFailure =
+    FAULT_STAGE === "triple-validation" &&
+    FAULT_MODE === "fail-always";
+  if (!isValidationFailure) {
+    await verifyBuild(finalRun);
+  }
 
   console.log("");
   console.log("================================");
   console.log("✔ ONESHOT PIPELINE E2E PASSED");
   console.log("================================");
   console.log(`Run: ${runId}`);
+  if (FAULT_STAGE && FAULT_MODE) {
+    console.log(`Fault: stage=${FAULT_STAGE} mode=${FAULT_MODE}`);
+  }
   console.log("");
 }
 

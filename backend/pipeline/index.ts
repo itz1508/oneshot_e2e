@@ -51,3 +51,8 @@ export { confirmPlan } from "./confirm-plan.js";
 export { createPipelineQueueEvents, closePipelineQueueEvents } from "./events.js";
 export { PipelineHistory } from "./history.js";
 export type { PipelineHistoryEvent, PipelineHistoryEventType } from "./history.js";
+export { PipelineIdempotency } from "./idempotency.js";
+export { PipelineFaultController } from "./fault-controller.js";
+export { runStage } from "./run-stage.js";
+export { faultsEnabled, getFaultConfig } from "./faults.js";
+export type { FaultStage, FaultMode, FaultConfig } from "./faults.js";

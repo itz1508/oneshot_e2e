@@ -225,6 +225,7 @@ if (pipelineReady) {
     runs,
     store: artifactStore,
     services: stageServices,
+    redis: getSharedRedis(),
     history: pipelineHistory,
     concurrency: Number(process.env.ONESHOT_RUN_CONCURRENCY || 1),
   });
@@ -292,7 +293,11 @@ const server = await startHttpServer(
           enqueue: (runId: string, stage) =>
             enqueueStage(runId, stage, pipelineHistory),
           confirmPlan: async (runId: string) => {
-            await confirmPlan({ runId, history: pipelineHistory });
+            return confirmPlan({
+              runId,
+              redis: getSharedRedis(),
+              history: pipelineHistory,
+            });
           },
           history: pipelineHistory,
           store: artifactStore,

@@ -1,4 +1,5 @@
 import { Worker, type Job } from "bullmq";
+import type { Redis } from "ioredis";
 import type {
   PipelineStage,
   StageHandoff,
@@ -26,12 +27,15 @@ import {
 import { PipelineContext } from "./context.js";
 import type { ArtifactStore } from "../runtime/artifact-store.js";
 import type { RunRepository } from "../runtime/run-repository.js";
+import { runStage } from "./run-stage.js";
+import { PipelineIdempotency } from "./idempotency.js";
 import type { PipelineHistory } from "./history.js";
 
 export interface PipelineWorkerInput {
   runs: RunRepository;
   store: ArtifactStore;
   services: StageServices;
+  redis: Redis;
   history?: PipelineHistory;
   concurrency?: number;
 }
@@ -62,7 +66,16 @@ type PipelineJob = Job<StageJobData, unknown, PipelineStage>;
 export function createPipelineWorker(
   input: PipelineWorkerInput,
 ): Worker<StageJobData, unknown, PipelineStage> {
-  const { runs, store, services, history, concurrency = 1 } = input;
+  const {
+    runs,
+    store,
+    services,
+    redis,
+    history,
+    concurrency = 1,
+  } = input;
+
+  const idempotency = new PipelineIdempotency(redis);
 
   const worker = new Worker<
     StageJobData,
@@ -74,8 +87,6 @@ export function createPipelineWorker(
     async (job: PipelineJob) => {
       const stage = job.name;
       const { runId } = job.data;
-      const jobId = String(job.id ?? stageJobId(runId, stage));
-      const attempt = job.attemptsMade + 1;
 
       const ctx: PipelineContext = {
         runId,
@@ -89,100 +100,79 @@ export function createPipelineWorker(
         await job.updateProgress(value);
       };
 
-      await history?.append({
-        runId,
-        stage,
-        type: attempt > 1 ? "retrying" : "started",
-        jobId,
-        attempt,
-      });
-
-      try {
+      const execute = async () => {
         switch (stage) {
           case "researcher":
             await runResearcherStage(ctx, services, progress);
-            break;
+            return;
           case "planner":
             await runPlannerStage(ctx, services, progress);
-            break;
+            return;
           case "refactor":
             await runRefactorStage(ctx, services, progress);
-            break;
+            return;
           case "gap-analysis":
-            await runGapAnalysisStage(
-              ctx,
-              services,
-              progress,
-            );
-            break;
+            await runGapAnalysisStage(ctx, services, progress);
+            return;
           case "evaluation":
-            await runEvaluationStage(
-              ctx,
-              services,
-              progress,
-            );
-            break;
+            await runEvaluationStage(ctx, services, progress);
+            return;
           case "triple-validation":
             await runTripleValidationStage(
               ctx,
               services,
               progress,
             );
-            break;
+            return;
           case "confirmation":
-            await runConfirmationStage(
-              ctx,
-              services,
-              progress,
-            );
-            break;
+            await runConfirmationStage(ctx, services, progress);
+            return;
           case "hash":
             await runHashStage(ctx, services, progress);
-            break;
+            return;
           case "build":
             await runBuildStage(ctx, services, progress);
-            break;
+            return;
           default:
             throw new Error(
               `Unknown pipeline stage: ${stage}`,
             );
         }
-      } catch (error) {
-        await history?.append({
-          runId,
-          stage,
-          type: "failed",
-          jobId,
-          attempt,
-          message:
-            error instanceof Error ? error.message : String(error),
-        });
-        throw error;
-      }
+      };
 
-      await history?.append({
+      const { skipped } = await runStage({
+        redis,
         runId,
         stage,
-        type: "completed",
-        jobId,
-        attempt,
+        job,
+        execute,
       });
 
       const handoff = HANDOFFS[stage];
-      if (handoff) {
-        if (handoff.gate === "auto") {
-          await enqueueNext(handoff.next, runId, history);
-        } else if (handoff.gate === "await-human" && handoff.next === "planner") {
-          await history?.append({
-            runId,
-            stage: "await-human",
-            type: "waiting",
-            message: `Waiting for confirm-plan before ${handoff.next}`,
-          });
-        }
+      if (!handoff) {
+        return { runId, stage };
       }
 
-      return { runId, stage };
+      if (handoff.gate === "auto") {
+        await enqueueNext(
+          handoff.next,
+          runId,
+          idempotency,
+          history,
+        );
+      } else if (
+        handoff.gate === "await-human" &&
+        handoff.next === "planner"
+      ) {
+        await history?.append({
+          runId,
+          stage: "await-human",
+          type: "waiting",
+          message: `Waiting for confirm-plan before ${handoff.next}`,
+        });
+      }
+
+      return { runId, stage, skipped };
     },
 
     {
@@ -217,8 +207,16 @@ export function createPipelineWorker(
 async function enqueueNext(
   stage: PipelineStage,
   runId: string,
+  idempotency: PipelineIdempotency,
   history?: PipelineHistory,
 ): Promise<void> {
+  if (await idempotency.isCompleted(runId, stage)) {
+    console.log(
+      `[OneShot] Skipping enqueue for ${stage}; already completed for ${runId}`,
+    );
+    return;
+  }
+
   await pipelineQueue.add(
     stage,
     { runId },

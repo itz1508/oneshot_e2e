@@ -28,6 +28,7 @@ import {
   saveArtifact,
   type PipelineStage,
   type PipelineHistory,
+  type ConfirmPlanResult,
 } from "../pipeline/index.js";
 import { projectAdkGraph } from "../graph/adk-graph.js";
 import { projectAuthorityGraph } from "../graph/authority-graph.js";
@@ -226,7 +227,7 @@ export interface RuntimeInfo {
 export interface PipelineApi {
   queueReady: boolean;
   enqueue: (runId: string, stage: PipelineStage) => Promise<string>;
-  confirmPlan: (runId: string) => Promise<void>;
+  confirmPlan: (runId: string) => Promise<ConfirmPlanResult>;
   store: ArtifactStore;
   history: PipelineHistory;
   getQueueCounts?: () => Promise<{ waiting: number; active: number; failed: number }>;
@@ -811,15 +812,17 @@ export async function startHttpServer(
             });
           }
           try {
-            await options.pipeline.confirmPlan(runId);
+            const result = await options.pipeline.confirmPlan(runId);
             return json(res, 202, {
               run_id: runId,
-              confirmed: true,
+              status: result.status,
+              planner_queued: result.plannerQueued,
               next_stage: "planner",
             });
           } catch (e) {
             const status =
-              e instanceof Error && e.message.includes("not awaiting")
+              e instanceof Error &&
+              e.message.includes("Researcher stage has not completed")
                 ? 409
                 : 500;
             return json(res, status, {
