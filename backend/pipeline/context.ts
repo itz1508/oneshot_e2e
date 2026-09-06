@@ -12,6 +12,14 @@ import type {
 } from "../contracts/schema/types.js";
 import type { ArtifactStore } from "../runtime/artifact-store.js";
 import type { RunRepository } from "../runtime/run-repository.js";
+import type { ProviderRuntimeSettings } from "../../app/web/cloud/provider-runtime-config.js";
+
+export interface CapturedProvider {
+  id: string;
+  model: string;
+  configRevision: number;
+  settings?: ProviderRuntimeSettings;
+}
 
 export interface PipelineContext {
   runId: string;
@@ -34,6 +42,12 @@ export async function loadPrompt(
   }
 
   return ctx.store.load<Prompt>(ctx.runId, promptId);
+}
+
+export async function loadProvider(
+  ctx: PipelineContext,
+): Promise<CapturedProvider> {
+  return ctx.store.load<CapturedProvider>(ctx.runId, "provider");
 }
 
 export async function loadResearchBundle(

@@ -21,6 +21,13 @@ import { QUEUE_PREFIX, RUN_QUEUE_NAME, type RunQueue, type RunJobV1 } from "../r
 import type { ProviderManager } from "../../app/web/cloud/provider-manager.js";
 import type { ProviderRuntimeSettings } from "../../app/web/cloud/provider-runtime-config.js";
 import type { ProviderCredential } from "../../app/web/cloud/provider-secret-store.js";
+import type { ArtifactStore } from "../runtime/artifact-store.js";
+import {
+  confirmPlan as pipelineConfirmPlan,
+  enqueueStage,
+  saveArtifact,
+  type PipelineStage,
+} from "../pipeline/index.js";
 import { projectAdkGraph } from "../graph/adk-graph.js";
 import { projectAuthorityGraph } from "../graph/authority-graph.js";
 import { projectIntentGraph } from "../graph/intent-graph.js";
@@ -210,9 +217,24 @@ export interface RuntimeInfo {
   queue?: boolean;
 }
 
+/**
+ * Minimal interface for the per-stage BullMQ pipeline. When supplied, the HTTP
+ * layer uses it for run submission and plan confirmation instead of the legacy
+ * ADK single-queue runtime.
+ */
+export interface PipelineApi {
+  queueReady: boolean;
+  enqueue: (runId: string, stage: PipelineStage) => Promise<string>;
+  confirmPlan: (runId: string) => Promise<void>;
+  store: ArtifactStore;
+  getQueueCounts?: () => Promise<{ waiting: number; active: number; failed: number }>;
+}
+
 export interface HttpServerOptions {
   workspaceRoot?: string;
   executeInline?: (job: RunJobV1) => Promise<unknown>;
+  /** Pipeline backend; when present, run submission uses per-stage queues. */
+  pipeline?: PipelineApi;
 }
 
 export async function startHttpServer(
@@ -249,22 +271,46 @@ export async function startHttpServer(
   const workspacePolicy = await WorkspacePathPolicy.create(workspaceRoot);
 
   async function submitRun(runId: string, prompt: Prompt, res: ServerResponse, extra: Record<string, unknown> = {}, reviewPlan = false) {
+    const pipeline = options.pipeline;
+    const legacyQueueReady = runQueue && queueReady;
     const queueRequired = process.env.ONESHOT_QUEUE_REQUIRED === "true";
-    if (queueRequired && (!runQueue || !queueReady)) {
+
+    if (queueRequired && !pipeline?.queueReady && !legacyQueueReady) {
       runs.create(runId);
       markRunQueueUnavailable(runId, runs, events);
       return json(res, 503, { error: "runtime queue unavailable", run_id: runId });
     }
+
     let selector;
     try {
       selector = providerManager?.captureForRun() ?? { id: "sample", configRevision: 0, model: "fixture" };
     } catch {
       return json(res, 409, { error: "Configure and activate a provider before starting a run" });
     }
+
     runs.create(runId);
+
+    // Per-stage BullMQ pipeline (new default when configured).
+    if (pipeline?.queueReady) {
+      try {
+        const ctx = { runId, runs, store: pipeline.store };
+        await saveArtifact(ctx, "prompt", prompt);
+        await saveArtifact(ctx, "provider", selector);
+        await pipeline.enqueue(runId, "researcher");
+        return json(res, 202, { run_id: runId, queued: true, pipeline: true, ...extra });
+      } catch (e) {
+        if (queueRequired) {
+          markRunQueueUnavailable(runId, runs, events);
+          return json(res, 503, { error: "pipeline queue unavailable", run_id: runId });
+        }
+        // Otherwise fall through to legacy path so local dev without Redis still works.
+      }
+    }
+
+    // Legacy ADK single-queue runtime (kept for tests and gradual migration).
     if (reviewPlan) await runtime.review.enable(runId);
     const job: RunJobV1 = { version: 1, runId, prompt, provider: selector, submittedAt: new Date().toISOString() };
-    if (runQueue && queueReady) {
+    if (legacyQueueReady) {
       try {
         await runQueue.addRun({ runId, prompt, providerId: selector.id,
           revision: selector.configRevision, model: selector.model,
@@ -379,19 +425,22 @@ export async function startHttpServer(
           const activeId = providerManager?.runtimeConfig().activeProvider || "<default>";
           const mode = providerManager?.mode ?? runtimeInfo?.mode ?? "production";
           const publicName = providerManager?.publicNameFor(activeId) || "<default>";
-          const redis: "ok" | "unavailable" | "disabled" = !runQueue
+          const pipelineReady = options.pipeline?.queueReady ?? false;
+          const legacyReady = Boolean(runQueue && queueReady);
+          const anyQueueReady = pipelineReady || legacyReady;
+          const redis: "ok" | "unavailable" | "disabled" = !(runQueue || options.pipeline)
             ? "disabled"
-            : queueReady
+            : anyQueueReady
               ? "ok"
               : "unavailable";
-          const queue: "ok" | "unavailable" | "disabled" = !runQueue
+          const queue: "ok" | "unavailable" | "disabled" = !(runQueue || options.pipeline)
             ? "disabled"
-            : queueReady
+            : anyQueueReady
               ? "ok"
               : "unavailable";
-          const worker: "ok" | "degraded" | "disabled" = !runQueue
+          const worker: "ok" | "degraded" | "disabled" = !(runQueue || options.pipeline)
             ? "disabled"
-            : queueReady
+            : anyQueueReady
               ? "ok"
               : "degraded";
           let providerConfiguration:
@@ -432,8 +481,10 @@ export async function startHttpServer(
             worker,
             providerConfiguration,
             run_queue: {
-              enabled: Boolean(runQueue),
-              redis_available: queueReady ?? false,
+              enabled: Boolean(runQueue || options.pipeline),
+              redis_available: anyQueueReady,
+              pipeline: Boolean(options.pipeline),
+              legacy: Boolean(runQueue),
             },
             task_management: Boolean(task),
             intent_collection: Boolean(intent),
@@ -450,6 +501,37 @@ export async function startHttpServer(
         // ---------------------------------------------------------------
         if (req.method === "GET" && url.pathname === "/api/runtime/queue") {
           const backend = "bullmq";
+
+          // Per-stage pipeline queue takes precedence.
+          if (options.pipeline) {
+            const queueName = "oneshot-pipeline";
+            const ready = options.pipeline.queueReady;
+            let redis: "ok" | "unavailable" = ready ? "ok" : "unavailable";
+            let waiting = 0;
+            let active = 0;
+            let failed = 0;
+            if (ready && options.pipeline.getQueueCounts) {
+              try {
+                const c = await options.pipeline.getQueueCounts();
+                waiting = c.waiting;
+                active = c.active;
+                failed = c.failed;
+              } catch {
+                redis = "unavailable";
+              }
+            }
+            return json(res, 200, {
+              available: ready && redis === "ok",
+              backend,
+              redis,
+              queue: queueName,
+              waiting,
+              active,
+              failed,
+              pipeline: true,
+            });
+          }
+
           const queueName = `${QUEUE_PREFIX}:${RUN_QUEUE_NAME}`;
           if (!runQueue) {
             return json(res, 200, {
@@ -697,6 +779,39 @@ export async function startHttpServer(
           } catch (e) {
             return json(res, 500, {
               error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        // POST /api/runs/:id/confirm-plan — human gate after Researcher
+        const runConfirmPlan = url.pathname.match(
+          /^\/api\/runs\/([^/]+)\/confirm-plan$/,
+        );
+        if (req.method === "POST" && runConfirmPlan) {
+          const runId = decodeURIComponent(runConfirmPlan[1]);
+          const snap = runs.get(runId);
+          if (!snap) return json(res, 404, { error: "run not found" });
+          if (!options.pipeline?.queueReady) {
+            return json(res, 501, {
+              error: "plan confirmation requires the per-stage pipeline",
+              run_id: runId,
+            });
+          }
+          try {
+            await options.pipeline.confirmPlan(runId);
+            return json(res, 202, {
+              run_id: runId,
+              confirmed: true,
+              next_stage: "planner",
+            });
+          } catch (e) {
+            const status =
+              e instanceof Error && e.message.includes("not awaiting")
+                ? 409
+                : 500;
+            return json(res, status, {
+              error: e instanceof Error ? e.message : String(e),
+              run_id: runId,
             });
           }
         }

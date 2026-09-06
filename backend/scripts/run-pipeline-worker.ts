@@ -28,7 +28,7 @@ import { PythonBridge } from "../validation/python-bridge.js";
 import { getRuntimePaths, ensureRuntimeDirectories } from "../runtime/runtime-config.js";
 import { createPipelineWorker } from "../pipeline/worker.js";
 import type { StageServices } from "../pipeline/processors.js";
-import { ResearcherWorkflow } from "../agents/researcher/workflow.js";
+import { saveArtifact } from "../pipeline/context.js";
 import { PlannerWorkflow } from "../agents/planner/workflow.js";
 import { RefactorWorkflow } from "../agents/refactor/workflow.js";
 import { GapAnalysisWorkflow } from "../agents/gap-analysis/workflow.js";
@@ -93,16 +93,10 @@ async function main() {
   const confirmation = new ConfirmationWorkflow(contracts);
   const hashWorkflow = new HashWorkflow(contracts);
 
-  // Provider binding is per-run. For the pipeline we bind lazily inside the
-  // researcher stage; here we prepare the provider using the manager default.
-  const provider = await providerManager.resolveForRun(
-    undefined,
-    providerManager.captureForRun(),
-  );
-
   const services: StageServices = {
     events,
-    researcher: new ResearcherWorkflow(provider, contracts),
+    providerManager,
+    contracts,
     planner: new PlannerWorkflow(contracts),
     refactor: new RefactorWorkflow(contracts),
     gapper: new GapAnalysisWorkflow(contracts),
@@ -111,11 +105,7 @@ async function main() {
     confirmation,
     hash: hashWorkflow,
     builder: new BuilderWorkflow(sandbox),
-    saveArtifact: async (ctx, name, value) => {
-      const path = await ctx.store.save(ctx.runId, name, value);
-      ctx.runs.artifact(ctx.runId, name, path);
-      return path;
-    },
+    saveArtifact,
   };
 
   const worker = createPipelineWorker({

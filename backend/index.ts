@@ -30,6 +30,19 @@ import { GapAnalysisWorkflow } from "./agents/gap-analysis/workflow.js";
 import { EvaluationWorkflow } from "./agents/evaluation/workflow.js";
 import { BuilderWorkflow } from "./agents/builder/workflow.js";
 import { TripleValidationWorkflow } from "./workflow/triple-validation.js";
+import { ConfirmationWorkflow } from "./workflow/confirmation.js";
+import { HashWorkflow } from "./workflow/hash.js";
+import {
+  closePipelineQueueEvents,
+  confirmPlan,
+  createPipelineQueueEvents,
+  createPipelineWorker,
+  enqueueStage,
+  pipelineQueue,
+  saveArtifact,
+  type StageServices,
+} from "./pipeline/index.js";
+import type { QueueEvents } from "bullmq";
 import { WorkflowRuntime } from "./runtime/workflow-runtime.js";
 import { SandboxService } from "./sandbox/sandbox-service.js";
 import { HardenedProcessRunner } from "./sandbox/runner/process-runner.js";
@@ -124,9 +137,36 @@ const sandbox = new SandboxService(
   runtimePaths.sandboxWorkspaces,
 );
 
-// --- Google ADK Dynamic Workflow Runtime ---
-// The dependency factory proves provider/model readiness per job and returns
-// the existing OneShot Agent implementations consumed by ADK connector nodes.
+// --- Agent workflow instances used by the per-stage pipeline ---
+// ResearcherWorkflow is created per-run inside the researcher stage because
+// provider/model selection is bound per job via ProviderManager.
+const artifactStore = new FileArtifactStore(runtimePaths.runs);
+const planner = new PlannerWorkflow(contracts);
+const refactor = new RefactorWorkflow(contracts);
+const gapper = new GapAnalysisWorkflow(contracts);
+const evaluator = new EvaluationWorkflow(contracts);
+const confirmation = new ConfirmationWorkflow(contracts);
+const hash = new HashWorkflow(contracts);
+const builder = new BuilderWorkflow(sandbox);
+
+const stageServices: StageServices = {
+  events,
+  providerManager,
+  contracts,
+  planner,
+  refactor,
+  gapper,
+  evaluator,
+  triple,
+  confirmation,
+  hash,
+  builder,
+  saveArtifact,
+};
+
+// --- Google ADK Dynamic Workflow Runtime (legacy inline fallback) ---
+// Kept so the server can still boot and run jobs in-process when Redis is
+// unavailable. The per-stage BullMQ pipeline is the primary execution path.
 const bindDependencies = createDynamicDependencyFactory({
   projectRoot,
   events,
@@ -141,7 +181,7 @@ const bindDependencies = createDynamicDependencyFactory({
 const runtime = new WorkflowRuntime(
   events,
   runs,
-  new FileArtifactStore(runtimePaths.runs),
+  artifactStore,
   bindDependencies,
 );
 
@@ -153,10 +193,40 @@ await skills.activation.activate({ skill_id: "oneshot-intent-collection" }, runt
 await skills.activation.activate({ skill_id: "oneshot-sandbox-runtime" }, runtimeCtx);
 await skills.activation.activate({ skill_id: "oneshot-init" }, runtimeCtx);
 
-// --- BullMQ Run Queue + Worker (scheduling/execution lifecycle) ---
-// Provider binding is per-run inside the worker, immediately before the
-// canonical workflow executes. RunRepository remains the durable source of
-// truth; Redis/BullMQ only transports scheduling + live progress.
+// --- Per-stage BullMQ pipeline (primary scheduling/execution lifecycle) ---
+// Jobs carry only { runId }; durable state lives in RunRepository + ArtifactStore.
+let pipelineReady = false;
+try {
+  await Promise.race([
+    pipelineQueue.waitUntilReady(),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error("pipeline Redis connection timeout")),
+        Number(process.env.ONESHOT_QUEUE_READY_TIMEOUT || 8_000),
+      ),
+    ),
+  ]);
+  pipelineReady = true;
+} catch (err) {
+  const reason = err instanceof Error ? err.message : String(err);
+  console.warn(
+    `ONESHOT_PIPELINE_REDIS_UNAVAILABLE (${reason}) — per-stage pipeline disabled; falling back to legacy runtime`,
+  );
+}
+
+let pipelineWorker: ReturnType<typeof createPipelineWorker> | undefined;
+let pipelineQueueEvents: QueueEvents | undefined;
+if (pipelineReady) {
+  pipelineWorker = createPipelineWorker({
+    runs,
+    store: artifactStore,
+    services: stageServices,
+    concurrency: Number(process.env.ONESHOT_RUN_CONCURRENCY || 1),
+  });
+  pipelineQueueEvents = createPipelineQueueEvents({ events });
+}
+
+// --- Legacy single-queue BullMQ runtime (fallback when pipeline Redis down) ---
 const queueDeps: RunQueueDeps = {
   runs,
   events,
@@ -165,15 +235,13 @@ const queueDeps: RunQueueDeps = {
     providerManager.resolveForRun(providerId, captured),
   createRuntime: async (provider) =>
     new WorkflowRuntime(
-      events, runs, new FileArtifactStore(runtimePaths.runs),
+      events, runs, artifactStore,
       createDynamicDependencyFactory({ projectRoot, events, contracts, sandbox, triple, provider }),
     ),
 };
 const runQueue = new BullMQRunQueue(RUN_QUEUE_NAME, queueDeps, {
   concurrency: Number(process.env.ONESHOT_RUN_CONCURRENCY || 1),
 });
-// Wait for Redis/Worker readiness before serving; degrade gracefully so local
-// development without Redis still works (inline fallback in the HTTP layer).
 let queueReady = true;
 try {
   await runQueue.ready(Number(process.env.ONESHOT_QUEUE_READY_TIMEOUT || 8_000));
@@ -181,7 +249,7 @@ try {
   queueReady = false;
   const reason = err instanceof Error ? err.message : String(err);
   console.warn(
-    `ONESHOT_QUEUE_REDIS_UNAVAILABLE (${reason}) — runs will execute inline in-process`,
+    `ONESHOT_LEGACY_QUEUE_REDIS_UNAVAILABLE (${reason}) — legacy inline fallback active`,
   );
 }
 
@@ -189,7 +257,7 @@ try {
 const runtimeInfo: RuntimeInfo = {
   mode: runtimeMode,
   provider: publicProviderName,
-  queue: queueReady,
+  queue: queueReady || pipelineReady,
 };
 
 // --- HTTP Server ---
@@ -209,9 +277,29 @@ const server = await startHttpServer(
   intent,
   sandbox,
   runtimeInfo,
-  { workspaceRoot, executeInline: (job) => executeRunJob({
-    data: job, updateProgress: async () => {},
-  }, queueDeps) },
+  {
+    workspaceRoot,
+    executeInline: (job) =>
+      executeRunJob({ data: job, updateProgress: async () => {} }, queueDeps),
+    pipeline: pipelineReady
+      ? {
+          queueReady: true,
+          enqueue: enqueueStage,
+          confirmPlan: async (runId: string) => {
+            await confirmPlan({ runId });
+          },
+          store: artifactStore,
+          getQueueCounts: async () => {
+            const c = await pipelineQueue.getJobCounts();
+            return {
+              waiting: c.waiting,
+              active: c.active,
+              failed: c.failed,
+            };
+          },
+        }
+      : undefined,
+  },
   runQueue,
   providerManager,
   queueReady,
@@ -227,6 +315,11 @@ console.log(
 // --- Graceful shutdown ---
 const shutdown = async () => {
   server.close(async () => {
+    try { await pipelineQueue.close(); } catch { /* ignore */ }
+    try { await pipelineWorker?.close(); } catch { /* ignore */ }
+    if (pipelineQueueEvents) {
+      try { await closePipelineQueueEvents(pipelineQueueEvents); } catch { /* ignore */ }
+    }
     try { await runQueue.close(); } catch { /* ignore */ }
 
     providerManager.close();

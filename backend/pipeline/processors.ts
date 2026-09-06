@@ -11,11 +11,12 @@ import {
   loadHashProof,
   loadPlan,
   loadPrompt,
+  loadProvider,
   loadResearchBundle,
   loadTripleValidation,
 } from "./context.js";
 import type { ProcessingEventBus } from "../runtime/event-bus.js";
-import type { ResearcherWorkflow } from "../agents/researcher/workflow.js";
+import { ResearcherWorkflow } from "../agents/researcher/workflow.js";
 import type { PlannerWorkflow } from "../agents/planner/workflow.js";
 import type { RefactorWorkflow } from "../agents/refactor/workflow.js";
 import type { GapAnalysisWorkflow } from "../agents/gap-analysis/workflow.js";
@@ -24,10 +25,13 @@ import type { BuilderWorkflow } from "../agents/builder/workflow.js";
 import type { TripleValidationWorkflow } from "../workflow/triple-validation.js";
 import type { ConfirmationWorkflow } from "../workflow/confirmation.js";
 import type { HashWorkflow } from "../workflow/hash.js";
+import { ProviderManager } from "../../app/web/cloud/provider-manager.js";
+import type { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 
 export interface StageServices {
   events: ProcessingEventBus;
-  researcher: ResearcherWorkflow;
+  providerManager: ProviderManager;
+  contracts: CanonicalContractSkill;
   planner: PlannerWorkflow;
   refactor: RefactorWorkflow;
   gapper: GapAnalysisWorkflow;
@@ -100,10 +104,16 @@ export async function runResearcherStage(
   emitStage(ctx, services, "researcher", "RUNNING");
 
   const prompt = await loadPrompt(ctx);
-  const bundle = await services.researcher.run(
-    prompt,
-    ctx.runId,
+  const captured = await loadProvider(ctx);
+  const provider = await services.providerManager.resolveForRun(
+    captured.id,
+    captured,
   );
+  const researcher = new ResearcherWorkflow(
+    provider,
+    services.contracts,
+  );
+  const bundle = await researcher.run(prompt, ctx.runId);
 
   await services.saveArtifact(
     ctx,

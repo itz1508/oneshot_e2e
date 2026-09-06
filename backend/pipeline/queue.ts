@@ -10,6 +10,10 @@ import type {
 
 export const PIPELINE_QUEUE = "oneshot-pipeline";
 
+/**
+ * Singleton BullMQ queue for the per-stage OneShot pipeline. Jobs carry only
+ * `{ runId }`; all durable state lives in `RunRepository` + `ArtifactStore`.
+ */
 export const pipelineQueue = new Queue<
   StageJobData,
   unknown,
@@ -42,6 +46,25 @@ export function stageJobId(
   stage: PipelineStage,
 ): string {
   return `${runId}-${stage}`;
+}
+
+/**
+ * Enqueue the named stage for a run. Returns the BullMQ job id.
+ */
+export async function enqueueStage(
+  runId: string,
+  stage: PipelineStage,
+): Promise<string> {
+  const job = await pipelineQueue.add(
+    stage,
+    { runId },
+    { jobId: stageJobId(runId, stage) },
+  );
+  return job.id ?? stageJobId(runId, stage);
+}
+
+export async function closePipelineQueue(): Promise<void> {
+  await pipelineQueue.close();
 }
 
 export { getSharedRedis, getProducerRedis };

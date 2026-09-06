@@ -12,13 +12,16 @@ export {
   pipelineQueue,
   PIPELINE_QUEUE,
   stageJobId,
+  enqueueStage,
+  closePipelineQueue,
   getSharedRedis,
   getProducerRedis,
 } from "./queue.js";
 
-export type { PipelineContext } from "./context.js";
+export type { PipelineContext, CapturedProvider } from "./context.js";
 export {
   loadPrompt,
+  loadProvider,
   loadResearchBundle,
   loadPlan,
   loadAudit,
