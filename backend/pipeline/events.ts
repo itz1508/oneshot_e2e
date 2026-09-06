@@ -39,9 +39,8 @@ export function createPipelineQueueEvents(
 
       // The durable event stream is authoritative; QueueEvents progress is
       // forwarded as a SUPPORT-level progress hint when no native event exists.
-      if (jobId) {
-        const runId = String(jobId).split("-")[0];
-        events.emit(runId, "PipelineProgress", "RUNNING", {
+      if (jobId && progress.runId) {
+        events.emit(progress.runId, "PipelineProgress", "Running", {
           scope: "SUPPORT",
           message: `[${progress.stage}] ${progress.percent}% — ${progress.message}`,
         });

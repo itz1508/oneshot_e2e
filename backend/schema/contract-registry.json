@@ -1,57 +1,57 @@
 {
   "registry_id": "oneshot-contract-registry",
-  "registry_version": "1",
+  "registry_version": "2",
   "contracts": [
     {
-      "contract_id": "urn:oneshot:schema:audit:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:audit:2",
+      "version": "2",
       "artifact_type": "audit",
       "schema_path": "schema/audit.schema.json",
-      "schema_digest": "e96d8f0e6a1f5241bf807e32123585872c188de8f6a795a19712334c83ae7cd5",
+      "schema_digest": "faa555c767648d5068381d3eab3d411eb7dd3823b241d0625d43bae06d4d0a52",
       "producer": "Planner",
       "consumers": [
         "Refactor"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:common:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:common:2",
+      "version": "2",
       "artifact_type": "common",
       "schema_path": "schema/common.schema.json",
-      "schema_digest": "5cdb72482d8206fb35ef3946c8cc428c495393f115244e3117d425d4119f0864",
+      "schema_digest": "12761d3d0a9bb7dc73c9313474cbf51f3e3a32746f7e8207a87caa3a5b67929c",
       "producer": "ContractSystem",
       "consumers": [
         "AllContracts"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:confirmed-package:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:confirmed-package:2",
+      "version": "2",
       "artifact_type": "confirmed-package",
       "schema_path": "schema/confirmed-package.schema.json",
-      "schema_digest": "8ca812044b8e7b968a8c7b733cd3ed1022c2098799a29a87caddd90121e6c776",
+      "schema_digest": "5c9984f0470a3dc5b4e6824de38a344d6d39cf78afd1d8131065abd917700b35",
       "producer": "Confirmed",
       "consumers": [
         "CreateHash"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:contract-registry:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:contract-registry:2",
+      "version": "2",
       "artifact_type": "contract-registry",
       "schema_path": "schema/contract-registry.schema.json",
-      "schema_digest": "9a1fb49e6a8addf42dc1e65bcbca95eaea5a57e1eb83be87f43da1b82c30b572",
+      "schema_digest": "cc511db0187d58f7b92cb2b1575a55285b11ffccc729539f4281c148fb26aa51",
       "producer": "ContractSystem",
       "consumers": [
         "ContractResolver"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:evaluation:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:evaluation:2",
+      "version": "2",
       "artifact_type": "evaluation",
       "schema_path": "schema/evaluation.schema.json",
-      "schema_digest": "9e255e0a5c28deb8e3a34462261467a101e2fc4e8a30a4a7dfa92b282bd883bc",
+      "schema_digest": "4393c72679835cb554c1298dffd2e5ab20d4c9b819cfd9d1c725ecabb0320877",
       "producer": "Evaluation",
       "consumers": [
         "SchemaValidation",
@@ -60,11 +60,11 @@
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:execution-evidence:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:execution-evidence:2",
+      "version": "2",
       "artifact_type": "execution-evidence",
       "schema_path": "schema/execution-evidence.schema.json",
-      "schema_digest": "1cb8c6ad6277370a791dc66843ff90618f294fff1a4fe37d2cc971623684e723",
+      "schema_digest": "1bfd993ae56a4890beb022d0294ed7d79f90624977ca467bff8ac320cf37f51d",
       "producer": "ExternalSandbox",
       "consumers": [
         "AuditStorage",
@@ -72,77 +72,77 @@
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:fixture-validation:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:fixture-validation:2",
+      "version": "2",
       "artifact_type": "fixture-validation",
       "schema_path": "schema/fixture-validation.schema.json",
-      "schema_digest": "103716f6527afbe12de5494bc0a7b1ff5e734551e4dde8e61d052d959b97b147",
+      "schema_digest": "0f8a9978b961217d31d124bb9afeac2fb78ab0b5dff840792f9f2c0228c143a2",
       "producer": "FixtureValidation",
       "consumers": [
         "TripleValidation"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:fixture:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:fixture:2",
+      "version": "2",
       "artifact_type": "fixture",
       "schema_path": "schema/fixture.schema.json",
-      "schema_digest": "96ae3469516cb1fa7c9fcfdff5e12cd7f6a87290a46c55165b5f677a0bbfdaf6",
+      "schema_digest": "7d69299f710942e7eccca7fefb53658564488e782da03338e61605aa11bda6b7",
       "producer": "Researcher",
       "consumers": [
         "FixtureValidation"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:gap:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:gap:2",
+      "version": "2",
       "artifact_type": "gap",
       "schema_path": "schema/gap.schema.json",
-      "schema_digest": "6bb33ed4c6b0c4cf02d3453278de9d2414ff7fb3f9fcb89b48d780231642a598",
+      "schema_digest": "3f96bfe4832283f287ee9d2a742440c5daafd5adf5a87675fcb6960d3ab42723",
       "producer": "GapAnalysis",
       "consumers": [
         "Evaluation"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:goal-validation:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:goal-validation:2",
+      "version": "2",
       "artifact_type": "goal-validation",
       "schema_path": "schema/goal-validation.schema.json",
-      "schema_digest": "4496c53d59b2e603211fda2dbbc67052880d92331372d48b89d31b575d4ced43",
+      "schema_digest": "6e40bace98e3cb9c6d7dd18f246a862536b1ccb4b52cba92ce387ba0a7b6dca3",
       "producer": "GoalValidation",
       "consumers": [
         "TripleValidation"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:goal:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:goal:2",
+      "version": "2",
       "artifact_type": "goal",
       "schema_path": "schema/goal.schema.json",
-      "schema_digest": "71c065c4cf908670e5224a964aad380aaa8ae94e7ca8a0a077014f4501e8e0cb",
+      "schema_digest": "c8fbfebab8bb9a7630f323193bbf5695283495cc43acb966fc63b18f54aac9e8",
       "producer": "Researcher",
       "consumers": [
         "GoalValidation"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:hash-proof:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:hash-proof:2",
+      "version": "2",
       "artifact_type": "hash-proof",
       "schema_path": "schema/hash-proof.schema.json",
-      "schema_digest": "fd30eaa05db4c2dd9bd169cea522fe987aafa6078c6e8bd81d412fd7c992df01",
+      "schema_digest": "42a18ee98b996e5113ae9a55e27a2eca20676216e839bc2feda8ade06e1a2c90",
       "producer": "Hash",
       "consumers": [
         "Done"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:plan:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:plan:2",
+      "version": "2",
       "artifact_type": "plan",
       "schema_path": "schema/plan.schema.json",
-      "schema_digest": "74687caba35372e2ac500cc15c1fa225d2193e09b7e6dd8049458b8831af5472",
+      "schema_digest": "64b449c78fa108df47a60b383141ec589de9d3567243e86357542cd255257bad",
       "producer": "Researcher",
       "consumers": [
         "Planner",
@@ -155,22 +155,35 @@
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:prompt:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:processing-event:2",
+      "version": "2",
+      "artifact_type": "processing-event",
+      "schema_path": "schema/processing-event.schema.json",
+      "schema_digest": "66176e27d845fd21cc1d87926d98feb588edbf696e11ddf4f02d38baabef4dc8",
+      "producer": "OneShotEventProjection",
+      "consumers": [
+        "RunSnapshot",
+        "SSE",
+        "UI"
+      ]
+    },
+    {
+      "contract_id": "urn:oneshot:schema:prompt:2",
+      "version": "2",
       "artifact_type": "prompt",
       "schema_path": "schema/prompt.schema.json",
-      "schema_digest": "f545d2914d75a68898dcad40ec71b25c7a56c426e76504d8a457353a8670d87c",
+      "schema_digest": "0f8e7d79d59442dd9cb78557a58fb370c2820c74a403e2d155cef52cb031dc6f",
       "producer": "Prompt",
       "consumers": [
         "Researcher"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:researcher:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:researcher:2",
+      "version": "2",
       "artifact_type": "researcher",
       "schema_path": "schema/researcher.schema.json",
-      "schema_digest": "1687548ceae967a2233fb1bd31363c5500b5d399452509766f9de92aabacc320",
+      "schema_digest": "cab1026b868bb293b4c7e2474f32919c2db4af76233b17cfd32bdfaa4e768306",
       "producer": "Researcher",
       "consumers": [
         "Planner",
@@ -178,66 +191,79 @@
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:sandbox-execution:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:run-snapshot:2",
+      "version": "2",
+      "artifact_type": "run-snapshot",
+      "schema_path": "schema/run-snapshot.schema.json",
+      "schema_digest": "71c41155fa104e0a1b6345ec5bed3015ed40940346f9fd4f3dd6f5902adb5138",
+      "producer": "OneShotAPI",
+      "consumers": [
+        "SSE",
+        "UI",
+        "TaskManagement"
+      ]
+    },
+    {
+      "contract_id": "urn:oneshot:schema:sandbox-execution:2",
+      "version": "2",
       "artifact_type": "sandbox-execution",
       "schema_path": "schema/sandbox-execution.schema.json",
-      "schema_digest": "42bb0a044a6fc1b7a873527bcfec3862a3829d0554467e291d51cd764412a0eb",
+      "schema_digest": "ca1ab1497d988cc0b5ea61f1da34f0779ab20422a5379d870a18937d0a8ba475",
       "producer": "OneShotControlPlane",
       "consumers": [
         "ExternalSandbox"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:schema-artifact:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:schema-artifact:2",
+      "version": "2",
       "artifact_type": "schema-artifact",
       "schema_path": "schema/schema-artifact.schema.json",
-      "schema_digest": "e8f70defeef8ebdb891750fa5f3102842a05d0cd90b96d6798a07c761b6c0796",
+      "schema_digest": "aa2f9bf1b1708e388841e7c0bfeae545b53f0557e061b7f4e3f828fb84beecb5",
       "producer": "Researcher",
       "consumers": [
         "SchemaValidation"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:schema-validation:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:schema-validation:2",
+      "version": "2",
       "artifact_type": "schema-validation",
       "schema_path": "schema/schema-validation.schema.json",
-      "schema_digest": "2c384b9236227bb183bb85419743f78ffb5267ab9f892c3a451dfd7cb4677855",
+      "schema_digest": "9f2bee2c9b76a9699eb72651c71597d54deb08c893924ec0bd1e3e23a93215f2",
       "producer": "SchemaValidation",
       "consumers": [
         "TripleValidation"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:triple-validation:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:triple-validation:2",
+      "version": "2",
       "artifact_type": "triple-validation",
       "schema_path": "schema/triple-validation.schema.json",
-      "schema_digest": "c29fd9324b490496c26c48bcbd0036cbff07267ced1742a50acfaf87c951c016",
+      "schema_digest": "e458318013dc191cb30016e854993013750cdd76441bc430acb128df178d5f1f",
       "producer": "TripleValidation",
       "consumers": [
         "Confirmed"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:validation:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:validation:2",
+      "version": "2",
       "artifact_type": "validation",
       "schema_path": "schema/validation.schema.json",
-      "schema_digest": "6e5651de2193f800ac2fb4a300a2a9ac5ad81e217f90245efbc42619be4ba080",
+      "schema_digest": "025ca49dcf5778ee9e77a2b74fd5bcde9b7b573c7ec0bd8a6273e873b0387909",
       "producer": "Researcher",
       "consumers": [
         "TripleValidation"
       ]
     },
     {
-      "contract_id": "urn:oneshot:schema:workflow-graph:1",
-      "version": "1",
+      "contract_id": "urn:oneshot:schema:workflow-graph:2",
+      "version": "2",
       "artifact_type": "workflow-graph",
       "schema_path": "schema/workflow-graph.schema.json",
-      "schema_digest": "54194e81a54940fbd1809f27f7be0cab502a0fe3317f7c6d5a3d570972a2cb9c",
+      "schema_digest": "5b399c587d53abe924cb6fec131a883247174acc9d8d5b5f1d51623bfa0646d0",
       "producer": "WorkflowDefinition",
       "consumers": [
         "WorkflowVerifier"

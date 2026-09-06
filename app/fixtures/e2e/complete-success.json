@@ -107,7 +107,7 @@
       }
     ],
     "plan_id": "plan:001",
-    "result": "PASSED"
+    "result": "Passed"
   },
   "fixture": {
     "fixture_id": "fixture:001",
@@ -140,7 +140,7 @@
         "resolution_evidence": "step:001 contains criterion:001"
       }
     ],
-    "result": "PASSED"
+    "result": "Passed"
   },
   "goal": {
     "goal_id": "goal:001",

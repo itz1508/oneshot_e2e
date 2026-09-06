@@ -113,8 +113,8 @@ const terminal2 = evs.filter((e) => e.processor === "Done" && /COMPLETE/.test(e.
 record({ action: "SSE durability+dedupe (DOM)", expected: "nonempty, unique event ids, backend sequence order", observed: `count=${evs.length}, unique=${uniq.size}, seqSorted=${seqSorted}`, pass: evs.length > 0 && uniq.size === evs.length && seqSorted });
 record({ action: "SSE terminal event", expected: "terminal Done present", observed: `terminalCount=${terminal2.length}, firstStates=${evs.slice(0, 8).map((e) => e.processor + ":" + e.state).join(",")}`, pass: terminal2.length > 0 });
 const dtn = JSON.parse(await ev(`JSON.stringify({stage:document.querySelector('[data-stage="Done"] em')?.textContent||'', rrResult:document.getElementById('run-result')?.dataset?.result||'', rrHasRC:(document.getElementById('run-result')?.innerText||'').includes('ROOT_CAUSE'), workHasRC:[...document.querySelectorAll('#work-content pre')].some(p=>p.textContent.includes('ROOT_CAUSE'))})`));
-const rcVisible = dtn.rrResult === "ROOT_CAUSE" || dtn.rrHasRC || dtn.workHasRC;
-record({ action: "DOM terminal ROOT_CAUSE", expected: "UI visibly renders ROOT_CAUSE (backend failure faithfully shown, not normalized)", observed: `stage=${dtn.stage}, run-result.dataset.result=${dtn.rrResult}, rrContainsRC=${dtn.rrHasRC}, workCardContainsRC=${dtn.workHasRC}`, pass: dtn.rrResult === "PASSED" && !dtn.rrHasRC && !dtn.workHasRC });
+const rcVisible = dtn.rrResult === "Root Cause" || dtn.rrHasRC || dtn.workHasRC;
+record({ action: "DOM terminal ROOT_CAUSE", expected: "UI visibly renders ROOT_CAUSE (backend failure faithfully shown, not normalized)", observed: `stage=${dtn.stage}, run-result.dataset.result=${dtn.rrResult}, rrContainsRC=${dtn.rrHasRC}, workCardContainsRC=${dtn.workHasRC}`, pass: dtn.rrResult === "Passed" && !dtn.rrHasRC && !dtn.workHasRC });
 evidence.run_events_decoded = evs;
 await shot("07-terminal-ROOT_CAUSE.png");
 // Flow G - Researcher
@@ -235,7 +235,7 @@ evidence.requests = (await ev("(window.__abRequests||[]).slice(0,60)")) || [];
 evidence.passed = PASSED;
 evidence.browser = "headless Chrome via CDP :9222 (detached), driving real runtime " + BASE;
 writeFileSync(join(ROOT, "dist", "e2e-evidence", "browser-e2e-evidence.json"), JSON.stringify(evidence, null, 2));
-console.log("\n=== BROWSER E2E " + (PASSED ? "PASSED" : "FAILED") + " ===");
+console.log("\n=== BROWSER E2E " + (PASSED ? "Passed" : "FAILED") + " ===");
 console.log("evidence: dist/e2e-evidence/browser-e2e-evidence.json");
 console.log("console_errors=" + JSON.stringify(evidence.console_errors));
 process.exit(PASSED ? 0 : 1);

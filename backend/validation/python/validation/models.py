@@ -36,25 +36,25 @@ class AuditFinding(StrictModel): finding_id:NonEmptyStr; area:NonEmptyStr; findi
 class Audit(StrictModel): audit_id:NonEmptyStr; researcher_id:NonEmptyStr; plan_id:NonEmptyStr; reviewed_areas:UniqueStrList; findings:list[AuditFinding]
 class ResolvedGap(StrictModel): gap_id:NonEmptyStr; affected_branch:NonEmptyStr; issue:NonEmptyStr; evidence_ids:UniqueStrList; required_correction:NonEmptyStr; expected_resolved_state:NonEmptyStr; resolution_evidence:NonEmptyStr
 class GapAnalysis(StrictModel):
-    plan_id:NonEmptyStr; result:Literal['PASSED','ROOT_CAUSE']; resolved_gaps:list[ResolvedGap]; gap_0:bool; root_cause:RootCause|None=None
+    plan_id:NonEmptyStr; result:Literal['Passed','Failed']; resolved_gaps:list[ResolvedGap]; gap_0:bool; issue_type:Literal['Root Cause','Missing']|None=None; root_cause:RootCause|None=None
     @model_validator(mode='after')
     def coherent(self):
-        if self.result=='PASSED' and (not self.gap_0 or self.root_cause is not None): raise ValueError('PASSED Gap Analysis requires gap_0=true and no root_cause')
-        if self.result=='ROOT_CAUSE' and (self.gap_0 or self.root_cause is None): raise ValueError('ROOT_CAUSE Gap Analysis requires gap_0=false and root_cause')
+        if self.result=='Passed' and (not self.gap_0 or self.root_cause is not None or self.issue_type is not None): raise ValueError('Passed Gap Analysis requires gap_0=true and no issue fields')
+        if self.result=='Failed' and (self.gap_0 or self.root_cause is None or self.issue_type is None): raise ValueError('Failed Gap Analysis requires gap_0=false and issue evidence')
         return self
 class EvaluationEvidence(StrictModel): check_id:NonEmptyStr; subject:NonEmptyStr; finding:NonEmptyStr; evidence_ids:UniqueStrList
 class Evaluation(StrictModel):
-    plan_id:NonEmptyStr; result:Literal['PASSED','ROOT_CAUSE']; evidence:Annotated[list[EvaluationEvidence],Field(min_length=1)]; root_cause:RootCause|None=None
+    plan_id:NonEmptyStr; result:Literal['Passed','Failed']; evidence:Annotated[list[EvaluationEvidence],Field(min_length=1)]; issue_type:Literal['Root Cause','Missing']|None=None; root_cause:RootCause|None=None
     @model_validator(mode='after')
     def coherent(self):
-        if self.result=='PASSED' and self.root_cause is not None: raise ValueError('PASSED Evaluation has no root_cause')
-        if self.result=='ROOT_CAUSE' and self.root_cause is None: raise ValueError('ROOT_CAUSE Evaluation requires root_cause')
+        if self.result=='Passed' and (self.root_cause is not None or self.issue_type is not None): raise ValueError('Passed Evaluation has no issue fields')
+        if self.result=='Failed' and (self.root_cause is None or self.issue_type is None): raise ValueError('Failed Evaluation requires issue evidence')
         return self
-class SchemaValidationResult(StrictModel): plan_id:NonEmptyStr; schema_id:NonEmptyStr; result:Literal['VALID','NOT_VALID']; evidence:list[EvidenceRef]
+class SchemaValidationResult(StrictModel): plan_id:NonEmptyStr; schema_id:NonEmptyStr; result:Literal['Passed','Failed']; evidence:list[EvidenceRef]
 class AssertionResult(StrictModel): assertion_id:NonEmptyStr; expected:Any=None; actual:Any=None; satisfied:bool
-class FixtureValidationResult(StrictModel): plan_id:NonEmptyStr; fixture_id:NonEmptyStr; assertion_results:list[AssertionResult]; result:Literal['VALID','NOT_VALID']; evidence:list[EvidenceRef]
+class FixtureValidationResult(StrictModel): plan_id:NonEmptyStr; fixture_id:NonEmptyStr; assertion_results:list[AssertionResult]; result:Literal['Passed','Failed']; evidence:list[EvidenceRef]
 class CriterionResult(StrictModel): criterion_id:NonEmptyStr; mapped_plan_refs:UniqueStrList; satisfied:bool
-class GoalValidationResult(StrictModel): plan_id:NonEmptyStr; goal_id:NonEmptyStr; criterion_results:list[CriterionResult]; result:Literal['VALID','NOT_VALID']; evidence:list[EvidenceRef]
+class GoalValidationResult(StrictModel): plan_id:NonEmptyStr; goal_id:NonEmptyStr; criterion_results:list[CriterionResult]; result:Literal['Passed','Failed']; evidence:list[EvidenceRef]
 class TripleValidation(StrictModel): plan_id:NonEmptyStr; validation_id:NonEmptyStr; schema_validation:SchemaValidationResult; fixture_validation:FixtureValidationResult; goal_validation:GoalValidationResult; all_valid:bool
 class ConfirmedCore(StrictModel): researcher:Researcher; plan:Plan; schema_artifact:SchemaArtifact; fixture:Fixture; goal:Goal; validation:ValidationDefinition; audit:Audit; gap_analysis:GapAnalysis; evaluation:Evaluation; triple_validation:TripleValidation
 class ConfirmedPackage(StrictModel): confirmed:Literal[True]; core:ConfirmedCore
@@ -144,4 +144,3 @@ class ResearchRequestModel(StrictModel):
     evidence_ids: UniqueStrList
     missing_information: UniqueStrList
     execution_id: NonEmptyStr
-

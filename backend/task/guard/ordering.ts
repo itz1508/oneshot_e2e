@@ -41,7 +41,7 @@ export function detectOrderingIssues(
   const completed = new Set<string>();
 
   for (const e of events.filter(
-    (x) => x.scope === "WORKFLOW" && x.state === "COMPLETE",
+    (x) => x.scope === "WORKFLOW" && x.execution_status === "Completed",
   )) {
     // Duplicate completion check. A refinement loop may legitimately revisit
     // GapAnalysis/Evaluation/validators/TripleValidation on a newer Plan
@@ -73,7 +73,7 @@ export function detectOrderingIssues(
     }
 
     // Early ROOT_CAUSE from Done is always valid (short-circuit exit)
-    if (e.processor === "Done" && e.result === "ROOT_CAUSE") {
+    if (e.processor === "Done" && e.test_result === "Failed") {
       completed.add(e.processor);
       continue;
     }

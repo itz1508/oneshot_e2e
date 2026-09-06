@@ -27,6 +27,7 @@ import { DeterministicValidationRuntime } from "../validation/deterministic-vali
 import { PythonBridge } from "../validation/python-bridge.js";
 import { getRuntimePaths, ensureRuntimeDirectories } from "../runtime/runtime-config.js";
 import { createPipelineWorker } from "../pipeline/worker.js";
+import { PipelineHistory } from "../pipeline/history.js";
 import { getSharedRedis } from "../runtime/redis-connection.js";
 import type { StageServices } from "../pipeline/processors.js";
 import { saveArtifact } from "../pipeline/context.js";
@@ -116,6 +117,12 @@ async function main() {
     store: new FileArtifactStore(runtimePaths.runs),
     services,
     redis: getSharedRedis(),
+    /*
+     * The worker owns stage execution, so it also owns the durable per-stage
+     * history stream (started/completed/skipped/waiting). GET /history reads
+     * the same Redis stream from the API process.
+     */
+    history: new PipelineHistory(getSharedRedis()),
     concurrency: Number(process.env.ONESHOT_PIPELINE_CONCURRENCY || 1),
   });
 

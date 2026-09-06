@@ -23,11 +23,13 @@ PRODUCER_CONSUMERS = {
     'contract-registry': ('ContractSystem', ['ContractResolver']),
     'sandbox-execution': ('OneShotControlPlane', ['ExternalSandbox']),
     'execution-evidence': ('ExternalSandbox', ['AuditStorage', 'TaskManagement']),
+    'processing-event': ('OneShotEventProjection', ['RunSnapshot', 'SSE', 'UI']),
+    'run-snapshot': ('OneShotAPI', ['SSE', 'UI', 'TaskManagement']),
 }
 
 def build_registry(schema_dir: str|Path):
     sd=Path(schema_dir); contracts=[]
     for p in sorted(sd.glob('*.schema.json')):
         b=p.read_bytes(); s=json.loads(b); name=p.name[:-12]; prod,cons=PRODUCER_CONSUMERS[name]
-        contracts.append({'contract_id':s['$id'],'version':'1','artifact_type':name,'schema_path':'schema/'+p.name,'schema_digest':hashlib.sha256(b).hexdigest(),'producer':prod,'consumers':cons})
-    return {'registry_id':'oneshot-contract-registry','registry_version':'1','contracts':contracts}
+        contracts.append({'contract_id':s['$id'],'version':'2','artifact_type':name,'schema_path':'schema/'+p.name,'schema_digest':hashlib.sha256(b).hexdigest(),'producer':prod,'consumers':cons})
+    return {'registry_id':'oneshot-contract-registry','registry_version':'2','contracts':contracts}

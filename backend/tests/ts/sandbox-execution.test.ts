@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
@@ -19,7 +19,7 @@ test("external Sandbox executes confirmed package, records evidence, verifies HA
 
   // 1. Run canonical workflow to DONE
   const out = await h.runtime.run(runId, prompt(runId));
-  assert.equal(out.result, "PASSED");
+  assert.equal(out.test_result, "Passed");
   assert.ok(out.hash_proof);
 
   const confirmedPackage = await h.store.load<any>(runId, "confirmed");
@@ -53,8 +53,8 @@ test("external Sandbox executes confirmed package, records evidence, verifies HA
   // 3. Execute Sandbox handoff
   const result = await sandbox.execute(input);
 
-  assert.equal(result.result, "PASSED");
-  if (result.result !== "PASSED") throw new Error("expected PASSED");
+  assert.equal(result.result, "Passed");
+  if (result.result !== "Passed") throw new Error("expected PASSED");
 
   assert.equal(result.hash_matched, true);
   assert.equal(result.hash_sandbox, canonicalHash);
@@ -93,7 +93,7 @@ test("external Sandbox executes confirmed package, records evidence, verifies HA
   // 5. Verify Sandbox Graph Projection
   const sbxGraph = projectSandboxGraph(events);
   assert.equal(sbxGraph.nodes.length, 9);
-  assert.ok(sbxGraph.nodes.every((n) => n.state === "COMPLETE"));
+  assert.ok(sbxGraph.nodes.every((n) => n.state === "Completed"));
 
   // 6. Verify Authority Graph includes Sandbox trace
   const authGraph = projectAuthorityGraph(h.events.list(runId));

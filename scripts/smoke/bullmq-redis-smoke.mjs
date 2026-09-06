@@ -39,7 +39,7 @@ try {
 // dequeue, contract validation, progress bridge — is the real code path.
 const deps = {
   runs: {
-    get: () => ({ result: "PASSED", events: [] }),
+    get: () => ({ result: "Passed", events: [] }),
     create: () => {
       throw new Error("smoke stub: create() must not be reached");
     },

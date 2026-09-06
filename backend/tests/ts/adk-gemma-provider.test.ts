@@ -29,7 +29,7 @@ test("Google ADK Researcher pipeline executes canonical chain in deterministic a
   h.runs.create(runId);
   try {
     const out = await h.runtime.run(runId, prompt(runId));
-    assert.equal(out.result, "PASSED");
+    assert.equal(out.test_result, "Passed");
     assert.equal(out.hash_proof?.equal, true);
     const research = await h.store.load<any>(runId, "researcher");
     assert.match(research.evidence[0].source, /google-adk-pipeline:/);
@@ -49,9 +49,9 @@ test("Google ADK Researcher pipeline executes canonical chain in deterministic a
       ),
     );
     assert.equal(
-      out.events.find((e) => e.processor === "Done" && e.state === "COMPLETE")
-        ?.result,
-      "PASSED",
+      out.events.find((e) => e.processor === "Done" && e.execution_status === "Completed")
+        ?.test_result,
+      "Passed",
     );
   } finally {
     p.close?.();

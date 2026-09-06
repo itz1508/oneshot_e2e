@@ -69,7 +69,7 @@ export function createConsoleInteractions({ apiFetch, toast, onReviewChanged }) 
     const files = document.querySelector('#status-files');
     files.innerHTML = Object.keys(snapshot?.artifacts || {}).map(name => `<button class="artifact-preview" data-artifact="${esc(name)}"><span>▤</span>${esc(name)}<small>Preview</small></button>`).join('') || '<p class="empty-note">Artifacts appear as the run produces them.</p>';
     files.querySelectorAll('[data-artifact]').forEach(button => { button.onclick = () => showFile(button.dataset.artifact, `/api/runs/${encodeURIComponent(activeRun)}/artifacts/${encodeURIComponent(button.dataset.artifact)}`); });
-    document.querySelector('#status-run-label').textContent = snapshot?.result || (review?.status === 'pending' ? 'Awaiting your review' : events.filter(e => e.state !== 'PENDING').at(-1)?.processor ? `${stageLabel(events.filter(e => e.state !== 'PENDING').at(-1).processor)}` : 'No active run');
+    document.querySelector('#status-run-label').textContent = snapshot?.test_result || (review?.status === 'pending' ? 'Awaiting your review' : events.filter(e => e.state !== 'Pending').at(-1)?.processor ? `${stageLabel(events.filter(e => e.state !== 'Pending').at(-1).processor)}` : 'No active run');
   }
 
   function addNote(text) {

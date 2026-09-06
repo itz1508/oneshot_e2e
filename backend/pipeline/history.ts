@@ -15,6 +15,8 @@ export interface PipelineHistoryEvent {
   stage: string;
   type: PipelineHistoryEventType;
   timestamp: string;
+  /** Refinement iteration the event belongs to (0 for run-level stages). */
+  iteration?: number;
   message?: string;
   jobId?: string;
   attempt?: number;
@@ -43,6 +45,8 @@ export class PipelineHistory {
       event.type,
       "timestamp",
       timestamp,
+      "iteration",
+      String(event.iteration ?? 0),
       "message",
       event.message ?? "",
       "jobId",
@@ -72,6 +76,7 @@ export class PipelineHistory {
         stage: object.stage,
         type: object.type as PipelineHistoryEventType,
         timestamp: object.timestamp,
+        iteration: Number(object.iteration ?? 0),
         message: object.message || undefined,
         jobId: object.jobId || undefined,
         attempt: Number(object.attempt ?? 0),

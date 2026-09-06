@@ -16,6 +16,6 @@ export interface OpenAIConfig {
 
 export interface OpenAIWorkerEvent {
   node: string;
-  state: "RUNNING" | "COMPLETE";
+  state: "Running" | "Completed";
   message?: string;
 }

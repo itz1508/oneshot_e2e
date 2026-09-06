@@ -1,11 +1,11 @@
 {
-  "$id": "urn:oneshot:schema:researcher:1",
+  "$id": "urn:oneshot:schema:researcher:2",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
     "evidence": {
       "items": {
-        "$ref": "urn:oneshot:schema:common:1#/$defs/evidence_ref"
+        "$ref": "urn:oneshot:schema:common:2#/$defs/evidence_ref"
       },
       "type": "array"
     },

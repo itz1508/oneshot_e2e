@@ -19,7 +19,7 @@ export interface TripleValidationNodeEffects {
   event?(
     jobId: string,
     processor: "SchemaValidation" | "FixtureValidation" | "GoalValidation",
-    state: "RUNNING" | "COMPLETE",
+    state: "Running" | "Completed",
     data?: Record<string, unknown>,
   ): void;
 }
@@ -81,9 +81,9 @@ export function createTripleValidationNode(
         { runId: `${input.job_id}-validation-admission` },
       )).output as { research: ResearchBundle; plan: Plan };
 
-      effects.event?.(input.job_id, "SchemaValidation", "RUNNING");
-      effects.event?.(input.job_id, "FixtureValidation", "RUNNING");
-      effects.event?.(input.job_id, "GoalValidation", "RUNNING");
+      effects.event?.(input.job_id, "SchemaValidation", "Running");
+      effects.event?.(input.job_id, "FixtureValidation", "Running");
+      effects.event?.(input.job_id, "GoalValidation", "Running");
 
       // Start all three before awaiting any one: real ADK dynamic parallel fan-out.
       const schemaTask = ctx.runNode(schemaNode, admitted, { runId: `${input.job_id}-schema` });
@@ -99,15 +99,15 @@ export function createTripleValidationNode(
       const fixture = fixtureResult.output as FixtureValidationResult;
       const goal = goalResult.output as GoalValidationResult;
 
-      effects.event?.(input.job_id, "SchemaValidation", "COMPLETE", {
+      effects.event?.(input.job_id, "SchemaValidation", "Completed", {
         result: schema.result,
         artifact_id: schema.schema_id,
       });
-      effects.event?.(input.job_id, "FixtureValidation", "COMPLETE", {
+      effects.event?.(input.job_id, "FixtureValidation", "Completed", {
         result: fixture.result,
         artifact_id: fixture.fixture_id,
       });
-      effects.event?.(input.job_id, "GoalValidation", "COMPLETE", {
+      effects.event?.(input.job_id, "GoalValidation", "Completed", {
         result: goal.result,
         artifact_id: goal.goal_id,
       });

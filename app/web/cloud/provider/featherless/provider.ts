@@ -14,6 +14,23 @@ import type {
 } from "./types.js";
 import { FeatherlessWorker } from "./worker-bridge.js";
 
+/**
+ * Python workers emit uppercase legacy states ("RUNNING"/"COMPLETE"); the
+ * canonical event stream carries ExecutionStatus ("Running"/"Completed").
+ */
+function normalizeExecutionStatus(
+  state: string,
+): "Running" | "Completed" | "Failed" {
+  const normalized = state.trim().toLowerCase();
+  if (normalized === "complete" || normalized === "completed") {
+    return "Completed";
+  }
+  if (normalized === "failed") {
+    return "Failed";
+  }
+  return "Running";
+}
+
 function positiveInt(value: string | undefined, fallback: number) {
   const number = Number(value);
   return Number.isInteger(number) && number > 0 ? number : fallback;
@@ -62,7 +79,7 @@ export class FeatherlessResearchProvider implements ResearchProvider {
           this.events?.emit(
             runId,
             `Provider:featherless:${event.node}`,
-            event.state,
+            normalizeExecutionStatus(event.state),
             { scope: "SUPPORT", message: event.message },
           ),
         ),

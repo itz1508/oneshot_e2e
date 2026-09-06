@@ -63,14 +63,14 @@ test("ADK runs Schema Fixture Goal validators in parallel and returns NOT_VALID 
     }
 
     assert.ok(output, "ADK workflow produced no Triple Validation output");
-    assert.equal(output.valid.schema_validation.result, "VALID");
-    assert.equal(output.valid.fixture_validation.result, "VALID");
-    assert.equal(output.valid.goal_validation.result, "VALID");
+    assert.equal(output.valid.schema_validation.result, "Passed");
+    assert.equal(output.valid.fixture_validation.result, "Passed");
+    assert.equal(output.valid.goal_validation.result, "Passed");
     assert.equal(output.valid.all_valid, true);
 
-    assert.equal(output.notValid.schema_validation.result, "VALID");
-    assert.equal(output.notValid.fixture_validation.result, "VALID");
-    assert.equal(output.notValid.goal_validation.result, "NOT_VALID");
+    assert.equal(output.notValid.schema_validation.result, "Passed");
+    assert.equal(output.notValid.fixture_validation.result, "Passed");
+    assert.equal(output.notValid.goal_validation.result, "Failed");
     assert.equal(output.notValid.all_valid, false);
     console.log("TRIPLE_VALID_JSON=" + JSON.stringify(output.valid));
     console.log("TRIPLE_REFINEMENT_SIGNAL_JSON=" + JSON.stringify(output.notValid));

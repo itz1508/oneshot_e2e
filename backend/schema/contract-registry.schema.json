@@ -1,5 +1,5 @@
 {
-  "$id": "urn:oneshot:schema:contract-registry:1",
+  "$id": "urn:oneshot:schema:contract-registry:2",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
@@ -28,7 +28,7 @@
             "type": "string"
           },
           "schema_digest": {
-            "$ref": "urn:oneshot:schema:common:1#/$defs/digest_sha256"
+            "$ref": "urn:oneshot:schema:common:2#/$defs/digest_sha256"
           },
           "schema_path": {
             "minLength": 1,

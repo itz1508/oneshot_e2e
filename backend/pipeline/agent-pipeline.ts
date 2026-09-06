@@ -82,7 +82,7 @@ export class AgentPipeline {
     }
 
     const processor = `RoleBinding:${agentId}`;
-    this.events?.emit(runId, processor, "RUNNING", {
+    this.events?.emit(runId, processor, "Running", {
       scope: "SUPPORT",
       message: `activate ${agentId}`,
     });
@@ -101,18 +101,19 @@ export class AgentPipeline {
       agents.set(agentId, activated as ActivatedAgent);
       this.active.set(runId, agents);
 
-      this.events?.emit(runId, processor, "COMPLETE", {
+      this.events?.emit(runId, processor, "Completed", {
         scope: "SUPPORT",
-        result: "PASSED",
+        test_result: "Passed",
         artifact_id: `agent:${agentId}`,
         message: `${agentId} activated and bound`,
       });
       return activated.runtime;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      this.events?.emit(runId, processor, "COMPLETE", {
+      this.events?.emit(runId, processor, "Completed", {
         scope: "SUPPORT",
-        result: "ROOT_CAUSE",
+        test_result: "Failed",
+        issue_type: "Root Cause",
         message,
       });
 

@@ -73,32 +73,32 @@
     },
     {
       "artifact": "confirmed_package",
-      "consumers": ["CreateHash", "Builder"],
+      "consumers": ["Hash", "Builder"],
       "owner": "Confirmed"
     },
     {
       "artifact": "HASH",
-      "consumers": ["Builder", "Hash"],
-      "owner": "CreateHash"
+      "consumers": ["Builder", "Finalize"],
+      "owner": "Hash"
     },
     {
       "artifact": "build_result",
-      "consumers": ["Hash", "Done"],
+      "consumers": ["Finalize"],
       "owner": "Builder"
     },
     {
       "artifact": "execution_evidence",
-      "consumers": ["Hash", "Done"],
+      "consumers": ["Finalize"],
       "owner": "Builder"
     },
     {
       "artifact": "hash_sandbox",
-      "consumers": ["Hash"],
+      "consumers": ["Finalize"],
       "owner": "Builder"
     },
     {
       "artifact": "hash_proof",
-      "consumers": ["Done"],
+      "consumers": ["Finalize"],
       "owner": "Hash"
     }
   ],
@@ -125,13 +125,13 @@
     {"artifact": "fixture_validation_result", "from": "FixtureValidation", "to": "TripleValidation"},
     {"artifact": "goal_validation_result", "from": "GoalValidation", "to": "TripleValidation"},
     {"artifact": "triple_validation", "from": "TripleValidation", "to": "Confirmed"},
-    {"artifact": "confirmed_package", "from": "Confirmed", "to": "CreateHash"},
+    {"artifact": "confirmed_package", "from": "Confirmed", "to": "Hash"},
     {"artifact": "confirmed_package", "from": "Confirmed", "to": "Builder"},
-    {"artifact": "HASH", "from": "CreateHash", "to": "Builder"},
-    {"artifact": "HASH", "from": "CreateHash", "to": "Hash"},
-    {"artifact": "hash_sandbox", "from": "Builder", "to": "Hash"},
-    {"artifact": "build_result", "from": "Builder", "to": "Hash"},
-    {"artifact": "verified_HASH", "from": "Hash", "to": "Done"}
+    {"artifact": "HASH", "from": "Hash", "to": "Builder"},
+    {"artifact": "hash_sandbox", "from": "Builder", "to": "Finalize"},
+    {"artifact": "build_result", "from": "Builder", "to": "Finalize"},
+    {"artifact": "hash_proof", "from": "Hash", "to": "Finalize"},
+    {"artifact": "verified_HASH", "from": "Finalize", "to": "Done"}
   ],
   "nodes": [
     {"id": "Prompt", "kind": "source"},
@@ -149,9 +149,9 @@
     {"id": "GoalValidation", "kind": "validator"},
     {"id": "TripleValidation", "kind": "gate"},
     {"id": "Confirmed", "kind": "gate"},
-    {"id": "CreateHash", "kind": "proof"},
-    {"id": "Builder", "kind": "processor"},
     {"id": "Hash", "kind": "proof"},
+    {"id": "Builder", "kind": "processor"},
+    {"id": "Finalize", "kind": "proof"},
     {"id": "Done", "kind": "terminal"}
   ],
   "parallel_groups": [
@@ -173,9 +173,9 @@
         "Evaluation",
         "TripleValidation",
         "Confirmed",
-        "CreateHash",
-        "Builder",
         "Hash",
+        "Builder",
+        "Finalize",
         "Done"
       ]
     },

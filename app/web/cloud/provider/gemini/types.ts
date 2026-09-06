@@ -31,6 +31,6 @@ export interface GeminiProviderHealth {
 
 export interface GeminiWorkerNodeEvent {
   node: string;
-  state: "RUNNING" | "COMPLETE";
+  state: "Running" | "Completed";
   message?: string;
 }

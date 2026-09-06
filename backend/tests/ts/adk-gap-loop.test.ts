@@ -107,7 +107,7 @@ test("dynamic Gap node fixes, rechecks, and exits at gap_0", async () => {
     assert.ok(output, "dynamic Gap node produced no response");
     assert.equal(gapper.fixes, 1);
     assert.ok(gapper.checks >= 2, `expected fresh recheck, got ${gapper.checks}`);
-    assert.equal(output.gap.result, "PASSED");
+    assert.equal(output.gap.result, "Passed");
     assert.equal(output.gap.gap_0, true);
     assert.equal(output.plan.plan_id, bundle.plan.plan_id);
     assert.ok(output.plan.revision > bundle.plan.revision);

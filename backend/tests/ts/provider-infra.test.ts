@@ -146,7 +146,7 @@ for (const [id, name] of [["openai", "OpenAI"], ["anthropic", "Anthropic"], ["ge
 function fakeRuntime(runs: RunRepository): WorkflowRuntime {
   return {
     run: async (runId: string, _prompt: Prompt): Promise<RunSnapshot> => {
-      runs.finish(runId, "PASSED");
+      runs.finish(runId, "Passed");
       return runs.require(runId);
     },
   } as unknown as WorkflowRuntime;
@@ -283,7 +283,7 @@ test("run worker executes the canonical workflow with per-run provider binding",
     const result = await executeRunJob(job, deps);
     assert.equal(result.status, "completed");
     assert.equal(resolvedAt, 1);
-    assert.equal(runs.require(runId).result, "PASSED");
+    assert.equal(runs.require(runId).test_result, "Passed");
 
     // Progress carries only non-secret metadata.
     assert.ok(
@@ -299,21 +299,21 @@ test("run worker executes the canonical workflow with per-run provider binding",
     );
     assert.deepEqual(
       progressCalls.map(
-        (p) => (p as { event: { state: string } }).event.state,
+        (p) => (p as { event: { execution_status: string } }).event.execution_status,
       ),
-      ["COMPLETE", "RUNNING", "COMPLETE"],
+      ["Completed", "Running", "Completed"],
     );
 
     // Bus events include RUNNING and COMPLETE for the RunWorker.
     const busEvents = events.list(runId);
     assert.ok(
       busEvents.some(
-        (e) => e.processor === "RunWorker" && e.state === "RUNNING",
+        (e) => e.processor === "RunWorker" && e.execution_status === "Running",
       ),
     );
     assert.ok(
       busEvents.some(
-        (e) => e.processor === "RunWorker" && e.state === "COMPLETE",
+        (e) => e.processor === "RunWorker" && e.execution_status === "Completed",
       ),
     );
   } finally {
@@ -343,7 +343,7 @@ test("run worker never re-executes an already-finalized run", async () => {
 
     const runId = "test-run-2";
     runs.create(runId);
-    runs.finish(runId, "PASSED");
+    runs.finish(runId, "Passed");
 
     const job: RunJobLike = {
       data: {
@@ -399,15 +399,15 @@ test("run worker finalizes infrastructure failures durably as ROOT_CAUSE", async
     assert.equal(result.status, "failed");
 
     const snap = runs.require(runId);
-    assert.equal(snap.result, "ROOT_CAUSE");
+    assert.equal(snap.test_result, "Failed");
     assert.ok(snap.root_cause);
     assert.match(snap.root_cause!.issue, /simulated infra failure/);
 
     const complete = events
       .list(runId)
-      .find((e) => e.processor === "RunWorker" && e.state === "COMPLETE");
+      .find((e) => e.processor === "RunWorker" && e.execution_status === "Completed");
     assert.ok(complete);
-    assert.equal(complete.result, "ROOT_CAUSE");
+    assert.equal(complete.test_result, "Failed");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

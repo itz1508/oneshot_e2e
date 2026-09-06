@@ -1,5 +1,5 @@
 {
-  "$id": "urn:oneshot:schema:evaluation:1",
+  "$id": "urn:oneshot:schema:evaluation:2",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "allOf": [
@@ -7,14 +7,15 @@
       "if": {
         "properties": {
           "result": {
-            "const": "PASSED"
+            "const": "Passed"
           }
         }
       },
       "then": {
         "not": {
           "required": [
-            "root_cause"
+            "root_cause",
+            "issue_type"
           ]
         }
       }
@@ -23,14 +24,12 @@
       "if": {
         "properties": {
           "result": {
-            "const": "ROOT_CAUSE"
+            "const": "Failed"
           }
         }
       },
       "then": {
-        "required": [
-          "root_cause"
-        ]
+        "required": ["root_cause", "issue_type"]
       }
     }
   ],
@@ -76,10 +75,13 @@
       "type": "string"
     },
     "result": {
-      "$ref": "urn:oneshot:schema:common:1#/$defs/workflow_result"
+      "$ref": "urn:oneshot:schema:common:2#/$defs/test_result"
+    },
+    "issue_type": {
+      "$ref": "urn:oneshot:schema:common:2#/$defs/issue_type"
     },
     "root_cause": {
-      "$ref": "urn:oneshot:schema:common:1#/$defs/root_cause"
+      "$ref": "urn:oneshot:schema:common:2#/$defs/root_cause"
     }
   },
   "required": [

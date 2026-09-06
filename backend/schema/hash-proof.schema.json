@@ -1,5 +1,5 @@
 {
-  "$id": "urn:oneshot:schema:hash-proof:1",
+  "$id": "urn:oneshot:schema:hash-proof:2",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
@@ -12,13 +12,13 @@
       "type": "string"
     },
     "created_hash": {
-      "$ref": "urn:oneshot:schema:common:1#/$defs/digest_sha256"
+      "$ref": "urn:oneshot:schema:common:2#/$defs/digest_sha256"
     },
     "equal": {
       "type": "boolean"
     },
     "recomputed_hash": {
-      "$ref": "urn:oneshot:schema:common:1#/$defs/digest_sha256"
+      "$ref": "urn:oneshot:schema:common:2#/$defs/digest_sha256"
     }
   },
   "required": [

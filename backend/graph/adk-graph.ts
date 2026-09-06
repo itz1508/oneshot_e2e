@@ -1,6 +1,6 @@
 import type { ProcessingEvent } from "../contracts/schema/types.js";
 
-export type GraphNodeState = "PENDING" | "RUNNING" | "COMPLETE";
+export type GraphNodeState = "Pending" | "Running" | "Completed" | "Failed";
 
 export interface AdkGraphNode {
   id: string;
@@ -116,7 +116,7 @@ export const ADK_GRAPH_EDGES: AdkGraphEdge[] = [
   { from: "GapAnalysisFix", to: "GapAnalysisCheck", condition: "fresh recheck" },
   { from: "GapAnalysisCheck", to: "GapAnalysisFinalize", condition: "gap_0" },
   { from: "GapAnalysisFinalize", to: "Evaluation" },
-  { from: "Evaluation", to: "TripleValidation", condition: "PASSED" },
+  { from: "Evaluation", to: "TripleValidation", condition: "Passed" },
   { from: "TripleValidation", to: "SchemaValidation", condition: "parallel ctx.runNode" },
   { from: "TripleValidation", to: "FixtureValidation", condition: "parallel ctx.runNode" },
   { from: "TripleValidation", to: "GoalValidation", condition: "parallel ctx.runNode" },
@@ -141,10 +141,11 @@ export const ADK_GRAPH_EDGES: AdkGraphEdge[] = [
 ];
 
 function rootState(latest: Map<string, ProcessingEvent>): GraphNodeState {
-  if (latest.get("Done")?.state === "COMPLETE") return "COMPLETE";
-  if ([...latest.values()].some((event) => event.state === "RUNNING")) return "RUNNING";
-  if ([...latest.values()].some((event) => event.state === "COMPLETE")) return "RUNNING";
-  return "PENDING";
+  if (latest.get("Done")?.execution_status === "Completed") return "Completed";
+  if ([...latest.values()].some((event) => event.execution_status === "Failed")) return "Failed";
+  if ([...latest.values()].some((event) => event.execution_status === "Running")) return "Running";
+  if ([...latest.values()].some((event) => event.execution_status === "Completed")) return "Running";
+  return "Pending";
 }
 
 /**
@@ -173,7 +174,7 @@ export function projectAdkGraph(events: ProcessingEvent[] = []) {
       id: definition.id,
       label: definition.label,
       kind: definition.kind,
-      state: (event?.state ?? "PENDING") as GraphNodeState,
+      state: (event?.execution_status ?? "Pending") as GraphNodeState,
       message: event?.message,
     };
   });

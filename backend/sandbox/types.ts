@@ -90,7 +90,7 @@ export interface ResearchRequest {
 
 /** Successful execution result with verified sandbox hash. */
 export interface SandboxExecutionPassed {
-  result: "PASSED";
+  result: "Passed";
   execution_id: string;
   sandbox_id: string;
   evidence: ExecutionEvidence;
@@ -100,7 +100,8 @@ export interface SandboxExecutionPassed {
 
 /** Execution failure or admission failure with deterministic root cause. */
 export interface SandboxExecutionRootCause {
-  result: "ROOT_CAUSE";
+  result: "Failed";
+  issue_type: "Root Cause";
   execution_id: string;
   sandbox_id?: string;
   root_cause: RootCause;

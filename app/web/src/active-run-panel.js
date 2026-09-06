@@ -67,8 +67,8 @@ export function createActiveRunPanel() {
       .filter(([_, phase]) => phase !== 'terminal' && phase !== 'success')
       .map(([processor]) => {
         const p = processorStates.get(processor);
-        const state = p?.state || 'PENDING';
-        const label = state === 'RUNNING' ? `◉ ${processor}` : `${STAGE_LABELS[state] || '○'} ${processor}`;
+        const state = p?.state || 'Pending';
+        const label = state === 'Running' ? `◉ ${processor}` : `${STAGE_LABELS[state] || '○'} ${processor}`;
         return `<div class="processor-row ${state.toLowerCase()}">${label}</div>`;
       })
       .join('');

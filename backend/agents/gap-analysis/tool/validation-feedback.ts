@@ -24,7 +24,7 @@ function fixtureFindings(
 ): ValidationFeedback {
   const findings: GapFinding[] = [];
   const unresolved: string[] = [];
-  if (triple.fixture_validation.result === "VALID") return { findings, unresolved };
+  if (triple.fixture_validation.result === "Passed") return { findings, unresolved };
 
   const assertions = new Map(bundle.fixture.plan_assertions.map((assertion) => [assertion.assertion_id, assertion]));
   const evidenceIds = triple.fixture_validation.evidence.map((evidence) => evidence.evidence_id);
@@ -84,7 +84,7 @@ function goalFindings(
 ): ValidationFeedback {
   const findings: GapFinding[] = [];
   const unresolved: string[] = [];
-  if (triple.goal_validation.result === "VALID") return { findings, unresolved };
+  if (triple.goal_validation.result === "Passed") return { findings, unresolved };
 
   const evidenceIds = triple.goal_validation.evidence.map((evidence) => evidence.evidence_id);
   for (const result of triple.goal_validation.criterion_results) {
@@ -137,7 +137,7 @@ export function validationFeedback(
   const goal = goalFindings(bundle, plan, triple);
   const unresolved = [...fixture.unresolved, ...goal.unresolved];
 
-  if (triple.schema_validation.result === "NOT_VALID") {
+  if (triple.schema_validation.result === "Failed") {
     unresolved.push(
       ...triple.schema_validation.evidence.map(
         (evidence) => `schema validation requires additional information: ${evidence.statement}`,

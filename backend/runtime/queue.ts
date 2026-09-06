@@ -346,7 +346,7 @@ export class BullMQRunQueue implements RunQueue {
       const reason = (arg as unknown as { failedReason?: unknown }).failedReason;
       if (!jobId) return;
       const snap = deps.runs.get(jobId);
-      if (snap && !snap.result) {
+      if (snap && snap.pipeline_status !== "Done") {
         const rootCause: RootCause = {
           issue: firstLine(`Queue job failed: ${String(reason ?? "unknown")}`),
           expected: "Run completes or fails with a terminal result",
@@ -358,10 +358,12 @@ export class BullMQRunQueue implements RunQueue {
             "Inspect the run events and server-side worker logs, then retry the run",
           recheck_target: jobId,
         };
-        deps.runs.finish(jobId, "ROOT_CAUSE", undefined, rootCause);
-        deps.events.emit(jobId, "RunWorker", "COMPLETE", {
+        deps.runs.finish(jobId, "Failed", undefined, rootCause);
+        deps.events.emit(jobId, "RunWorker", "Completed", {
           scope: "SUPPORT",
-          result: "ROOT_CAUSE",
+          test_result: "Failed",
+          issue_type: "Root Cause",
+          issue: rootCause,
           message: rootCause.issue,
         });
       }
@@ -533,12 +535,14 @@ export async function executeRunJob(
       recheck_target: runId,
     };
     const snapshot = deps.runs.get(runId);
-    if (snapshot && !snapshot.result) {
-      deps.runs.finish(runId, "ROOT_CAUSE", undefined, rootCause);
+  if (snapshot && snapshot.pipeline_status !== "Done") {
+      deps.runs.finish(runId, "Failed", undefined, rootCause);
     }
-    deps.events.emit(runId, "RunWorker", "COMPLETE", {
+    deps.events.emit(runId, "RunWorker", "Completed", {
       scope: "SUPPORT",
-      result: "ROOT_CAUSE",
+      test_result: "Failed",
+      issue_type: "Root Cause",
+      issue: rootCause,
       message: rootCause.issue,
     });
   };
@@ -567,15 +571,15 @@ export async function executeRunJob(
     // enqueue that timed out on the producer side but still landed, or a
     // replayed job after restart).
     const existing = deps.runs.get(runId);
-    if (existing?.result) {
-      deps.events.emit(runId, "RunWorker", "COMPLETE", {
+    if (existing?.pipeline_status === "Done") {
+      deps.events.emit(runId, "RunWorker", "Completed", {
         scope: "SUPPORT",
-        result: existing.result,
-        message: `Run already finalized (${existing.result}); queue execution skipped`,
+        test_result: existing.test_result,
+        message: `Run already finalized (${existing.test_result}); queue execution skipped`,
       });
       return {
         runId,
-        status: existing.result === "PASSED" ? "completed" : "failed",
+        status: existing.test_result === "Passed" ? "completed" : "failed",
       };
     }
 
@@ -584,7 +588,7 @@ export async function executeRunJob(
     // stalled job was redelivered). The canonical workflow creates artifacts
     // and state, so silently restarting from the beginning could duplicate
     // side effects. attempts=1 means no auto-retry; refuse + finalize.
-    if (existing && !existing.result && existing.events.length > 0) {
+    if (existing && existing.events.length > 0) {
       finalizeFailure(
         `Run ${runId} is partially executed (${existing.events.length} events, no result); refusing to silently restart from the beginning`,
         "Partial execution detected on re-dequeue; explicit recovery policy required (attempts=1, no automatic retry)",
@@ -612,21 +616,22 @@ export async function executeRunJob(
         (err instanceof Error ? err.message : String(err));
       const issue = wrc?.issue ??
         "Provider binding failed before the workflow could execute";
-      deps.events.emit(runId, "ProviderBinding", "COMPLETE", {
+      deps.events.emit(runId, "ProviderBinding", "Completed", {
         scope: "SUPPORT",
-        result: "ROOT_CAUSE",
+        test_result: "Failed",
+        issue_type: "Root Cause",
         message: firstLine(actual),
       });
       finalizeFailure(issue, actual);
       return { runId, status: "failed" };
     }
 
-    deps.events.emit(runId, "ProviderBinding", "COMPLETE", {
+    deps.events.emit(runId, "ProviderBinding", "Completed", {
       scope: "SUPPORT",
       message: `Provider bound; credentials resolved server-side; ready for Researcher (requested=${providerId}, revision=${revision})`,
     });
 
-    deps.events.emit(runId, "RunWorker", "RUNNING", {
+    deps.events.emit(runId, "RunWorker", "Running", {
       scope: "SUPPORT",
       message: `Run dequeued for execution (provider=${providerId}, revision=${revision})`,
     });
@@ -635,13 +640,13 @@ export async function executeRunJob(
     await runtime.run(runId, prompt);
 
     const snapshot = deps.runs.get(runId);
-    const result = snapshot?.result;
-    deps.events.emit(runId, "RunWorker", "COMPLETE", {
+    const result = snapshot?.test_result;
+    deps.events.emit(runId, "RunWorker", "Completed", {
       scope: "SUPPORT",
-      message: `Run finished: ${result ?? "UNKNOWN"}`,
-      result,
+      message: `Run finished: ${result ?? "Unknown"}`,
+      test_result: result,
     });
-    return { runId, status: result === "PASSED" ? "completed" : "failed" };
+    return { runId, status: result === "Passed" ? "completed" : "failed" };
   } catch (err) {
     // Preserve the real root cause for any WorkflowRootCauseError (e.g. a
     // provider/infrastructure failure) — never hide it behind a generic

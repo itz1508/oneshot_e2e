@@ -82,7 +82,7 @@ test("ADK runs Refactor then existing Gap Analysis until fresh gap_0", async () 
     }
 
     assert.ok(output, "ADK workflow produced no Gap Analysis output");
-    assert.equal(output.gap.result, "PASSED");
+    assert.equal(output.gap.result, "Passed");
     assert.equal(output.gap.gap_0, true);
     assert.equal(output.gapPlan.plan_id, output.refactored.plan_id);
     assert.ok(output.gap.resolved_gaps.length >= 1);

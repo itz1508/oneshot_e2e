@@ -47,7 +47,7 @@ def validate_schema(plan: dict, schema_artifact: dict, schema_store=None):
     return {
         'plan_id': plan['plan_id'],
         'schema_id': schema_artifact['schema_id'],
-        'result': 'NOT_VALID' if errors else 'VALID',
+        'result': 'Failed' if errors else 'Passed',
         'evidence': [
             _evidence(
                 'schema-proof',
@@ -63,7 +63,7 @@ def validate_fixture(plan: dict, fixture: dict, assertion_ids: list[str], schema
         'plan_id': plan['plan_id'],
         'fixture_id': fixture['fixture_id'],
         'assertion_results': results,
-        'result': 'VALID' if ok else 'NOT_VALID',
+        'result': 'Passed' if ok else 'Failed',
         'evidence': [
             _evidence(
                 'fixture-proof',
@@ -88,7 +88,7 @@ def validate_goal(plan: dict, goal: dict, criterion_ids: list[str]):
         'plan_id': plan['plan_id'],
         'goal_id': goal['goal_id'],
         'criterion_results': results,
-        'result': 'VALID' if ok else 'NOT_VALID',
+        'result': 'Passed' if ok else 'Failed',
         'evidence': [
             _evidence(
                 'goal-proof',
@@ -113,7 +113,7 @@ def run_triple(plan, validation, schema_artifact, fixture, goal, schema_store=No
         goal,
         validation['goal_validation']['criterion_ids'],
     )
-    all_valid = all(x['result'] == 'VALID' for x in (schema, fixture_result, goal_result))
+    all_valid = all(x['result'] == 'Passed' for x in (schema, fixture_result, goal_result))
     return {
         'plan_id': plan['plan_id'],
         'validation_id': validation['validation_id'],

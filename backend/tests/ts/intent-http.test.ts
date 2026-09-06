@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
@@ -38,7 +38,7 @@ test("Chat intent help path revises same Intent then runs canonical Task-managed
     );
     assert.equal(p1.status, 409);
     const need = (await p1.json()) as any;
-    assert.equal(need.result, "ROOT_CAUSE");
+    assert.equal(need.result, "Root Cause");
     assert.equal(need.help_request.source_processor, "IntentCollection");
 
     const c2 = (await fetch(
@@ -61,7 +61,7 @@ test("Chat intent help path revises same Intent then runs canonical Task-managed
     ).then((r) => r.json())) as any;
     assert.equal(
       graph.nodes.find((n: any) => n.id === "prompt").state,
-      "COMPLETE",
+      "Completed",
     );
 
     const start = (await fetch(
@@ -75,10 +75,11 @@ test("Chat intent help path revises same Intent then runs canonical Task-managed
       snap = await fetch(`${base}/api/runs/${start.run_id}`).then((r) =>
         r.json(),
       );
-      if (snap.result) break;
+      if (snap.test_result) break;
       await new Promise((r) => setTimeout(r, 50));
     }
-    assert.equal(snap.result, "PASSED");
+    assert.equal(snap.test_result, "Passed");
+    assert.equal(snap.pipeline_status, "Done");
 
     const task = (await fetch(`${base}/api/runs/${start.run_id}/task`).then(
       (r) => r.json(),
@@ -90,7 +91,7 @@ test("Chat intent help path revises same Intent then runs canonical Task-managed
     assert.equal(authority.traceability.valid, true);
     assert.equal(
       authority.nodes.find((n: any) => n.id === "Researcher").state,
-      "COMPLETE",
+      "Completed",
     );
   } finally {
     server.closeAllConnections();

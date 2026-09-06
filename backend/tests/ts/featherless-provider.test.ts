@@ -31,7 +31,7 @@ test("Featherless Gemma provider boundary executes canonical chain in determinis
 
   try {
     const output = await runtime.runtime.run(runId, prompt(runId));
-    assert.equal(output.result, "PASSED");
+    assert.equal(output.test_result, "Passed");
     assert.equal(output.hash_proof?.equal, true);
 
     const research = await runtime.store.load<any>(runId, "researcher");
@@ -54,7 +54,7 @@ test("Featherless Gemma provider boundary executes canonical chain in determinis
           event.scope === "SUPPORT" &&
           event.processor ===
             "Provider:featherless:researcher-provider" &&
-          event.state === "COMPLETE",
+          event.execution_status === "Completed",
       ),
     );
     } finally {
@@ -131,7 +131,7 @@ test("Production Featherless failure produces ROOT_CAUSE and never silently fall
 
     try {
       const output = await runtime.runtime.run(runId, prompt(runId));
-      assert.equal(output.result, "ROOT_CAUSE");
+      assert.equal(output.test_result, "Failed");
       assert.equal(output.root_cause?.issue, "Featherless research provider failed");
       assert.match(output.root_cause?.actual || "", /FEATHERLESS_API_KEY is not configured/);
     } finally {

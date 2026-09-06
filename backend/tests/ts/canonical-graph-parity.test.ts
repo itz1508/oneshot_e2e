@@ -59,10 +59,11 @@ test("machine-readable graph records LoopAgent ParallelAgent Builder and H1/H2 p
   for (const required of [
     "GapRecheck|GapCheck|gaps_remaining",
     "Confirmed|Builder|confirmed_package",
-    "CreateHash|Builder|HASH",
-    "Builder|Hash|hash_sandbox",
-    "Builder|Hash|build_result",
-    "Hash|Done|verified_HASH",
+    "Hash|Builder|HASH",
+    "Builder|Finalize|hash_sandbox",
+    "Builder|Finalize|build_result",
+    "Hash|Finalize|hash_proof",
+    "Finalize|Done|verified_HASH",
   ]) {
     assert.ok(edges.has(required), `missing graph edge ${required}`);
   }

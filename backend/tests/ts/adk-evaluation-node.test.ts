@@ -82,7 +82,7 @@ test("ADK passes gap_0 Plan directly into existing Evaluation Agent", async () =
     }
     assert.ok(output, "ADK workflow produced no Evaluation output");
     assert.equal(output.evaluation.plan_id, output.plan.plan_id);
-    assert.equal(output.evaluation.result, "PASSED");
+    assert.equal(output.evaluation.result, "Passed");
     assert.ok(output.evaluation.evidence.length > 0);
     console.log("EVALUATION_OUTPUT_JSON=" + JSON.stringify(output.evaluation));
   } finally {

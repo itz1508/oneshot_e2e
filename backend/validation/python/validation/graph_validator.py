@@ -23,13 +23,13 @@ REQUIRED_EDGES = {
     ('FixtureValidation', 'TripleValidation', 'fixture_validation_result'),
     ('GoalValidation', 'TripleValidation', 'goal_validation_result'),
     ('TripleValidation', 'Confirmed', 'triple_validation'),
-    ('Confirmed', 'CreateHash', 'confirmed_package'),
+    ('Confirmed', 'Hash', 'confirmed_package'),
     ('Confirmed', 'Builder', 'confirmed_package'),
-    ('CreateHash', 'Builder', 'HASH'),
-    ('CreateHash', 'Hash', 'HASH'),
-    ('Builder', 'Hash', 'hash_sandbox'),
-    ('Builder', 'Hash', 'build_result'),
-    ('Hash', 'Done', 'verified_HASH'),
+    ('Hash', 'Builder', 'HASH'),
+    ('Builder', 'Finalize', 'hash_sandbox'),
+    ('Builder', 'Finalize', 'build_result'),
+    ('Hash', 'Finalize', 'hash_proof'),
+    ('Finalize', 'Done', 'verified_HASH'),
 }
 
 EXPECTED_VALIDATORS = {'SchemaValidation', 'FixtureValidation', 'GoalValidation'}
@@ -42,9 +42,9 @@ EXPECTED_SEQUENCE = [
     'Evaluation',
     'TripleValidation',
     'Confirmed',
-    'CreateHash',
-    'Builder',
     'Hash',
+    'Builder',
+    'Finalize',
     'Done',
 ]
 
@@ -117,7 +117,7 @@ def validate_graph(graph: dict) -> list[str]:
         'validation_id': 'Researcher',
         'audit_id': 'Planner',
         'gap_0': 'GapAnalysis',
-        'HASH': 'CreateHash',
+        'HASH': 'Hash',
         'build_result': 'Builder',
         'execution_evidence': 'Builder',
         'hash_sandbox': 'Builder',

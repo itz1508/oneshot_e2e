@@ -254,6 +254,114 @@ jobs:
           cat /tmp/oneshot.log || true
 
 
+  pipeline-checkpoint-recovery:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 20
+
+    env:
+      REDIS_URL: redis://127.0.0.1:6379
+      ONESHOT_MODE: sample
+      PIPELINE_FAULTS_ENABLED: "true"
+      PIPELINE_FAULT_STAGE: evaluation
+      PIPELINE_FAULT_MODE: crash-after-checkpoint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build:backend
+
+      - name: Start server (never restarted by the test)
+        run: |
+          npm start > /tmp/oneshot.log 2>&1 &
+          echo $! > /tmp/oneshot.pid
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:8787/api/health && exit 0
+            sleep 1
+          done
+          cat /tmp/oneshot.log
+          exit 1
+
+      - name: Verify checkpoint recovery after crash-after-checkpoint
+        run: npm run test:pipeline:checkpoint-recovery
+
+      - if: failure()
+        run: |
+          cat /tmp/oneshot.log || true
+
+  pipeline-refinement-recovery:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 20
+
+    env:
+      REDIS_URL: redis://127.0.0.1:6379
+      ONESHOT_MODE: sample
+      PIPELINE_FAULTS_ENABLED: "true"
+      PIPELINE_FAULTS: '[{"stage":"triple-validation","mode":"refine-once"},{"stage":"evaluation","mode":"crash-after-checkpoint","minIteration":1}]'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build:backend
+
+      - name: Start server (never restarted by the test)
+        run: |
+          npm start > /tmp/oneshot.log 2>&1 &
+          echo $! > /tmp/oneshot.pid
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:8787/api/health && exit 0
+            sleep 1
+          done
+          cat /tmp/oneshot.log
+          exit 1
+
+      - name: Verify refinement iteration crash recovery
+        run: npm run test:pipeline:refinement-recovery
+
+      - if: failure()
+        run: |
+          cat /tmp/oneshot.log || true
+
+
   python-reasoner-tests:
     runs-on: ubuntu-latest
 

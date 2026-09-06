@@ -11,17 +11,17 @@ class TestFixtureOperators(unittest.TestCase):
    {'assertion_id':'exists','operator':'exists','target':'$.plan_id','evidence_ids':e},
    {'assertion_id':'equals','operator':'equals','target':'$.plan_id','expected':p['plan_id'],'evidence_ids':e},
    {'assertion_id':'contains','operator':'contains','target':'$.steps.0.requirement_refs','expected':'req:001','evidence_ids':e},
-   {'assertion_id':'matches','operator':'matchesSchema','target':'$','expected':'urn:oneshot:schema:plan:1','evidence_ids':e},
+   {'assertion_id':'matches','operator':'matchesSchema','target':'$','expected':'urn:oneshot:schema:plan:2','evidence_ids':e},
    {'assertion_id':'references','operator':'references','target':'$.steps.0.goal_refs','expected':'criterion:001','evidence_ids':e},
    {'assertion_id':'edge','operator':'edgeExists','target':'$.plan_id','expected':{'from':'Researcher','to':'Planner','artifact':'plan_id'},'evidence_ids':e},
    {'assertion_id':'files','operator':'allFilesSpecified','target':'$.steps.0.requirement_refs','expected':['req:001'],'evidence_ids':e}]}
  def test_all_operators_positive_and_negative(self):
-  f=self.fixture();v=copy.deepcopy(self.b['validation']);v['fixture_validation']['assertion_ids']=[a['assertion_id'] for a in f['plan_assertions']];r=run_triple(self.b['plan'],v,self.b['schema_artifact'],f,self.b['goal'],self.s,self.g);self.assertEqual('VALID',r['fixture_validation']['result'])
-  mut={'exists':lambda a:a.update(target='$.missing'),'equals':lambda a:a.update(expected='wrong'),'contains':lambda a:a.update(expected='missing'),'matches':lambda a:a.update(expected='urn:oneshot:schema:prompt:1'),'references':lambda a:a.update(expected='missing'),'edge':lambda a:a.update(expected={'from':'No','to':'Planner'}),'files':lambda a:a.update(expected=['missing'])}
+  f=self.fixture();v=copy.deepcopy(self.b['validation']);v['fixture_validation']['assertion_ids']=[a['assertion_id'] for a in f['plan_assertions']];r=run_triple(self.b['plan'],v,self.b['schema_artifact'],f,self.b['goal'],self.s,self.g);self.assertEqual('Passed',r['fixture_validation']['result'])
+  mut={'exists':lambda a:a.update(target='$.missing'),'equals':lambda a:a.update(expected='wrong'),'contains':lambda a:a.update(expected='missing'),'matches':lambda a:a.update(expected='urn:oneshot:schema:prompt:2'),'references':lambda a:a.update(expected='missing'),'edge':lambda a:a.update(expected={'from':'No','to':'Planner'}),'files':lambda a:a.update(expected=['missing'])}
   for aid,fn in mut.items():
-   bad=copy.deepcopy(f);fn(next(a for a in bad['plan_assertions'] if a['assertion_id']==aid));r=run_triple(self.b['plan'],v,self.b['schema_artifact'],bad,self.b['goal'],self.s,self.g);self.assertEqual('NOT_VALID',r['fixture_validation']['result'],aid)
+   bad=copy.deepcopy(f);fn(next(a for a in bad['plan_assertions'] if a['assertion_id']==aid));r=run_triple(self.b['plan'],v,self.b['schema_artifact'],bad,self.b['goal'],self.s,self.g);self.assertEqual('Failed',r['fixture_validation']['result'],aid)
  def test_invalid_schema_document_not_valid(self):
-  bad=copy.deepcopy(self.b['schema_artifact']);bad['schema_document']={'type':123};r=run_triple(self.b['plan'],self.b['validation'],bad,self.b['fixture'],self.b['goal'],self.s,self.g);self.assertEqual('NOT_VALID',r['schema_validation']['result'])
+  bad=copy.deepcopy(self.b['schema_artifact']);bad['schema_document']={'type':123};r=run_triple(self.b['plan'],self.b['validation'],bad,self.b['fixture'],self.b['goal'],self.s,self.g);self.assertEqual('Failed',r['schema_validation']['result'])
  def test_validation_route_plan_id_mismatch_rejected(self):
   v=copy.deepcopy(self.b['validation'])
   v['goal_validation']['plan_id']='wrong'

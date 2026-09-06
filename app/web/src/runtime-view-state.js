@@ -1,14 +1,14 @@
 // Semantic UI state projection.
 // Derives IDLE / PLANNING / RUNNING / COMPLETE / ERROR strictly from real
 // runtime events and snapshots. No fabricated progress, stages, or timers.
-export const WORKFLOW_STATES = ['IDLE', 'PLANNING', 'RUNNING', 'COMPLETE', 'ERROR'];
+export const WORKFLOW_STATES = ['Idle', 'Planning', 'Running', 'Completed', 'Error'];
 
 const PLANNING_PROCESSORS = ['Researcher', 'Planner'];
 const EXECUTING_PROCESSORS = ['Refactor', 'Gap Analysis', 'Evaluation', 'Schema Validation', 'Fixture Validation', 'Goal Validation', 'Builder', 'Hash Verification'];
 const TERMINAL_PROCESSORS = ['Confirmed', 'Done'];
 
 function isTerminalComplete(e) {
-  return TERMINAL_PROCESSORS.includes(e.processor) && (e.state === 'COMPLETE' || e.state === 'COMPLETED');
+  return TERMINAL_PROCESSORS.includes(e.processor) && (e.state === 'Completed' || e.state === 'Completed');
 }
 
 function isExecuting(e) {
@@ -16,10 +16,10 @@ function isExecuting(e) {
 }
 
 export function createStateMachine(app, { onChange } = {}) {
-  let current = 'IDLE';
+  let current = 'Idle';
   let planning = false;
   let executing = false;
-  let terminal = null; // 'COMPLETE' | 'ERROR'
+  let terminal = null; // 'Completed' | 'Error'
 
   // Initial semantic class is applied immediately (idle until real events).
   if (app) app.classList.add('state-idle');
@@ -36,9 +36,9 @@ export function createStateMachine(app, { onChange } = {}) {
 
   function derive() {
     if (terminal) return terminal;
-    if (executing) return 'RUNNING';
-    if (planning) return 'PLANNING';
-    return current === 'IDLE' ? 'IDLE' : 'RUNNING';
+    if (executing) return 'Running';
+    if (planning) return 'Planning';
+    return current === 'Idle' ? 'Idle' : 'Running';
   }
 
   return {
@@ -46,8 +46,8 @@ export function createStateMachine(app, { onChange } = {}) {
     onEvent(e) {
       if (!e) return;
       if (isTerminalComplete(e)) {
-        terminal = e.result === 'PASSED' ? 'COMPLETE' : 'ERROR';
-      } else if (e.state === 'RUNNING') {
+        terminal = e.result === 'Passed' ? 'Completed' : 'Error';
+      } else if (e.state === 'Running') {
         if (PLANNING_PROCESSORS.includes(e.processor)) planning = true;
         else if (isExecuting(e)) executing = true;
       }
@@ -58,14 +58,14 @@ export function createStateMachine(app, { onChange } = {}) {
       planning = true;
       executing = false;
       terminal = null;
-      set('PLANNING');
+      set('Planning');
     },
     /** No active run (restore failed / cleared). */
     onReset() {
       planning = false;
       executing = false;
       terminal = null;
-      set('IDLE');
+      set('Idle');
     },
     current: () => current,
     /** Get current phase from processor. */

@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
@@ -15,8 +15,8 @@ test("multi-turn Intent keeps identity, asks targeted help, then creates Prompt(
   assert.equal(a.intent.ready_for_prompt, false);
   assert.equal(a.intent.revision, 1);
   const blocked = svc.createPrompt(a.conversation_id, "prompt:test");
-  assert.equal(blocked.result, "ROOT_CAUSE");
-  if (blocked.result !== "ROOT_CAUSE") throw new Error("expected root cause");
+  assert.equal(blocked.result, "Root Cause");
+  if (blocked.result !== "Root Cause") throw new Error("expected root cause");
   assert.equal(blocked.root_cause.issue, "Additional information required");
   assert.equal(blocked.help_request.required_information[0], "goal");
   assert.match(blocked.help_request.question, /specifically/i);
@@ -30,8 +30,8 @@ test("multi-turn Intent keeps identity, asks targeted help, then creates Prompt(
   assert.equal(b.intent.ready_for_prompt, true);
   assert.equal(b.turns.length, 2);
   const ready = svc.createPrompt(a.conversation_id, "prompt:test");
-  assert.equal(ready.result, "PASSED");
-  if (ready.result !== "PASSED") throw new Error("expected prompt");
+  assert.equal(ready.result, "Passed");
+  if (ready.result !== "Passed") throw new Error("expected prompt");
   assert.equal(ready.prompt.prompt_id, "prompt:test");
   assert.match(ready.prompt.intent, /multimedia player/i);
   const directions = ready.prompt.research_direction.join("\n");
@@ -52,7 +52,7 @@ test("multi-turn Intent keeps identity, asks targeted help, then creates Prompt(
   const graph = projectIntentGraph(b);
   assert.equal(
     graph.nodes.find((x) => x.id === "prompt")?.state,
-    "COMPLETE",
+    "Completed",
   );
   const skill = new IntentCollectionSkill(svc);
   assert.deepEqual(
@@ -85,8 +85,8 @@ test("Prompt(id) carries explicit requirements and constraints into job-specific
     conversation.conversation_id,
     "prompt:structured-direction",
   );
-  assert.equal(result.result, "PASSED");
-  if (result.result !== "PASSED") throw new Error("expected prompt");
+  assert.equal(result.result, "Passed");
+  if (result.result !== "Passed") throw new Error("expected prompt");
 
   assert.deepEqual(Object.keys(result.prompt).sort(), [
     "context",
@@ -122,7 +122,7 @@ test("Intent accepts the IDE audit command as a concrete goal", async () => {
   assert.match(conversation.intent.goal || "", /audit this project/i);
   assert.equal(
     svc.createPrompt(conversation.conversation_id, "prompt:audit").result,
-    "PASSED",
+    "Passed",
   );
 });
 
@@ -138,19 +138,19 @@ test("Intent automatically derives sufficient intent from natural conversational
   assert.match(conv1.intent.goal || "", /json schema/i);
   assert.match(conv1.intent.requested_outcome || "", /3 practical reasons|json schema/i);
   const prompt1 = svc.createPrompt(conv1.conversation_id, "prompt:json-schema");
-  assert.equal(prompt1.result, "PASSED");
+  assert.equal(prompt1.result, "Passed");
 
   const conv2 = svc.start("Write a Python prime checker.");
   assert.equal(conv2.intent.ready_for_prompt, true);
   assert.match(conv2.intent.goal || "", /prime checker/i);
   const prompt2 = svc.createPrompt(conv2.conversation_id, "prompt:prime-checker");
-  assert.equal(prompt2.result, "PASSED");
+  assert.equal(prompt2.result, "Passed");
 
   const conv3 = svc.start("Build it.");
   assert.equal(conv3.intent.ready_for_prompt, false);
   const prompt3 = svc.createPrompt(conv3.conversation_id, "prompt:vague");
-  assert.equal(prompt3.result, "ROOT_CAUSE");
-  if (prompt3.result === "ROOT_CAUSE") {
+  assert.equal(prompt3.result, "Root Cause");
+  if (prompt3.result === "Root Cause") {
     assert.equal(prompt3.help_request.required_information[0], "goal");
   }
 });

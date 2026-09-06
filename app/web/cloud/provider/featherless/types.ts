@@ -14,6 +14,6 @@ export interface FeatherlessConfig {
 
 export interface FeatherlessWorkerEvent {
   node: string;
-  state: "RUNNING" | "COMPLETE";
+  state: "Running" | "Completed";
   message?: string;
 }

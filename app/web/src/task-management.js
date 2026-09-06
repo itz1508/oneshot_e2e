@@ -12,7 +12,7 @@ export const AGENT_STAGES = {
   Result: ['Confirmed', 'Done'],
 };
 
-const STEP_STATES = ['PENDING', 'RUNNING', 'COMPLETE', 'COMPLETED', 'FAILED'];
+const STEP_STATES = ['Pending', 'Running', 'Completed', 'Completed', 'Failed'];
 const PLAN_EMPTY = 'Plan record not yet provided by the runtime.';
 
 function escapeHtml(s) {
@@ -44,7 +44,7 @@ export function planToGroups(plan) {
 export function stepStateFromEvent(e) {
   if (!e || typeof e.stepId !== 'string' || !e.stepId.trim()) return null;
   if (!STEP_STATES.includes(e.state)) return null;
-  return { stepId: e.stepId, state: e.state === 'COMPLETED' ? 'COMPLETE' : e.state };
+  return { stepId: e.stepId, state: e.state === 'Completed' ? 'Completed' : e.state };
 }
 
 /** Pure: map a plan step's real responsibility to its canonical Agent group.
@@ -90,12 +90,12 @@ export function createTaskManagement({ apiFetch } = {}) {
     if (rows.length) {
       return rows.every(r => {
         const s = r.dataset.state;
-        return s === 'COMPLETE' || s === 'COMPLETED';
+        return s === 'Completed' || s === 'Completed';
       });
     }
     // Stage-less groups (Researcher) carry state on their summary element.
     const s = groupEl(agent)?.querySelector(':scope > summary')?.dataset.state;
-    return s === 'COMPLETE' || s === 'COMPLETED';
+    return s === 'Completed' || s === 'Completed';
   }
 
   function allComplete(agent) {
@@ -103,11 +103,11 @@ export function createTaskManagement({ apiFetch } = {}) {
   }
 
   function aggregateState(agent) {
-    const states = stageRows(agent).map(r => r.dataset.state || 'PENDING');
-    if (states.some(s => s === 'RUNNING')) return 'RUNNING';
-    if (states.some(s => s === 'FAILED')) return 'FAILED';
-    if (states.length && states.every(s => s === 'COMPLETE' || s === 'COMPLETED')) return 'COMPLETE';
-    return 'PENDING';
+    const states = stageRows(agent).map(r => r.dataset.state || 'Pending');
+    if (states.some(s => s === 'Running')) return 'Running';
+    if (states.some(s => s === 'Failed')) return 'Failed';
+    if (states.length && states.every(s => s === 'Completed' || s === 'Completed')) return 'Completed';
+    return 'Pending';
   }
 
   function taskItem(it) {
@@ -175,7 +175,7 @@ export function createTaskManagement({ apiFetch } = {}) {
         const g = groupEl(agent);
         const em = g?.querySelector(':scope > summary em');
         if (em) em.textContent = aggregateState(agent);
-        if (e.state === 'RUNNING') {
+        if (e.state === 'Running') {
           g?.classList.add('active-agent');
           if (g && !g.open) g.open = true;
           if (lastRunningAgent && lastRunningAgent !== agent && allComplete(lastRunningAgent)) {
@@ -184,7 +184,7 @@ export function createTaskManagement({ apiFetch } = {}) {
           }
           lastRunningAgent = agent;
         }
-        if (e.state === 'COMPLETE' || e.state === 'COMPLETED') {
+        if (e.state === 'Completed' || e.state === 'Completed') {
           g?.classList.remove('active-agent');
         }
       }
@@ -280,7 +280,7 @@ export function createTaskManagement({ apiFetch } = {}) {
       qall('.agent-group').forEach(g => {
         g.classList.remove('active-agent');
         const em = g.querySelector(':scope > summary em');
-        if (em) em.textContent = 'PENDING';
+        if (em) em.textContent = 'Pending';
       });
       this.renderPlanMessage(PLAN_EMPTY);
     },

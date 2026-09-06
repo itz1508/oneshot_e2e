@@ -1,0 +1,30 @@
+{
+  "$id": "urn:oneshot:schema:processing-event:2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {"type":"string","minLength":1},
+    "sequence": {"type":"integer","minimum":1},
+    "run_id": {"type":"string","minLength":1},
+    "scope": {"enum":["WORKFLOW","ADK","SANDBOX","SUPPORT"]},
+    "processor": {"type":"string","minLength":1},
+    "execution_status": {"$ref":"urn:oneshot:schema:common:2#/$defs/execution_status"},
+    "test_result": {"$ref":"urn:oneshot:schema:common:2#/$defs/test_result"},
+    "issue_type": {"$ref":"urn:oneshot:schema:common:2#/$defs/issue_type"},
+    "issue": {"$ref":"urn:oneshot:schema:common:2#/$defs/root_cause"},
+    "artifact_id": {"type":"string","minLength":1},
+    "message": {"type":"string","minLength":1},
+    "created_at": {"type":"string","minLength":1},
+    "causation_id": {"type":"string","minLength":1},
+    "correlation_id": {"type":"string","minLength":1},
+    "traceparent": {"type":"string","minLength":1},
+    "artifact": {"type":"object","additionalProperties":true}
+  },
+  "required":["event_id","sequence","run_id","scope","processor","execution_status","created_at","correlation_id","traceparent"],
+  "allOf":[
+    {"if":{"required":["test_result"],"properties":{"test_result":{"const":"Passed"}}},"then":{"not":{"anyOf":[{"required":["issue_type"]},{"required":["issue"]}]}}},
+    {"if":{"required":["test_result"],"properties":{"test_result":{"const":"Failed"}}},"then":{"required":["issue_type","issue"]}},
+    {"if":{"properties":{"execution_status":{"const":"Failed"}},"required":["execution_status"]},"then":{"required":["issue_type","issue"],"not":{"required":["test_result"]}}}
+  ]
+}

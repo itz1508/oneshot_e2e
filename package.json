@@ -10,6 +10,8 @@
   },
   "scripts": {
     "oneshot": "node scripts/oneshot.mjs",
+    "dev": "node --env-file=.env dist/backend/index.js",
+    "dev:worker": "node --env-file=.env dist/backend/scripts/run-pipeline-worker.js",
     "agent:review": "npm run build:backend && node dist/app/bootstrap/readme.js",
     "build": "tsc -p tsconfig.json && npm --prefix app/web run build",
     "start": "node dist/backend/index.js",
@@ -30,7 +32,10 @@
     "dev:up": "docker compose -f docker-compose.dev.yml up --build -d",
     "dev:down": "docker compose -f docker-compose.dev.yml down",
     "start:worker": "node dist/backend/scripts/run-pipeline-worker.js",
-    "test:pipeline:e2e": "node backend/scripts/test-pipeline-e2e.mjs"
+    "test:pipeline:e2e": "node backend/scripts/test-pipeline-e2e.mjs",
+    "test:pipeline:recovery": "node backend/scripts/test-pipeline-recovery.mjs",
+    "test:pipeline:checkpoint-recovery": "node backend/scripts/test-pipeline-checkpoint-recovery.mjs",
+    "test:pipeline:refinement-recovery": "node backend/scripts/test-pipeline-refinement-recovery.mjs"
   },
   "dependencies": {
     "@google/adk": "2.0.0",

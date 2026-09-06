@@ -78,22 +78,38 @@
       ],
       "type": "object"
     },
-    "validation_result": {
+    "execution_status": {
       "enum": [
-        "VALID",
-        "NOT_VALID"
+        "Pending",
+        "Running",
+        "Completed",
+        "Failed"
       ],
       "type": "string"
     },
-    "workflow_result": {
+    "test_result": {
       "enum": [
-        "PASSED",
-        "ROOT_CAUSE"
+        "Passed",
+        "Failed"
+      ],
+      "type": "string"
+    },
+    "issue_type": {
+      "enum": [
+        "Root Cause",
+        "Missing"
+      ],
+      "type": "string"
+    },
+    "pipeline_status": {
+      "enum": [
+        "Running",
+        "Done"
       ],
       "type": "string"
     }
   },
-  "$id": "urn:oneshot:schema:common:1",
+  "$id": "urn:oneshot:schema:common:2",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {},

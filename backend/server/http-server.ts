@@ -89,15 +89,31 @@ function markRunQueueUnavailable(
     recheck_target: runId,
   };
   const snap = runs.get(runId);
-  if (snap && !snap.result) {
-    runs.finish(runId, "ROOT_CAUSE", undefined, rootCause);
+  if (snap && snap.pipeline_status !== "Done") {
+    runs.finish(runId, "Failed", undefined, rootCause);
   }
-  events.emit(runId, "RunWorker", "COMPLETE", {
+  events.emit(runId, "RunWorker", "Completed", {
     scope: "SUPPORT",
-    result: "ROOT_CAUSE",
+    test_result: "Failed",
+    issue_type: "Root Cause",
+    issue: rootCause,
     message: "runtime queue unavailable",
   });
 }
+
+/** Valid stage names accepted by the diagnostic reconcile endpoint. */
+const PIPELINE_STAGE_NAMES = new Set<string>([
+  "researcher",
+  "planner",
+  "refactor",
+  "gap-analysis",
+  "evaluation",
+  "triple-validation",
+  "confirmation",
+  "hash",
+  "build",
+  "finalize",
+]);
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -232,6 +248,15 @@ export interface PipelineApi {
   store: ArtifactStore;
   history: PipelineHistory;
   getQueueCounts?: () => Promise<{ waiting: number; active: number; failed: number }>;
+  /**
+   * Diagnostic recovery for an executed stage whose transition did not
+   * commit (crash window). Exposed via POST /api/runs/:id/reconcile.
+   */
+  reconcile?: (
+    runId: string,
+    stage: PipelineStage,
+    iteration: number,
+  ) => Promise<{ recovered: boolean; reason: string }>;
 }
 
 export interface HttpServerOptions {
@@ -641,7 +666,7 @@ export async function startHttpServer(
           const cid = decodeURIComponent(convPrompt[1]);
           try {
             const r = intent.createPrompt(cid, id("prompt", cid));
-            return json(res, r.result === "PASSED" ? 200 : 409, r);
+            return json(res, r.result === "Passed" ? 200 : 409, r);
           } catch (e) {
             return json(res, 404, {
               error: e instanceof Error ? e.message : String(e),
@@ -670,7 +695,7 @@ export async function startHttpServer(
             });
           }
 
-          if (made.result !== "PASSED") return json(res, 409, made);
+          if (made.result !== "Passed") return json(res, 409, made);
 
           return submitRun(runId, made.prompt, res, {
             prompt_id: made.prompt.prompt_id,
@@ -765,7 +790,7 @@ export async function startHttpServer(
               return json(res, 200, {
                 run_id: runId,
                 canceled: false,
-                state: snap.result ? "terminal" : "not-queued",
+                state: snap.pipeline_status === "Done" ? "terminal" : "not-queued",
               });
             }
             const state = await runQueue.getJobState(runId);
@@ -825,6 +850,50 @@ export async function startHttpServer(
                 ? 409
                 : 500;
             return json(res, status, {
+              error: e instanceof Error ? e.message : String(e),
+              run_id: runId,
+            });
+          }
+        }
+
+        // POST /api/runs/:id/reconcile — diagnostic recovery for an executed
+        // stage whose transition is missing or stuck pending after a crash.
+        const runReconcile = url.pathname.match(
+          /^\/api\/runs\/([^/]+)\/reconcile$/,
+        );
+        if (req.method === "POST" && runReconcile) {
+          const runId = decodeURIComponent(runReconcile[1]);
+          const snap = runs.get(runId);
+          if (!snap) return json(res, 404, { error: "run not found" });
+          if (!options.pipeline?.reconcile) {
+            return json(res, 501, {
+              error: "reconciliation requires the per-stage pipeline",
+              run_id: runId,
+            });
+          }
+          const input = await body(req);
+          const stage = String(input.stage ?? "");
+          if (!PIPELINE_STAGE_NAMES.has(stage)) {
+            return json(res, 400, {
+              error: `unknown pipeline stage '${stage}'`,
+              run_id: runId,
+            });
+          }
+          const iteration = Number(input.iteration ?? 0);
+          try {
+            const result = await options.pipeline.reconcile(
+              runId,
+              stage as PipelineStage,
+              Number.isFinite(iteration) && iteration >= 0 ? Math.floor(iteration) : 0,
+            );
+            return json(res, 200, {
+              run_id: runId,
+              stage,
+              iteration: Number.isFinite(iteration) && iteration >= 0 ? Math.floor(iteration) : 0,
+              ...result,
+            });
+          } catch (e) {
+            return json(res, 500, {
               error: e instanceof Error ? e.message : String(e),
               run_id: runId,
             });
@@ -1156,7 +1225,7 @@ export async function startHttpServer(
               const review = await runtime.review.get(runId);
               return review ? json(res, 200, review) : json(res, 404, { error: "No plan review available" });
             }
-            if (snapshot.result) return json(res, 409, { error: "Run has already finished" });
+            if (snapshot.pipeline_status === "Done") return json(res, 409, { error: "Run has already finished" });
             return json(res, 200, await runtime.review.decide(runId, await body(req)));
           } catch (error) {
             if (error instanceof PlanReviewError) return json(res, error.status, { error: error.message });
@@ -1191,11 +1260,11 @@ export async function startHttpServer(
           const runId = sbxExecMatch[1];
           const r = runs.get(runId);
           if (!r) return json(res, 404, { error: "run not found" });
-          if (r.result !== "PASSED" || !r.hash_proof?.equal) {
+          if (r.test_result !== "Passed" || !r.hash_proof?.equal) {
             return json(res, 409, {
               error:
                 "Run has not reached confirmed DONE status with valid canonical hash",
-              run_result: r.result,
+              run_result: r.test_result,
             });
           }
 
@@ -1214,7 +1283,7 @@ export async function startHttpServer(
             };
 
             const result = await sandbox.execute(sbxInput);
-            return json(res, result.result === "PASSED" ? 200 : 409, result);
+            return json(res, result.result === "Passed" ? 200 : 409, result);
           } catch (e) {
             return json(res, 500, {
               error: e instanceof Error ? e.message : String(e),

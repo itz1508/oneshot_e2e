@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
@@ -13,11 +13,11 @@ test("Task event stream is append-only, replayable, traced, and ADK-projectable"
   const store = new AppendOnlyProcessingEventStore(root),
     bus = new ProcessingEventBus(store);
 
-  bus.emit("r1", "Researcher", "PENDING");
-  bus.emit("r1", "Researcher", "RUNNING");
-  bus.emit("r1", "ADK:cache", "RUNNING", { scope: "ADK", message: "lookup" });
-  bus.emit("r1", "ADK:cache", "COMPLETE", { scope: "ADK", message: "hit" });
-  bus.emit("r1", "Researcher", "COMPLETE", { result: "PASSED" });
+  bus.emit("r1", "Researcher", "Pending");
+  bus.emit("r1", "Researcher", "Running");
+  bus.emit("r1", "ADK:cache", "Running", { scope: "ADK", message: "lookup" });
+  bus.emit("r1", "ADK:cache", "Completed", { scope: "ADK", message: "hit" });
+  bus.emit("r1", "Researcher", "Completed", { test_result: "Passed" });
 
   const reloaded = new AppendOnlyProcessingEventStore(root).list("r1");
   assert.equal(reloaded.length, 5);
@@ -38,7 +38,7 @@ test("Task event stream is append-only, replayable, traced, and ADK-projectable"
   const graph = projectAdkGraph(reloaded);
   assert.equal(
     graph.nodes.find((n) => n.id === "Provider:cache")?.state,
-    "COMPLETE",
+    "Completed",
   );
   assert.equal(graph.root_agent.type, "Workflow");
 });

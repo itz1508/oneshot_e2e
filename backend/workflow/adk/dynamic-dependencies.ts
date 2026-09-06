@@ -38,7 +38,7 @@ export function createDynamicDependencyFactory(input: DynamicDependencyFactoryIn
   const hash = input.hash ?? new HashWorkflow(input.contracts);
 
   return async (runId: string): Promise<BoundDynamicDependencies> => {
-    input.events.emit(runId, "ProviderBinding:Researcher", "RUNNING", {
+    input.events.emit(runId, "ProviderBinding:Researcher", "Running", {
       scope: "SUPPORT",
       message: "resolve provider and prove model readiness before ADK Researcher node",
     });
@@ -58,9 +58,9 @@ export function createDynamicDependencyFactory(input: DynamicDependencyFactoryIn
         });
       }
 
-      input.events.emit(runId, "ProviderBinding:Researcher", "COMPLETE", {
+      input.events.emit(runId, "ProviderBinding:Researcher", "Completed", {
         scope: "SUPPORT",
-        result: "PASSED",
+        test_result: "Passed",
         artifact_id: `provider:${readiness.provider}`,
         message: `models=${readiness.models.join(",") || "fixture"}`,
       });
@@ -82,9 +82,10 @@ export function createDynamicDependencyFactory(input: DynamicDependencyFactoryIn
       };
     } catch (error) {
       provider?.close?.();
-      input.events.emit(runId, "ProviderBinding:Researcher", "COMPLETE", {
+      input.events.emit(runId, "ProviderBinding:Researcher", "Completed", {
         scope: "SUPPORT",
-        result: "ROOT_CAUSE",
+        test_result: "Failed",
+        issue_type: "Root Cause",
         message: error instanceof Error ? error.message : String(error),
       });
       throw error;

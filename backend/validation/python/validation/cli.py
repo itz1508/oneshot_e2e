@@ -55,7 +55,7 @@ def handle(cmd: str, payload: dict):
     if cmd == 'schema-validation':
         plan, validation, schema_artifact, fixture, goal = _triple_inputs(payload)
         out = validate_schema(plan, schema_artifact, STORE)
-        STORE.assert_valid('urn:oneshot:schema:schema-validation:1', out)
+        STORE.assert_valid('urn:oneshot:schema:schema-validation:2', out)
         return out
 
     if cmd == 'fixture-validation':
@@ -68,7 +68,7 @@ def handle(cmd: str, payload: dict):
             STORE,
             graph,
         )
-        STORE.assert_valid('urn:oneshot:schema:fixture-validation:1', out)
+        STORE.assert_valid('urn:oneshot:schema:fixture-validation:2', out)
         return out
 
     if cmd == 'goal-validation':
@@ -78,7 +78,7 @@ def handle(cmd: str, payload: dict):
             goal,
             validation['goal_validation']['criterion_ids'],
         )
-        STORE.assert_valid('urn:oneshot:schema:goal-validation:1', out)
+        STORE.assert_valid('urn:oneshot:schema:goal-validation:2', out)
         return out
 
     if cmd == 'triple-validation':
@@ -94,12 +94,12 @@ def handle(cmd: str, payload: dict):
             graph,
         )
         for contract_id, key in [
-            ('urn:oneshot:schema:schema-validation:1', 'schema_validation'),
-            ('urn:oneshot:schema:fixture-validation:1', 'fixture_validation'),
-            ('urn:oneshot:schema:goal-validation:1', 'goal_validation'),
+            ('urn:oneshot:schema:schema-validation:2', 'schema_validation'),
+            ('urn:oneshot:schema:fixture-validation:2', 'fixture_validation'),
+            ('urn:oneshot:schema:goal-validation:2', 'goal_validation'),
         ]:
             STORE.assert_valid(contract_id, out[key])
-        STORE.assert_valid('urn:oneshot:schema:triple-validation:1', out)
+        STORE.assert_valid('urn:oneshot:schema:triple-validation:2', out)
         return out
 
     # compatibility aliases for deterministic scripts/tests

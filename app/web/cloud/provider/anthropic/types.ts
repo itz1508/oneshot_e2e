@@ -15,6 +15,6 @@ export interface AnthropicConfig {
 
 export interface AnthropicWorkerEvent {
   node: string;
-  state: "RUNNING" | "COMPLETE";
+  state: "Running" | "Completed";
   message?: string;
 }

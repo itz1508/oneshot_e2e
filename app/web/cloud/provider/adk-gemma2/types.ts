@@ -28,6 +28,6 @@ export interface AdkProviderHealth {
 
 export interface AdkWorkerNodeEvent {
   node: string;
-  state: "RUNNING" | "COMPLETE";
+  state: "Running" | "Completed";
   message?: string;
 }

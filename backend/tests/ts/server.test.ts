@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
@@ -38,10 +38,10 @@ test("HTTP/UI product runs chain and durable run snapshot reloads", async () => 
       snap = await fetch(`${base}/api/runs/${start.run_id}`).then((r) =>
         r.json(),
       );
-      if (snap.result) break;
+      if (snap.test_result) break;
       await new Promise((r) => setTimeout(r, 50));
     }
-    assert.equal(snap.result, "PASSED");
+    assert.equal(snap.test_result, "Passed");
     assert.equal(snap.hash_proof.equal, true);
     const task = (await fetch(`${base}/api/runs/${start.run_id}/task`).then(
       (r) => r.json(),
@@ -76,10 +76,10 @@ test("HTTP/UI product runs chain and durable run snapshot reloads", async () => 
     assert.equal((await fetch(`${base}/`)).status, 200);
     const reloaded = new RunRepository(resolve(".runtime/test-harness/state/server"));
     const durable = reloaded.get(start.run_id);
-    assert.equal(durable?.result, "PASSED");
+    assert.equal(durable?.test_result, "Passed");
     assert.ok(
       durable?.events.some(
-        (e) => e.processor === "Done" && e.result === "PASSED",
+        (e) => e.processor === "Done" && e.test_result === "Passed",
       ),
     );
   } finally {

@@ -47,7 +47,7 @@ async function collectWorkflowEvents(url: string): Promise<ProcessingEvent[]> {
         const event = JSON.parse(data) as ProcessingEvent;
         events.push(event);
         print("WORKFLOW_EVENT_JSON", event);
-        if (event.processor === "Done" && event.state === "COMPLETE") {
+        if (event.processor === "Done" && event.execution_status === "Completed") {
           terminal = true;
           break;
         }
@@ -149,7 +149,7 @@ test(
       for (const processor of requiredCompleteProcessors) {
         assert.ok(
           streamEvents.some(
-            (event) => event.processor === processor && event.state === "COMPLETE",
+            (event) => event.processor === processor && event.execution_status === "Completed",
           ),
           `missing ${processor} COMPLETE event`,
         );
@@ -198,14 +198,14 @@ test(
         run_id: started.run_id,
         prompt_id: started.prompt_id,
         event_count: streamEvents.length,
-        final_result: snapshot.result,
+        final_result: snapshot.test_result,
         artifact_names: Object.keys(artifacts),
         last_event: streamEvents.at(-1),
       });
 
-      assert.equal(snapshot.result, "PASSED");
+      assert.equal(snapshot.test_result, "Passed");
       assert.equal(streamEvents.at(-1)?.processor, "Done");
-      assert.equal(streamEvents.at(-1)?.state, "COMPLETE");
+      assert.equal(streamEvents.at(-1)?.execution_status, "Completed");
     } finally {
       server.closeAllConnections();
       await new Promise<void>((ok, fail) =>

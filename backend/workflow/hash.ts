@@ -25,7 +25,7 @@ export class HashWorkflow {
       recomputed_hash: sandboxHash,
       equal: createdHash === sandboxHash,
     };
-    await this.contracts.validate("urn:oneshot:schema:hash-proof:1", proof);
+    await this.contracts.validate("urn:oneshot:schema:hash-proof:2", proof);
     return proof;
   }
 
@@ -33,7 +33,7 @@ export class HashWorkflow {
   async run(confirmed: ConfirmedPackage): Promise<HashProof> {
     const created = await this.create(confirmed);
     const proof = await this.contracts.verifyHash(confirmed.core, created);
-    await this.contracts.validate("urn:oneshot:schema:hash-proof:1", proof);
+    await this.contracts.validate("urn:oneshot:schema:hash-proof:2", proof);
     return proof;
   }
 }

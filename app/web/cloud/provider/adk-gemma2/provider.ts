@@ -11,6 +11,23 @@ import { structuredDraftToResearchBundle } from "../structured-draft.js";
 import { AdkGemmaWorker } from "./worker-bridge.js";
 import type { AdkGemmaConfig, AdkResearchDraft } from "./types.js";
 
+/**
+ * Python workers emit uppercase legacy states ("RUNNING"/"COMPLETE"); the
+ * canonical event stream carries ExecutionStatus ("Running"/"Completed").
+ */
+function normalizeExecutionStatus(
+  state: string,
+): "Running" | "Completed" | "Failed" {
+  const normalized = state.trim().toLowerCase();
+  if (normalized === "complete" || normalized === "completed") {
+    return "Completed";
+  }
+  if (normalized === "failed") {
+    return "Failed";
+  }
+  return "Running";
+}
+
 function positiveInt(value: string | undefined, fallback: number) {
   const n = Number(value);
   return Number.isInteger(n) && n > 0 ? n : fallback;
@@ -90,7 +107,7 @@ export class AdkGemmaResearchProvider implements ResearchProvider {
       { length: config.workerPoolSize },
       () =>
         new AdkGemmaWorker(projectRoot, config, (runId, event) =>
-          this.events?.emit(runId, `ADK:${event.node}`, event.state, {
+          this.events?.emit(runId, `ADK:${event.node}`, normalizeExecutionStatus(event.state), {
             scope: "ADK",
             message: event.message,
           }),

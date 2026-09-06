@@ -12,7 +12,7 @@ export function actionTextFromEvent(e) {
   if (activity) return activity;
   const processor = typeof e.processor === 'string' ? e.processor.trim() : '';
   if (!processor) return '';
-  return `${processor} ${String(e.state || 'PENDING').toLowerCase()}`;
+  return `${processor} ${String(e.state || 'Pending').toLowerCase()}`;
 }
 
 /** Pure: artifact row from a real artifact-registration event (contract

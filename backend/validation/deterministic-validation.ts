@@ -80,7 +80,7 @@ export class DeterministicValidationRuntime {
       fixture_validation: fixtureValidation,
       goal_validation: goalValidation,
       all_valid: [schemaValidation, fixtureValidation, goalValidation].every(
-        (result) => result.result === "VALID",
+        (result) => result.result === "Passed",
       ),
     };
   }

@@ -17,7 +17,7 @@ export interface AuthorityNode {
   input?: string;
   output?: string;
   owns?: readonly string[];
-  state: "PENDING" | "RUNNING" | "COMPLETE";
+  state: "Pending" | "Running" | "Completed" | "Failed";
   artifact_id?: string;
 }
 
@@ -247,7 +247,7 @@ export function projectAuthorityGraph(events: ProcessingEvent[] = []) {
         .replace(/^ADK:/, "ADK / ")
         .replace(/^ExternalSandbox:/, "Sandbox / "),
       ...catalog,
-      state: (event?.state ?? "PENDING") as AuthorityNode["state"],
+      state: (event?.execution_status ?? "Pending") as AuthorityNode["state"],
       artifact_id: event?.artifact_id,
     };
   });

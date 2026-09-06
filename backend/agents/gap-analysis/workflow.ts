@@ -123,20 +123,21 @@ export class GapAnalysisWorkflow {
     const gap: GapAnalysis = rootCause
       ? {
           plan_id: plan.plan_id,
-          result: "ROOT_CAUSE",
+          result: "Failed",
+          issue_type: "Root Cause",
           resolved_gaps: resolved,
           gap_0: false,
           root_cause: rootCause,
         }
       : {
           plan_id: plan.plan_id,
-          result: "PASSED",
+          result: "Passed",
           resolved_gaps: resolved,
           gap_0: true,
         };
 
-    await this.contracts.validate("urn:oneshot:schema:plan:1", plan);
-    await this.contracts.validate("urn:oneshot:schema:gap:1", gap);
+    await this.contracts.validate("urn:oneshot:schema:plan:2", plan);
+    await this.contracts.validate("urn:oneshot:schema:gap:2", gap);
     return gap;
   }
 

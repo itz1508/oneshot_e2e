@@ -224,7 +224,9 @@ async function waitForPipelineComplete(runId) {
       const run = await requestJson(
         `/api/runs/${encodeURIComponent(runId)}`,
       );
-      const status = normalize(run.status ?? run.state);
+      const status = normalize(
+        run.pipeline_status ?? run.status ?? run.state,
+      );
       if (
         status === "complete" ||
         status === "completed" ||

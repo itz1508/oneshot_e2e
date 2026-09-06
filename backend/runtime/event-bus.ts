@@ -2,16 +2,20 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type {
   ProcessingEvent,
   ProcessingScope,
-  ProcessingState,
-  ValidationResult,
-  WorkflowResult,
+  ExecutionStatus,
+  IssueType,
+  RootCause,
+  TestResult,
 } from "../contracts/schema/types.js";
 import type { AppendOnlyProcessingEventStore } from "../task/event/event-store.js";
 
 type Subscriber = (event: ProcessingEvent) => void;
 
+type EventInputStatus = ExecutionStatus;
 type EventData = {
-  result?: WorkflowResult | ValidationResult;
+  test_result?: TestResult;
+  issue_type?: IssueType;
+  issue?: RootCause;
   artifact_id?: string;
   message?: string;
   scope?: ProcessingScope;
@@ -79,7 +83,7 @@ export class ProcessingEventBus {
   emit(
     runId: string,
     processor: string,
-    state: ProcessingState,
+    executionStatus: EventInputStatus,
     data: EventData = {},
   ): ProcessingEvent {
     const h = this.load(runId);
@@ -94,18 +98,38 @@ export class ProcessingEventBus {
 
     const last = h.at(-1);
 
+    if (data.test_result === "Passed" && (data.issue_type || data.issue)) {
+      throw new Error("Passed processing events cannot carry issue fields");
+    }
+    if (executionStatus === "Failed" && data.test_result) {
+      throw new Error("Failed stage execution cannot claim a completed test result");
+    }
+    const issueType = data.issue_type ??
+      ((data.test_result === "Failed" || executionStatus === "Failed") ? "Root Cause" : undefined);
+    const issue = data.issue ?? (issueType ? {
+      issue: data.message ?? `${processor} failed`,
+      expected: `${processor} completes successfully`,
+      actual: data.message ?? `${processor} reported ${issueType}`,
+      evidence_ids: [],
+      required_correction: `Correct the ${processor} failure`,
+      recheck_target: processor,
+    } : undefined);
+
+    const normalizedStatus: ExecutionStatus = executionStatus;
     const event: ProcessingEvent = {
       event_id: randomUUID(),
       sequence: seq,
       run_id: runId,
       scope: data.scope ?? "WORKFLOW",
       processor,
-      state,
+      execution_status: normalizedStatus,
       created_at: new Date().toISOString(),
       causation_id: last?.event_id,
       correlation_id: `run:${runId}`,
       traceparent: `00-${traceId}-${spanId}-01`,
-      ...(data.result ? { result: data.result } : {}),
+      ...(data.test_result ? { test_result: data.test_result } : {}),
+      ...(issueType ? { issue_type: issueType } : {}),
+      ...(issue ? { issue } : {}),
       ...(data.artifact_id ? { artifact_id: data.artifact_id } : {}),
       ...(data.message ? { message: data.message } : {}),
     };
@@ -153,13 +177,7 @@ export class ProcessingEventBus {
     this.load(runId); // ensure history + seen are populated from durable store
     if (this.hasSeen(runId, event.event_id)) return false; // duplicate delivery
     this.markSeen(runId, event.event_id);
-    try {
-      this.store?.append(event);
-    } catch {
-      // Store rejected (concurrent persist / ordering) — another path already
-      // durably stored it; treat as already-persisted and do not double-notify.
-      return false;
-    }
+    this.store?.append(event);
     this.history.get(runId)!.push(event);
     // Advance the high-water sequence so a later emit() continues, never resets.
     if (event.sequence > (this.sequence.get(runId) ?? 0)) {

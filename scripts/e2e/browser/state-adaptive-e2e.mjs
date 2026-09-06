@@ -261,14 +261,14 @@ while (Date.now() < deadline) {
     record("REAL artifacts only (Files/Records)", "rows carry real runtime artifact names; no invented operation labels without producer evidence", `rows=${m.liveFiles.map(f => f.name + (f.op ? ":" + f.op : "")).join(",")}`, m.liveFiles.every(f => !!f.name));
   }
   const researcher = m.roles.find(r => r.role === "Researcher");
-  const anyRunning = m.roles.some(r => r.em === "RUNNING" && r.role !== "Researcher");
-  if (researcher && researcher.em === "COMPLETE" && researcher.open === false && anyRunning && !sawResearcherCompleteCollapsed) {
+  const anyRunning = m.roles.some(r => r.em === "Running" && r.role !== "Researcher");
+  if (researcher && researcher.em === "Completed" && researcher.open === false && anyRunning && !sawResearcherCompleteCollapsed) {
     sawResearcherCompleteCollapsed = true;
-    record("Researcher collapses; next Role expands", "completed Researcher auto-collapses when next Role begins; next Role open", `researcher open=${researcher.open}, running roles open=${m.roles.filter(r => r.em === "RUNNING").map(r => r.role + ":" + r.open).join(",")}`, true);
+    record("Researcher collapses; next Role expands", "completed Researcher auto-collapses when next Role begins; next Role open", `researcher open=${researcher.open}, running roles open=${m.roles.filter(r => r.em === "Running").map(r => r.role + ":" + r.open).join(",")}`, true);
   }
   if (stableWs && Math.abs(stableWs.w - m.ws.w) < 1 && Math.abs(stableWs.x - m.ws.x) < 1) stableCount++;
   else { stableWs = m.ws; stableCount = 1; }
-  if (m.runResult === "PASSED" || m.runResult === "ROOT_CAUSE") break;
+  if (m.runResult === "Passed" || m.runResult === "Root Cause") break;
   await sleep(250);
 }
 // Layout must also stay calm right after terminal (settle, no jumps).
@@ -289,7 +289,7 @@ const fin = await measure();
 const snapText = await ev("document.querySelector('.result-raw-json pre')?.textContent || document.getElementById('run-result')?.dataset?.snapshot || document.getElementById('run-result')?.textContent || ''");
 let snap = null;
 try { snap = JSON.parse(snapText); } catch {}
-record("Terminal DONE/PASSED", "run-result renders real PASSED terminal", `dataset.result=${fin.runResult}, snapshot.result=${snap?.result}`, fin.runResult === "PASSED" && snap?.result === "PASSED");
+record("Terminal DONE/PASSED", "run-result renders real PASSED terminal", `dataset.result=${fin.runResult}, snapshot.result=${snap?.result}`, fin.runResult === "Passed" && snap?.result === "Passed");
 const hp = snap?.hash_proof;
 record("HASH PROOF equality", "hash_proof.equal=true and created_hash===recomputed_hash (sha256 hex)", hp ? `equal=${hp.equal}, created=${String(hp.created_hash).slice(0,12)}…, recomputed=${String(hp.recomputed_hash).slice(0,12)}…` : "no hash_proof", !!hp && hp.equal === true && hp.created_hash === hp.recomputed_hash && /^[0-9a-f]{64}$/i.test(String(hp.created_hash)));
 results.hash_proof = hp ?? null;
@@ -312,7 +312,7 @@ record("Task Management shows concrete Plan.steps TODOs", "every DOM TODO descri
 const chipStates = fin.chips;
 record("No fabricated step states", "step chips show '—' (no step_id events exist yet); no invented PENDING/DONE", `chips=${JSON.stringify(chipStates.slice(0, 6))}`, chipStates.length === 0 || chipStates.every(c => c === "—"));
 const researcherFinal = fin.roles.find(r => r.role === "Researcher");
-record("Researcher completed + collapsed after chain advanced", "researcher em COMPLETE, accordion collapsed (history reopenable)", `em=${researcherFinal?.em}, open=${researcherFinal?.open}`, researcherFinal?.em === "COMPLETE" && researcherFinal?.open === false);
+record("Researcher completed + collapsed after chain advanced", "researcher em COMPLETE, accordion collapsed (history reopenable)", `em=${researcherFinal?.em}, open=${researcherFinal?.open}`, researcherFinal?.em === "Completed" && researcherFinal?.open === false);
 record("COMPLETE ambience", "app.state-complete with configured completion gradient", `appState=${fin.appState}, bg=${fin.ambBefore.bg}`, fin.appState === "state-complete" && fin.ambBefore.bg !== "none");
 await shot("06-complete-ambience-todos.png");
 
@@ -343,7 +343,7 @@ record("ROOT_CAUSE path", "deterministic failure fixture availability", "NOT EXE
 results.state_transitions.push({ at: new Date().toISOString(), state: "SESSION-END", passed: PASSED });
 
 writeFileSync(join(ROOT, "dist", "e2e-evidence", "state-adaptive-evidence.json"), JSON.stringify({ ...results, passed: PASSED, screenshots: SHOTS }, null, 2));
-console.log(`\n=== STATE-ADAPTIVE E2E ${PASSED ? "PASSED" : "FAILED"} ===`);
+console.log(`\n=== STATE-ADAPTIVE E2E ${PASSED ? "Passed" : "FAILED"} ===`);
 console.log(`evidence: dist/e2e-evidence/state-adaptive-evidence.json`);
 console.log(`screenshots: ${SHOTS}`);
 try { await cdp.send("Browser.close"); } catch(e) {}

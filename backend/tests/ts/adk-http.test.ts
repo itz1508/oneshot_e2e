@@ -43,25 +43,26 @@ test("HTTP/UI path reaches DONE through canonical ADK workflow and Researcher pr
       snap = await fetch(`${base}/api/runs/${start.run_id}`).then((r) =>
         r.json(),
       );
-      if (snap.result) break;
+      if (snap.test_result) break;
       await new Promise((r) => setTimeout(r, 50));
     }
 
-    assert.equal(snap.result, "PASSED");
+    assert.equal(snap.test_result, "Passed");
+    assert.equal(snap.pipeline_status, "Done");
     assert.equal(snap.hash_proof.equal, true);
     const researcher = await h.store.load<any>(start.run_id, "researcher");
     assert.match(researcher.evidence[0].source, /google-adk-pipeline:/);
     assert.equal(
       snap.events.find(
-        (e: any) => e.processor === "Builder" && e.state === "COMPLETE",
-      )?.result,
-      "PASSED",
+        (e: any) => e.processor === "Builder" && e.execution_status === "Completed",
+      )?.test_result,
+      "Passed",
     );
     assert.equal(
       snap.events.find(
-        (e: any) => e.processor === "Done" && e.state === "COMPLETE",
-      )?.result,
-      "PASSED",
+        (e: any) => e.processor === "Done" && e.execution_status === "Completed",
+      )?.test_result,
+      "Passed",
     );
 
     const graph = (await fetch(
@@ -77,11 +78,11 @@ test("HTTP/UI path reaches DONE through canonical ADK workflow and Researcher pr
     assert.equal(graph.provider_subgraph.attached_to, "Researcher");
     assert.equal(
       graph.nodes.find((n: any) => n.id === "Provider:cache")?.state,
-      "COMPLETE",
+      "Completed",
     );
     assert.equal(
       graph.nodes.find((n: any) => n.id === "Provider:research-draft")?.state,
-      "COMPLETE",
+      "Completed",
     );
     console.log(
       "HTTP_WORKFLOW_RESPONSE_JSON=" +

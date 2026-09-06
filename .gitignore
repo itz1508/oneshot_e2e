@@ -1,3 +1,5 @@
+# local scratch
+
 node_modules/
 __pycache__/
 *.pyc
@@ -31,3 +33,7 @@ scripts/config/
 /runtime/
 /oneshot_e2e.runtimeserver*.log
 /ui_*.png
+
+# Transient local test/run logs
+*.log
+/unit-log.txt

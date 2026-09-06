@@ -3,6 +3,7 @@ import {
   mkdirSync,
   readFileSync,
   renameSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -12,7 +13,8 @@ import type {
   ProcessingEvent,
   RootCause,
   RunSnapshot,
-  WorkflowResult,
+  IssueType,
+  TestResult,
 } from "../contracts/schema/types.js";
 import type { HelpRequest } from "../intent/types.js";
 
@@ -22,6 +24,13 @@ import type { HelpRequest } from "../intent/types.js";
  */
 export class RunRepository {
   private runs = new Map<string, RunSnapshot>();
+  /**
+   * Last-known disk mtime per run. The API server and the pipeline worker are
+   * separate processes sharing this directory; when the worker terminalizes a
+   * run on disk, the server must reload it instead of serving its stale
+   * in-memory copy.
+   */
+  private diskMtimes = new Map<string, number>();
 
   constructor(private root?: string) {
     if (root) mkdirSync(root, { recursive: true });
@@ -55,32 +64,75 @@ export class RunRepository {
           throw err;
         }
       }
-    } catch {
+    } catch (error) {
       try {
         writeFileSync(p, content, "utf8");
-      } catch {}
+      } catch {
+        throw error;
+      }
+    }
+    this.noteDiskVersion(p);
+  }
+
+  /** Record the on-disk mtime so cross-process updates are detected. */
+  private noteDiskVersion(p: string): void {
+    try {
+      this.diskMtimes.set(p, statSync(p).mtimeMs);
+    } catch {
+      /* the file may have been renamed concurrently; get() re-checks */
     }
   }
 
   create(runId: string): RunSnapshot {
-    const r: RunSnapshot = { run_id: runId, events: [], artifacts: {} };
+    const r: RunSnapshot = {
+      run_id: runId,
+      pipeline_status: "Running",
+      events: [],
+      artifacts: {},
+    };
     this.runs.set(runId, r);
     this.persist(r);
     return r;
   }
 
   get(runId: string): RunSnapshot | undefined {
-    let r = this.runs.get(runId);
-    if (r) return r;
     const p = this.path(runId);
+
+    /*
+     * Multi-process reload: another process (the pipeline worker) may have
+     * terminalized this run on disk after this process cached it. When the
+     * file is newer than the cached copy, reload from disk.
+     */
     if (p && existsSync(p)) {
+      let diskMtime = 0;
       try {
-        r = JSON.parse(readFileSync(p, "utf8")) as RunSnapshot;
-        this.runs.set(runId, r);
-        return r;
-      } catch {}
+        diskMtime = statSync(p).mtimeMs;
+      } catch {
+        /* raced with a tmp+rename; fall back to the cached copy */
+      }
+      const cached = this.runs.get(runId);
+      const known = this.diskMtimes.get(p) ?? 0;
+      if (!cached || diskMtime > known) {
+        try {
+          const candidate = JSON.parse(
+            readFileSync(p, "utf8"),
+          ) as Partial<RunSnapshot>;
+          if (
+            candidate.pipeline_status !== "Running" &&
+            candidate.pipeline_status !== "Done"
+          ) {
+            return undefined;
+          }
+          const r = candidate as RunSnapshot;
+          this.runs.set(runId, r);
+          this.diskMtimes.set(p, diskMtime || Date.now());
+          return r;
+        } catch {}
+      }
+      if (cached) return cached;
     }
-    return undefined;
+
+    return this.runs.get(runId);
   }
 
   require(runId: string): RunSnapshot {
@@ -104,15 +156,24 @@ export class RunRepository {
 
   finish(
     runId: string,
-    result: WorkflowResult,
+    testResult: TestResult,
     hashProof?: HashProof,
     rootCause?: RootCause,
     helpRequest?: HelpRequest,
+    issueType?: IssueType,
   ): RunSnapshot {
+    if (testResult === "Failed" && !rootCause) {
+      throw new Error("Failed finalization requires structured issue evidence");
+    }
+    if (testResult === "Passed" && (rootCause || issueType)) {
+      throw new Error("Passed finalization cannot carry issue fields");
+    }
     const r = this.require(runId);
-    r.result = result;
+    r.pipeline_status = "Done";
+    r.test_result = testResult;
     r.hash_proof = hashProof;
     r.root_cause = rootCause;
+    r.issue_type = rootCause ? (issueType ?? "Root Cause") : undefined;
     r.help_request = helpRequest;
     this.persist(r);
     return r;

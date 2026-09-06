@@ -193,8 +193,8 @@ export class IntentCollectionService {
   /**
    * Attempt to create a canonical Prompt(id) from the accumulated intent.
    *
-   * Returns `{ result: "PASSED", prompt, intent }` when sufficient, or
-   * `{ result: "ROOT_CAUSE", root_cause, help_request, intent }` when
+   * Returns `{ result: "Passed", prompt, intent }` when sufficient, or
+   * `{ result: "Root Cause", root_cause, help_request, intent }` when
    * user-owned information is still missing.
    */
   createPrompt(
@@ -215,11 +215,11 @@ export class IntentCollectionService {
         required_correction: `Ask user: ${help.question}`,
         recheck_target: intent.intent_id,
       };
-      return { result: "ROOT_CAUSE", root_cause: rc, help_request: help, intent };
+      return { result: "Root Cause", root_cause: rc, help_request: help, intent };
     }
 
     const prompt = this.promptGenerator.generate(intent, promptId);
-    return { result: "PASSED", prompt, intent };
+    return { result: "Passed", prompt, intent };
   }
 
   // -------------------------------------------------------------------------

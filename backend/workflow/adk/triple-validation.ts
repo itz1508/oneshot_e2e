@@ -7,7 +7,7 @@ export interface TripleEffects {
   event(
     runId: string,
     processor: string,
-    state: "PENDING" | "RUNNING" | "COMPLETE",
+    state: "Pending" | "Running" | "Completed",
     data?: Record<string, unknown>,
   ): void;
   save(runId: string, name: string, value: unknown): Promise<string>;
@@ -51,12 +51,12 @@ export function createTripleValidationAgent(
     description: "Runs deterministic Schema Validation on its Python lane.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
-      effects.event(runId, "SchemaValidation", "RUNNING");
+      effects.event(runId, "SchemaValidation", "Running");
       const result = await tripleWorkflow.schema(
         state.bundle(ctx),
         state.plan(ctx),
       );
-      effects.event(runId, "SchemaValidation", "COMPLETE", {
+      effects.event(runId, "SchemaValidation", "Completed", {
         result: result.result,
         artifact_id: result.schema_id,
       });
@@ -71,12 +71,12 @@ export function createTripleValidationAgent(
     description: "Runs deterministic Fixture Validation on its Python lane.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
-      effects.event(runId, "FixtureValidation", "RUNNING");
+      effects.event(runId, "FixtureValidation", "Running");
       const result = await tripleWorkflow.fixture(
         state.bundle(ctx),
         state.plan(ctx),
       );
-      effects.event(runId, "FixtureValidation", "COMPLETE", {
+      effects.event(runId, "FixtureValidation", "Completed", {
         result: result.result,
         artifact_id: result.fixture_id,
       });
@@ -91,12 +91,12 @@ export function createTripleValidationAgent(
     description: "Runs deterministic Goal Validation on its Python lane.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
-      effects.event(runId, "GoalValidation", "RUNNING");
+      effects.event(runId, "GoalValidation", "Running");
       const result = await tripleWorkflow.goal(
         state.bundle(ctx),
         state.plan(ctx),
       );
-      effects.event(runId, "GoalValidation", "COMPLETE", {
+      effects.event(runId, "GoalValidation", "Completed", {
         result: result.result,
         artifact_id: result.goal_id,
       });
@@ -119,7 +119,7 @@ export function createTripleValidationAgent(
       "Joins the three proof results and applies the all_valid admission rule.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
-      effects.event(runId, "TripleValidation", "RUNNING");
+      effects.event(runId, "TripleValidation", "Running");
 
       const triple = await tripleWorkflow.join(
         state.bundle(ctx),
@@ -130,8 +130,8 @@ export function createTripleValidationAgent(
       );
 
       await effects.save(runId, "triple-validation", triple);
-      effects.event(runId, "TripleValidation", "COMPLETE", {
-        result: triple.all_valid ? "VALID" : "NOT_VALID",
+      effects.event(runId, "TripleValidation", "Completed", {
+        result: triple.all_valid ? "Passed" : "Failed",
         artifact_id: triple.validation_id,
         message: `all_valid=${triple.all_valid}`,
       });

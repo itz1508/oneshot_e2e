@@ -88,7 +88,7 @@ async function waitForTerminal(
     const response = await fetch(`${base}/api/runs/${runId}`);
     assert.equal(response.status, 200);
     const snapshot = await response.json();
-    if (snapshot.result) return snapshot;
+    if (snapshot.test_result) return snapshot;
     if (Date.now() >= deadline) {
       throw new Error(`live run ${runId} did not terminate within ${timeoutMs}ms`);
     }
@@ -133,7 +133,7 @@ test(
     const observed: ProcessingEvent[] = [];
     const stopObserve = h.events.observe((event) => {
       observed.push(event);
-      if (event.scope === "ADK" || event.state === "COMPLETE" || event.processor === "Builder") {
+      if (event.scope === "ADK" || event.execution_status === "Completed" || event.processor === "Builder") {
         print("LIVE_WORKFLOW_EVENT_JSON", event);
       }
     });
@@ -217,7 +217,7 @@ test(
       ];
       const stageResponses = stageProcessors.map((processor) => {
         const event = persistedEvents.find(
-          (candidate) => candidate.processor === processor && candidate.state === "COMPLETE",
+          (candidate) => candidate.processor === processor && candidate.execution_status === "Completed",
         );
         assert.ok(event, `missing live ${processor} COMPLETE event`);
         assert.match(event.message || "", /response=/, `${processor} did not expose response evidence`);
@@ -235,11 +235,11 @@ test(
 
       print("LIVE_FINAL_RUN_JSON", {
         run_id: snapshot.run_id,
-        result: snapshot.result,
+        result: snapshot.test_result,
         current_processor: snapshot.current_processor,
         hash_proof: snapshot.hash_proof,
       });
-      assert.equal(snapshot.result, "PASSED");
+      assert.equal(snapshot.test_result, "Passed");
       assert.equal(snapshot.hash_proof?.equal, true);
 
       assert.ok(runner.last, "real HardenedProcessRunner did not execute");
@@ -265,7 +265,7 @@ test(
 
       const builderResult = await h.store.load<any>(started.run_id, "builder-result");
       print("LIVE_BUILDER_RESULT_JSON", builderResult);
-      assert.equal(builderResult.result, "PASSED");
+      assert.equal(builderResult.result, "Passed");
       assert.equal(builderResult.hash_matched, true);
 
       print("LIVE_END_TO_END_PROOF_JSON", {
@@ -280,7 +280,7 @@ test(
         bytes_written: execution.bytes_written,
         product_verification: "PRODUCT_VERIFY mp4=true mp3=true wav=false",
         hash_equal: snapshot.hash_proof.equal,
-        final_result: snapshot.result,
+        final_result: snapshot.test_result,
       });
     } finally {
       stopObserve();

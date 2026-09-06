@@ -21,7 +21,9 @@ export function projectAudit(
 
   return {
     run_id: runId,
-    result: snapshot?.result,
+    pipeline_status: snapshot?.pipeline_status,
+    test_result: snapshot?.test_result,
+    issue_type: snapshot?.issue_type,
     event_count: events.length,
     ordering: { valid: issues.length === 0, issues },
     checkpoint,

@@ -42,7 +42,7 @@ async function waitForTerminal(base: string, runId: string): Promise<any> {
     const response = await fetch(`${base}/api/runs/${runId}`);
     assert.equal(response.status, 200);
     const snapshot = await response.json();
-    if (snapshot.result) return snapshot;
+    if (snapshot.test_result) return snapshot;
     await new Promise((resolveWait) => setTimeout(resolveWait, 50));
   }
   throw new Error(`run ${runId} did not terminate`);
@@ -89,7 +89,7 @@ test("session start -> PromptGenerator -> Researcher -> canonical workflow -> fi
     assert.equal(promptResponse.status, 200);
     const httpPrompt = (await promptResponse.json()) as any;
     console.log(`HTTP_PROMPT_RESPONSE_JSON=${JSON.stringify(httpPrompt)}`);
-    assert.equal(httpPrompt.result, "PASSED");
+    assert.equal(httpPrompt.result, "Passed");
     assert.match(JSON.stringify(httpPrompt.prompt), /MP4/);
     assert.match(JSON.stringify(httpPrompt.prompt), /MP3/);
 
@@ -136,7 +136,7 @@ test("session start -> PromptGenerator -> Researcher -> canonical workflow -> fi
     ];
     for (const processor of terminalProcessors) {
       assert.ok(
-        events.some((event) => event.processor === processor && event.state === "COMPLETE"),
+        events.some((event) => event.processor === processor && event.execution_status === "Completed"),
         `missing terminal COMPLETE event for ${processor}`,
       );
     }
@@ -149,7 +149,7 @@ test("session start -> PromptGenerator -> Researcher -> canonical workflow -> fi
     console.log(
       `SESSION_FINAL_RESPONSE_JSON=${JSON.stringify({
         run_id: final.run_id,
-        result: final.result,
+        result: final.test_result,
         current_processor: final.current_processor,
         hash_proof: final.hash_proof,
         event_count: events.length,
@@ -157,7 +157,7 @@ test("session start -> PromptGenerator -> Researcher -> canonical workflow -> fi
       })}`,
     );
 
-    assert.equal(final.result, "PASSED");
+    assert.equal(final.test_result, "Passed");
     assert.equal(final.hash_proof?.equal, true);
     assert.equal(task.checkpoint.last_processor, "Done");
   } finally {

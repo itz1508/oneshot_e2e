@@ -6,16 +6,13 @@
  * and are loaded by each stage worker.
  */
 
-export type PipelineStage =
-  | "researcher"
-  | "planner"
-  | "refactor"
-  | "gap-analysis"
-  | "evaluation"
-  | "triple-validation"
-  | "confirmation"
-  | "hash"
-  | "build";
+/**
+ * Single source of truth for the queued stage list lives in
+ * stage-outcome.ts (it is part of the durable checkpoint key space).
+ */
+import type { PipelineStage } from "./stage-outcome.js";
+
+export type { PipelineStage };
 
 export type GateAction = "auto" | "await-human";
 
@@ -25,11 +22,21 @@ export interface StageHandoff {
 }
 
 export interface StageJobData {
+  version: 2;
   runId: string;
+  stage: PipelineStage;
+  /**
+   * Refinement iteration for iterative stages (refactor, gap-analysis,
+   * evaluation, triple-validation). Run-level stages always execute at
+   * iteration 0 regardless of what the job carries (see stage-scope.ts).
+   */
+  iteration: number;
 }
 
 export interface StageProgress {
+  runId?: string;
   stage: PipelineStage;
+  iteration?: number;
   percent: number;
   message: string;
 }

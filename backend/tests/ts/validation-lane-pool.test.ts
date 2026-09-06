@@ -27,7 +27,7 @@ test("Schema Fixture and Goal can enter three independent Python lanes before re
         return {
           ...common,
           schema_id: "schema:test",
-          result: "VALID",
+          result: "Passed",
         } as unknown as T;
       }
       if (command === "fixture-validation") {
@@ -35,7 +35,7 @@ test("Schema Fixture and Goal can enter three independent Python lanes before re
           ...common,
           fixture_id: "fixture:test",
           assertion_results: [],
-          result: "VALID",
+          result: "Passed",
         } as unknown as T;
       }
       if (command === "goal-validation") {
@@ -43,7 +43,7 @@ test("Schema Fixture and Goal can enter three independent Python lanes before re
           ...common,
           goal_id: "goal:test",
           criterion_results: [],
-          result: "VALID",
+          result: "Passed",
         } as unknown as T;
       }
       return { valid: true } as unknown as T;
@@ -79,6 +79,6 @@ test("Schema Fixture and Goal can enter three independent Python lanes before re
   assert.deepEqual([...entered].sort(), ["fixture", "goal", "schema"]);
   assert.deepEqual(
     results.map((result) => result.result),
-    ["VALID", "VALID", "VALID"],
+    ["Passed", "Passed", "Passed"],
   );
 });

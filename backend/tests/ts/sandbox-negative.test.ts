@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
@@ -22,8 +22,8 @@ test("negative 1: Hash mismatch halts execution before sandbox workspace or runn
   };
 
   const result = await sandbox.execute(tamperedInput);
-  assert.equal(result.result, "ROOT_CAUSE");
-  if (result.result !== "ROOT_CAUSE") throw new Error("expected ROOT_CAUSE");
+  assert.equal(result.result, "Failed");
+  if (result.result !== "Failed") throw new Error("expected failed result");
 
   assert.match(result.root_cause.issue, /hash mismatch/i);
   assert.equal(result.evidence, undefined); // Execution never started
@@ -37,7 +37,7 @@ test("negative 1: Hash mismatch halts execution before sandbox workspace or runn
     events.some(
       (e) =>
         e.processor === "SandboxAdmissionVerified" &&
-        e.result === "ROOT_CAUSE",
+      e.test_result === "Failed" && e.issue_type === "Root Cause",
     ),
   );
   assert.equal(events.some((e) => e.processor === "ExecutionStarted"), false);
@@ -84,8 +84,8 @@ test("negative 2: Timeout kills execution process tree and produces ROOT_CAUSE w
     elapsedMs < 4000,
     `Execution should terminate promptly near timeout (took ${elapsedMs}ms)`,
   );
-  assert.equal(result.result, "ROOT_CAUSE");
-  if (result.result !== "ROOT_CAUSE") throw new Error("expected ROOT_CAUSE");
+  assert.equal(result.result, "Failed");
+  if (result.result !== "Failed") throw new Error("expected failed result");
 
   assert.match(result.root_cause.issue, /timeout/i);
   assert.ok(result.evidence?.timeout_evidence?.timed_out);
@@ -123,8 +123,8 @@ test("negative 3: Command failure emits deterministic ROOT_CAUSE with exit code 
     hash: updatedHash,
   });
 
-  assert.equal(result.result, "ROOT_CAUSE");
-  if (result.result !== "ROOT_CAUSE") throw new Error("expected ROOT_CAUSE");
+  assert.equal(result.result, "Failed");
+  if (result.result !== "Failed") throw new Error("expected failed result");
 
   assert.match(result.root_cause.issue, /command execution failure/i);
   assert.ok(result.evidence?.exit_codes.includes(42));
@@ -168,8 +168,8 @@ test("negative 4: Environment isolation filters out unauthorized secret variable
     },
   });
 
-  assert.equal(result.result, "PASSED");
-  if (result.result !== "PASSED") throw new Error("expected PASSED");
+  assert.equal(result.result, "Passed");
+  if (result.result !== "Passed") throw new Error("expected PASSED");
 
   // Verify secret is not in stdout
   const allStdout = result.evidence.commands.join(" ");
@@ -211,8 +211,8 @@ test("negative 5: Resource bytes written limit triggers resource exhaustion ROOT
     },
   });
 
-  assert.equal(result.result, "ROOT_CAUSE");
-  if (result.result !== "ROOT_CAUSE") throw new Error("expected ROOT_CAUSE");
+  assert.equal(result.result, "Failed");
+  if (result.result !== "Failed") throw new Error("expected failed result");
   assert.match(result.root_cause.issue, /resource limits exceeded/i);
 
   h.bridge.close();
@@ -266,8 +266,8 @@ test("negative 7: Network access is isolated under DENY_ALL policy", async () =>
     },
   });
 
-  assert.equal(result.result, "PASSED");
-  if (result.result !== "PASSED") throw new Error("expected PASSED");
+  assert.equal(result.result, "Passed");
+  if (result.result !== "Passed") throw new Error("expected PASSED");
   assert.equal(result.evidence.network_policy_used, "DENY_ALL");
 
   h.bridge.close();

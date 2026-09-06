@@ -43,14 +43,14 @@ test("full OneShot workflow executes through ADK Workflow + ctx.runNode connecto
     }
 
     assert.ok(output, "ADK dynamic workflow produced no terminal output");
-    assert.equal(output.result, "PASSED");
-    if (output.result !== "PASSED") return;
+    assert.equal(output.result, "Passed");
+    if (output.result !== "Passed") return;
     assert.equal(output.research.plan.plan_id, output.plan.plan_id);
     assert.equal(output.gap.gap_0, true);
-    assert.equal(output.evaluation.result, "PASSED");
+    assert.equal(output.evaluation.result, "Passed");
     assert.equal(output.triple.all_valid, true);
     assert.equal(output.confirmed.confirmed, true);
-    assert.equal(output.builder.result, "PASSED");
+    assert.equal(output.builder.result, "Passed");
     assert.equal(output.hash_proof.equal, true);
     assert.equal(output.created_hash, output.hash_proof.created_hash);
     console.log("DYNAMIC_WORKFLOW_OUTPUT_JSON=" + JSON.stringify(output));

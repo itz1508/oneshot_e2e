@@ -1,8 +1,9 @@
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
-export type WorkflowResult = "PASSED" | "ROOT_CAUSE";
-export type ValidationResult = "VALID" | "NOT_VALID";
-export type ProcessingState = "PENDING" | "RUNNING" | "COMPLETE";
+export type ExecutionStatus = "Pending" | "Running" | "Completed" | "Failed";
+export type TestResult = "Passed" | "Failed";
+export type IssueType = "Root Cause" | "Missing";
+export type PipelineStatus = "Running" | "Done";
 export type ProcessingScope = "WORKFLOW" | "ADK" | "SUPPORT" | "SANDBOX";
 export interface PromptContext { context_id:string; statement:string }
 export interface Prompt { prompt_id:string; intent:string; requested_outcome:string; context:PromptContext[]; research_direction:string[] }
@@ -30,18 +31,18 @@ export interface ValidationDefinition {
 export interface AuditFinding { finding_id:string; area:string; finding:string; affected_plan_refs:string[]; evidence_ids:string[]; required_refinement:string }
 export interface Audit { audit_id:string; researcher_id:string; plan_id:string; reviewed_areas:string[]; findings:AuditFinding[] }
 export interface ResolvedGap { gap_id:string; affected_branch:string; issue:string; evidence_ids:string[]; required_correction:string; expected_resolved_state:string; resolution_evidence:string }
-export interface GapAnalysis { plan_id:string; result:WorkflowResult; resolved_gaps:ResolvedGap[]; gap_0:boolean; root_cause?:RootCause }
+export interface GapAnalysis { plan_id:string; result:TestResult; resolved_gaps:ResolvedGap[]; gap_0:boolean; issue_type?:IssueType; root_cause?:RootCause }
 export interface EvaluationEvidence { check_id:string; subject:string; finding:string; evidence_ids:string[] }
-export interface Evaluation { plan_id:string; result:WorkflowResult; evidence:EvaluationEvidence[]; root_cause?:RootCause }
-export interface SchemaValidationResult { plan_id:string; schema_id:string; result:ValidationResult; evidence:EvidenceRef[] }
+export interface Evaluation { plan_id:string; result:TestResult; evidence:EvaluationEvidence[]; issue_type?:IssueType; root_cause?:RootCause }
+export interface SchemaValidationResult { plan_id:string; schema_id:string; result:TestResult; evidence:EvidenceRef[] }
 export interface AssertionResult { assertion_id:string; expected?:JsonValue; actual?:JsonValue; satisfied:boolean }
-export interface FixtureValidationResult { plan_id:string; fixture_id:string; assertion_results:AssertionResult[]; result:ValidationResult; evidence:EvidenceRef[] }
+export interface FixtureValidationResult { plan_id:string; fixture_id:string; assertion_results:AssertionResult[]; result:TestResult; evidence:EvidenceRef[] }
 export interface CriterionResult { criterion_id:string; mapped_plan_refs:string[]; satisfied:boolean }
-export interface GoalValidationResult { plan_id:string; goal_id:string; criterion_results:CriterionResult[]; result:ValidationResult; evidence:EvidenceRef[] }
+export interface GoalValidationResult { plan_id:string; goal_id:string; criterion_results:CriterionResult[]; result:TestResult; evidence:EvidenceRef[] }
 export interface TripleValidation { plan_id:string; validation_id:string; schema_validation:SchemaValidationResult; fixture_validation:FixtureValidationResult; goal_validation:GoalValidationResult; all_valid:boolean }
 export interface ConfirmedCore { researcher:ResearcherArtifact; plan:Plan; schema_artifact:SchemaArtifact; fixture:Fixture; goal:Goal; validation:ValidationDefinition; audit:Audit; gap_analysis:GapAnalysis; evaluation:Evaluation; triple_validation:TripleValidation }
 export interface ConfirmedPackage { confirmed:true; core:ConfirmedCore }
 export interface HashProof { canonicalization_id:"oneshot-jcs-rfc8785-v1"; algorithm:"sha256"; created_hash:string; recomputed_hash:string; equal:boolean }
 export interface ResearchBundle { prompt:Prompt; researcher:ResearcherArtifact; plan:Plan; schema_artifact:SchemaArtifact; fixture:Fixture; goal:Goal; validation:ValidationDefinition }
-export interface ProcessingEvent { event_id:string; sequence:number; run_id:string; scope:ProcessingScope; processor:string; state:ProcessingState; result?:WorkflowResult|ValidationResult; artifact_id?:string; message?:string; created_at:string; causation_id?:string; correlation_id:string; traceparent:string; artifact?:{ name:string; path:string; operation?:'created'|'updated'|'verified'|'failed'; kind?:'research'|'plan'|'schema'|'fixture'|'validation'|'build'|'evidence'; } }
-export interface RunSnapshot { run_id:string; result?:WorkflowResult; current_processor?:string; events:ProcessingEvent[]; artifacts:Record<string,string>; hash_proof?:HashProof; root_cause?:RootCause; help_request?:import("../../intent/types.js").HelpRequest }
+export interface ProcessingEvent { event_id:string; sequence:number; run_id:string; scope:ProcessingScope; processor:string; execution_status:ExecutionStatus; test_result?:TestResult; issue_type?:IssueType; issue?:RootCause; artifact_id?:string; message?:string; created_at:string; causation_id?:string; correlation_id:string; traceparent:string; artifact?:{ name:string; path:string; operation?:'created'|'updated'|'verified'|'failed'; kind?:'research'|'plan'|'schema'|'fixture'|'validation'|'build'|'evidence'; } }
+export interface RunSnapshot { run_id:string; pipeline_status:PipelineStatus; test_result?:TestResult; issue_type?:IssueType; current_processor?:string; events:ProcessingEvent[]; artifacts:Record<string,string>; hash_proof?:HashProof; root_cause?:RootCause; help_request?:import("../../intent/types.js").HelpRequest }

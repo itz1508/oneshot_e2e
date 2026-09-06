@@ -816,9 +816,9 @@ button {
   font-style: normal;
   color: var(--muted);
 }
-.stage[data-state="RUNNING"] em { color: var(--blue); }
-.stage[data-state="COMPLETE"] em, .stage[data-state="COMPLETED"] em { color: var(--green); }
-.stage[data-state="FAILED"] em { color: var(--red); }
+.stage[data-state="Running"] em { color: var(--blue); }
+.stage[data-state="Completed"] em, .stage[data-state="Completed"] em { color: var(--green); }
+.stage[data-state="Failed"] em { color: var(--red); }
 
 /* Concrete TODO Item Presentation */
 .role-tasks { padding: 4px 0 8px; }
@@ -850,13 +850,13 @@ button {
   background: rgba(255, 255, 255, 0.04);
   color: transparent;
 }
-.task-item[data-state="COMPLETE"] .task-check,
-.task-item[data-state="COMPLETED"] .task-check {
+.task-item[data-state="Completed"] .task-check,
+.task-item[data-state="Completed"] .task-check {
   background: rgba(16, 185, 129, 0.15);
   border-color: rgba(16, 185, 129, 0.4);
   color: #10b981;
 }
-.task-item[data-state="RUNNING"] .task-check {
+.task-item[data-state="Running"] .task-check {
   background: rgba(37, 99, 235, 0.15);
   border-color: rgba(37, 99, 235, 0.4);
   color: #3b82f6;
@@ -883,16 +883,16 @@ button {
   border-radius: 4px;
   padding: 1px 5px;
 }
-.task-item .step-state[data-state="RUNNING"] {
+.task-item .step-state[data-state="Running"] {
   color: var(--state-running-primary);
   border-color: color-mix(in srgb, var(--state-running-primary) 35%, transparent);
 }
-.task-item .step-state[data-state="COMPLETE"],
-.task-item .step-state[data-state="COMPLETED"] {
+.task-item .step-state[data-state="Completed"],
+.task-item .step-state[data-state="Completed"] {
   color: var(--state-complete-primary);
   border-color: color-mix(in srgb, var(--state-complete-primary) 35%, transparent);
 }
-.task-item .step-state[data-state="FAILED"] {
+.task-item .step-state[data-state="Failed"] {
   color: var(--state-error-primary);
   border-color: color-mix(in srgb, var(--state-error-primary) 35%, transparent);
 }
@@ -1463,8 +1463,8 @@ button {
 .status-tabs button.active { border-color: var(--blue); color: var(--text); }
 .status-stage { display: flex; justify-content: space-between; gap: 8px; padding: 13px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
 .status-stage strong { color: var(--muted); font-size: 10px; }
-.status-stage[data-state="RUNNING"] strong { color: #e6bd73; }
-.status-stage[data-state="COMPLETE"] strong { color: #72d6ae; }
+.status-stage[data-state="Running"] strong { color: #e6bd73; }
+.status-stage[data-state="Completed"] strong { color: #72d6ae; }
 .status-event { border-bottom: 1px solid var(--line); padding: 12px 0; overflow-wrap: anywhere; }
 .status-event small { color: var(--muted); font-size: 10px; }
 .status-event p { font-size: 12px; line-height: 1.6; }

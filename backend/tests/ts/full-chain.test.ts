@@ -9,13 +9,13 @@ test("full canonical ADK chain reaches DONE through Builder and sandbox integrit
 
   try {
     const result = await h.runtime.run(runId, prompt(runId));
-    assert.equal(result.result, "PASSED");
+    assert.equal(result.test_result, "Passed");
     assert.equal(result.hash_proof?.equal, true);
 
     const complete = new Map(
       result.events
-        .filter((event) => event.state === "COMPLETE")
-        .map((event) => [event.processor, event.result]),
+        .filter((event) => event.execution_status === "Completed")
+        .map((event) => [event.processor, event.test_result]),
     );
 
     for (const processor of [
@@ -37,13 +37,13 @@ test("full canonical ADK chain reaches DONE through Builder and sandbox integrit
       assert.ok(complete.has(processor), `missing ${processor}`);
     }
 
-    assert.equal(complete.get("SchemaValidation"), "VALID");
-    assert.equal(complete.get("FixtureValidation"), "VALID");
-    assert.equal(complete.get("GoalValidation"), "VALID");
-    assert.equal(complete.get("TripleValidation"), "VALID");
-    assert.equal(complete.get("Builder"), "PASSED");
-    assert.equal(complete.get("Hash"), "PASSED");
-    assert.equal(complete.get("Done"), "PASSED");
+    assert.equal(complete.get("SchemaValidation"), "Passed");
+    assert.equal(complete.get("FixtureValidation"), "Passed");
+    assert.equal(complete.get("GoalValidation"), "Passed");
+    assert.equal(complete.get("TripleValidation"), "Passed");
+    assert.equal(complete.get("Builder"), "Passed");
+    assert.equal(complete.get("Hash"), "Passed");
+    assert.equal(complete.get("Done"), "Passed");
 
     const audit = await h.store.load<any>(runId, "audit");
     const evaluation = await h.store.load<any>(runId, "evaluation");
@@ -58,7 +58,7 @@ test("full canonical ADK chain reaches DONE through Builder and sandbox integrit
     assert.equal(validation.schema_validation.plan_id, validation.plan_id);
     assert.equal(validation.fixture_validation.plan_id, validation.plan_id);
     assert.equal(validation.goal_validation.plan_id, validation.plan_id);
-    assert.equal(builder.result, "PASSED");
+    assert.equal(builder.result, "Passed");
     assert.equal(builder.hash_sandbox, confirmedHash.hash);
     assert.equal(result.hash_proof?.created_hash, confirmedHash.hash);
     assert.equal(result.hash_proof?.recomputed_hash, builder.hash_sandbox);

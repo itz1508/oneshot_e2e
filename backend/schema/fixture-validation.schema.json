@@ -1,5 +1,5 @@
 {
-  "$id": "urn:oneshot:schema:fixture-validation:1",
+  "$id": "urn:oneshot:schema:fixture-validation:2",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
@@ -27,7 +27,7 @@
     },
     "evidence": {
       "items": {
-        "$ref": "urn:oneshot:schema:common:1#/$defs/evidence_ref"
+        "$ref": "urn:oneshot:schema:common:2#/$defs/evidence_ref"
       },
       "type": "array"
     },
@@ -40,7 +40,7 @@
       "type": "string"
     },
     "result": {
-      "$ref": "urn:oneshot:schema:common:1#/$defs/validation_result"
+      "$ref": "urn:oneshot:schema:common:2#/$defs/test_result"
     }
   },
   "required": [

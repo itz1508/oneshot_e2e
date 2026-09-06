@@ -16,7 +16,9 @@ export function projectTaskRun(
 
   return {
     run_id: runId,
-    result: snapshot?.result,
+    pipeline_status: snapshot?.pipeline_status,
+    test_result: snapshot?.test_result,
+    issue_type: snapshot?.issue_type,
     current_processor: snapshot?.current_processor,
     event_count: events.length,
     checkpoint,

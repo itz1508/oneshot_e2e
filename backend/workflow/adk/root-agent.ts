@@ -13,7 +13,7 @@ export interface OneShotWorkflowEffects {
   event(
     runId: string,
     processor: string,
-    processingState: "PENDING" | "RUNNING" | "COMPLETE",
+    processingState: "Pending" | "Running" | "Completed",
     data?: Record<string, unknown>,
   ): void;
   save(runId: string, name: string, value: unknown): Promise<string>;
@@ -46,7 +46,7 @@ export function createOneShotRootAgent(
     handler: async (ctx) => {
       const runId = state.runId(ctx);
       const agent = await pipeline.activate(runId, "Researcher");
-      effects.event(runId, "Researcher", "RUNNING");
+      effects.event(runId, "Researcher", "Running");
       const bundle = await agent.run(state.prompt(ctx), runId);
 
       await effects.save(runId, "prompt", bundle.prompt);
@@ -57,8 +57,8 @@ export function createOneShotRootAgent(
       await effects.save(runId, "goal", bundle.goal);
       await effects.save(runId, "validation", bundle.validation);
 
-      effects.event(runId, "Researcher", "COMPLETE", {
-        result: "PASSED",
+      effects.event(runId, "Researcher", "Completed", {
+        result: "Passed",
         artifact_id: bundle.researcher.researcher_id,
       });
 
@@ -77,11 +77,11 @@ export function createOneShotRootAgent(
     handler: async (ctx) => {
       const runId = state.runId(ctx);
       const agent = await pipeline.activate(runId, "Planner");
-      effects.event(runId, "Planner", "RUNNING");
+      effects.event(runId, "Planner", "Running");
       const audit = await agent.run(state.bundle(ctx), runId);
       await effects.save(runId, "audit", audit);
-      effects.event(runId, "Planner", "COMPLETE", {
-        result: "PASSED",
+      effects.event(runId, "Planner", "Completed", {
+        result: "Passed",
         artifact_id: audit.audit_id,
         message: `reviewed=${audit.reviewed_areas.length}; findings=${audit.findings.length}`,
       });
@@ -95,12 +95,12 @@ export function createOneShotRootAgent(
     handler: async (ctx) => {
       const runId = state.runId(ctx);
       const agent = await pipeline.activate(runId, "Refactor");
-      effects.event(runId, "Refactor", "RUNNING");
+      effects.event(runId, "Refactor", "Running");
       const plan = await agent.run(state.bundle(ctx), state.audit(ctx));
       const bundle = { ...state.bundle(ctx), plan };
       await effects.save(runId, "plan.refactored", plan);
-      effects.event(runId, "Refactor", "COMPLETE", {
-        result: "PASSED",
+      effects.event(runId, "Refactor", "Completed", {
+        result: "Passed",
         artifact_id: plan.plan_id,
         message: `plan_id preserved; revision=${plan.revision}`,
       });
@@ -121,13 +121,13 @@ export function createOneShotRootAgent(
     handler: async (ctx) => {
       const runId = state.runId(ctx);
       const agent = await pipeline.activate(runId, "Evaluation");
-      effects.event(runId, "Evaluation", "RUNNING");
+      effects.event(runId, "Evaluation", "Running");
       const result = await agent.run(
         state.bundle(ctx),
         state.plan(ctx),
       );
       await effects.save(runId, "evaluation", result);
-      effects.event(runId, "Evaluation", "COMPLETE", {
+      effects.event(runId, "Evaluation", "Completed", {
         result: result.result,
         artifact_id: result.plan_id,
         message: `evidence=${result.evidence.length}`,
@@ -148,7 +148,7 @@ export function createOneShotRootAgent(
     description: "Creates the exact confirmed immutable package.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
-      effects.event(runId, "Confirmed", "RUNNING");
+      effects.event(runId, "Confirmed", "Running");
       const confirmed = await deps.confirmation.run(
         state.bundle(ctx),
         state.plan(ctx),
@@ -158,8 +158,8 @@ export function createOneShotRootAgent(
         state.tripleValidation(ctx),
       );
       await effects.save(runId, "confirmed", confirmed);
-      effects.event(runId, "Confirmed", "COMPLETE", {
-        result: "PASSED",
+      effects.event(runId, "Confirmed", "Completed", {
+        result: "Passed",
         artifact_id: state.plan(ctx).plan_id,
       });
       return {
@@ -173,11 +173,11 @@ export function createOneShotRootAgent(
     description: "Creates H1 from the confirmed immutable core.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
-      effects.event(runId, "CreateHash", "RUNNING");
+      effects.event(runId, "CreateHash", "Running");
       const createdHash = await deps.hash.create(state.confirmed(ctx));
       await effects.save(runId, "confirmed-hash", { hash: createdHash });
-      effects.event(runId, "CreateHash", "COMPLETE", {
-        result: "PASSED",
+      effects.event(runId, "CreateHash", "Completed", {
+        result: "Passed",
         artifact_id: createdHash,
       });
       return {
@@ -193,20 +193,20 @@ export function createOneShotRootAgent(
     handler: async (ctx) => {
       const runId = state.runId(ctx);
       const agent = await pipeline.activate(runId, "Builder");
-      effects.event(runId, "Builder", "RUNNING");
+      effects.event(runId, "Builder", "Running");
       const result = await agent.run(
         state.confirmed(ctx),
         state.createdHash(ctx),
       );
       await effects.save(runId, "builder-result", result);
-      effects.event(runId, "Builder", "COMPLETE", {
+      effects.event(runId, "Builder", "Completed", {
         result: result.result,
         artifact_id: result.execution_id,
       });
       return {
         stateDelta: {
           [ADK_STATE.builderResult]: result,
-          ...(result.result === "ROOT_CAUSE"
+          ...(result.result === "Failed"
             ? rootCauseDelta(result.root_cause)
             : {}),
         },
@@ -221,16 +221,16 @@ export function createOneShotRootAgent(
     handler: async (ctx) => {
       const runId = state.runId(ctx);
       const result = state.builderResult(ctx);
-      if (result.result !== "PASSED") return;
+      if (result.result !== "Passed") return;
 
-      effects.event(runId, "Hash", "RUNNING");
+      effects.event(runId, "Hash", "Running");
       const proof = await deps.hash.proof(
         state.createdHash(ctx),
         result.hash_sandbox,
       );
       await effects.save(runId, "hash-proof", proof);
-      effects.event(runId, "Hash", "COMPLETE", {
-        result: proof.equal ? "PASSED" : "ROOT_CAUSE",
+      effects.event(runId, "Hash", "Completed", {
+        result: proof.equal ? "Passed" : "Root Cause",
         artifact_id: proof.recomputed_hash,
         message: `equal=${proof.equal}`,
       });

@@ -7,7 +7,7 @@ export interface GapLoopEffects {
   event(
     runId: string,
     processor: string,
-    state: "PENDING" | "RUNNING" | "COMPLETE",
+    state: "Pending" | "Running" | "Completed",
     data?: Record<string, unknown>,
   ): void;
   save(runId: string, name: string, value: unknown): Promise<string>;
@@ -24,7 +24,7 @@ export function createGapAnalysisAgent(
     handler: async (ctx) => {
       const runId = state.runId(ctx);
       await pipeline.activate(runId, "GapAnalysis");
-      effects.event(runId, "GapAnalysis", "RUNNING");
+      effects.event(runId, "GapAnalysis", "Running");
       return {
         stateDelta: {
           [ADK_STATE.resolvedGaps]: [],
@@ -174,7 +174,7 @@ export function createGapAnalysisAgent(
 
       await effects.save(runId, "plan.gap", plan);
       await effects.save(runId, "gap", gap);
-      effects.event(runId, "GapAnalysis", "COMPLETE", {
+      effects.event(runId, "GapAnalysis", "Completed", {
         result: gap.result,
         artifact_id: gap.plan_id,
         message: `gap_0=${gap.gap_0}; resolved=${gap.resolved_gaps.length}`,

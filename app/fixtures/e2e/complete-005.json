@@ -85,7 +85,7 @@
       }
     ],
     "plan_id": "plan:005",
-    "result": "PASSED"
+    "result": "Passed"
   },
   "fixture": {
     "fixture_id": "fixture:005",

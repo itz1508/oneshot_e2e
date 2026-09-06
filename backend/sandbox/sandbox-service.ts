@@ -1,4 +1,4 @@
-﻿import { randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { HashProof, RootCause } from "../contracts/schema/types.js";
@@ -73,7 +73,7 @@ export class SandboxService {
     private contracts: CanonicalContractSkill,
     private events?: ProcessingEventBus,
     private runner: SandboxRunner = new HardenedProcessRunner(),
-    private root = resolve(process.env.ONESHOT_ROOT || process.cwd(), ".runtime/sandbox-workspaces"),
+    private root = resolve(process.env.ONESHOT_RUNTIME_DIR || resolve(process.env.ONESHOT_ROOT || process.cwd(), ".runtime"), "sandbox-workspaces"),
   ) {
     mkdirSync(this.root, { recursive: true });
   }
@@ -81,9 +81,10 @@ export class SandboxService {
   private ev(
     runId: string,
     processor: string,
-    state: "PENDING" | "RUNNING" | "COMPLETE",
+    state: "Pending" | "Running" | "Completed",
     data: {
-      result?: "PASSED" | "ROOT_CAUSE" | "VALID" | "NOT_VALID";
+      test_result?: "Passed" | "Failed";
+      issue_type?: "Root Cause" | "Missing";
       artifact_id?: string;
       message?: string;
     } = {},
@@ -108,18 +109,18 @@ export class SandboxService {
     };
 
     // --- 1. SandboxHandoffReceived ---
-    this.ev(runId, "SandboxHandoffReceived", "COMPLETE", {
+    this.ev(runId, "SandboxHandoffReceived", "Completed", {
       artifact_id: input.hash,
       message: `execution_id=${auth.execution_id}`,
     });
 
     // --- 2. SandboxAdmissionVerified ---
-    this.ev(runId, "SandboxAdmissionVerified", "RUNNING");
+    this.ev(runId, "SandboxAdmissionVerified", "Running");
     let admission;
     try {
       admission = await verifySandboxAdmission(input, this.contracts);
-      this.ev(runId, "SandboxAdmissionVerified", "COMPLETE", {
-        result: "VALID",
+      this.ev(runId, "SandboxAdmissionVerified", "Completed", {
+        test_result: "Passed",
         artifact_id: admission.recomputed_hash,
       });
     } catch (err) {
@@ -135,13 +136,15 @@ export class SandboxService {
               recheck_target: "sandbox admission",
             };
 
-      this.ev(runId, "SandboxAdmissionVerified", "COMPLETE", {
-        result: "ROOT_CAUSE",
+      this.ev(runId, "SandboxAdmissionVerified", "Completed", {
+        test_result: "Failed",
+        issue_type: "Root Cause",
         message: rc.actual,
       });
 
       return {
-        result: "ROOT_CAUSE",
+        result: "Failed",
+        issue_type: "Root Cause",
         execution_id: auth.execution_id,
         root_cause: rc,
       };
@@ -152,7 +155,7 @@ export class SandboxService {
     const workspacePath = join(this.root, sandboxId.replace(/[^a-zA-Z0-9_-]/g, "_"));
     mkdirSync(workspacePath, { recursive: true });
 
-    this.ev(runId, "SandboxCreated", "COMPLETE", {
+    this.ev(runId, "SandboxCreated", "Completed", {
       artifact_id: sandboxId,
       message: `workspace=${workspacePath}`,
     });
@@ -160,7 +163,7 @@ export class SandboxService {
     const startedAt = new Date().toISOString();
 
     // --- 4. ExecutionStarted ---
-    this.ev(runId, "ExecutionStarted", "COMPLETE", {
+    this.ev(runId, "ExecutionStarted", "Completed", {
       artifact_id: sandboxId,
       message: `timeout=${auth.timeout_seconds}s memory=${auth.memory_limit_mb}MB`,
     });
@@ -175,8 +178,9 @@ export class SandboxService {
     const completedAt = new Date().toISOString();
 
     // --- 5. ExecutionCompleted ---
-    this.ev(runId, "ExecutionCompleted", "COMPLETE", {
-      result: runnerResult.condition === "success" ? "PASSED" : "ROOT_CAUSE",
+    this.ev(runId, "ExecutionCompleted", "Completed", {
+      test_result: runnerResult.condition === "success" ? "Passed" : "Failed",
+      ...(runnerResult.condition === "success" ? {} : { issue_type: "Root Cause" as const }),
       message: `exit_codes=${runnerResult.exit_codes.join(",")}`,
     });
 
@@ -208,20 +212,21 @@ export class SandboxService {
 
     this.memoryEvidence.set(runId, evidence);
 
-    this.ev(runId, "ExecutionEvidenceRecorded", "COMPLETE", {
+    this.ev(runId, "ExecutionEvidenceRecorded", "Completed", {
       artifact_id: `evidence:${auth.execution_id}`,
       message: `bytes_written=${evidence.bytes_written} duration=${evidence.resource_usage.duration_ms}ms`,
     });
 
     // --- 7. SandboxHashCreated ---
-    this.ev(runId, "SandboxHashCreated", "COMPLETE", {
+    this.ev(runId, "SandboxHashCreated", "Completed", {
       artifact_id: hashSandbox,
     });
 
     // --- 8. SandboxHashVerified ---
     const hashMatched = hashSandbox === input.hash;
-    this.ev(runId, "SandboxHashVerified", "COMPLETE", {
-      result: hashMatched ? "PASSED" : "ROOT_CAUSE",
+    this.ev(runId, "SandboxHashVerified", "Completed", {
+      test_result: hashMatched ? "Passed" : "Failed",
+      ...(hashMatched ? {} : { issue_type: "Root Cause" as const }),
       artifact_id: hashSandbox,
       message: `hash_matched=${hashMatched}`,
     });
@@ -230,7 +235,7 @@ export class SandboxService {
     const cleaned = await this.runner.cleanup(sandboxId, workspacePath);
     evidence.cleanup_result.workspace_cleaned = cleaned;
 
-    this.ev(runId, "SandboxCleaned", "COMPLETE", {
+    this.ev(runId, "SandboxCleaned", "Completed", {
       artifact_id: sandboxId,
       message: `workspace_cleaned=${cleaned}`,
     });
@@ -238,7 +243,8 @@ export class SandboxService {
     // Evaluate failure conditions
     if (runnerResult.condition === "timeout") {
       return {
-        result: "ROOT_CAUSE",
+        result: "Failed",
+        issue_type: "Root Cause",
         execution_id: auth.execution_id,
         sandbox_id: sandboxId,
         evidence,
@@ -255,7 +261,8 @@ export class SandboxService {
 
     if (runnerResult.condition === "resource_exhausted") {
       return {
-        result: "ROOT_CAUSE",
+        result: "Failed",
+        issue_type: "Root Cause",
         execution_id: auth.execution_id,
         sandbox_id: sandboxId,
         evidence,
@@ -272,7 +279,8 @@ export class SandboxService {
 
     if (runnerResult.condition === "failure" || runnerResult.exit_codes.some((c) => c !== 0)) {
       return {
-        result: "ROOT_CAUSE",
+        result: "Failed",
+        issue_type: "Root Cause",
         execution_id: auth.execution_id,
         sandbox_id: sandboxId,
         evidence,
@@ -289,7 +297,8 @@ export class SandboxService {
 
     if (!hashMatched) {
       return {
-        result: "ROOT_CAUSE",
+        result: "Failed",
+        issue_type: "Root Cause",
         execution_id: auth.execution_id,
         sandbox_id: sandboxId,
         evidence,
@@ -305,7 +314,7 @@ export class SandboxService {
     }
 
     return {
-      result: "PASSED",
+      result: "Passed",
       execution_id: auth.execution_id,
       sandbox_id: sandboxId,
       evidence,

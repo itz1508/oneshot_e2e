@@ -305,7 +305,9 @@ async function waitForPipelineEnd(runId) {
         );
       }
       const run = await getRun(runId);
-      const status = normalize(run.status ?? run.state);
+      const status = normalize(
+        run.pipeline_status ?? run.status ?? run.state,
+      );
       if (
         status === "complete" ||
         status === "completed" ||
@@ -368,8 +370,12 @@ async function verifyPipelineHistory(runId) {
     }
   }
 
+  /*
+   * normalize() maps underscores to dashes, so "triple_validation" and
+   * "triple-validation" are the SAME stage — listing both would double-count.
+   */
   const validationAliases = [
-    ["triple-validation", "triple_validation", "validation"],
+    ["triple-validation"],
   ];
   for (const aliases of validationAliases) {
     const completed = aliases.reduce(
@@ -423,7 +429,7 @@ async function verifyPipelineHistory(runId) {
   requireOrdering(
     events,
     { stage: "triple-validation", type: "completed" },
-    { stage: "builder", type: "started" },
+    { stage: "build", type: "started" },
   );
 
   const plannerStarts = countEvent(events, "planner", "started");
@@ -442,19 +448,20 @@ async function verifyPipelineHistory(runId) {
 
 async function verifyBuild(run) {
   console.log("8. Verifying final build...");
-  const hash = run?.build?.hash ?? run?.hash;
+  const hash =
+    run?.hash_proof?.created_hash ??
+    run?.build?.hash ??
+    run?.hash;
   if (!hash) {
     throw new Error(`Final run response contains no build hash: ${JSON.stringify(run)}`);
   }
   if (!/^(sha256:)?[a-fA-F0-9]{64}$/.test(String(hash))) {
     throw new Error("Final hash must be SHA-256");
   }
-  if (run.build?.status) {
-    if (normalize(run.build.status) !== "success") {
-      throw new Error("Build status must be SUCCESS");
-    }
+  if (run.hash_proof && run.hash_proof.equal !== true) {
+    throw new Error("Hash proof must verify (equal=true)");
   }
-  console.log(`   ✔ Final hash: ${hash}`);
+  console.log(`   Final hash: ${hash}`);
 }
 
 async function main() {

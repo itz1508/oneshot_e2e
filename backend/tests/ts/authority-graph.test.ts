@@ -5,14 +5,14 @@ import { ProcessingEventBus } from "../../runtime/event-bus.js";
 
 test("authority trace resolves owner responsibility skill tool capability and artifacts", () => {
   const bus = new ProcessingEventBus();
-  bus.emit("a1", "Researcher", "RUNNING");
-  bus.emit("a1", "ADK:researcher-provider", "RUNNING", { scope: "ADK" });
-  bus.emit("a1", "ADK:researcher-provider", "COMPLETE", {
+  bus.emit("a1", "Researcher", "Running");
+  bus.emit("a1", "ADK:researcher-provider", "Running", { scope: "ADK" });
+  bus.emit("a1", "ADK:researcher-provider", "Completed", {
     scope: "ADK",
     artifact_id: "draft:1",
   });
-  bus.emit("a1", "Researcher", "COMPLETE", {
-    result: "PASSED",
+  bus.emit("a1", "Researcher", "Completed", {
+    test_result: "Passed",
     artifact_id: "researcher:1",
   });
 

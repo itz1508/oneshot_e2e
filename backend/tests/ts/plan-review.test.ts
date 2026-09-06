@@ -61,12 +61,13 @@ for (const action of ['approve', 'cancel'] as const) {
       }
       assert.ok(draft, 'review must become available');
       assert.equal(draft.status, 'pending');
-      assert.equal(h.runs.require(runId).events.some(e => e.processor === 'Planner' && e.state === 'RUNNING'), false);
+      assert.equal(h.runs.require(runId).events.some(e => e.processor === 'Planner' && e.execution_status === 'Running'), false);
       const result = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, revision: draft.revision, edits: draft.edits }) });
       assert.equal(result.status, 200);
       const finished = await execution;
-      assert.equal(finished.result, action === 'approve' ? 'PASSED' : 'ROOT_CAUSE');
-      assert.equal(finished.events.some(e => e.processor === 'Planner' && e.state === 'RUNNING'), action === 'approve');
+      assert.equal(finished.test_result, action === 'approve' ? 'Passed' : 'Failed');
+      assert.equal(finished.issue_type, action === 'approve' ? undefined : 'Root Cause');
+      assert.equal(finished.events.some(e => e.processor === 'Planner' && e.execution_status === 'Running'), action === 'approve');
       if (action === 'approve') assert.ok(finished.hash_proof?.equal);
       else assert.match(finished.root_cause?.actual || '', /cancelled/i);
       const duplicate = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, revision: draft.revision, edits: draft.edits }) });

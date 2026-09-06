@@ -18,32 +18,32 @@ export function projectIntentGraph(c?: ConversationSnapshot) {
       {
         id: "chat",
         label: "Chat / User Turns",
-        state: turns ? "COMPLETE" : "PENDING",
+        state: turns ? "Completed" : "Pending",
       },
       {
         id: "intent",
         label: "Intent Collector",
-        state: turns ? "COMPLETE" : "PENDING",
+        state: turns ? "Completed" : "Pending",
       },
       {
         id: "merge",
         label: "Multi-turn Merge + Provenance",
-        state: turns ? "COMPLETE" : "PENDING",
+        state: turns ? "Completed" : "Pending",
       },
       {
         id: "required-info",
         label: "Required Information Check",
-        state: turns ? "COMPLETE" : "PENDING",
+        state: turns ? "Completed" : "Pending",
       },
       {
         id: "clarification",
         label: "Targeted Help Request",
-        state: turns && !ready ? "RUNNING" : "PENDING",
+        state: turns && !ready ? "Running" : "Pending",
       },
       {
         id: "prompt",
         label: "Prompt(id) Generator",
-        state: ready ? "COMPLETE" : "PENDING",
+        state: ready ? "Completed" : "Pending",
       },
     ],
     edges: [

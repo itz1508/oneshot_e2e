@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  oneshot:
+    image: oneshot:gemma-latest
+    container_name: oneshot-gemma
+    
+    # Ports
+    ports:
+      - "8787:8787"      # OneShot Web UI + API
+      - "11434:11434"    # Ollama API (optional, for advanced users)
+    
+    # Environment Configuration
+    environment:
+      # OneShot Core
+      PORT: 8787
+      ONESHOT_BIND_HOST: 0.0.0.0
+      NODE_ENV: production
+      ONESHOT_MODE: production
+      
+      # Research Provider (local Gemma by default)
+      ONESHOT_RESEARCH_PROVIDER: ollama
+      
+      # Ollama Configuration
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_MODELS: /root/.ollama/models
+      OLLAMA_NUM_GPU: 0
+      OLLAMA_MODEL: gemma:7b
+      
+      # Authentication (change this!)
+      ONESHOT_API_TOKEN: oneshot-default-token-please-change-me
+    
+    # Startup & Restart
+    restart: unless-stopped
+    
+    # Health Check
+    healthcheck:
+      test: 
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8787/api/health
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+    
+    # Resource Limits
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+    
+    # Volumes (persistent data + model cache)
+    volumes:
+      # Ollama model cache (so model isn't re-downloaded)
+      - oneshot_ollama_cache:/root/.ollama/models
+      # OneShot runtime (conversations, runs, checkpoints)
+      - oneshot_runtime:/app/.runtime
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  oneshot_ollama_cache:
+    driver: local
+  oneshot_runtime:
+    driver: local
+
+networks:
+  default:
+    name: oneshot-network
+    driver: bridge

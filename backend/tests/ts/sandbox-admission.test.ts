@@ -11,7 +11,7 @@ test("sandbox admission accepts authentic confirmed package and exact canonical 
   h.runs.create(runId);
 
   const out = await h.runtime.run(runId, prompt(runId));
-  assert.equal(out.result, "PASSED");
+  assert.equal(out.test_result, "Passed");
   assert.ok(out.hash_proof);
 
   const confirmedPackage = await h.store.load<any>(runId, "confirmed");
@@ -36,7 +36,7 @@ test("sandbox admission rejects tampered package before execution starts", async
   h.runs.create(runId);
 
   const out = await h.runtime.run(runId, prompt(runId));
-  assert.equal(out.result, "PASSED");
+  assert.equal(out.test_result, "Passed");
   assert.ok(out.hash_proof);
 
   const confirmedPackage = await h.store.load<any>(runId, "confirmed");

@@ -148,7 +148,7 @@ export async function observeUntilDone(timeoutMs = 420_000) {
     const events = evidence.sse;
     const latest = events[events.length - 1];
     const done = events.find(
-      (e) => e.processor === "Done" && e.state === "COMPLETE",
+      (e) => e.processor === "Done" && e.state === "Completed",
     );
 
     // §26 live intermediate screenshots (best effort, once each)
@@ -185,7 +185,7 @@ export async function observeUntilDone(timeoutMs = 420_000) {
     }
     if (
       events.some(
-        (e) => e.state === "COMPLETE" && e.result === "ROOT_CAUSE" && e.processor === "Done",
+        (e) => e.state === "Completed" && e.result === "Root Cause" && e.processor === "Done",
       )
     ) {
       return null; // handled by caller via evidence

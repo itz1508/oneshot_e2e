@@ -51,14 +51,14 @@ test("normal canonical job invokes Sandbox through Builder exactly once", async 
 
   try {
     const result = await h.runtime.run(runId, prompt(runId));
-    assert.equal(result.result, "PASSED");
+    assert.equal(result.test_result, "Passed");
     assert.equal(runner.executions, 1);
 
     const builderEvents = result.events.filter(
-      (event) => event.processor === "Builder" && event.state === "COMPLETE",
+      (event) => event.processor === "Builder" && event.execution_status === "Completed",
     );
     assert.equal(builderEvents.length, 1);
-    assert.equal(builderEvents[0].result, "PASSED");
+    assert.equal(builderEvents[0].test_result, "Passed");
   } finally {
     h.close();
   }

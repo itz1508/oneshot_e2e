@@ -1,0 +1,25 @@
+{
+  "$id": "urn:oneshot:schema:run-snapshot:2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "run_id":{"type":"string","minLength":1},
+    "pipeline_status":{"$ref":"urn:oneshot:schema:common:2#/$defs/pipeline_status"},
+    "test_result":{"$ref":"urn:oneshot:schema:common:2#/$defs/test_result"},
+    "issue_type":{"$ref":"urn:oneshot:schema:common:2#/$defs/issue_type"},
+    "current_processor":{"type":"string","minLength":1},
+    "events":{"type":"array","items":{"$ref":"urn:oneshot:schema:processing-event:2"}},
+    "artifacts":{"type":"object","additionalProperties":{"type":"string"}},
+    "hash_proof":{"$ref":"urn:oneshot:schema:hash-proof:2"},
+    "root_cause":{"$ref":"urn:oneshot:schema:common:2#/$defs/root_cause"},
+    "help_request":{"type":"object"}
+  },
+  "required":["run_id","pipeline_status","events","artifacts"],
+  "allOf":[
+    {"if":{"properties":{"pipeline_status":{"const":"Running"}},"required":["pipeline_status"]},"then":{"not":{"anyOf":[{"required":["test_result"]},{"required":["issue_type"]},{"required":["root_cause"]}]}}},
+    {"if":{"required":["test_result"],"properties":{"pipeline_status":{"const":"Done"},"test_result":{"const":"Passed"}}},"then":{"not":{"anyOf":[{"required":["issue_type"]},{"required":["root_cause"]}]}}},
+    {"if":{"required":["test_result"],"properties":{"pipeline_status":{"const":"Done"},"test_result":{"const":"Failed"}}},"then":{"required":["issue_type","root_cause"]}},
+    {"if":{"properties":{"pipeline_status":{"const":"Done"}},"required":["pipeline_status"]},"then":{"required":["test_result"]}}
+  ]
+}

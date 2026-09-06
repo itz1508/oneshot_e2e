@@ -26,7 +26,7 @@ export class TripleValidationWorkflow {
   ): Promise<SchemaValidationResult> {
     const out = await this.validation.schema(bundle, plan);
     await this.contracts.validate(
-      "urn:oneshot:schema:schema-validation:1",
+      "urn:oneshot:schema:schema-validation:2",
       out,
     );
     return out;
@@ -38,7 +38,7 @@ export class TripleValidationWorkflow {
   ): Promise<FixtureValidationResult> {
     const out = await this.validation.fixture(bundle, plan);
     await this.contracts.validate(
-      "urn:oneshot:schema:fixture-validation:1",
+      "urn:oneshot:schema:fixture-validation:2",
       out,
     );
     return out;
@@ -50,7 +50,7 @@ export class TripleValidationWorkflow {
   ): Promise<GoalValidationResult> {
     const out = await this.validation.goal(bundle, plan);
     await this.contracts.validate(
-      "urn:oneshot:schema:goal-validation:1",
+      "urn:oneshot:schema:goal-validation:2",
       out,
     );
     return out;
@@ -106,12 +106,12 @@ export class TripleValidationWorkflow {
       fixture_validation: fixtureValidation,
       goal_validation: goalValidation,
       all_valid: [schemaValidation, fixtureValidation, goalValidation].every(
-        (result) => result.result === "VALID",
+        (result) => result.result === "Passed",
       ),
     };
 
     await this.contracts.validate(
-      "urn:oneshot:schema:triple-validation:1",
+      "urn:oneshot:schema:triple-validation:2",
       triple,
     );
     return triple;

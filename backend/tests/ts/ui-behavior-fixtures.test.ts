@@ -33,21 +33,21 @@ describe("UI E2E Observability Fixtures", () => {
     const f = loadFixture("complete-005.json");
     assert.strictEqual(f.fixture.fixture_id, "fixture:005");
     assert.strictEqual(f.audit.plan_id, "plan:005");
-    assert.strictEqual(f.evaluation.result, "PASSED");
+    assert.strictEqual(f.evaluation.result, "Passed");
   });
 
   it("should load fixture 006", () => {
     const f = loadFixture("complete-006.json");
     assert.strictEqual(f.fixture.fixture_id, "fixture:006");
     assert.strictEqual(f.audit.plan_id, "plan:006");
-    assert.strictEqual(f.evaluation.result, "PASSED");
+    assert.strictEqual(f.evaluation.result, "Passed");
   });
 
   it("should load fixture 007", () => {
     const f = loadFixture("complete-007.json");
     assert.strictEqual(f.fixture.fixture_id, "fixture:007");
     assert.strictEqual(f.audit.plan_id, "plan:007");
-    assert.strictEqual(f.evaluation.result, "PASSED");
+    assert.strictEqual(f.evaluation.result, "Passed");
   });
 
   it("should validate fixture-suite", () => {

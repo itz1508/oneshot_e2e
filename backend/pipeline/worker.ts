@@ -2,16 +2,12 @@ import { randomUUID } from "node:crypto";
 import { Worker, type Job } from "bullmq";
 import type { Redis } from "ioredis";
 import type {
-  PipelineStage,
-  StageHandoff,
   StageJobData,
   StageProgress,
 } from "./types.js";
 import {
   PIPELINE_QUEUE,
   getSharedRedis,
-  pipelineQueue,
-  stageJobId,
 } from "./queue.js";
 import type { StageServices } from "./processors.js";
 import {
@@ -24,12 +20,34 @@ import {
   runConfirmationStage,
   runHashStage,
   runBuildStage,
+  runFinalizeStage,
 } from "./processors.js";
-import { PipelineContext } from "./context.js";
+import {
+  PipelineContext,
+  loadHashProof,
+  loadTripleValidation,
+} from "./context.js";
 import type { ArtifactStore } from "../runtime/artifact-store.js";
 import type { RunRepository } from "../runtime/run-repository.js";
+import {
+  advance,
+  refine,
+  terminal,
+} from "./stage-outcome.js";
+import type {
+  PipelineIssue,
+  PipelineStage,
+  StageOutcome,
+} from "./stage-outcome.js";
+import { stageIteration } from "./stage-scope.js";
+import type { StageIdentity } from "./checkpoints.js";
+import { applyTransition } from "./apply-transition.js";
+import type { TransitionServices } from "./apply-transition.js";
+import { resolveTransition } from "../workflow/canonical-transition.js";
+import { createTransitionServices } from "./transition-services.js";
 import { runStage } from "./run-stage.js";
 import { PipelineIdempotency } from "./idempotency.js";
+import { PipelineFaultController } from "./fault-controller.js";
 import type { PipelineHistory } from "./history.js";
 
 export interface PipelineWorkerInput {
@@ -41,28 +59,11 @@ export interface PipelineWorkerInput {
   concurrency?: number;
 }
 
-const HANDOFFS: Record<
-  PipelineStage,
-  StageHandoff | null
-> = {
-  researcher: { next: "planner", gate: "await-human" },
-  planner: { next: "refactor", gate: "auto" },
-  refactor: { next: "gap-analysis", gate: "auto" },
-  "gap-analysis": { next: "evaluation", gate: "auto" },
-  evaluation: {
-    next: "triple-validation",
-    gate: "auto",
-  },
-  "triple-validation": {
-    next: "confirmation",
-    gate: "auto",
-  },
-  confirmation: { next: "hash", gate: "auto" },
-  hash: { next: "build", gate: "auto" },
-  build: null,
-};
-
-type PipelineJob = Job<StageJobData, unknown, PipelineStage>;
+type PipelineJob = Job<
+  StageJobData,
+  unknown,
+  PipelineStage
+>;
 
 export function createPipelineWorker(
   input: PipelineWorkerInput,
@@ -76,7 +77,21 @@ export function createPipelineWorker(
     concurrency = 1,
   } = input;
 
-  const idempotency = new PipelineIdempotency(redis);
+  const idempotency =
+    new PipelineIdempotency(redis);
+  const faultController =
+    new PipelineFaultController(redis);
+
+  const {
+    checkpoints,
+    services: transitionServices,
+  } = createTransitionServices({
+    runs,
+    store,
+    events: services.events,
+    redis,
+    history,
+  });
 
   const workerId = randomUUID();
   const heartbeatKey = `oneshot:worker:${workerId}:heartbeat`;
@@ -106,6 +121,11 @@ export function createPipelineWorker(
     async (job: PipelineJob) => {
       const stage = job.name;
       const { runId } = job.data;
+      if (job.data.version !== 2 || !runId || job.data.stage !== stage ||
+          !Number.isInteger(job.data.iteration) || job.data.iteration < 0) {
+        throw new Error("Invalid version-2 pipeline job payload");
+      }
+      const requestedIteration = job.data.iteration;
 
       const ctx: PipelineContext = {
         runId,
@@ -116,82 +136,346 @@ export function createPipelineWorker(
       const progress = async (
         value: StageProgress,
       ): Promise<void> => {
-        await job.updateProgress(value);
+        await job.updateProgress({ ...value, runId, iteration: stageIteration(stage, requestedIteration) });
       };
 
-      const execute = async () => {
-        switch (stage) {
-          case "researcher":
-            await runResearcherStage(ctx, services, progress);
-            return;
-          case "planner":
-            await runPlannerStage(ctx, services, progress);
-            return;
-          case "refactor":
-            await runRefactorStage(ctx, services, progress);
-            return;
-          case "gap-analysis":
-            await runGapAnalysisStage(ctx, services, progress);
-            return;
-          case "evaluation":
-            await runEvaluationStage(ctx, services, progress);
-            return;
-          case "triple-validation":
-            await runTripleValidationStage(
-              ctx,
-              services,
-              progress,
-            );
-            return;
-          case "confirmation":
-            await runConfirmationStage(ctx, services, progress);
-            return;
-          case "hash":
-            await runHashStage(ctx, services, progress);
-            return;
-          case "build":
-            await runBuildStage(ctx, services, progress);
-            return;
-          default:
-            throw new Error(
-              `Unknown pipeline stage: ${stage}`,
-            );
-        }
-      };
-
-      const { skipped } = await runStage({
-        redis,
+      /*
+       * Run-level stages are pinned to iteration 0 so Researcher/Planner can
+       * never be re-executed by a refinement iteration (stage-scope.ts).
+       */
+      const identity: StageIdentity = {
         runId,
         stage,
-        job,
-        execute,
-      });
+        iteration: stageIteration(
+          stage,
+          requestedIteration,
+        ),
+      };
 
-      const handoff = HANDOFFS[stage];
-      if (!handoff) {
-        return { runId, stage };
-      }
+      const execute =
+        async (): Promise<StageOutcome> => {
+          /*
+           * Fault injection (test only): a refine-once config substitutes a
+           * Missing/refine outcome for this stage execution exactly once,
+           * deterministically driving the canonical refinement loop to the
+           * next iteration without touching sample fixtures.
+           */
+          if (
+            await faultController.shouldInjectRefine(
+              runId,
+              stage as never,
+              identity.iteration,
+            )
+          ) {
+            return refine(
+              { faultInjected: true },
+              {
+                issue_type: "Missing",
+                evidence: {
+                  issue: "Fault-injected refinement request",
+                  expected: "Stage completes with a forwardable result",
+                  actual: "refine-once fault injection requested refinement",
+                  evidence_ids: [],
+                  required_correction:
+                    "Run the next refinement iteration",
+                  recheck_target: runId,
+                },
+              },
+              "fault injection: refine-once",
+            );
+          }
 
-      if (handoff.gate === "auto") {
-        await enqueueNext(
-          handoff.next,
-          runId,
-          idempotency,
-          history,
-        );
-      } else if (
-        handoff.gate === "await-human" &&
-        handoff.next === "planner"
-      ) {
-        await history?.append({
-          runId,
-          stage: "await-human",
-          type: "waiting",
-          message: `Waiting for confirm-plan before ${handoff.next}`,
+          switch (stage) {
+            case "researcher":
+              await runResearcherStage(
+                ctx,
+                services,
+                progress,
+              );
+              return advance(undefined);
+            case "planner":
+              await runPlannerStage(
+                ctx,
+                services,
+                progress,
+              );
+              return advance(undefined);
+            case "refactor":
+              await runRefactorStage(
+                ctx,
+                services,
+                progress,
+              );
+              return advance(undefined);
+            case "gap-analysis":
+              await runGapAnalysisStage(
+                ctx,
+                services,
+                progress,
+              );
+              return advance(undefined);
+            case "evaluation":
+              await runEvaluationStage(
+                ctx,
+                services,
+                progress,
+              );
+              return advance(undefined);
+            case "triple-validation": {
+              await runTripleValidationStage(
+                ctx,
+                services,
+                progress,
+              );
+
+              /*
+               * Triple Validation drives the refinement loop: a failed
+               * validation asks for another refinement iteration (capped by
+               * the canonical transition resolver).
+               */
+              const triple =
+                await loadTripleValidation(
+                  ctx,
+                );
+
+              return triple.all_valid
+                ? advance({ all_valid: true })
+                : refine(
+                    { all_valid: false },
+                    {
+                      issue_type: "Missing",
+                      evidence: {
+                        issue:
+                          "Schema, fixture, or goal validation failed",
+                        expected:
+                          "Triple validation reports all_valid for the current revision",
+                        actual:
+                          "Triple validation reported failures for the current revision",
+                        evidence_ids: [
+                          triple.validation_id,
+                        ],
+                        required_correction:
+                          "Refine the plan/artifacts and rerun validation",
+                        recheck_target: runId,
+                      },
+                    },
+                    "triple-validation: all_valid=false; refinement iteration required",
+                  );
+            }
+            case "confirmation":
+              await runConfirmationStage(
+                ctx,
+                services,
+                progress,
+              );
+              return advance(undefined);
+            case "hash": {
+              await runHashStage(
+                ctx,
+                services,
+                progress,
+              );
+
+              const proof =
+                await loadHashProof(ctx);
+
+              return proof.equal
+                ? advance({ equal: true })
+                : terminal(
+                    { equal: false },
+                    {
+                      issue_type: "Root Cause",
+                      evidence: {
+                        issue:
+                          "Hash proof reported a canonical mismatch",
+                        expected:
+                          "created_hash equals recomputed_hash (proof.equal)",
+                        actual:
+                          "Hash proof reported a canonical mismatch",
+                        evidence_ids: [
+                          proof.created_hash,
+                        ],
+                        required_correction:
+                          "Investigate canonical serialization drift before promoting the build",
+                        recheck_target: runId,
+                      },
+                    },
+                  );
+            }
+            case "build": {
+              const firstExecution = await checkpoints.recordBuilderIntent(runId);
+              if (!firstExecution) {
+                try {
+                  const recovered = await store.load<{ result: string }>(runId, "build_result");
+                  return recovered.result === "Passed"
+                    ? advance({ result: "Passed", recovered: true })
+                    : terminal({ result: recovered.result, recovered: true }, {
+                        issue_type: "Root Cause",
+                        evidence: {
+                          issue: "Recovered failed Builder evidence",
+                          expected: "Sandbox build passes",
+                          actual: recovered.result,
+                          evidence_ids: [],
+                          required_correction: "Correct the sandbox build failure",
+                          recheck_target: "Builder",
+                        },
+                      });
+                } catch {
+                  return terminal({ recovered: false }, {
+                    issue_type: "Root Cause",
+                    evidence: {
+                      issue: "Builder execution outcome is uncertain",
+                      expected: "Committed immutable Builder evidence",
+                      actual: "Execution intent exists without committed evidence",
+                      evidence_ids: [],
+                      required_correction: "Inspect the sandbox execution and start a new run",
+                      recheck_target: "Builder intent recovery",
+                    },
+                  });
+                }
+              }
+              await runBuildStage(
+                ctx,
+                services,
+                progress,
+              );
+
+              const buildResult =
+                await store.load<{
+                  result: string;
+                }>(runId, "build_result");
+
+              return buildResult.result ===
+                "Passed"
+                ? advance({ result: "Passed" })
+                : terminal(
+                    { result: buildResult.result },
+                    {
+                      issue_type: "Root Cause",
+                      evidence: {
+                        issue: "Build verification failed",
+                        expected:
+                          "Sandbox build verifies against the canonical hash",
+                        actual: `Build result: ${buildResult.result}`,
+                        evidence_ids: [],
+                        required_correction:
+                          "Address the build failure and rerun the pipeline",
+                        recheck_target: runId,
+                      },
+                    },
+                  );
+            }
+            case "finalize": {
+              /*
+               * The terminal stage carries no agent work. The semantic
+               * content (test result + issue) was checkpointed as a
+               * finalization intent before this stage was queued; replaying
+               * it here keeps recovery deterministic.
+               */
+              const intent =
+                await checkpoints.loadFinalizationIntent(
+                  runId,
+                );
+
+              await runFinalizeStage(ctx, services, progress);
+
+              if (
+                intent &&
+                intent.test_result === "Failed"
+              ) {
+                return terminal(
+                  { finalized: true },
+                  intent.issue,
+                );
+              }
+              const proof = await loadHashProof(ctx);
+              const buildResult = await store.load<{
+                result: string;
+                hash_sandbox?: string;
+                evidence?: { hash_sandbox?: string };
+              }>(runId, "build_result");
+              const sandboxHash = buildResult.hash_sandbox ?? buildResult.evidence?.hash_sandbox;
+              if (buildResult.result !== "Passed" || sandboxHash !== proof.created_hash) {
+                return terminal({ finalized: false }, {
+                  issue_type: "Root Cause",
+                  evidence: {
+                    issue: "Finalize hash verification failed",
+                    expected: proof.created_hash,
+                    actual: sandboxHash ?? "sandbox hash missing",
+                    evidence_ids: [],
+                    required_correction: "Preserve and compare Builder sandbox hash evidence",
+                    recheck_target: "Finalize",
+                  },
+                });
+              }
+              return advance({ finalized: true, hash_proof: proof });
+            }
+            default:
+              throw new Error(
+                `Unknown pipeline stage: ${stage}`,
+              );
+          }
+        };
+
+      const { skipped, outcome } =
+        await runStage({
+          identity,
+          checkpoints,
+          history:
+            history ?? {
+              append: async () => "",
+            },
+          execute,
+          lock: idempotency,
+          faults: {
+            apply: (faultRunId, faultStage, faultIteration) =>
+              faultController.apply(
+                faultRunId,
+                faultStage as never,
+                faultIteration,
+              ),
+            applyAfterCheckpoint:
+              (faultRunId, faultStage, faultIteration) =>
+                faultController.applyAfterCheckpoint(
+                  faultRunId,
+                  faultStage as never,
+                  faultIteration,
+                ),
+          },
+          markCompleted: () =>
+            idempotency.markCompleted(
+              runId,
+              stage,
+              identity.iteration,
+            ),
+          job,
         });
-      }
 
-      return { runId, stage, skipped };
+      /*
+       * Durable transition: pending → side effect → committed.
+       *
+       * On a retry after a crash this runs even when the stage execution was
+       * skipped, because the persisted outcome — not a fresh agent run —
+       * drives the transition.
+       */
+      const transition = resolveTransition(
+        stage,
+        outcome,
+        identity.iteration,
+      );
+
+      await applyTransition(
+        identity,
+        transition,
+        transitionServices,
+      );
+
+      return {
+        runId,
+        stage,
+        skipped,
+        transition: transition.type,
+      };
     },
 
     {
@@ -229,30 +513,3 @@ export function createPipelineWorker(
   return worker;
 }
 
-async function enqueueNext(
-  stage: PipelineStage,
-  runId: string,
-  idempotency: PipelineIdempotency,
-  history?: PipelineHistory,
-): Promise<void> {
-  if (await idempotency.isCompleted(runId, stage)) {
-    console.log(
-      `[OneShot] Skipping enqueue for ${stage}; already completed for ${runId}`,
-    );
-    return;
-  }
-
-  await pipelineQueue.add(
-    stage,
-    { runId },
-    {
-      jobId: stageJobId(runId, stage),
-    },
-  );
-  await history?.append({
-    runId,
-    stage,
-    type: "queued",
-    jobId: stageJobId(runId, stage),
-  });
-}

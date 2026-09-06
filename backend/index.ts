@@ -42,6 +42,8 @@ import {
   saveArtifact,
   type StageServices,
   PipelineHistory,
+  createTransitionServices,
+  reconcileStage,
 } from "./pipeline/index.js";
 import { getSharedRedis } from "./runtime/redis-connection.js";
 import type { QueueEvents } from "bullmq";
@@ -224,6 +226,20 @@ let pipelineWorker: ReturnType<typeof createPipelineWorker> | undefined;
 let pipelineQueueEvents: QueueEvents | undefined;
 const pipelineHistory = new PipelineHistory(getSharedRedis());
 
+/*
+ * Durable transition services (shared by the inline worker when enabled and
+ * by the diagnostic reconcile endpoint).
+ */
+const transitionHandle = pipelineReady
+  ? createTransitionServices({
+      runs,
+      store: artifactStore,
+      events,
+      redis: getSharedRedis(),
+      history: pipelineHistory,
+    })
+  : undefined;
+
 if (pipelineReady) {
   pipelineQueueEvents = createPipelineQueueEvents({ events });
 
@@ -324,6 +340,14 @@ const server = await startHttpServer(
               failed: c.failed,
             };
           },
+          reconcile: transitionHandle
+            ? (runId, stage, iteration) =>
+                reconcileStage(
+                  { runId, stage, iteration },
+                  transitionHandle.checkpoints,
+                  transitionHandle.services,
+                )
+            : undefined,
         }
       : undefined,
   },

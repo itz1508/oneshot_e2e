@@ -9,7 +9,7 @@ test("canonical runtime executes connected ADK nodes in workflow order", async (
 
   try {
     const result = await h.runtime.run(runId, prompt(runId));
-    assert.equal(result.result, "PASSED");
+    assert.equal(result.test_result, "Passed");
 
     const ordered = [
       "Researcher",
@@ -28,10 +28,10 @@ test("canonical runtime executes connected ADK nodes in workflow order", async (
     let previousComplete = -1;
     for (const processor of ordered) {
       const running = result.events.find(
-        (event) => event.processor === processor && event.state === "RUNNING",
+        (event) => event.processor === processor && event.execution_status === "Running",
       );
       const complete = result.events.find(
-        (event) => event.processor === processor && event.state === "COMPLETE",
+        (event) => event.processor === processor && event.execution_status === "Completed",
       );
       assert.ok(running, `missing ${processor} RUNNING event`);
       assert.ok(complete, `missing ${processor} COMPLETE event`);

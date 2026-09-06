@@ -1,0 +1,168 @@
+# OneShot Docker Image with Ollama + Gemma 7B Support
+# Usage: docker run -p 8787:8787 -p 11434:11434 -e ONESHOT_RESEARCH_PROVIDER=ollama oneshot:latest
+
+FROM node:24.13.0-slim AS node-builder
+WORKDIR /app
+
+# Install root runtime + build dependencies
+COPY package*.json tsconfig.json ./
+COPY app/vendor ./app/vendor
+RUN npm install --ignore-scripts --no-audit --no-fund
+
+# Copy backend source and compile
+COPY backend ./backend
+COPY app/web/cloud ./app/web/cloud
+RUN npx tsc -p tsconfig.json
+
+# Copy and build OneShot Web IDE
+COPY app/web ./app/web
+RUN cd app/web && npm ci --no-audit --no-fund && npm run build
+
+# Prune development dependencies
+RUN npm prune --omit=dev --no-audit --no-fund
+
+# ==========================================
+# Ollama Base Stage - Download and prepare
+# ==========================================
+FROM ollama/ollama:latest AS ollama-builder
+
+# Pre-download Gemma 7B model
+RUN ollama pull gemma:7b
+
+# ==========================================
+# Final Runtime Image
+# ==========================================
+FROM python:3.12-slim-bookworm AS runner
+WORKDIR /app
+
+# Install Ollama CLI dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Ollama from builder
+COPY --from=ollama-builder /root/.ollama /root/.ollama
+
+# Use exact Node runtime from Node build stage
+COPY --from=node-builder /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-builder /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+    && node --version \
+    && npm --version
+
+# Install Python dependencies
+COPY app/requirements ./app/requirements
+RUN pip install --no-cache-dir -r app/requirements/base.txt
+
+# Install Ollama from official source
+RUN curl -fsSL https://ollama.ai/install.sh | sh
+
+# Copy runtime dependencies
+COPY package*.json ./
+COPY --from=node-builder /app/node_modules ./node_modules
+
+# Copy compiled backend and Web IDE
+COPY --from=node-builder /app/dist ./dist
+COPY --from=node-builder /app/app/web/dist ./app/web/dist
+COPY backend ./backend
+COPY app/web/cloud ./app/web/cloud
+COPY app/web/__init__.py ./app/web/__init__.py
+
+# Copy fixtures and legal docs
+COPY app/fixtures ./app/fixtures
+COPY app/legal ./app/legal
+COPY docs/CANONICAL_WORKFLOW.md ./docs/CANONICAL_WORKFLOW.md
+COPY docs/license/LICENSE docs/license/NOTICE ./docs/license/
+
+# Python import paths
+ENV PYTHONPATH=/app/backend/validation/python:/app/app
+
+# Create runtime directories
+RUN mkdir -p .runtime/runs .runtime/run-state .runtime/task-events .runtime/checkpoints \
+    .runtime/conversations .runtime/sandbox-workspaces .runtime/cache .runtime/uploads .runtime/qc
+
+# ==========================================
+# Configuration & Startup
+# ==========================================
+
+# OneShot HTTP Server
+ENV ONESHOT_BIND_HOST=0.0.0.0
+ENV PORT=8787
+ENV NODE_ENV=production
+
+# Ollama Configuration
+ENV OLLAMA_HOST=0.0.0.0:11434
+ENV OLLAMA_MODELS=/root/.ollama/models
+ENV OLLAMA_NUM_GPU=0
+
+# Research Provider - default to Ollama
+ENV ONESHOT_MODE=production
+ENV ONESHOT_RESEARCH_PROVIDER=ollama
+
+# Optional: Cloud API keys (users can set via docker run -e)
+# ENV FEATHERLESS_API_KEY=your_key_here
+# ENV GEMINI_API_KEY=your_key_here
+
+EXPOSE 8787 11434
+
+# Create startup script that runs both services
+RUN mkdir -p /scripts
+COPY --chown=root:root <<'EOF' /scripts/start.sh
+#!/bin/bash
+set -e
+
+# Function to wait for Ollama to be ready
+wait_for_ollama() {
+    echo "Starting Ollama service..."
+    ollama serve &
+    OLLAMA_PID=$!
+    
+    # Wait for Ollama to be responsive
+    for i in {1..30}; do
+        if curl -s http://127.0.0.1:11434/api/tags > /dev/null 2>&1; then
+            echo "✓ Ollama ready"
+            break
+        fi
+        echo "  Waiting for Ollama... ($i/30)"
+        sleep 2
+    done
+    
+    # Load Gemma 7B if not already loaded
+    echo "Ensuring Gemma 7B is available..."
+    if ! ollama list | grep -q "gemma:7b"; then
+        echo "  Pulling gemma:7b (this may take a few minutes)..."
+        ollama pull gemma:7b
+    else
+        echo "✓ Gemma 7B already available"
+    fi
+}
+
+# Function to run OneShot
+run_oneshot() {
+    echo "Starting OneShot server on port $PORT..."
+    exec node dist/backend/index.js
+}
+
+# Main
+echo "==============================================="
+echo "OneShot with Ollama + Gemma 7B"
+echo "==============================================="
+echo ""
+echo "Configuration:"
+echo "  OneShot HTTP:  http://0.0.0.0:$PORT"
+echo "  Ollama API:    http://0.0.0.0:11434"
+echo "  Research Mode: $ONESHOT_RESEARCH_PROVIDER"
+echo ""
+
+# Start Ollama in background
+wait_for_ollama
+
+# Start OneShot (foreground)
+run_oneshot
+EOF
+
+RUN chmod +x /scripts/start.sh
+
+CMD ["/scripts/start.sh"]

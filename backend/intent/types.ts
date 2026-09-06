@@ -62,14 +62,14 @@ export interface HelpRequest {
 
 /** Prompt was successfully created from sufficient intent information. */
 export interface PromptCreation {
-  result: "PASSED";
+  result: "Passed";
   prompt: Prompt;
   intent: IntentState;
 }
 
 /** Prompt cannot be created — missing user-owned information. */
 export interface PromptNeedsHelp {
-  result: "ROOT_CAUSE";
+  result: "Root Cause";
   root_cause: RootCause;
   help_request: HelpRequest;
   intent: IntentState;

@@ -45,7 +45,7 @@ test("NOT_VALID becomes Gap feedback, improves same plan, and all three validato
         { job_id: `${jobId}-initial`, research, plan: initialGap.plan },
         { runId: `${jobId}-evaluation-initial` },
       )).output as Evaluation;
-      assert.equal(initialEvaluation.result, "PASSED");
+      assert.equal(initialEvaluation.result, "Passed");
 
       // Simulate a condition that escaped the preceding gap_0 proof. Triple
       // Validation must treat this as refinement feedback, not terminal failure.
@@ -57,7 +57,7 @@ test("NOT_VALID becomes Gap feedback, improves same plan, and all three validato
         { job_id: `${jobId}-before`, research, plan: missedPlan },
         { runId: `${jobId}-triple-before` },
       )).output as TripleValidation;
-      assert.equal(before.goal_validation.result, "NOT_VALID");
+      assert.equal(before.goal_validation.result, "Failed");
       assert.equal(before.all_valid, false);
 
       const feedback = validationFeedback(research, missedPlan, before);
@@ -86,16 +86,16 @@ test("NOT_VALID becomes Gap feedback, improves same plan, and all three validato
         { job_id: `${jobId}-repair`, research, plan: refined.plan },
         { runId: `${jobId}-evaluation-repair` },
       )).output as Evaluation;
-      assert.equal(evaluation.result, "PASSED");
+      assert.equal(evaluation.result, "Passed");
 
       const after = (await ctx.runNode(
         tripleNode,
         { job_id: `${jobId}-after`, research, plan: refined.plan },
         { runId: `${jobId}-triple-after` },
       )).output as TripleValidation;
-      assert.equal(after.schema_validation.result, "VALID");
-      assert.equal(after.fixture_validation.result, "VALID");
-      assert.equal(after.goal_validation.result, "VALID");
+      assert.equal(after.schema_validation.result, "Passed");
+      assert.equal(after.fixture_validation.result, "Passed");
+      assert.equal(after.goal_validation.result, "Passed");
       assert.equal(after.all_valid, true);
 
       return { before, improvedPlan: refined.plan, gap: refined.gap, evaluation, after };

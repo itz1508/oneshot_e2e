@@ -224,7 +224,7 @@ test("executeRunJob rejects malformed payloads at the worker boundary as ROOT_CA
     const res = await executeRunJob(job, deps);
     assert.equal(res.status, "failed");
     const snap = runs.require("mal-1");
-    assert.equal(snap.result, "ROOT_CAUSE");
+    assert.equal(snap.test_result, "Failed");
     assert.match(snap.root_cause!.issue, /Malformed run job payload/);
     assert.match(snap.root_cause!.issue, /secret-shaped/);
     assert.ok(
@@ -256,7 +256,7 @@ test("executeRunJob refuses to silently restart a partially-executed run (ROOT_C
     } as never;
     const runId = "partial-1";
     runs.create(runId);
-    const prior = events.emit(runId, "Researcher", "RUNNING", {
+    const prior = events.emit(runId, "Researcher", "Running", {
       message: "partial step",
     });
     runs.event(runId, prior);
@@ -268,7 +268,7 @@ test("executeRunJob refuses to silently restart a partially-executed run (ROOT_C
     assert.equal(res.status, "failed");
     assert.equal(ran, 0, "workflow must NOT be re-executed from the beginning");
     const snap = runs.require(runId);
-    assert.equal(snap.result, "ROOT_CAUSE");
+    assert.equal(snap.test_result, "Failed");
     assert.match(snap.root_cause!.issue, /partially executed/);
   } finally {
     await rm(dir, { recursive: true, force: true });
@@ -287,7 +287,7 @@ test("ProcessingEventBus.ingest is idempotent (at-least-once → exactly-once; p
     const observed: ProcessingEvent[] = [];
     bus.observe((e) => observed.push(e));
 
-    const e1 = bus.emit("r", "Researcher", "RUNNING", { message: "first" });
+    const e1 = bus.emit("r", "Researcher", "Running", { message: "first" });
     assert.equal(bus.ingest(e1), false, "redelivery of emitted event is deduped");
 
     const e2: ProcessingEvent = {
@@ -296,7 +296,7 @@ test("ProcessingEventBus.ingest is idempotent (at-least-once → exactly-once; p
       run_id: "r",
       scope: "WORKFLOW",
       processor: "Planner",
-      state: "COMPLETE",
+      execution_status: "Completed",
       created_at: "2026-01-01T00:00:00Z",
       correlation_id: "run:r",
       traceparent: "00-traceid2-spanid2-01",
@@ -313,7 +313,7 @@ test("ProcessingEventBus.ingest is idempotent (at-least-once → exactly-once; p
     assert.equal(persisted[1].traceparent, "00-traceid2-spanid2-01", "trace preserved");
     assert.equal(observed.length, 2, "observers notified once per unique event");
 
-    const e3 = bus.emit("r", "Builder", "RUNNING", { message: "third" });
+    const e3 = bus.emit("r", "Builder", "Running", { message: "third" });
     assert.equal(e3.sequence, 3, "emit continues from high-water mark after ingest");
     assert.equal(store.list("r").length, 3);
   } finally {
@@ -470,8 +470,8 @@ test("POST /api/runs returns 503 + finalizes the run (no ghost) when ONESHOT_QUE
     const snap = s.runs.get(body.run_id);
     assert.ok(snap, "run record exists");
     assert.equal(
-      snap!.result,
-      "ROOT_CAUSE",
+      snap!.test_result,
+      "Failed",
       "run finalized as queue-unavailable, not left as a permanent queued ghost",
     );
   } finally {
@@ -542,9 +542,9 @@ test("SSE replays durable events after Last-Event-ID with id:/event: framing", a
     });
     const runId = "sse-1";
     s.runs.create(runId);
-    events.emit(runId, "Researcher", "RUNNING", { message: "e1" });
-    events.emit(runId, "Planner", "RUNNING", { message: "e2" });
-    events.emit(runId, "Builder", "COMPLETE", { message: "e3" });
+    events.emit(runId, "Researcher", "Running", { message: "e1" });
+    events.emit(runId, "Planner", "Running", { message: "e2" });
+    events.emit(runId, "Builder", "Completed", { message: "e3" });
     assert.equal(s.runs.get(runId)!.events.length, 3);
 
     // Full replay (no Last-Event-ID).
@@ -599,7 +599,7 @@ test("executeRunJob produces the same canonical artifacts as direct execution (b
     // artifact set must be identical (executeRunJob must not alter it).
     const makeRuntime = (runs: RunRepository, events: ProcessingEventBus) => ({
       run: async (runId: string, _prompt: Prompt): Promise<void> => {
-        events.emit(runId, "Researcher", "RUNNING", { message: "research" });
+        events.emit(runId, "Researcher", "Running", { message: "research" });
         await store.save(runId, "researcher", {
           researcher_id: "r",
           evidence: [],
@@ -607,9 +607,9 @@ test("executeRunJob produces the same canonical artifacts as direct execution (b
         });
         await store.save(runId, "plan", { plan_id: "p", steps: [], audit: null });
         await store.save(runId, "fixture", { fixture_id: "f", plan_assertions: [] });
-        events.emit(runId, "Researcher", "COMPLETE", { result: "PASSED" });
-        events.emit(runId, "Done", "COMPLETE", { result: "PASSED" });
-        runs.finish(runId, "PASSED", undefined);
+        events.emit(runId, "Researcher", "Completed", { test_result: "Passed" });
+        events.emit(runId, "Done", "Completed", { test_result: "Passed" });
+        runs.finish(runId, "Passed", undefined);
       },
     });
 
@@ -684,9 +684,9 @@ test("executeRunJob emits ProviderBinding/COMPLETE (readiness proven) before Run
       createRuntime: async () =>
         ({
           run: async (runId: string) => {
-            events.emit(runId, "Researcher", "RUNNING", { message: "research" });
-            events.emit(runId, "Researcher", "COMPLETE", { result: "PASSED" });
-            runs.finish(runId, "PASSED", undefined);
+            events.emit(runId, "Researcher", "Running", { message: "research" });
+            events.emit(runId, "Researcher", "Completed", { test_result: "Passed" });
+            runs.finish(runId, "Passed", undefined);
           },
         } as never),
     } as never;
@@ -705,13 +705,13 @@ test("executeRunJob emits ProviderBinding/COMPLETE (readiness proven) before Run
 
     const evs = events.list("bind-1");
     const bindIdx = evs.findIndex(
-      (e) => e.processor === "ProviderBinding" && e.state === "COMPLETE",
+      (e) => e.processor === "ProviderBinding" && e.execution_status === "Completed",
     );
     const runWorkerIdx = evs.findIndex(
-      (e) => e.processor === "RunWorker" && e.state === "RUNNING",
+      (e) => e.processor === "RunWorker" && e.execution_status === "Running",
     );
     const researcherIdx = evs.findIndex(
-      (e) => e.processor === "Researcher" && e.state === "RUNNING",
+      (e) => e.processor === "Researcher" && e.execution_status === "Running",
     );
     assert.ok(bindIdx >= 0, "ProviderBinding/COMPLETE emitted");
     assert.ok(runWorkerIdx > bindIdx, "RunWorker/RUNNING comes after ProviderBinding");
@@ -770,7 +770,7 @@ test("executeRunJob surfaces a provider-readiness failure as ProviderBinding ROO
     assert.equal(res.status, "failed");
 
     const snap = runs.require("bind-fail");
-    assert.equal(snap.result, "ROOT_CAUSE");
+    assert.equal(snap.test_result, "Failed");
     // The REAL root cause is preserved — NOT hidden behind "Run worker failure".
     assert.equal(
       snap.root_cause!.issue,
@@ -786,8 +786,8 @@ test("executeRunJob surfaces a provider-readiness failure as ProviderBinding ROO
       .list("bind-fail")
       .find((e) => e.processor === "ProviderBinding");
     assert.ok(bind, "ProviderBinding event emitted on readiness failure");
-    assert.equal(bind.state, "COMPLETE");
-    assert.equal(bind.result, "ROOT_CAUSE");
+    assert.equal(bind.execution_status, "Completed");
+    assert.equal(bind.test_result, "Failed");
     assert.match(String(bind.message), /FEATHERLESS_API_KEY unset/);
     // The workflow never executed (no Researcher event) — readiness failed first.
     assert.ok(
@@ -828,11 +828,11 @@ test("executeRunJob passes the captured provider model and configuration revisio
       createRuntime: async (provider: any) =>
         ({
           run: async (runId: string) => {
-            events.emit(runId, "Researcher", "RUNNING", {
+            events.emit(runId, "Researcher", "Running", {
               message: `bound=${provider.id}`,
             });
-            events.emit(runId, "Researcher", "COMPLETE", { result: "PASSED" });
-            runs.finish(runId, "PASSED", undefined);
+            events.emit(runId, "Researcher", "Completed", { test_result: "Passed" });
+            runs.finish(runId, "Passed", undefined);
           },
         } as never),
     } as never;
@@ -854,7 +854,7 @@ test("executeRunJob passes the captured provider model and configuration revisio
     const researcher = events
       .list("rebind-1")
       .find(
-        (e) => e.processor === "Researcher" && e.state === "RUNNING",
+        (e) => e.processor === "Researcher" && e.execution_status === "Running",
       );
     assert.ok(researcher, "Researcher/RUNNING event emitted");
     assert.match(

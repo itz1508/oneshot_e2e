@@ -26,23 +26,24 @@ class TestAdditionalProofs(unittest.TestCase):
         bad=copy.deepcopy(self.b['plan'])
         bad['steps'][0]['requirement_refs']=[]
         result=evaluate_plan(bad,self.b['goal'])
-        self.assertEqual(result['result'],'ROOT_CAUSE')
-        self.s.assert_valid('urn:oneshot:schema:evaluation:1',result)
+        self.assertEqual(result['result'],'Failed')
+        self.assertEqual(result['issue_type'],'Root Cause')
+        self.s.assert_valid('urn:oneshot:schema:evaluation:2',result)
 
     def test_fixture_not_valid(self):
         bad=copy.deepcopy(self.b['fixture'])
         bad['plan_assertions'][0]['expected']='plan:wrong'
         t=run_triple(self.b['plan'],self.b['validation'],self.b['schema_artifact'],bad,self.b['goal'],self.s,self.g)
-        self.assertEqual(t['fixture_validation']['result'],'NOT_VALID')
+        self.assertEqual(t['fixture_validation']['result'],'Failed')
         self.assertFalse(t['all_valid'])
 
     def test_unknown_field_rejected(self):
         bad=copy.deepcopy(self.b['audit']); bad['severity']='HIGH'
-        self.assertTrue(self.s.validate('urn:oneshot:schema:audit:1',bad))
+        self.assertTrue(self.s.validate('urn:oneshot:schema:audit:2',bad))
 
     def test_missing_required_field_rejected(self):
         bad=copy.deepcopy(self.b['researcher']); del bad['plan_id']
-        self.assertTrue(self.s.validate('urn:oneshot:schema:researcher:1',bad))
+        self.assertTrue(self.s.validate('urn:oneshot:schema:researcher:2',bad))
 
     def test_plan_identity_continuity_fixture(self):
         before='plan:001'

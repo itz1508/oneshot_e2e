@@ -1,6 +1,6 @@
 import type { ProcessingEvent } from "../../contracts/schema/types.js";
 
-export type SandboxGraphNodeState = "PENDING" | "RUNNING" | "COMPLETE";
+export type SandboxGraphNodeState = "Pending" | "Running" | "Completed" | "Failed";
 
 export interface SandboxGraphNode {
   id: string;
@@ -54,7 +54,7 @@ export function projectSandboxGraph(events: ProcessingEvent[] = []) {
     const e = latest.get(s.id);
     return {
       ...s,
-      state: (e?.state ?? "PENDING") as SandboxGraphNodeState,
+      state: (e?.execution_status ?? "Pending") as SandboxGraphNodeState,
       message: e?.message,
       artifact_id: e?.artifact_id,
     };

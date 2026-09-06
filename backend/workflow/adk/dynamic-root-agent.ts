@@ -56,14 +56,14 @@ export interface OneShotDynamicEffects {
   event?(
     jobId: string,
     processor: string,
-    state: "RUNNING" | "COMPLETE",
+    executionStatus: "Running" | "Completed",
     data?: Record<string, unknown>,
   ): void;
   save?(jobId: string, name: string, value: unknown): Promise<string>;
 }
 
 export interface OneShotDynamicPassed {
-  result: "PASSED";
+  result: "Passed";
   research: ResearchBundle;
   audit: Audit;
   plan: Plan;
@@ -72,12 +72,13 @@ export interface OneShotDynamicPassed {
   triple: TripleValidation;
   confirmed: ConfirmedPackage;
   created_hash: string;
-  builder: Extract<SandboxExecutionResult, { result: "PASSED" }>;
+  builder: Extract<SandboxExecutionResult, { result: "Passed" }>;
   hash_proof: HashProof;
 }
 
 export interface OneShotDynamicRootCause {
-  result: "ROOT_CAUSE";
+  result: "Failed";
+  issue_type: "Root Cause";
   root_cause: RootCause;
   research?: ResearchBundle;
   audit?: Audit;
@@ -177,7 +178,7 @@ export function createOneShotDynamicWorkflow(
       const input = parseInput(nodeInput);
       const jobId = input.job_id;
 
-      effects.event?.(jobId, "Researcher", "RUNNING");
+      effects.event?.(jobId, "Researcher", "Running");
       let research = (await ctx.runNode(
         researcherNode,
         { job_id: jobId, prompt: input.prompt },
@@ -190,39 +191,39 @@ export function createOneShotDynamicWorkflow(
       await save(effects, jobId, "fixture", research.fixture);
       await save(effects, jobId, "goal", research.goal);
       await save(effects, jobId, "validation", research.validation);
-      effects.event?.(jobId, "Researcher", "COMPLETE", {
-        result: "PASSED",
+      effects.event?.(jobId, "Researcher", "Completed", {
+        test_result: "Passed",
         artifact_id: research.researcher.researcher_id,
       });
 
       if (effects.review) research = await effects.review(jobId, research);
 
-      effects.event?.(jobId, "Planner", "RUNNING");
+      effects.event?.(jobId, "Planner", "Running");
       const audit = (await ctx.runNode(
         plannerNode,
         { job_id: jobId, research },
         { runId: `${jobId}-planner` },
       )).output as Audit;
       await save(effects, jobId, "audit", audit);
-      effects.event?.(jobId, "Planner", "COMPLETE", {
-        result: "PASSED",
+      effects.event?.(jobId, "Planner", "Completed", {
+        test_result: "Passed",
         artifact_id: audit.audit_id,
       });
 
-      effects.event?.(jobId, "Refactor", "RUNNING");
+      effects.event?.(jobId, "Refactor", "Running");
       let plan = (await ctx.runNode(
         refactorNode,
         { job_id: jobId, research, audit },
         { runId: `${jobId}-refactor` },
       )).output as Plan;
       await save(effects, jobId, "plan.refactored", plan);
-      effects.event?.(jobId, "Refactor", "COMPLETE", {
-        result: "PASSED",
+      effects.event?.(jobId, "Refactor", "Completed", {
+        test_result: "Passed",
         artifact_id: plan.plan_id,
         message: `revision=${plan.revision}`,
       });
 
-      effects.event?.(jobId, "GapAnalysis", "RUNNING");
+      effects.event?.(jobId, "GapAnalysis", "Running");
       let gapOutput = (await ctx.runNode(
         gapNode,
         { job_id: jobId, research, plan },
@@ -232,39 +233,40 @@ export function createOneShotDynamicWorkflow(
       let gap = gapOutput.gap;
       await save(effects, jobId, "plan.gap", plan);
       await save(effects, jobId, "gap", gap);
-      effects.event?.(jobId, "GapAnalysis", "COMPLETE", {
-        result: gap.result,
+      effects.event?.(jobId, "GapAnalysis", "Completed", {
+        test_result: gap.result,
         artifact_id: plan.plan_id,
         message: `gap_0=${gap.gap_0}; revision=${plan.revision}`,
       });
-      if (gap.result === "ROOT_CAUSE") {
-        return { result: "ROOT_CAUSE", root_cause: gap.root_cause!, research, audit, plan, gap };
+      if (gap.result === "Failed") {
+        return { result: "Failed", issue_type: "Root Cause", root_cause: gap.root_cause!, research, audit, plan, gap };
       }
 
-      effects.event?.(jobId, "Evaluation", "RUNNING");
+      effects.event?.(jobId, "Evaluation", "Running");
       let evaluation = (await ctx.runNode(
         evaluationNode,
         { job_id: jobId, research, plan },
         { runId: `${jobId}-evaluation-0` },
       )).output as Evaluation;
       await save(effects, jobId, "evaluation", evaluation);
-      effects.event?.(jobId, "Evaluation", "COMPLETE", {
-        result: evaluation.result,
+      effects.event?.(jobId, "Evaluation", "Completed", {
+        test_result: evaluation.result,
         artifact_id: plan.plan_id,
       });
-      if (evaluation.result === "ROOT_CAUSE") {
-        return { result: "ROOT_CAUSE", root_cause: evaluation.root_cause!, research, audit, plan, gap, evaluation };
+      if (evaluation.result === "Failed") {
+        return { result: "Failed", issue_type: "Root Cause", root_cause: evaluation.root_cause!, research, audit, plan, gap, evaluation };
       }
 
-      effects.event?.(jobId, "TripleValidation", "RUNNING");
+      effects.event?.(jobId, "TripleValidation", "Running");
       let triple = (await ctx.runNode(
         tripleNode,
         { job_id: `${jobId}-proof-0`, research, plan },
         { runId: `${jobId}-triple-0` },
       )).output as TripleValidation;
       await save(effects, jobId, "triple-validation", triple);
-      effects.event?.(jobId, "TripleValidation", "COMPLETE", {
-        result: triple.all_valid ? "PASSED" : "NOT_VALID",
+      effects.event?.(jobId, "TripleValidation", "Completed", {
+        test_result: triple.all_valid ? "Passed" : "Failed",
+        ...(triple.all_valid ? {} : { issue_type: "Missing" }),
         artifact_id: triple.validation_id,
       });
 
@@ -285,7 +287,7 @@ export function createOneShotDynamicWorkflow(
             "Provide the missing information required to improve the same logical Plan without guessing",
             plan.plan_id,
           );
-          return { result: "ROOT_CAUSE", root_cause: cause, research, audit, plan, gap, evaluation, triple };
+          return { result: "Failed", issue_type: "Root Cause", root_cause: cause, research, audit, plan, gap, evaluation, triple };
         }
         if (seen.has(signature)) {
           const cause = rootCause(
@@ -296,12 +298,12 @@ export function createOneShotDynamicWorkflow(
             "Provide additional evidence for a new deterministic Plan improvement",
             plan.plan_id,
           );
-          return { result: "ROOT_CAUSE", root_cause: cause, research, audit, plan, gap, evaluation, triple };
+          return { result: "Failed", issue_type: "Root Cause", root_cause: cause, research, audit, plan, gap, evaluation, triple };
         }
         seen.add(signature);
 
         const beforeRevision = plan.revision;
-        effects.event?.(jobId, "GapAnalysis", "RUNNING", {
+        effects.event?.(jobId, "GapAnalysis", "Running", {
           message: `validation refinement=${refinement}`,
         });
         gapOutput = (await ctx.runNode(
@@ -318,13 +320,13 @@ export function createOneShotDynamicWorkflow(
         gap = gapOutput.gap;
         await save(effects, jobId, `plan.gap.${refinement}`, plan);
         await save(effects, jobId, `gap.${refinement}`, gap);
-        effects.event?.(jobId, "GapAnalysis", "COMPLETE", {
-          result: gap.result,
+        effects.event?.(jobId, "GapAnalysis", "Completed", {
+          test_result: gap.result,
           artifact_id: plan.plan_id,
           message: `validation refinement=${refinement}; revision=${plan.revision}`,
         });
-        if (gap.result === "ROOT_CAUSE") {
-          return { result: "ROOT_CAUSE", root_cause: gap.root_cause!, research, audit, plan, gap, evaluation, triple };
+        if (gap.result === "Failed") {
+          return { result: "Failed", issue_type: "Root Cause", root_cause: gap.root_cause!, research, audit, plan, gap, evaluation, triple };
         }
         if (plan.revision <= beforeRevision) {
           const cause = rootCause(
@@ -335,10 +337,10 @@ export function createOneShotDynamicWorkflow(
             "Provide a deterministic additive Plan improvement",
             plan.plan_id,
           );
-          return { result: "ROOT_CAUSE", root_cause: cause, research, audit, plan, gap, evaluation, triple };
+          return { result: "Failed", issue_type: "Root Cause", root_cause: cause, research, audit, plan, gap, evaluation, triple };
         }
 
-        effects.event?.(jobId, "Evaluation", "RUNNING", {
+        effects.event?.(jobId, "Evaluation", "Running", {
           message: `validation refinement=${refinement}`,
         });
         evaluation = (await ctx.runNode(
@@ -347,15 +349,15 @@ export function createOneShotDynamicWorkflow(
           { runId: `${jobId}-evaluation-refine-${refinement}` },
         )).output as Evaluation;
         await save(effects, jobId, `evaluation.${refinement}`, evaluation);
-        effects.event?.(jobId, "Evaluation", "COMPLETE", {
-          result: evaluation.result,
+        effects.event?.(jobId, "Evaluation", "Completed", {
+          test_result: evaluation.result,
           artifact_id: plan.plan_id,
         });
-        if (evaluation.result === "ROOT_CAUSE") {
-          return { result: "ROOT_CAUSE", root_cause: evaluation.root_cause!, research, audit, plan, gap, evaluation, triple };
+        if (evaluation.result === "Failed") {
+          return { result: "Failed", issue_type: "Root Cause", root_cause: evaluation.root_cause!, research, audit, plan, gap, evaluation, triple };
         }
 
-        effects.event?.(jobId, "TripleValidation", "RUNNING", {
+        effects.event?.(jobId, "TripleValidation", "Running", {
           message: `fresh proof after refinement=${refinement}`,
         });
         triple = (await ctx.runNode(
@@ -364,13 +366,14 @@ export function createOneShotDynamicWorkflow(
           { runId: `${jobId}-triple-${refinement}` },
         )).output as TripleValidation;
         await save(effects, jobId, `triple-validation.${refinement}`, triple);
-        effects.event?.(jobId, "TripleValidation", "COMPLETE", {
-          result: triple.all_valid ? "PASSED" : "NOT_VALID",
+        effects.event?.(jobId, "TripleValidation", "Completed", {
+          test_result: triple.all_valid ? "Passed" : "Failed",
+          ...(triple.all_valid ? {} : { issue_type: "Missing" }),
           artifact_id: triple.validation_id,
           message: `refinement=${refinement}`,
         });
 
-        if (refinement >= 32 && !triple.all_valid) {
+        if (refinement >= 3 && !triple.all_valid) {
           const cause = rootCause(
             "Validation refinement exceeded deterministic bound",
             "The same logical Plan converges to all VALID proofs",
@@ -379,64 +382,66 @@ export function createOneShotDynamicWorkflow(
             "Provide additional information required to resolve the remaining validation findings",
             plan.plan_id,
           );
-          return { result: "ROOT_CAUSE", root_cause: cause, research, audit, plan, gap, evaluation, triple };
+          return { result: "Failed", issue_type: "Root Cause", root_cause: cause, research, audit, plan, gap, evaluation, triple };
         }
       }
 
-      effects.event?.(jobId, "Confirmed", "RUNNING");
+      effects.event?.(jobId, "Confirmed", "Running");
       const confirmed = (await ctx.runNode(
         confirmationNode,
         { job_id: jobId, research, plan, audit, gap, evaluation, triple },
         { runId: `${jobId}-confirmed` },
       )).output as ConfirmedPackage;
       await save(effects, jobId, "confirmed", confirmed);
-      effects.event?.(jobId, "Confirmed", "COMPLETE", {
-        result: "PASSED",
+      effects.event?.(jobId, "Confirmed", "Completed", {
+        test_result: "Passed",
         artifact_id: plan.plan_id,
       });
 
-      effects.event?.(jobId, "CreateHash", "RUNNING");
+      effects.event?.(jobId, "CreateHash", "Running");
       const createdHash = (await ctx.runNode(
         createHashNode,
         { job_id: jobId, confirmed },
         { runId: `${jobId}-create-hash` },
       )).output as string;
       await save(effects, jobId, "confirmed-hash", { hash: createdHash });
-      effects.event?.(jobId, "CreateHash", "COMPLETE", {
-        result: "PASSED",
+      effects.event?.(jobId, "CreateHash", "Completed", {
+        test_result: "Passed",
         artifact_id: createdHash,
       });
 
-      effects.event?.(jobId, "Builder", "RUNNING");
+      effects.event?.(jobId, "Builder", "Running");
       const builder = (await ctx.runNode(
         builderNode,
         { job_id: jobId, confirmed, hash: createdHash },
         { runId: `${jobId}-builder` },
       )).output as SandboxExecutionResult;
       await save(effects, jobId, "builder-result", builder);
-      effects.event?.(jobId, "Builder", "COMPLETE", {
-        result: builder.result,
+      effects.event?.(jobId, "Builder", "Completed", {
+        test_result: builder.result,
         artifact_id: builder.execution_id,
       });
-      if (builder.result === "ROOT_CAUSE") {
-        return { result: "ROOT_CAUSE", root_cause: builder.root_cause, research, audit, plan, gap, evaluation, triple, builder };
+      if (builder.result === "Failed") {
+        return { result: "Failed", issue_type: "Root Cause", root_cause: builder.root_cause, research, audit, plan, gap, evaluation, triple, builder };
       }
 
-      effects.event?.(jobId, "Hash", "RUNNING");
+      effects.event?.(jobId, "Hash", "Running");
       const proof = (await ctx.runNode(
         verifyHashNode,
         { job_id: jobId, created_hash: createdHash, sandbox_hash: builder.hash_sandbox },
         { runId: `${jobId}-hash` },
       )).output as HashProof;
       await save(effects, jobId, "hash-proof", proof);
-      effects.event?.(jobId, "Hash", "COMPLETE", {
-        result: proof.equal ? "PASSED" : "ROOT_CAUSE",
+      effects.event?.(jobId, "Hash", "Completed", {
+        test_result: proof.equal ? "Passed" : "Failed",
+        ...(proof.equal ? {} : { issue_type: "Root Cause" }),
         artifact_id: proof.recomputed_hash,
         message: `equal=${proof.equal}`,
       });
       if (!proof.equal) {
         return {
-          result: "ROOT_CAUSE",
+          result: "Failed",
+          issue_type: "Root Cause",
           root_cause: rootCause(
             "Hash verification mismatch",
             proof.created_hash,
@@ -457,7 +462,7 @@ export function createOneShotDynamicWorkflow(
       }
 
       return {
-        result: "PASSED",
+        result: "Passed",
         research,
         audit,
         plan,

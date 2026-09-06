@@ -66,13 +66,14 @@ const CANONICAL_NAME: Record<
   confirmation: "Confirmed",
   hash: "CreateHash",
   build: "Builder",
+  finalize: "Finalize",
 };
 
 export function emitStage(
   ctx: PipelineContext,
   services: StageServices,
   stage: PipelineStage,
-  state: "RUNNING" | "COMPLETE",
+  state: "Running" | "Completed",
   extra: Parameters<ProcessingEventBus["emit"]>[3] = {},
 ): void {
   services.events.emit(
@@ -111,7 +112,7 @@ export async function runResearcherStage(
     "Gathering repository context",
   );
 
-  emitStage(ctx, services, "researcher", "RUNNING");
+  emitStage(ctx, services, "researcher", "Running");
 
   const prompt = await loadPrompt(ctx);
   const captured = await loadProvider(ctx);
@@ -148,8 +149,8 @@ export async function runResearcherStage(
     bundle.validation,
   );
 
-  emitStage(ctx, services, "researcher", "COMPLETE", {
-    result: "PASSED",
+  emitStage(ctx, services, "researcher", "Completed", {
+    test_result: "Passed",
     artifact_id: bundle.researcher.researcher_id,
   });
 
@@ -178,7 +179,7 @@ export async function runPlannerStage(
     "Reviewing Researcher evidence",
   );
 
-  emitStage(ctx, services, "planner", "RUNNING");
+  emitStage(ctx, services, "planner", "Running");
 
   const bundle = await loadResearchBundle(ctx);
   const audit = await services.planner.run(
@@ -188,8 +189,8 @@ export async function runPlannerStage(
 
   await services.saveArtifact(ctx, "audit", audit);
 
-  emitStage(ctx, services, "planner", "COMPLETE", {
-    result: "PASSED",
+  emitStage(ctx, services, "planner", "Completed", {
+    test_result: "Passed",
     artifact_id: audit.audit_id,
   });
 
@@ -217,7 +218,7 @@ export async function runRefactorStage(
     "Refining approved plan",
   );
 
-  emitStage(ctx, services, "refactor", "RUNNING");
+  emitStage(ctx, services, "refactor", "Running");
 
   const bundle = await loadResearchBundle(ctx);
   const audit = await loadAudit(ctx);
@@ -228,8 +229,8 @@ export async function runRefactorStage(
 
   await services.saveArtifact(ctx, "plan", plan);
 
-  emitStage(ctx, services, "refactor", "COMPLETE", {
-    result: "PASSED",
+  emitStage(ctx, services, "refactor", "Completed", {
+    test_result: "Passed",
     artifact_id: plan.plan_id,
   });
 
@@ -257,7 +258,7 @@ export async function runGapAnalysisStage(
     "Searching for missing requirements",
   );
 
-  emitStage(ctx, services, "gap-analysis", "RUNNING");
+  emitStage(ctx, services, "gap-analysis", "Running");
 
   const bundle = await loadResearchBundle(ctx);
   const plan = await loadPlan(ctx);
@@ -271,8 +272,9 @@ export async function runGapAnalysisStage(
     gap,
   );
 
-  emitStage(ctx, services, "gap-analysis", "COMPLETE", {
-    result: gap.result,
+  emitStage(ctx, services, "gap-analysis", "Completed", {
+    test_result: gap.result,
+    ...(gap.result === "Failed" ? { issue_type: gap.issue_type, issue: gap.root_cause } : {}),
     artifact_id: gap.plan_id,
   });
 
@@ -280,7 +282,7 @@ export async function runGapAnalysisStage(
     progress,
     "gap-analysis",
     100,
-    gap.result === "PASSED"
+    gap.result === "Passed"
       ? "No gaps detected"
       : `${gap.resolved_gaps.length} gap(s) analyzed`,
   );
@@ -302,7 +304,7 @@ export async function runEvaluationStage(
     "Evaluating final plan",
   );
 
-  emitStage(ctx, services, "evaluation", "RUNNING");
+  emitStage(ctx, services, "evaluation", "Running");
 
   const bundle = await loadResearchBundle(ctx);
   const plan = await loadPlan(ctx);
@@ -326,8 +328,9 @@ export async function runEvaluationStage(
     );
   }
 
-  emitStage(ctx, services, "evaluation", "COMPLETE", {
-    result: evaluation.result,
+  emitStage(ctx, services, "evaluation", "Completed", {
+    test_result: evaluation.result,
+    ...(evaluation.result === "Failed" ? { issue_type: evaluation.issue_type, issue: evaluation.root_cause } : {}),
     artifact_id: evaluation.plan_id,
   });
 
@@ -425,7 +428,7 @@ export async function runTripleValidationStage(
     "Starting schema validation",
   );
 
-  emitStage(ctx, services, "triple-validation", "RUNNING");
+  emitStage(ctx, services, "triple-validation", "Running");
 
   const bundle = await loadResearchBundle(ctx);
   const plan = await loadPlan(ctx);
@@ -459,9 +462,10 @@ export async function runTripleValidationStage(
     ctx,
     services,
     "triple-validation",
-    "COMPLETE",
+    "Completed",
     {
-      result: triple.all_valid ? "PASSED" : "ROOT_CAUSE",
+      test_result: triple.all_valid ? "Passed" : "Failed",
+      ...(triple.all_valid ? {} : { issue_type: "Missing" as const }),
       artifact_id: triple.validation_id,
     },
   );
@@ -492,7 +496,7 @@ export async function runConfirmationStage(
     "Confirming validated package",
   );
 
-  emitStage(ctx, services, "confirmation", "RUNNING");
+  emitStage(ctx, services, "confirmation", "Running");
 
   const bundle = await loadResearchBundle(ctx);
   const plan = await loadPlan(ctx);
@@ -516,8 +520,8 @@ export async function runConfirmationStage(
     confirmed,
   );
 
-  emitStage(ctx, services, "confirmation", "COMPLETE", {
-    result: "PASSED",
+  emitStage(ctx, services, "confirmation", "Completed", {
+    test_result: "Passed",
     artifact_id: confirmed.core.researcher.researcher_id,
   });
 
@@ -546,7 +550,7 @@ export async function runHashStage(
     "Creating canonical hash proof",
   );
 
-  emitStage(ctx, services, "hash", "RUNNING");
+  emitStage(ctx, services, "hash", "Running");
 
   const confirmed = await loadConfirmedPackage(ctx);
   const proof = await services.hash.run(confirmed);
@@ -557,8 +561,9 @@ export async function runHashStage(
     proof,
   );
 
-  emitStage(ctx, services, "hash", "COMPLETE", {
-    result: proof.equal ? "PASSED" : "ROOT_CAUSE",
+  emitStage(ctx, services, "hash", "Completed", {
+    test_result: proof.equal ? "Passed" : "Failed",
+    ...(proof.equal ? {} : { issue_type: "Root Cause" as const }),
     artifact_id: proof.created_hash,
   });
 
@@ -588,7 +593,7 @@ export async function runBuildStage(
     "Preparing verified build",
   );
 
-  emitStage(ctx, services, "build", "RUNNING");
+  emitStage(ctx, services, "build", "Running");
 
   const confirmed = await loadConfirmedPackage(ctx);
   const proof = await loadHashProof(ctx);
@@ -603,10 +608,11 @@ export async function runBuildStage(
     result,
   );
 
-  const passed = result.result === "PASSED";
+  const passed = result.result === "Passed";
 
-  emitStage(ctx, services, "build", "COMPLETE", {
-    result: passed ? "PASSED" : "ROOT_CAUSE",
+  emitStage(ctx, services, "build", "Completed", {
+    test_result: passed ? "Passed" : "Failed",
+    ...(passed ? {} : { issue_type: "Root Cause" as const, issue: "root_cause" in result ? result.root_cause : undefined }),
     artifact_id: proof.created_hash,
   });
 
@@ -617,5 +623,38 @@ export async function runBuildStage(
     passed
       ? "Build promoted successfully"
       : "Build failed",
+  );
+}
+
+/* ============================================================
+   FINALIZE
+   ============================================================ */
+
+/**
+ * Terminal stage. It carries no agent work: the semantic content (test
+ * result + issue) was checkpointed as a finalization intent before this
+ * stage was queued, and the terminal side effects run in the transition
+ * layer (services.finish) when the finalize stage's `done` transition
+ * commits.
+ */
+export async function runFinalizeStage(
+  ctx: PipelineContext,
+  services: StageServices,
+  progress: (value: StageProgress) => Promise<void> | void,
+): Promise<void> {
+  await reportProgress(
+    progress,
+    "finalize",
+    10,
+    "Finalizing workflow",
+  );
+
+  emitStage(ctx, services, "finalize", "Running");
+
+  await reportProgress(
+    progress,
+    "finalize",
+    100,
+    "Workflow finalized",
   );
 }

@@ -65,7 +65,8 @@ export async function confirmPlan({
     const plannerJobId = stageJobId(runId, "planner");
     await pipelineQueue.add(
       "planner",
-      { runId },
+      // Planner is a run-level stage; it always executes at iteration 0.
+      { version: 2, runId, stage: "planner", iteration: 0 },
       {
         jobId: plannerJobId,
         attempts: 3,

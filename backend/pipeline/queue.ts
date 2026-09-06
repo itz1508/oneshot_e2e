@@ -45,8 +45,9 @@ export const pipelineQueue = new Queue<
 export function stageJobId(
   runId: string,
   stage: PipelineStage,
+  iteration = 0,
 ): string {
-  return `${runId}-${stage}`;
+  return `v2-${runId}-${stage}-${iteration}`;
 }
 
 /**
@@ -56,17 +57,19 @@ export async function enqueueStage(
   runId: string,
   stage: PipelineStage,
   history?: PipelineHistory,
+  iteration = 0,
 ): Promise<string> {
   const job = await pipelineQueue.add(
     stage,
-    { runId },
-    { jobId: stageJobId(runId, stage) },
+    { version: 2, runId, stage, iteration },
+    { jobId: stageJobId(runId, stage, iteration) },
   );
-  const jobId = job.id ?? stageJobId(runId, stage);
+  const jobId = job.id ?? stageJobId(runId, stage, iteration);
   await history?.append({
     runId,
     stage,
     type: "queued",
+    iteration,
     jobId,
   });
   return jobId;

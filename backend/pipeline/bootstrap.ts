@@ -28,7 +28,7 @@ export function createAgentPipeline(input: AgentPipelineBootstrapInput): AgentPi
   const pipeline = new AgentPipeline(events);
 
   pipeline.register("Researcher", async (runId) => {
-    events.emit(runId, "ProviderBinding:Researcher", "RUNNING", {
+    events.emit(runId, "ProviderBinding:Researcher", "Running", {
       scope: "SUPPORT",
       message: "resolve and probe ResearchProvider",
     });
@@ -50,9 +50,9 @@ export function createAgentPipeline(input: AgentPipelineBootstrapInput): AgentPi
         });
       }
 
-      events.emit(runId, "ProviderBinding:Researcher", "COMPLETE", {
+      events.emit(runId, "ProviderBinding:Researcher", "Completed", {
         scope: "SUPPORT",
-        result: "PASSED",
+        test_result: "Passed",
         artifact_id: `provider:${readiness.provider}`,
         message: `models=${readiness.models.join(",") || "fixture"}`,
       });
@@ -65,9 +65,10 @@ export function createAgentPipeline(input: AgentPipelineBootstrapInput): AgentPi
       };
     } catch (error) {
       provider?.close?.();
-      events.emit(runId, "ProviderBinding:Researcher", "COMPLETE", {
+      events.emit(runId, "ProviderBinding:Researcher", "Completed", {
         scope: "SUPPORT",
-        result: "ROOT_CAUSE",
+        test_result: "Failed",
+        issue_type: "Root Cause",
         message: error instanceof Error ? error.message : String(error),
       });
       throw error;

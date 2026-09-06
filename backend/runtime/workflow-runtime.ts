@@ -74,7 +74,7 @@ export class WorkflowRuntime {
   private ev(
     runId: string,
     processor: string,
-    state: "PENDING" | "RUNNING" | "COMPLETE",
+    state: "Pending" | "Running" | "Completed" | "Failed",
     data: Parameters<ProcessingEventBus["emit"]>[3] = {},
   ): void {
     this.events.emit(runId, processor, state, data);
@@ -97,26 +97,30 @@ export class WorkflowRuntime {
     helpRequest?: HelpRequest,
   ): RunSnapshot {
     const current = this.runs.require(runId);
-    if (current.result) return current;
+    if (current.pipeline_status === "Done") return current;
 
     if (helpRequest) {
-      this.ev(runId, "HelpRequest", "RUNNING", { scope: "SUPPORT" });
-      this.ev(runId, "HelpRequest", "COMPLETE", {
+      this.ev(runId, "HelpRequest", "Running", { scope: "SUPPORT" });
+      this.ev(runId, "HelpRequest", "Completed", {
         scope: "SUPPORT",
-        result: "ROOT_CAUSE",
+        test_result: "Failed",
+        issue_type: "Root Cause",
+        issue: rootCause,
         artifact_id: helpRequest.request_id,
         message: helpRequest.question,
       });
     }
 
-    this.ev(runId, "Done", "RUNNING");
-    this.ev(runId, "Done", "COMPLETE", {
-      result: "ROOT_CAUSE",
+    this.ev(runId, "Done", "Running");
+    this.ev(runId, "Done", "Completed", {
+      test_result: "Failed",
+      issue_type: "Root Cause",
+      issue: rootCause,
       message: rootCause.actual,
     });
     return this.runs.finish(
       runId,
-      "ROOT_CAUSE",
+      "Failed",
       proof,
       rootCause,
       helpRequest,
@@ -125,14 +129,14 @@ export class WorkflowRuntime {
 
   private finishPassed(runId: string, proof: HashProof): RunSnapshot {
     const current = this.runs.require(runId);
-    if (current.result) return current;
+    if (current.pipeline_status === "Done") return current;
 
-    this.ev(runId, "Done", "RUNNING");
-    this.ev(runId, "Done", "COMPLETE", {
-      result: "PASSED",
+    this.ev(runId, "Done", "Running");
+    this.ev(runId, "Done", "Completed", {
+      test_result: "Passed",
       artifact_id: proof.created_hash,
     });
-    return this.runs.finish(runId, "PASSED", proof);
+    return this.runs.finish(runId, "Passed", proof);
   }
 
   /** Execute one complete canonical job through ADK Workflow + ctx.runNode(). */
@@ -153,7 +157,7 @@ export class WorkflowRuntime {
       "Hash",
       "Done",
     ];
-    for (const processor of order) this.ev(runId, processor, "PENDING");
+    for (const processor of order) this.ev(runId, processor, "Pending");
 
     let bound: BoundDynamicDependencies | undefined;
     try {
@@ -161,24 +165,15 @@ export class WorkflowRuntime {
       const rootAgent = createOneShotDynamicWorkflow(bound, {
         review: async (jobId, research) => {
           if (!await this.review.open(jobId, research)) return research;
-          this.ev(jobId, "PlanReview", "RUNNING", { scope: "SUPPORT", message: "Draft ready. Review and confirm before Planner continues." });
-          const reviewed = await this.review.wait(jobId, () => Boolean(this.runs.get(jobId)?.result));
+          this.ev(jobId, "PlanReview", "Running", { scope: "SUPPORT", message: "Draft ready. Review and confirm before Planner continues." });
+          const reviewed = await this.review.wait(jobId, () => this.runs.get(jobId)?.pipeline_status === "Done");
           await this.save(jobId, "plan.reviewed", reviewed.plan);
           await this.save(jobId, "research.reviewed", reviewed);
-          this.ev(jobId, "PlanReview", "COMPLETE", { scope: "SUPPORT", message: "Draft confirmed by the user." });
+          this.ev(jobId, "PlanReview", "Completed", { scope: "SUPPORT", message: "Draft confirmed by the user." });
           return reviewed;
         },
         event: (jobId, processor, state, data = {}) => {
           // Triple Validation is an internal validation gate, not a workflow
-          // completion result. Keep its public event vocabulary VALID/NOT_VALID.
-          if (
-            processor === "TripleValidation" &&
-            state === "COMPLETE" &&
-            data.result === "PASSED"
-          ) {
-            this.ev(jobId, processor, state, { ...data, result: "VALID" });
-            return;
-          }
           this.ev(jobId, processor, state, data);
         },
         save: (jobId, name, value) => this.save(jobId, name, value),
@@ -222,7 +217,7 @@ export class WorkflowRuntime {
           typeof adkEvent.output === "object"
         ) {
           const validation = adkEvent.output as {
-            result?: "VALID" | "NOT_VALID";
+            result?: "Passed" | "Failed";
             plan_id?: string;
           };
           const projectionKey = `${adkEvent.nodeInfo?.path ?? adkEvent.author}:${adkEvent.invocationId ?? ""}`;
@@ -231,11 +226,11 @@ export class WorkflowRuntime {
             !projectedValidatorRuns.has(projectionKey)
           ) {
             projectedValidatorRuns.add(projectionKey);
-            this.ev(runId, adkEvent.author, "RUNNING", {
+            this.ev(runId, adkEvent.author, "Running", {
               message: "ADK validator node response received",
             });
-            this.ev(runId, adkEvent.author, "COMPLETE", {
-              result: validation.result,
+            this.ev(runId, adkEvent.author, "Completed", {
+              test_result: validation.result,
               artifact_id: validation.plan_id,
             });
           }
@@ -249,7 +244,7 @@ export class WorkflowRuntime {
       if (!terminal) {
         throw new Error("ADK dynamic Workflow completed without terminal output");
       }
-      if (terminal.result === "PASSED") {
+      if (terminal.result === "Passed") {
         return this.finishPassed(runId, terminal.hash_proof);
       }
       return this.finishRoot(
@@ -259,7 +254,7 @@ export class WorkflowRuntime {
       );
     } catch (error) {
       const current = this.runs.require(runId);
-      if (current.result) return current;
+      if (current.pipeline_status === "Done") return current;
       const underlying = unwrapAdkError(error);
       return this.finishRoot(
         runId,

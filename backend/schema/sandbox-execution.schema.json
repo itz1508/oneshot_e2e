@@ -1,5 +1,5 @@
 {
-  "$id": "urn:oneshot:schema:sandbox-execution:1",
+  "$id": "urn:oneshot:schema:sandbox-execution:2",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "SandboxExecutionInput",
   "type": "object",
@@ -7,7 +7,7 @@
   "required": ["confirmed_package", "hash"],
   "properties": {
     "confirmed_package": {
-      "$ref": "urn:oneshot:schema:confirmed-package:1"
+      "$ref": "urn:oneshot:schema:confirmed-package:2"
     },
     "hash": {
       "type": "string",

@@ -13,6 +13,6 @@ export function evaluatePlan(bundle:ResearchBundle,plan:Plan):Evaluation{
   const fixtureIds=new Set(bundle.fixture.plan_assertions.map(a=>a.assertion_id));add("fixture traceability",bundle.validation.fixture_validation.assertion_ids.every(x=>fixtureIds.has(x))&&!gaps.some(g=>g.affected_branch==="fixture"),"Routed fixture assertions exist and map to plan");
   add("schema traceability",bundle.schema_artifact.target==="plan"&&!gaps.some(g=>g.affected_branch==="schema"),"Researcher schema targets plan and is referenced");
   add("execution meaning",plan.steps.length>0&&plan.steps.every(s=>s.responsibility.trim().length>0),"Every plan step names an execution responsibility");
-  if(!failed.length)return {plan_id:plan.plan_id,result:"PASSED",evidence:entries};
-  return {plan_id:plan.plan_id,result:"ROOT_CAUSE",evidence:entries,root_cause:{issue:"Evaluation found incomplete canonical evidence areas",expected:EVALUATION_AREAS.join(", "),actual:failed.join(", "),evidence_ids:evidenceIds,required_correction:"Correct the failed Evaluation areas",recheck_target:plan.plan_id}};
+  if(!failed.length)return {plan_id:plan.plan_id,result:"Passed",evidence:entries};
+  return {plan_id:plan.plan_id,result:"Failed",issue_type:"Root Cause",evidence:entries,root_cause:{issue:"Evaluation found incomplete canonical evidence areas",expected:EVALUATION_AREAS.join(", "),actual:failed.join(", "),evidence_ids:evidenceIds,required_correction:"Correct the failed Evaluation areas",recheck_target:plan.plan_id}};
 }

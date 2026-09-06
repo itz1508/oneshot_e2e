@@ -41,7 +41,8 @@ test("runtime ROOT CAUSE preserves targeted help request without recovery loop",
   const runId = "run:need-help";
   h.runs.create(runId);
   const out = await h.runtime.run(runId, prompt(runId));
-  assert.equal(out.result, "ROOT_CAUSE");
+  assert.equal(out.test_result, "Failed");
+  assert.equal(out.issue_type, "Root Cause");
   assert.equal(out.help_request?.request_id, "help:test");
   assert.equal(out.help_request?.source_processor, "Researcher");
   assert.ok(
@@ -49,11 +50,12 @@ test("runtime ROOT CAUSE preserves targeted help request without recovery loop",
       (e) =>
         e.scope === "SUPPORT" &&
         e.processor === "HelpRequest" &&
-        e.result === "ROOT_CAUSE",
+        e.test_result === "Failed" &&
+        e.issue_type === "Root Cause",
     ),
   );
   assert.equal(
-    out.events.filter((e) => e.processor === "Researcher" && e.state === "RUNNING")
+    out.events.filter((e) => e.processor === "Researcher" && e.execution_status === "Running")
       .length,
     1,
   );

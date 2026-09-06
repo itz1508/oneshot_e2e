@@ -42,6 +42,9 @@ services:
       ONESHOT_MODE: sample
       PYTHON_REASONER_URL: http://reasoner:8000
       ONESHOT_INTERNAL_TOKEN: local-development-secret
+      ONESHOT_RUNTIME_DIR: /app/.runtime
+    volumes:
+      - oneshot_runtime:/app/.runtime
     depends_on:
       redis:
         condition: service_healthy
@@ -61,6 +64,9 @@ services:
       ONESHOT_MODE: sample
       PYTHON_REASONER_URL: http://reasoner:8000
       ONESHOT_INTERNAL_TOKEN: local-development-secret
+      ONESHOT_RUNTIME_DIR: /app/.runtime
+    volumes:
+      - oneshot_runtime:/app/.runtime
     depends_on:
       - redis
       - reasoner
@@ -79,3 +85,4 @@ services:
 
 volumes:
   oneshot_redis_data:
+  oneshot_runtime:

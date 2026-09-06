@@ -23,8 +23,8 @@ def validate_references(core:dict)->list[str]:
     eq('schema validation plan',t['schema_validation']['plan_id'],p['plan_id']);eq('schema validation id',t['schema_validation']['schema_id'],s['schema_id'])
     eq('fixture validation plan',t['fixture_validation']['plan_id'],p['plan_id']);eq('fixture validation id',t['fixture_validation']['fixture_id'],f['fixture_id'])
     eq('goal validation plan',t['goal_validation']['plan_id'],p['plan_id']);eq('goal validation id',t['goal_validation']['goal_id'],g['goal_id'])
-    expected=all(t[k]['result']=='VALID' for k in ['schema_validation','fixture_validation','goal_validation']);eq('triple.all_valid',t['all_valid'],expected)
+    expected=all(t[k]['result']=='Passed' for k in ['schema_validation','fixture_validation','goal_validation']);eq('triple.all_valid',t['all_valid'],expected)
     if not ga['gap_0']:e.append('gap_0 is not true')
-    if ev['result']!='PASSED':e.append('evaluation is not PASSED')
+    if ev['result']!='Passed':e.append('evaluation is not PASSED')
     if not expected:e.append('triple validation is not all VALID')
     return e
