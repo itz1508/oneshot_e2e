@@ -5,6 +5,7 @@ export type PipelineHistoryEventType =
   | "started"
   | "completed"
   | "failed"
+  | "skipped"
   | "waiting"
   | "confirmed"
   | "retrying";

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reasoning-request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "task",
+    "goal",
+    "evidence",
+    "constraints"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task": {
+      "type": "string",
+      "enum": [
+        "researcher",
+        "planner",
+        "gap-analysis",
+        "evaluation",
+        "critic"
+      ]
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "content",
+          "confidence"
+        ],
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "plan": {
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  }
+}

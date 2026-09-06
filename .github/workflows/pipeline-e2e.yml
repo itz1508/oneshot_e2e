@@ -1,0 +1,201 @@
+name: Pipeline E2E
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  pipeline-happy-path:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 20
+
+    env:
+      REDIS_URL: redis://127.0.0.1:6379
+      ONESHOT_MODE: sample
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build backend
+        run: npm run build:backend
+
+      - name: Build tests
+        run: npm run build:test
+
+      - name: Build application
+        run: npm run build
+
+      - name: Start OneShot server
+        run: |
+          npm start > /tmp/oneshot.log 2>&1 &
+          echo $! > /tmp/oneshot.pid
+
+      - name: Start OneShot worker
+        run: |
+          node dist/backend/scripts/run-pipeline-worker.js > /tmp/oneshot-worker.log 2>&1 &
+          echo $! > /tmp/oneshot-worker.pid
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8787/api/health; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/oneshot.log
+          cat /tmp/oneshot-worker.log
+          exit 1
+
+      - name: Happy-path pipeline
+        run: npm run test:pipeline:e2e
+
+      - name: Print server logs on failure
+        if: failure()
+        run: |
+          cat /tmp/oneshot.log || true
+          cat /tmp/oneshot-worker.log || true
+
+  pipeline-planner-retry:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 20
+
+    env:
+      REDIS_URL: redis://127.0.0.1:6379
+      ONESHOT_MODE: sample
+      PIPELINE_FAULTS_ENABLED: "true"
+      PIPELINE_FAULT_STAGE: planner
+      PIPELINE_FAULT_MODE: fail-once
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build:backend
+
+      - name: Start server
+        run: |
+          npm start > /tmp/oneshot.log 2>&1 &
+          echo $! > /tmp/oneshot.pid
+
+      - name: Start worker
+        run: |
+          node dist/backend/scripts/run-pipeline-worker.js > /tmp/oneshot-worker.log 2>&1 &
+          echo $! > /tmp/oneshot-worker.pid
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:8787/api/health && exit 0
+            sleep 1
+          done
+          cat /tmp/oneshot.log
+          cat /tmp/oneshot-worker.log
+          exit 1
+
+      - name: Verify retry
+        run: npm run test:pipeline:e2e
+
+      - if: failure()
+        run: |
+          cat /tmp/oneshot.log || true
+          cat /tmp/oneshot-worker.log || true
+
+  pipeline-validation-block:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 20
+
+    env:
+      REDIS_URL: redis://127.0.0.1:6379
+      ONESHOT_MODE: sample
+      PIPELINE_FAULTS_ENABLED: "true"
+      PIPELINE_FAULT_STAGE: triple-validation
+      PIPELINE_FAULT_MODE: fail-always
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build:backend
+
+      - name: Start server
+        run: |
+          npm start > /tmp/oneshot.log 2>&1 &
+          echo $! > /tmp/oneshot.pid
+
+      - name: Start worker
+        run: |
+          node dist/backend/scripts/run-pipeline-worker.js > /tmp/oneshot-worker.log 2>&1 &
+          echo $! > /tmp/oneshot-worker.pid
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:8787/api/health && exit 0
+            sleep 1
+          done
+          cat /tmp/oneshot.log
+          cat /tmp/oneshot-worker.log
+          exit 1
+
+      - name: Verify build blocking
+        run: npm run test:pipeline:e2e
+
+      - if: failure()
+        run: |
+          cat /tmp/oneshot.log || true
+          cat /tmp/oneshot-worker.log || true

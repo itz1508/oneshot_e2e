@@ -27,5 +27,36 @@ services:
       retries: 20
       start_period: 2s
 
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: oneshot-server
+    command:
+      - node
+      - dist/backend/index.js
+    ports:
+      - "8787:8787"
+    environment:
+      REDIS_URL: redis://redis:6379
+      ONESHOT_MODE: sample
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: oneshot-worker
+    command:
+      - node
+      - dist/backend/scripts/run-pipeline-worker.js
+    environment:
+      REDIS_URL: redis://redis:6379
+      ONESHOT_MODE: sample
+    depends_on:
+      - redis
+
 volumes:
   oneshot_redis_data:

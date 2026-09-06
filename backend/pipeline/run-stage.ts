@@ -30,7 +30,7 @@ export async function runStage<T>(
     await history.append({
       runId,
       stage,
-      type: "completed",
+      type: "skipped",
       message: "Stage already completed; duplicate execution skipped.",
       jobId: String(job.id),
       attempt: job.attemptsMade + 1,
@@ -50,9 +50,9 @@ export async function runStage<T>(
       await history.append({
         runId,
         stage,
-        type: "completed",
+        type: "skipped",
         message:
-          "Stage completed by another worker; duplicate execution skipped.",
+          "Stage completed by another worker; duplicate execution suppressed.",
         jobId: String(job.id),
         attempt: job.attemptsMade + 1,
       });

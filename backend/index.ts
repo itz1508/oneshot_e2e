@@ -221,15 +221,26 @@ let pipelineQueueEvents: QueueEvents | undefined;
 const pipelineHistory = new PipelineHistory(getSharedRedis());
 
 if (pipelineReady) {
-  pipelineWorker = createPipelineWorker({
-    runs,
-    store: artifactStore,
-    services: stageServices,
-    redis: getSharedRedis(),
-    history: pipelineHistory,
-    concurrency: Number(process.env.ONESHOT_RUN_CONCURRENCY || 1),
-  });
   pipelineQueueEvents = createPipelineQueueEvents({ events });
+
+  /*
+   * Production runs the BullMQ worker in a separate process so a stage crash
+   * cannot take down the HTTP API. Set ONESHOT_START_WORKER=true to run the
+   * worker inline (useful for local development without a second terminal).
+   */
+  if (process.env.ONESHOT_START_WORKER === "true") {
+    pipelineWorker = createPipelineWorker({
+      runs,
+      store: artifactStore,
+      services: stageServices,
+      redis: getSharedRedis(),
+      history: pipelineHistory,
+      concurrency: Number(process.env.ONESHOT_RUN_CONCURRENCY || 1),
+    });
+    console.log(
+      "[OneShot] Pipeline worker started inline (ONESHOT_START_WORKER=true)",
+    );
+  }
 }
 
 // --- Legacy single-queue BullMQ runtime (fallback when pipeline Redis down) ---

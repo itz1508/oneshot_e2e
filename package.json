@@ -27,10 +27,12 @@
     "redis:up": "docker compose -f docker-compose.dev.yml up -d redis",
     "redis:down": "docker compose -f docker-compose.dev.yml down",
     "redis:logs": "docker compose -f docker-compose.dev.yml logs -f redis",
+    "start:worker": "node dist/backend/scripts/run-pipeline-worker.js",
     "test:pipeline:e2e": "node backend/scripts/test-pipeline-e2e.mjs"
   },
   "dependencies": {
     "@google/adk": "2.0.0",
+    "ajv": "^8.20.0",
     "bullmq": "^6.3.4",
     "ioredis": "^6.0.0",
     "jwt-decode": "^4.0.0",
