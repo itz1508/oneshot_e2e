@@ -13,7 +13,6 @@ import { AnthropicModelProvider } from "./provider/anthropic/provider.js";
 import type { ProcessingEventBus } from "../../../backend/runtime/event-bus.js";
 import { ProviderManager } from "./provider-manager.js";
 import { getRuntimePaths } from "../../../backend/runtime/runtime-config.js";
-import { AdkGemmaResearchProvider } from "./provider/adk-gemma2/provider.js";
 import { FeatherlessResearchProvider } from "./provider/featherless/provider.js";
 
 function resolveSeedFixture(projectRoot: string): string {
@@ -82,11 +81,6 @@ export async function resolveResearchProvider(
 
   if (!selected) return new MissingProductionResearchProvider();
 
-  if (selected === "adk_gemma2" || selected === "google_adk_gemma2") {
-    const provider = new AdkGemmaResearchProvider(projectRoot);
-    if (events) provider.attachEvents(events);
-    return provider;
-  }
   if (selected === "featherless" || selected === "featherless_gemma4") {
     const provider = new FeatherlessResearchProvider(projectRoot);
     if (events) provider.attachEvents(events);

@@ -90,6 +90,5 @@ test("public name resolution does not leak implementation class names", async ()
     assert.ok(!name.includes("ResearchProvider"), `name "${name}" should not include "ResearchProvider"`);
     assert.ok(!name.includes("ModelProvider"), `name "${name}" should not include "ModelProvider"`);
     assert.ok(!name.includes("Featherless"), `name "${name}" should not include "Featherless"`);
-    assert.ok(!name.includes("AdkGemma"), `name "${name}" should not include "AdkGemma"`);
   }
 });

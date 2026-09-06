@@ -8,7 +8,6 @@ import { startHttpServer } from "../../server/http-server.js";
 import { ProviderManager } from "../../../app/web/cloud/provider-manager.js";
 import { LocalFileSecretStore } from "../../../app/web/cloud/provider-secret-store.js";
 import { FileProviderRuntimeConfigStore } from "../../../app/web/cloud/provider-runtime-config.js";
-import { AdkGemmaResearchProvider } from "../../../app/web/cloud/provider/adk-gemma2/provider.js";
 import { ProcessingEventBus } from "../../runtime/event-bus.js";
 import { RunRepository } from "../../runtime/run-repository.js";
 import { ConversationStore } from "../../intent/conversation-store.js";
@@ -48,7 +47,7 @@ test("production API: setup, all public provider names, write-only keys, activat
     assert.equal((await postJson(base + "/api/runs", { intent: "test" })).status, 409);
     const list = await get("/api/providers");
     assert.deepEqual(list.providers.map((p: any) => p.displayName).sort(), ["Anthropic", "Gemini", "OpenAI"]);
-    for (const id of ["sample", "featherless", "adk_gemma2", "google"]) {
+    for (const id of ["sample", "featherless", "google"]) {
       assert.equal((await fetch(base + "/api/providers/" + id, { headers: AUTH })).status, 404);
     }
     for (const [id, name] of [["openai", "OpenAI"], ["anthropic", "Anthropic"], ["gemini", "Gemini"]]) {

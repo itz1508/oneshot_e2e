@@ -6,6 +6,7 @@ export interface GeminiConfig {
   apiKey?: string;
   temperature?: number;
   baseUrl?: string;
+  model?: string;
   distributionModel: string;
   researchModel: string;
   synthesisModel: string;

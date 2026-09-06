@@ -29,17 +29,19 @@ export function loadGeminiConfig(projectRoot: string, model?: string): GeminiCon
     ? resolve(projectRoot, process.env.ONESHOT_GEMINI_TEST_DRAFT_FILE)
     : undefined;
 
+  const dynamicModel = (model || configuredModel("GEMINI_MODEL") || "").trim();
+
   const distributionModel =
-    model || configuredModel("GEMINI_DISTRIBUTION_MODEL") ||
+    dynamicModel || configuredModel("GEMINI_DISTRIBUTION_MODEL") ||
     (testDraftFile ? "test-distribution" : "");
   const researchModel =
-    model || configuredModel("GEMINI_RESEARCH_MODEL") ||
+    dynamicModel || configuredModel("GEMINI_RESEARCH_MODEL") ||
     (testDraftFile ? "test-research" : "");
   const synthesisModel =
-    model || configuredModel("GEMINI_SYNTHESIS_MODEL") ||
+    dynamicModel || configuredModel("GEMINI_SYNTHESIS_MODEL") ||
     (testDraftFile ? "test-synthesis" : "");
 
-  if (!testDraftFile) {
+  if (!testDraftFile && !dynamicModel) {
     const missing = [
       ["GEMINI_DISTRIBUTION_MODEL", distributionModel],
       ["GEMINI_RESEARCH_MODEL", researchModel],
@@ -49,10 +51,10 @@ export function loadGeminiConfig(projectRoot: string, model?: string): GeminiCon
       .map(([name]) => name);
     if (missing.length) {
       throw new Error(
-        `Gemini Researcher pipeline is not bound: missing ${missing.join(", ")}`,
+        `Gemini Researcher pipeline is not bound: missing ${missing.join(", ")} or GEMINI_MODEL`,
       );
     }
-    if (!model && new Set([distributionModel, researchModel, synthesisModel]).size !== 3) {
+    if (new Set([distributionModel, researchModel, synthesisModel]).size !== 3) {
       throw new Error(
         "Gemini Researcher pipeline requires three distinct model bindings: distribution, research, synthesis",
       );
@@ -60,6 +62,7 @@ export function loadGeminiConfig(projectRoot: string, model?: string): GeminiCon
   }
 
   return {
+    model: dynamicModel || synthesisModel,
     distributionModel,
     researchModel,
     synthesisModel,
@@ -167,13 +170,15 @@ export class GeminiModelProvider implements ResearchProvider {
       this.config.researchModel,
       this.config.synthesisModel,
     ];
+    const uniqueModels = Array.from(new Set(models.filter(Boolean)));
+    const modelTag = uniqueModels.length === 1 ? uniqueModels[0] : models.join("->");
     return await structuredDraftToResearchBundle({
       projectRoot: this.projectRoot,
       prompt,
       runId,
       draft: d,
       gathered,
-      providerSource: `gemini-pipeline:${models.join("->")}`,
+      providerSource: `gemini-pipeline:${modelTag}`,
       providerProvenance: this.config.useVertexAi
         ? "vertex-ai-native-gemini"
         : "gemini-api-native",

@@ -6,8 +6,8 @@ set -euo pipefail
 : "${SERVICE:=oneshot}"
 : "${RUNTIME_SA_NAME:=oneshot-runtime}"
 : "${SECRET_NAME:=oneshot-api-token}"
-: "${ONESHOT_RESEARCH_PROVIDER:=adk_gemma2}"
-: "${COMPLIANCE_PROVIDER_PATH:=app/web/cloud/provider/adk-gemma2/worker.py}"
+: "${ONESHOT_RESEARCH_PROVIDER:=gemini}"
+: "${COMPLIANCE_PROVIDER_PATH:=app/web/cloud/provider/gemini/provider.ts}"
 
 command -v gcloud >/dev/null || { echo "ROOT_CAUSE: gcloud not installed"; exit 10; }
 command -v grep >/dev/null || { echo "ROOT_CAUSE: grep not installed"; exit 11; }

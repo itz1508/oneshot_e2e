@@ -13,35 +13,45 @@ You are an autonomous setup agent.
 
 # Installation
 
----
+<details open>
+<summary>🖥️ Windows</summary>
 
-🖥️ Windows
+### Quick Start (All-In-One)
+
+- **Source Repository**: [github.com/itz1508/oneshot_e2e](https://github.com/itz1508/oneshot_e2e)
+- **Direct Download**: [main.zip (Source Archive)](https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip)
 
 ```powershell
-# Step 1: Clone
+# Step 1: Clone (or extract the downloaded ZIP)
 git clone https://github.com/itz1508/oneshot_e2e.git oneshot
 cd oneshot
 
-# Step 2: Check Requirements
-node --version
-npm --version
-python --version
+# Step 2: Install, Build, Verify & Launch (Single Command)
+powershell -ExecutionPolicy Bypass -File .\scripts\install-e2e.ps1
+```
 
-# Step 3: Install
-npm ci
-npm --prefix app/web ci
-python -m venv .venv
-.venv\Scripts\Activate
-python -m pip install -r app/requirements/base.txt -r app/requirements/workspace-api.txt
+#### Expected Hash & Verification Success Output:
+```text
+[1/5] Checking prerequisites (Node.js, npm, Python)... OK
+[2/5] Installing dependencies (Node.js & Python)... OK
+[3/5] Building project (TypeScript backend & React Web IDE)... OK
+[4/5] Running canonical verification suite...
+      Checking repository manifest SHA-256 integrity...
+      Manifest verified: MANIFEST_VERIFIED.
+      Running test matrix and contracts...
+      Verification passed: ONESHOT_PRODUCTION_E2E_VERIFIED.
+      Verifying canonical cryptographic workflow hash proof...
+      Cryptographic Hash: 6dd464dc06edcc0b4cdb9985df3a7c4d5140de1098d0bba85baaba4fe01952ca (equal=True)
 
-# Step 4: Build
-npm run build
-
-# Step 5: Verify
-npm run verify
-
-# Step 6: Launch
-npm start
+============================================================
+ ONESHOT_INSTALL_E2E = PASSED
+ CANONICAL_HASH      = 6dd464dc06edcc0b4cdb9985df3a7c4d5140de1098d0bba85baaba4fe01952ca
+ HASH_PROOF_EQUAL    = true (SHA-256 / RFC 8785 JCS)
+ MANIFEST_STATUS     = MANIFEST_VERIFIED
+ TEST_SUITE          = ONESHOT_PRODUCTION_E2E_VERIFIED
+ URL                 = http://localhost:8787
+ STATUS              = READY
+============================================================
 ```
 
 </details>
@@ -49,31 +59,42 @@ npm start
 <details>
 <summary>🐧 Linux/macOS</summary>
 
+### Quick Start (All-In-One)
+
+- **Source Repository**: [github.com/itz1508/oneshot_e2e](https://github.com/itz1508/oneshot_e2e)
+- **Direct Download**: [main.zip (Source Archive)](https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip)
+
 ```bash
-# Step 1: Clone
+# Step 1: Clone (or extract the downloaded ZIP)
 git clone https://github.com/itz1508/oneshot_e2e.git oneshot
 cd oneshot
 
-# Step 2: Check Requirements
-node --version
-npm --version
-python3 --version
+# Step 2: Install, Build, Verify & Launch (Single Command)
+chmod +x ./scripts/install-e2e.sh && ./scripts/install-e2e.sh
+```
 
-# Step 3: Install
-npm ci
-npm --prefix app/web ci
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r app/requirements/base.txt -r app/requirements/workspace-api.txt
+#### Expected Hash & Verification Success Output:
+```text
+[1/5] Checking prerequisites (Node.js, npm, Python)... OK
+[2/5] Installing dependencies (Node.js & Python)... OK
+[3/5] Building project (TypeScript backend & React Web IDE)... OK
+[4/5] Running canonical verification suite...
+      Checking repository manifest SHA-256 integrity...
+      Manifest verified: MANIFEST_VERIFIED.
+      Running test matrix and contracts...
+      Verification passed: ONESHOT_PRODUCTION_E2E_VERIFIED.
+      Verifying canonical cryptographic workflow hash proof...
+      Cryptographic Hash: 6dd464dc06edcc0b4cdb9985df3a7c4d5140de1098d0bba85baaba4fe01952ca (equal=true)
 
-# Step 4: Build
-npm run build
-
-# Step 5: Verify
-npm run verify
-
-# Step 6: Launch
-npm start
+============================================================
+ ONESHOT_INSTALL_E2E = PASSED
+ CANONICAL_HASH      = 6dd464dc06edcc0b4cdb9985df3a7c4d5140de1098d0bba85baaba4fe01952ca
+ HASH_PROOF_EQUAL    = true (SHA-256 / RFC 8785 JCS)
+ MANIFEST_STATUS     = MANIFEST_VERIFIED
+ TEST_SUITE          = ONESHOT_PRODUCTION_E2E_VERIFIED
+ URL                 = http://localhost:8787
+ STATUS              = READY
+============================================================
 ```
 
 </details>
@@ -81,23 +102,39 @@ npm start
 <details>
 <summary>🐳 Docker</summary>
 
+### Quick Start (All-In-One)
+
+- **Source Repository**: [github.com/itz1508/oneshot_e2e](https://github.com/itz1508/oneshot_e2e)
+- **Direct Download**: [main.zip (Source Archive)](https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip)
+
 ```bash
-# Step 1: Clone
+# Step 1: Clone (or extract the downloaded ZIP)
 git clone https://github.com/itz1508/oneshot_e2e.git oneshot
 cd oneshot
 
-# Step 2: Check Requirements
-docker --version
-docker-compose --version
+# Step 2: Build, Verify & Launch (Single Command)
+# On Windows PowerShell:
+powershell -ExecutionPolicy Bypass -File .\scripts\install-e2e.ps1 -Docker
 
-# Step 3: Install
-docker build -t oneshot:local .
+# On Linux / macOS:
+chmod +x ./scripts/install-e2e.sh && ./scripts/install-e2e.sh --docker
+```
 
-# Step 4: Verify
-docker run --rm oneshot:local node dist/backend/index.js --health
+#### Expected Hash & Verification Success Output:
+```text
+[1/4] Checking Docker daemon... OK
+[2/4] Building Docker container image (oneshot:local)... OK
+[3/4] Launching container and verifying health...
+      Health check PASSED: mode=sample, provider=<default>
+      Auth gate check PASSED (401 on unauthenticated access).
+      Web UI check PASSED (200 OK).
 
-# Step 5: Launch
-docker run -p 8787:8787 oneshot:local
+============================================================
+ ONESHOT_INSTALL_E2E = PASSED
+ URL       = http://localhost:8787
+ MODE      = sample
+ CONTAINER = oneshot-local
+============================================================
 ```
 
 </details>

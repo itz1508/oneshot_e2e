@@ -2,7 +2,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$ProjectId,
 
-    [string]$ResearchProvider = "adk_gemma2",
+    [string]$ResearchProvider = "gemini",
 
     [int]$Port = 8787
 )

@@ -13,8 +13,6 @@ def requirement_files(provider: str | None = None) -> list[Path]:
         if provider is not None
         else os.getenv("ONESHOT_RESEARCH_PROVIDER", "")
     ).lower()
-    if selected in {"adk_gemma2", "google_adk_gemma2"}:
-        files.append(ROOT / "app/requirements" / "adk.txt")
     if selected in {"featherless", "featherless_gemma4"}:
         files.append(ROOT / "app/requirements" / "featherless.txt")
     if os.getenv("ONESHOT_WORKSPACE_API", "").lower() == "true":
@@ -88,7 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--profile",
-        choices=("base", "adk", "featherless", "workspace", "all"),
+        choices=("base", "featherless", "workspace", "all"),
         default="base",
     )
     args = parser.parse_args(argv)
@@ -96,8 +94,6 @@ def main(argv: list[str] | None = None) -> int:
     errors = []
     if args.profile in ("base", "all"):
         errors.extend(pins(ROOT / "app/requirements" / "base.txt", True))
-    if args.profile in ("adk", "all"):
-        errors.extend(pins(ROOT / "app/requirements" / "adk.txt", True))
     if args.profile in ("featherless", "all"):
         errors.extend(pins(ROOT / "app/requirements" / "featherless.txt", True))
     if args.profile in ("workspace", "all"):

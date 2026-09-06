@@ -12,7 +12,7 @@ Researcher owns evidence collection, provenance, consolidation, and the canonica
 
 ## Provider integration
 
-Production supports the configured Researcher provider, including Featherless and the Google ADK + native Gemini pipeline. The compatibility provider identifier `adk_gemma2` remains accepted for the Google ADK pipeline.
+Production supports the configured Researcher provider, including Featherless and native Gemini.
 
 Examples:
 
@@ -25,7 +25,7 @@ or:
 
 ```text
 ONESHOT_MODE=production
-ONESHOT_RESEARCH_PROVIDER=adk_gemma2
+ONESHOT_RESEARCH_PROVIDER=gemini
 ```
 
 ## Tavily evidence acquisition

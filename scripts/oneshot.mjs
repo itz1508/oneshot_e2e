@@ -286,16 +286,13 @@ pass(
 
 const mode = (process.env.ONESHOT_MODE || "sample").toLowerCase();
 const providerKey = (
-  process.env.ONESHOT_RESEARCH_PROVIDER ||
-  (mode === "sample" ? "" : "adk_gemma2")
+  process.env.ONESHOT_RESEARCH_PROVIDER || ""
 ).toLowerCase();
 const profiles = [
   ["base", "app/requirements/base.txt"],
   ["workspace", "app/requirements/workspace-api.txt"],
 ];
-if (["adk_gemma2", "google_adk_gemma2"].includes(providerKey)) {
-  profiles.push(["adk", "app/requirements/adk.txt"]);
-} else if (["featherless", "featherless_gemma4"].includes(providerKey)) {
+if (["featherless", "featherless_gemma4"].includes(providerKey)) {
   profiles.push(["featherless", "app/requirements/featherless.txt"]);
 }
 for (const [profile, requirementsFile] of profiles) {

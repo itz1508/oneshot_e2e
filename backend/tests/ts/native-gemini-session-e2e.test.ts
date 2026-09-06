@@ -114,12 +114,10 @@ test(
     assert.ok(requiredModels.every(Boolean), "three live Gemini model bindings are required");
     assert.equal(new Set(requiredModels).size, 3, "live Gemini bindings must be distinct");
 
-    const savedDraft = process.env.ONESHOT_ADK_TEST_DRAFT_FILE;
     const savedMode = process.env.ONESHOT_MODE;
     const savedProvider = process.env.ONESHOT_RESEARCH_PROVIDER;
-    delete process.env.ONESHOT_ADK_TEST_DRAFT_FILE;
     process.env.ONESHOT_MODE = "production";
-    process.env.ONESHOT_RESEARCH_PROVIDER = "adk_gemma2";
+    process.env.ONESHOT_RESEARCH_PROVIDER = "gemini";
 
     const innerProvider = await resolveResearchProvider(process.cwd());
     const provider = new CapturingResearchProvider(innerProvider);
@@ -289,8 +287,6 @@ test(
         server.close((error) => (error ? fail(error) : ok())),
       );
       h.close();
-      if (savedDraft === undefined) delete process.env.ONESHOT_ADK_TEST_DRAFT_FILE;
-      else process.env.ONESHOT_ADK_TEST_DRAFT_FILE = savedDraft;
       if (savedMode === undefined) delete process.env.ONESHOT_MODE;
       else process.env.ONESHOT_MODE = savedMode;
       if (savedProvider === undefined) delete process.env.ONESHOT_RESEARCH_PROVIDER;

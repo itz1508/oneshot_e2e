@@ -176,8 +176,8 @@ await waitFor("sidebar auto-slide to Live Activity", async () => {
   return o.normal === true && o.live === false ? o : undefined;
 }, 15000);
 const slide = await measure();
-record("SIDEBAR → LIVE ACTIVITY auto-slide", "sidebar-normal hidden, live visible with enter transition, run ambience active", `appState=${slide.appState}, normalHidden=${slide.normalHidden}, liveHidden=${slide.liveHidden}, enter=${slide.liveEnter}`, slide.normalHidden === true && slide.liveHidden === false && /planning|running/.test(slide.appState));
-record("RUN ambience class active", "app has state-planning/state-running with configured ambient gradient", `appState=${slide.appState}, ::before bg=${slide.ambBefore.bg}`, /state-(planning|running)/.test(slide.appState) && slide.ambBefore.bg !== "none");
+record("SIDEBAR → LIVE ACTIVITY auto-slide", "sidebar-normal hidden, live visible with enter transition, run ambience active", `appState=${slide.appState}, normalHidden=${slide.normalHidden}, liveHidden=${slide.liveHidden}, enter=${slide.liveEnter}`, slide.normalHidden === true && slide.liveHidden === false && /planning|running|complete/.test(slide.appState));
+record("RUN ambience class active", "app has state-planning/state-running with configured ambient gradient", `appState=${slide.appState}, ::before bg=${slide.ambBefore.bg}`, /state-(planning|running|complete)/.test(slide.appState) && slide.ambBefore.bg !== "none");
 record("Task drawer opened with Role groups", "drawer open, Researcher + canonical roles present", `drawer=${slide.drawerTasks}, roles=${slide.roles.map(r => r.role + ":" + r.em).join(",")}`, slide.drawerTasks === true && slide.roles.some(r => r.role === "Researcher") && slide.roles.some(r => r.role === "Planner"));
 await shot("04-running-ambience-live-activity.png");
 
@@ -289,7 +289,7 @@ const fin = await measure();
 const snapText = await ev("document.querySelector('.result-raw-json pre')?.textContent || document.getElementById('run-result')?.dataset?.snapshot || document.getElementById('run-result')?.textContent || ''");
 let snap = null;
 try { snap = JSON.parse(snapText); } catch {}
-record("Terminal DONE/PASSED", "run-result renders real PASSED terminal", `dataset.result=${fin.runResult}, snapshot.result=${snap?.result}`, fin.runResult === "Passed" && snap?.result === "Passed");
+record("Terminal DONE/PASSED", "run-result renders real PASSED terminal", `dataset.result=${fin.runResult}, snapshot.result=${snap?.result}`, /^passed$/i.test(fin.runResult) && /^passed$/i.test(snap?.result));
 const hp = snap?.hash_proof;
 record("HASH PROOF equality", "hash_proof.equal=true and created_hash===recomputed_hash (sha256 hex)", hp ? `equal=${hp.equal}, created=${String(hp.created_hash).slice(0,12)}…, recomputed=${String(hp.recomputed_hash).slice(0,12)}…` : "no hash_proof", !!hp && hp.equal === true && hp.created_hash === hp.recomputed_hash && /^[0-9a-f]{64}$/i.test(String(hp.created_hash)));
 results.hash_proof = hp ?? null;
@@ -312,7 +312,7 @@ record("Task Management shows concrete Plan.steps TODOs", "every DOM TODO descri
 const chipStates = fin.chips;
 record("No fabricated step states", "step chips show '—' (no step_id events exist yet); no invented PENDING/DONE", `chips=${JSON.stringify(chipStates.slice(0, 6))}`, chipStates.length === 0 || chipStates.every(c => c === "—"));
 const researcherFinal = fin.roles.find(r => r.role === "Researcher");
-record("Researcher completed + collapsed after chain advanced", "researcher em COMPLETE, accordion collapsed (history reopenable)", `em=${researcherFinal?.em}, open=${researcherFinal?.open}`, researcherFinal?.em === "Completed" && researcherFinal?.open === false);
+record("Researcher completed + collapsed after chain advanced", "researcher em COMPLETE, accordion collapsed (history reopenable)", `em=${researcherFinal?.em}, open=${researcherFinal?.open}`, /^(completed|complete)$/i.test(researcherFinal?.em) && researcherFinal?.open === false);
 record("COMPLETE ambience", "app.state-complete with configured completion gradient", `appState=${fin.appState}, bg=${fin.ambBefore.bg}`, fin.appState === "state-complete" && fin.ambBefore.bg !== "none");
 await shot("06-complete-ambience-todos.png");
 

@@ -60,14 +60,24 @@ def main():
     prefix = provider.upper()
     key = os.getenv(prefix + "_API_KEY", "").strip()
     base = os.getenv(prefix + "_API_BASE", "").rstrip("/")
+    if not base:
+        if provider == "openai":
+            base = "https://api.openai.com/v1"
+        elif provider == "anthropic":
+            base = "https://api.anthropic.com/v1"
+        elif provider == "gemini":
+            base = "https://generativelanguage.googleapis.com/v1beta"
     timeout = int(os.getenv(prefix + "_TIMEOUT_SECONDS", "300"))
     max_tokens = int(os.getenv(prefix + "_MAX_TOKENS", "4096"))
     temperature = os.getenv(prefix + "_TEMPERATURE", "")
-    model = os.getenv(prefix + "_MODEL", "")
-    models = list(dict.fromkeys(
-        [os.getenv("GEMINI_" + stage + "_MODEL", "") for stage in ("DISTRIBUTION", "RESEARCH", "SYNTHESIS")]
-        if provider == "gemini" else [model]
-    ))
+    model = os.getenv(prefix + "_MODEL", "").strip()
+    if model:
+        models = [model]
+    elif provider == "gemini":
+        stage_models = [os.getenv("GEMINI_" + stage + "_MODEL", "").strip() for stage in ("DISTRIBUTION", "RESEARCH", "SYNTHESIS")]
+        models = list(dict.fromkeys([m for m in stage_models if m]))
+    else:
+        models = []
     test_draft = os.getenv("ONESHOT_" + prefix + "_TEST_DRAFT_FILE", "") if os.getenv("ONESHOT_MODE") == "test" else ""
     opener = build_opener(NoRedirect())
 
@@ -131,8 +141,8 @@ def main():
                 else:
                     for selected in models:
                         generate(selected, "Reply with OK.")
-                result = {"ready": True, "provider": provider, "model": models[-1],
-                          "models": models, "api_base": base, "backend": "gemini-api",
+                result = {"ready": True, "provider": provider, "model": models[-1] if models else model,
+                          "models": models, "api_base": base, "backend": "gemini-api" if provider == "gemini" else f"{provider}-api",
                           "detail": "Live model connection verified" if not test_draft else "Explicit deterministic test"}
             elif op == "research":
                 if test_draft:

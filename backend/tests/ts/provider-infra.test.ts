@@ -164,7 +164,6 @@ test("secret store is write-only from the browser's perspective", async () => {
     });
     assert.equal(await store.has("featherless"), true);
     assert.equal((await store.get("featherless"))?.value, FAKE_SECRET);
-    assert.equal(await store.has("adk_gemma2"), false);
 
     // Credential files live outside the workspace and are never web-served.
     assert.ok(!dir.startsWith(resolve(process.cwd())));

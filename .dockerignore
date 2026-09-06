@@ -17,3 +17,6 @@ data
 **/*.log
 **/*.tmp
 **/*.pid
+**/.pytest_cache
+.pytest_cache
+.runtime

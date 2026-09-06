@@ -6,8 +6,8 @@ set -euo pipefail
 : "${SERVICE:=oneshot}"
 : "${RUNTIME_SA_NAME:=oneshot-runtime}"
 : "${SECRET_NAME:=oneshot-api-token}"
-: "${ONESHOT_RESEARCH_PROVIDER:=adk_gemma2}"
-: "${COMPLIANCE_PROVIDER_PATH:=app/web/cloud/provider/adk-gemma2/worker.py}"
+: "${ONESHOT_RESEARCH_PROVIDER:=gemini}"
+: "${COMPLIANCE_PROVIDER_PATH:=app/web/cloud/provider/gemini/provider.ts}"
 
 RUNTIME_SA="${RUNTIME_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 

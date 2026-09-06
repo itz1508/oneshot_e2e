@@ -130,7 +130,7 @@ docker run \
 
 ```bash
 docker run \
-  -e ONESHOT_RESEARCH_PROVIDER=adk_gemma2 \
+  -e ONESHOT_RESEARCH_PROVIDER=gemini \
   -e GEMINI_API_KEY=your_key \
   oneshot:gemma-latest
 ```

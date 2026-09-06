@@ -54,7 +54,7 @@ function banner(text) {
 banner("Launch OneShot for Demonstration");
 
 const mode = (process.env.ONESHOT_MODE || "sample").toLowerCase();
-const provider = process.env.ONESHOT_RESEARCH_PROVIDER || (mode === "sample" ? "Deterministic Sample Provider" : "adk_gemma2");
+const provider = process.env.ONESHOT_RESEARCH_PROVIDER || (mode === "sample" ? "Deterministic Sample Provider" : "unconfigured");
 
 log(`DEMONSTRATION MODE`);
 log(`Mode:     ${C.bold}${mode.toUpperCase()}${C.reset}`);

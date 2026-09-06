@@ -223,12 +223,12 @@ ls -la app/fixtures/
 
 ### Production Provider (ADK)
 
-**Issue**: ADK provider fails
+**Issue**: Research provider fails
 
 **Check**:
 ```bash
 # Verify environment
-echo $ONESHOT_RESEARCH_PROVIDER  # Should be "adk_gemma2" or similar
+echo $ONESHOT_RESEARCH_PROVIDER  # Should be "featherless", "gemini", or similar
 
 # Check API credentials
 # Check network connectivity to provider

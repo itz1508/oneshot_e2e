@@ -51,6 +51,7 @@ export class GeminiWorker {
     const env = {
       ...process.env,
       GEMINI_API_KEY: this.config.apiKey ?? process.env.GEMINI_API_KEY ?? "",
+      GEMINI_MODEL: this.config.model || this.config.synthesisModel,
       GEMINI_TEMPERATURE: this.config.temperature === undefined ? "" : String(this.config.temperature),
       GEMINI_API_BASE: this.config.baseUrl || "https://generativelanguage.googleapis.com/v1beta",
       GEMINI_DISTRIBUTION_MODEL: this.config.distributionModel,

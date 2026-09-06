@@ -19,18 +19,12 @@ Those licenses do not apply to OneShot-owned material.
    - License copy:
      app/legal/third-party/Google-ADK-Apache-2.0.txt
 
-2. Google ADK research-provider dependencies
-   - Used by the isolated researcher provider adapter under
-     app/web/cloud/provider/adk-gemma2/
-   - Governed by their respective upstream licenses.
-   - Manifest: app/requirements/adk.txt
-
-3. LiteLLM (litellm)
+2. LiteLLM (litellm)
    - Copyright (c) BerriAI
    - Governed by its applicable upstream license.
-   - Manifest: app/requirements/adk.txt
+   - Manifest: app/requirements/base.txt
 
-4. Redis Client (redis-py)
+3. Redis Client (redis-py)
    - Copyright (c) Redis Ltd.
    - Governed by its applicable upstream license.
-   - Manifest: app/requirements/adk.txt
+   - Manifest: app/requirements/workspace-api.txt

@@ -11,7 +11,7 @@ This directory owns server-side provider integrations for the OneShot web applic
 | `provider.ts`, `provider-resolver.ts` | Research provider contract and runtime resolution |
 | `provider/{openai,anthropic,gemini}/` | Native adapters, types and worker bridges |
 | `provider/native_worker.py` | Native provider transport |
-| `provider/{adk-gemma2,featherless}/` | Compatibility adapters and their workers |
+| `provider/featherless/` | Compatibility adapter and its worker |
 | `provider/fixture-provider.ts` | Deterministic sample provider |
 | `provider/structured-draft.ts` | Convert provider output to the canonical research bundle |
 | `workspace/providers.py` | Provider clients for the standalone workspace API |
