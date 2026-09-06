@@ -56,6 +56,25 @@ The generated-output proof establishes faithful transport of provider text throu
 - Current selected implementation: build, frontend lint/typecheck and 27 frontend tests pass; 135 backend tests pass, one live-provider test is skipped. The source-policy tests and saved-registry regression also pass.
 - Browser execution is unverified on this host: agent-browser could not launch Chrome and reported that it exited before providing a DevTools URL. Rendering unit tests and Vite build are not a visual browser proof.
 
+## Second-pass manual audit (same day, post-publication)
+
+Every patch-distinct commit on the ten non-ancestral branches was inspected individually
+(`git log --cherry-pick --right-only --no-merges origin/main...<branch>`) and compared
+against the current implementation. Verdict: nothing further qualifies for porting.
+
+| Branch lineage | Manual finding | Kept |
+|---|---|---|
+| integrate-main, backup/local-main-before-oneshot-repair, stage/verified-1.3.0, safety/local-stage-cd79561, safety/worktree-snapshot | Identical commit subjects: one old stage baseline preserved under five names (worktree-snapshot adds an index parent). Old React docs-index/UI, judge launcher and prior packaging paths. | Superseded by the migration baseline plus durable pipeline; snapshots preserved. |
+| repair/runtime-provider-ui — BYOK adapters (`4e5953c`) | Main's `app/web/cloud/providers.json` already declares OpenAI, Anthropic and Gemini with credential-env wiring on the current native workers, with passing tests. | Main (newer, tested). |
+| repair/runtime-provider-ui — failure recovery (`80fba05`) | Main has BullMQ `attempts: 3` with backoff (`backend/pipeline/queue.ts`) and crash-retry reconciliation (`backend/pipeline/worker.ts`); the repair branch's automatic-backoff claim has no active scheduling path. | Main. |
+| repair/runtime-provider-ui — gemma removal (`7ccea7a`) | Main's UI contains zero gemma references. The sole remaining `ADK:gemma2` is an internal authority-graph capability backed by main's gemma image tooling (`2c23eaa`), not a user-facing surface. | Main (removal target does not exist here). |
+| repair/runtime-provider-ui — BYOK/Tavily UX, snapshot pinning (`22fee72`); docs/pnpm commits | Old provider layout and pnpm migration conflict with the current tree. Generated-output transport and the trace panel were already ported; the optional Tavily-settings UI stays on the preserved branch, unclaimed. | Main; branch preserved. |
+| ui-e2e-observability | React-era trace/deliverable commits; their concepts were ported into the plain-JS console (`workflow-trace*.js`, `terminal-message.js`, `reconciled-deliverable.test.ts`). | Ported portions only; React tree retired. |
+| handoff-native-gemini-e2e-20260902 | Historical Apache license reconciliation; its verifier requires deleted root LICENSE/NOTICE paths. | Current Apache-2.0 layout; history preserved. |
+| backup/pre-reconciliation-local-4a91d9e | Contains a proprietary "All Rights Reserved" license change opposing main's Apache-2.0, deletes a passing gap-loop test, and pins old dependencies. | Rejected on substance; preserved as history. |
+| backup/adk-workflow-v2-before-reconcile | Old verification YAML referencing deleted `web/` and root requirements paths. | Current canonical workflow; preserved. |
+
+## Reproduce the branch inventory
 ## Reproduce the branch inventory
 
 ```powershell
