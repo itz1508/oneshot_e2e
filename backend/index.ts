@@ -14,8 +14,8 @@ import { ValidationLanePool } from "./validation/validation-lane-pool.js";
 import { DeterministicValidationRuntime } from "./validation/deterministic-validation.js";
 import { CanonicalContractSkill } from "./skills/canonical-contract-skill.js";
 import { createSkillSystem } from "./skills/bootstrap.js";
-import { ProviderManager } from "./runtime/provider-manager.js";
-import type { ResearchProvider } from "./role/researcher/provider.js";
+import { ProviderManager } from "../app/web/cloud/provider-manager.js";
+import type { ResearchProvider } from "../app/web/cloud/provider.js";
 import { createDynamicDependencyFactory } from "./workflow/adk/dynamic-dependencies.js";
 import {
   BullMQRunQueue,
@@ -23,12 +23,12 @@ import {
   RUN_QUEUE_NAME,
   type RunQueueDeps,
 } from "./runtime/queue.js";
-import { ResearcherWorkflow } from "./role/researcher/workflow.js";
-import { PlannerWorkflow } from "./role/planner/workflow.js";
-import { RefactorWorkflow } from "./role/refactor/workflow.js";
-import { GapAnalysisWorkflow } from "./role/gap-analysis/workflow.js";
-import { EvaluationWorkflow } from "./role/evaluation/workflow.js";
-import { BuilderWorkflow } from "./role/builder/workflow.js";
+import { ResearcherWorkflow } from "./agents/researcher/workflow.js";
+import { PlannerWorkflow } from "./agents/planner/workflow.js";
+import { RefactorWorkflow } from "./agents/refactor/workflow.js";
+import { GapAnalysisWorkflow } from "./agents/gap-analysis/workflow.js";
+import { EvaluationWorkflow } from "./agents/evaluation/workflow.js";
+import { BuilderWorkflow } from "./agents/builder/workflow.js";
 import { TripleValidationWorkflow } from "./workflow/triple-validation.js";
 import { WorkflowRuntime } from "./runtime/workflow-runtime.js";
 import { SandboxService } from "./sandbox/sandbox-service.js";
@@ -98,7 +98,7 @@ await contracts.verifyStatic();
 const providerManager = new ProviderManager({
   projectRoot,
   events,
-  catalogPath: resolve(projectRoot, "backend/config/providers.json"),
+  catalogPath: resolve(projectRoot, "app/web/cloud/providers.json"),
   runtimePaths: runtimePaths,
 });
 
@@ -126,7 +126,7 @@ const sandbox = new SandboxService(
 
 // --- Google ADK Dynamic Workflow Runtime ---
 // The dependency factory proves provider/model readiness per job and returns
-// the existing OneShot Role implementations consumed by ADK connector nodes.
+// the existing OneShot Agent implementations consumed by ADK connector nodes.
 const bindDependencies = createDynamicDependencyFactory({
   projectRoot,
   events,

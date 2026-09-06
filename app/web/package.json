@@ -8,7 +8,20 @@
     "typecheck": "node scripts/check.mjs typecheck",
     "lint": "node scripts/check.mjs lint",
     "test": "node --test tests/*.test.mjs",
-    "build": "node scripts/build.mjs",
-    "start": "node scripts/serve.mjs"
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "start": "node scripts/serve.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "http-proxy-middleware": "^3.0.3"
+  },
+  "devDependencies": {
+    "vite": "^6.2.0"
   }
 }

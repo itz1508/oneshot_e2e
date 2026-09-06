@@ -28,7 +28,7 @@ from workspace_api.models import (
     MessageRole,
     UsageEvent,
 )
-from workspace_api.providers import ModelRequest, ProviderMessage
+from web.cloud.workspace.providers import ModelRequest, ProviderMessage
 from workspace_api.router import ModelRouter, RouteResult
 from workspace_api.schemas import ChatCompletionRequest
 from workspace_api.usage import UsageTracker

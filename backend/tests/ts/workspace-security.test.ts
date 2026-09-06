@@ -85,7 +85,7 @@ test("Explicit precedence order is enforced", () => {
     1: "administrator/deployment env or secret-manager",
     2: "local ProviderSecretStore credential",
     3: ".runtime/config/providers.json selection/settings",
-    4: "backend/config/providers.json defaults",
+    4: "app/web/cloud/providers.json defaults",
     5: "sample provider when running sample mode",
   };
   assert.strictEqual(Object.keys(precedence).length, 5);

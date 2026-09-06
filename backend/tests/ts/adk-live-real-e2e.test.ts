@@ -8,7 +8,7 @@ import {
   type SandboxRunner,
 } from "../../sandbox/runner/runner.js";
 import { HardenedProcessRunner } from "../../sandbox/runner/process-runner.js";
-import { resolveResearchProvider } from "../../role/researcher/provider-resolver.js";
+import { resolveResearchProvider } from "../../../app/web/cloud/provider-resolver.js";
 import { ConversationStore } from "../../intent/conversation-store.js";
 import { IntentCollectionService } from "../../intent/intent-collection.js";
 import { startHttpServer } from "../../server/http-server.js";

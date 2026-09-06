@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
-import { resolveResearchProvider } from "../../role/researcher/provider-resolver.js";
-import { AdkGemmaResearchProvider } from "../../role/researcher/provider/adk-gemma2/provider.js";
+import { resolveResearchProvider } from "../../../app/web/cloud/provider-resolver.js";
+import { AdkGemmaResearchProvider } from "../../../app/web/cloud/provider/adk-gemma2/provider.js";
 import { harness, prompt } from "./harness.js";
 
 test("Google ADK Researcher pipeline executes canonical chain in deterministic adapter mode", async () => {

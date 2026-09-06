@@ -15,7 +15,7 @@ interface ProbeOutput {
   evaluation: Evaluation;
 }
 
-test("ADK passes gap_0 Plan directly into existing Evaluation Role", async () => {
+test("ADK passes gap_0 Plan directly into existing Evaluation Agent", async () => {
   const h = await harness("adk-evaluation-node");
   const jobId = "job-evaluation-001";
   const researcherNode = createResearcherNode(h.researcher);

@@ -13,13 +13,13 @@ import type {
   TripleValidation,
 } from "../../contracts/schema/types.js";
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
-import { validationFeedback } from "../../role/gap-analysis/tool/validation-feedback.js";
-import type { BuilderWorkflow } from "../../role/builder/workflow.js";
-import type { EvaluationWorkflow } from "../../role/evaluation/workflow.js";
-import type { GapAnalysisWorkflow } from "../../role/gap-analysis/workflow.js";
-import type { PlannerWorkflow } from "../../role/planner/workflow.js";
-import type { RefactorWorkflow } from "../../role/refactor/workflow.js";
-import type { ResearcherWorkflow } from "../../role/researcher/workflow.js";
+import { validationFeedback } from "../../agents/gap-analysis/tool/validation-feedback.js";
+import type { BuilderWorkflow } from "../../agents/builder/workflow.js";
+import type { EvaluationWorkflow } from "../../agents/evaluation/workflow.js";
+import type { GapAnalysisWorkflow } from "../../agents/gap-analysis/workflow.js";
+import type { PlannerWorkflow } from "../../agents/planner/workflow.js";
+import type { RefactorWorkflow } from "../../agents/refactor/workflow.js";
+import type { ResearcherWorkflow } from "../../agents/researcher/workflow.js";
 import type { SandboxExecutionResult } from "../../sandbox/types.js";
 import type { ConfirmationWorkflow } from "../confirmation.js";
 import type { HashWorkflow } from "../hash.js";
@@ -52,6 +52,7 @@ export interface OneShotDynamicDependencies {
 }
 
 export interface OneShotDynamicEffects {
+  review?(jobId: string, research: ResearchBundle): Promise<ResearchBundle>;
   event?(
     jobId: string,
     processor: string,
@@ -150,7 +151,7 @@ async function save(effects: OneShotDynamicEffects, jobId: string, name: string,
 /**
  * Build the actual OneShot Google ADK dynamic Workflow.
  *
- * Every existing OneShot Role is connected as an ADK node and invoked through
+ * Every existing OneShot Agent is connected as an ADK node and invoked through
  * ctx.runNode(). Typed outputs are passed directly to the next node. Triple
  * Validation fans out concurrently. NOT_VALID is refinement feedback: it is
  * converted into Gap findings, the same logical Plan is improved, Evaluation
@@ -177,7 +178,7 @@ export function createOneShotDynamicWorkflow(
       const jobId = input.job_id;
 
       effects.event?.(jobId, "Researcher", "RUNNING");
-      const research = (await ctx.runNode(
+      let research = (await ctx.runNode(
         researcherNode,
         { job_id: jobId, prompt: input.prompt },
         { runId: `${jobId}-researcher` },
@@ -193,6 +194,8 @@ export function createOneShotDynamicWorkflow(
         result: "PASSED",
         artifact_id: research.researcher.researcher_id,
       });
+
+      if (effects.review) research = await effects.review(jobId, research);
 
       effects.event?.(jobId, "Planner", "RUNNING");
       const audit = (await ctx.runNode(
@@ -484,7 +487,7 @@ export function toDynamicRootCause(error: unknown, jobId: string): RootCause {
     "OneShot dynamic Workflow reaches a canonical terminal result",
     error instanceof Error ? error.message : String(error),
     [],
-    "Correct the reported ADK node, Role, provider, contract, or runtime boundary",
+    "Correct the reported ADK node, Agent, provider, contract, or runtime boundary",
     jobId,
   );
 }

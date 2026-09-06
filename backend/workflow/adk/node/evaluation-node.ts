@@ -1,7 +1,7 @@
 import { node, type NodeContext } from "@google/adk";
 import type { Evaluation, Plan, ResearchBundle } from "../../../contracts/schema/types.js";
-import { EvaluationRole } from "../../../role/evaluation/role.js";
-import type { EvaluationWorkflow } from "../../../role/evaluation/workflow.js";
+import { EvaluationAgent } from "../../../agents/evaluation/agent.js";
+import type { EvaluationWorkflow } from "../../../agents/evaluation/workflow.js";
 
 export interface EvaluationNodeInput {
   job_id: string;
@@ -17,6 +17,6 @@ export function createEvaluationNode(evaluator: EvaluationWorkflow) {
       }
       return await evaluator.run(input.research, input.plan);
     },
-    { name: EvaluationRole.id },
+    { name: EvaluationAgent.id },
   );
 }

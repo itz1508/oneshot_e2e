@@ -19,7 +19,7 @@ interface ProbeOutput {
   plan: Plan;
 }
 
-test("ADK passes Planner Audit directly into existing Refactor Role", async () => {
+test("ADK passes Planner Audit directly into existing Refactor Agent", async () => {
   const h = await harness("adk-refactor-node");
   const jobId = "job-refactor-001";
   const researcherNode = createResearcherNode(h.researcher);

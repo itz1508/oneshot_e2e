@@ -32,8 +32,8 @@ import type { Prompt, ProcessingEvent, RootCause } from "../contracts/schema/typ
 import type { RunRepository } from "./run-repository.js";
 import type { ProcessingEventBus } from "./event-bus.js";
 import type { WorkflowRuntime } from "./workflow-runtime.js";
-import type { ResearchProvider } from "../role/researcher/provider.js";
-import type { ProviderRuntimeSettings } from "./provider-runtime-config.js";
+import type { ResearchProvider } from "../../app/web/cloud/provider.js";
+import type { ProviderRuntimeSettings } from "../../app/web/cloud/provider-runtime-config.js";
 import { WorkflowRootCauseError } from "../core/root-cause-error.js";
 import {
   closeSharedRedis,

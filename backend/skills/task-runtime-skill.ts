@@ -11,7 +11,7 @@ import { SkillCatalog } from "./catalog.js";
  *
  * Tools: project_run, audit_run, project_adk_graph, project_authority_graph
  *
- * This skill does not own Role execution, validation, confirmation, or hashing.
+ * This skill does not own Agent execution, validation, confirmation, or hashing.
  */
 export class TaskRuntimeSkill {
   private registry = new ToolRegistry();

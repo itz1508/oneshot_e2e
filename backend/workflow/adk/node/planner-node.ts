@@ -1,15 +1,15 @@
 import { node, type NodeContext } from "@google/adk";
 
 import type { Audit, ResearchBundle } from "../../../contracts/schema/types.js";
-import { PlannerRole } from "../../../role/planner/role.js";
-import type { PlannerWorkflow } from "../../../role/planner/workflow.js";
+import { PlannerAgent } from "../../../agents/planner/agent.js";
+import type { PlannerWorkflow } from "../../../agents/planner/workflow.js";
 
 export interface PlannerNodeInput {
   job_id: string;
   research: ResearchBundle;
 }
 
-/** ADK connector for the existing OneShot Planner Role. */
+/** ADK connector for the existing OneShot Planner Agent. */
 export function createPlannerNode(planner: PlannerWorkflow) {
   return node(
     async (
@@ -23,6 +23,6 @@ export function createPlannerNode(planner: PlannerWorkflow) {
       }
       return await planner.run(nodeInput.research, nodeInput.job_id);
     },
-    { name: PlannerRole.id },
+    { name: PlannerAgent.id },
   );
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { planToGroups, stepStateFromEvent, roleForResponsibility, roleOfStage } from '../src/task-management.js';
+import { planToGroups, stepStateFromEvent, agentForResponsibility, agentOfStage } from '../src/task-management.js';
 
 const PLAN = {
   plan_id: 'plan-1',
@@ -47,17 +47,17 @@ test('per-step state chips exist only for real step_id-scoped events', () => {
   assert.equal(stepStateFromEvent(null), null);
 });
 
-test('responsibility maps to canonical Role groups; unknown owners stay separate', () => {
-  assert.equal(roleForResponsibility('Researcher'), 'Researcher');
-  assert.equal(roleForResponsibility('builder'), 'Builder');
-  assert.equal(roleForResponsibility('Fixture Validation'), 'Triple Validation');
-  assert.equal(roleForResponsibility('Frontend Engineer'), null);
-  assert.equal(roleForResponsibility(''), null);
+test('responsibility maps to canonical Agent groups; unknown owners stay separate', () => {
+  assert.equal(agentForResponsibility('Researcher'), 'Researcher');
+  assert.equal(agentForResponsibility('builder'), 'Builder');
+  assert.equal(agentForResponsibility('Fixture Validation'), 'Triple Validation');
+  assert.equal(agentForResponsibility('Frontend Engineer'), null);
+  assert.equal(agentForResponsibility(''), null);
 });
 
-test('stage processors map to their Role groups', () => {
-  assert.equal(roleOfStage('Schema Validation'), 'Triple Validation');
-  assert.equal(roleOfStage('Hash Verification'), 'Builder');
-  assert.equal(roleOfStage('Researcher'), null);
-  assert.equal(roleOfStage('Unknown'), null);
+test('stage processors map to their Agent groups', () => {
+  assert.equal(agentOfStage('Schema Validation'), 'Triple Validation');
+  assert.equal(agentOfStage('Hash Verification'), 'Builder');
+  assert.equal(agentOfStage('Researcher'), null);
+  assert.equal(agentOfStage('Unknown'), null);
 });

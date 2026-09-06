@@ -8,9 +8,9 @@ import { join } from "node:path";
 import { startHttpServer } from "../../server/http-server.js";
 import { ProcessingEventBus } from "../../runtime/event-bus.js";
 import { RunRepository } from "../../runtime/run-repository.js";
-import { ProviderManager } from "../../runtime/provider-manager.js";
-import { LocalFileSecretStore } from "../../runtime/provider-secret-store.js";
-import { FileProviderRuntimeConfigStore } from "../../runtime/provider-runtime-config.js";
+import { ProviderManager } from "../../../app/web/cloud/provider-manager.js";
+import { LocalFileSecretStore } from "../../../app/web/cloud/provider-secret-store.js";
+import { FileProviderRuntimeConfigStore } from "../../../app/web/cloud/provider-runtime-config.js";
 import { AppendOnlyProcessingEventStore } from "../../task/event/event-store.js";
 import {
   executeRunJob,
@@ -358,9 +358,9 @@ test("GET /api/health provider name reflects the active provider's public name",
     const uiRoot = join(tmp, "ui");
     await mkdir(uiRoot, { recursive: true });
     await writeFile(join(uiRoot, "index.html"), "<html>ok</html>");
-    await mkdir(join(tmp, "backend", "config"), { recursive: true });
+    await mkdir(join(tmp, "app", "web", "cloud"), { recursive: true });
     await writeFile(
-      join(tmp, "backend", "config", "providers.json"),
+      join(tmp, "app", "web", "cloud", "providers.json"),
       JSON.stringify({
         version: 1,
         providers: {
@@ -371,7 +371,7 @@ test("GET /api/health provider name reflects the active provider's public name",
     );
         const pm = new ProviderManager({
       projectRoot: tmp,
-      catalogPath: join(tmp, "backend", "config", "providers.json"),
+      catalogPath: join(tmp, "app", "web", "cloud", "providers.json"),
       secretStore: new LocalFileSecretStore(join(tmp, "secrets")),
       runtimeConfigStore: new FileProviderRuntimeConfigStore(join(tmp, "rt", "providers.json")),
     });

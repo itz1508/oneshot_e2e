@@ -12,7 +12,7 @@ interface RunJobV1 {
   version: 1;
   runId: string;
   prompt: Prompt;
-  provider: { id: string; model?: string; configRevision?: number };
+  provider: { id: string; model?: string; configRevision?: number; settings?: ProviderRuntimeSettings };
   submittedAt: string; // ISO 8601
 }
 ```
@@ -191,24 +191,17 @@ run submitted → capture provider selection (job metadata, non-secret)
 
 ## 16. Provider changes while jobs are queued
 
-**Decision: the product rebinds.** A queued run binds the provider that is
-**active at the moment execution starts**, not the `provider.id` captured in the
-job metadata. The captured `provider.id` / `configRevision` is **diagnostic only**
-(provenance: what was selected at submit time); `ProviderBinding` reports it as
-`provider.requested`.
+The current implementation pins the submitted provider configuration.
+`ProviderManager.captureForRun()` captures `id`, `model`, `configRevision` and
+non-secret `settings`. The queue worker passes that capture to
+`ProviderManager.resolveForRun()` in `app/web/cloud/provider-manager.ts`.
 
-- **Changing the active provider in the UI affects future runs**: new
-  submissions and queued runs that have not yet started bind the then-active
-  provider.
-- **It must not silently mutate an already-active run**: the provider is bound
-  **once** at execution start (`ProviderBinding` event) and the `WorkflowRuntime`
-  consumes that instance for the whole run; switching the UI active provider
-  mid-run does not affect an executing run (`resolveProvider` is called once per
-  `executeRunJob`).
-- Captured-selector **pinning** (binding the job's `provider.id` regardless of
-  the current active selection) is **not** the default. It would require
-  `ProviderManager.createProvider` to accept an explicit provider id; the current
-  per-run binding re-reads the active selection by design (`backend/index.ts`).
+- Changing the active provider or model affects subsequent submissions; existing
+  queued captures retain their selected provider and settings.
+- A running workflow consumes its bound provider instance for the run.
+- Credentials are resolved server-side and are not part of the captured payload.
+- Older envelopes without full settings are rejected when their captured
+  revision differs from the current revision, preventing silent rebinding.
 
 ## 17. Docker / local deployment
 

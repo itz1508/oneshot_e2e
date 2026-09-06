@@ -5,10 +5,10 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { startHttpServer } from "../../server/http-server.js";
-import { ProviderManager } from "../../runtime/provider-manager.js";
-import { LocalFileSecretStore } from "../../runtime/provider-secret-store.js";
-import { FileProviderRuntimeConfigStore } from "../../runtime/provider-runtime-config.js";
-import { AdkGemmaResearchProvider } from "../../role/researcher/provider/adk-gemma2/provider.js";
+import { ProviderManager } from "../../../app/web/cloud/provider-manager.js";
+import { LocalFileSecretStore } from "../../../app/web/cloud/provider-secret-store.js";
+import { FileProviderRuntimeConfigStore } from "../../../app/web/cloud/provider-runtime-config.js";
+import { AdkGemmaResearchProvider } from "../../../app/web/cloud/provider/adk-gemma2/provider.js";
 import { ProcessingEventBus } from "../../runtime/event-bus.js";
 import { RunRepository } from "../../runtime/run-repository.js";
 import { ConversationStore } from "../../intent/conversation-store.js";
@@ -126,9 +126,9 @@ test("provider HTTP endpoints: list/get/update/test/activate + 404s", async () =
   const uiRoot = join(tmp, "ui");
   let server: Server | undefined;
   try {
-    await mkdir(join(projectRoot, "backend", "config"), { recursive: true });
+    await mkdir(join(projectRoot, "app", "web", "cloud"), { recursive: true });
     await writeFile(
-      join(projectRoot, "backend", "config", "providers.json"),
+      join(projectRoot, "app", "web", "cloud", "providers.json"),
       JSON.stringify({
         version: 1,
         providers: {

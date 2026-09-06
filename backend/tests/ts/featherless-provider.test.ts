@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { FeatherlessResearchProvider } from "../../role/researcher/provider/featherless/provider.js";
+import { FeatherlessResearchProvider } from "../../../app/web/cloud/provider/featherless/provider.js";
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
 import { harness, prompt } from "./harness.js";
 

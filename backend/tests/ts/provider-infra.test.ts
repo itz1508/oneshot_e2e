@@ -3,11 +3,11 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { ProviderManager } from "../../runtime/provider-manager.js";
-import { LocalFileSecretStore } from "../../runtime/provider-secret-store.js";
+import { ProviderManager } from "../../../app/web/cloud/provider-manager.js";
+import { LocalFileSecretStore } from "../../../app/web/cloud/provider-secret-store.js";
 import { ProcessingEventBus } from "../../runtime/event-bus.js";
 import { RunRepository } from "../../runtime/run-repository.js";
-import { FixtureResearchProvider } from "../../role/researcher/tool/fixture-provider.js";
+import { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";
 import { executeRunJob, type RunJobLike } from "../../runtime/queue.js";
 import type {
   Prompt,
@@ -16,7 +16,7 @@ import type {
 import type { WorkflowRuntime } from "../../runtime/workflow-runtime.js";
 import type { RunQueueDeps } from "../../runtime/queue.js";
 import { createServer } from "node:http";
-import { FileProviderRuntimeConfigStore } from "../../runtime/provider-runtime-config.js";
+import { FileProviderRuntimeConfigStore } from "../../../app/web/cloud/provider-runtime-config.js";
 
 function tempDir(): string {
   return mkdtempSync(join(tmpdir(), "oneshot-pinfra-"));
@@ -199,7 +199,7 @@ test("provider manager never discloses credential values in catalog or status", 
     }
 
     // Catalog is git-tracked and non-secret.
-    const catalogPath = resolve(process.cwd(), "backend/config/providers.json");
+    const catalogPath = resolve(process.cwd(), "app/web/cloud/providers.json");
     const catalogRaw = readFileSync(catalogPath, "utf8");
     assert.ok(!catalogRaw.includes(FAKE_SECRET));
     assert.ok(catalogRaw.includes("openai"));

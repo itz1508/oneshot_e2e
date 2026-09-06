@@ -19,7 +19,7 @@ from workspace_api.models import (
     ProviderCredential,
     ProviderKind,
 )
-from workspace_api.providers import ModelRequest, ModelResult, ModelUsage, ProviderMessage
+from web.cloud.workspace.providers import ModelRequest, ModelResult, ModelUsage, ProviderMessage
 from workspace_api.rate_limit import MemoryRateLimiter
 from workspace_api.router import ModelRouter
 from workspace_api.security import SecretCipher

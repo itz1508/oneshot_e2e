@@ -5,9 +5,9 @@ import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";
 import type {
   ResearchProvider,
   ResearchProviderReadiness,
-} from "../../role/researcher/provider.js";
+} from "../../../app/web/cloud/provider.js";
 import type { ProcessingEventBus } from "../../runtime/event-bus.js";
-import { FixtureResearchProvider } from "../../role/researcher/tool/fixture-provider.js";
+import { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";
 import { ConversationStore } from "../../intent/conversation-store.js";
 import { IntentCollectionService } from "../../intent/intent-collection.js";
 import { PromptGenerator } from "../../intent/prompt-generator.js";

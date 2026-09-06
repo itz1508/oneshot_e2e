@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Expose read-only processing evidence around the canonical OneShot workflow. This Skill does not own Role execution, Triple Validation, confirmation, canonicalization, or hashing.
+Expose read-only processing evidence around the canonical OneShot workflow. This Skill does not own Agent execution, Triple Validation, confirmation, canonicalization, or hashing.
 
 ## Responsibilities
 

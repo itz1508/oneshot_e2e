@@ -15,7 +15,7 @@ import type {
   TripleValidation,
 } from "../../contracts/schema/types.js";
 import type { SandboxExecutionResult } from "../../sandbox/types.js";
-import type { GapFinding } from "../../role/gap-analysis/tool/coverage.js";
+import type { GapFinding } from "../../agents/gap-analysis/tool/coverage.js";
 
 /**
  * ADK session state is orchestration scratch state only.

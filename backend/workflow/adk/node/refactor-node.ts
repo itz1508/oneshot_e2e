@@ -1,8 +1,8 @@
 import { node, type NodeContext } from "@google/adk";
 
 import type { Audit, Plan, ResearchBundle } from "../../../contracts/schema/types.js";
-import { RefactorRole } from "../../../role/refactor/role.js";
-import type { RefactorWorkflow } from "../../../role/refactor/workflow.js";
+import { RefactorAgent } from "../../../agents/refactor/agent.js";
+import type { RefactorWorkflow } from "../../../agents/refactor/workflow.js";
 
 export interface RefactorNodeInput {
   job_id: string;
@@ -10,7 +10,7 @@ export interface RefactorNodeInput {
   audit: Audit;
 }
 
-/** ADK connector for the existing OneShot Refactor Role. */
+/** ADK connector for the existing OneShot Refactor Agent. */
 export function createRefactorNode(refactor: RefactorWorkflow) {
   return node(
     async (
@@ -24,6 +24,6 @@ export function createRefactorNode(refactor: RefactorWorkflow) {
       }
       return await refactor.run(nodeInput.research, nodeInput.audit);
     },
-    { name: RefactorRole.id },
+    { name: RefactorAgent.id },
   );
 }

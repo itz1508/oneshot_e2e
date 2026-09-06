@@ -110,18 +110,18 @@ test("SkillActivationEngine activates reusable Skill, binds tool surface, and tr
   assert.equal(activations[0].state, "DEACTIVATED");
 });
 
-test("Caller/Role composes canonical-contracts skill through activation engine", async () => {
+test("Caller/Agent composes canonical-contracts skill through activation engine", async () => {
   const system = createSkillSystem();
   const bridge = new PythonBridge();
 
   try {
     const active = await system.activation.activate(
       { skill_id: "oneshot-canonical-contracts" },
-      { caller_id: "role:Researcher", bridge },
+      { caller_id: "agent:Researcher", bridge },
     );
 
     assert.equal(active.skill_id, "oneshot-canonical-contracts");
-    assert.equal(active.caller_id, "role:Researcher");
+    assert.equal(active.caller_id, "agent:Researcher");
 
     // Invoke canonicalize tool
     const res = await active.invoke<{ canonical_utf8: string }>("canonicalize", {

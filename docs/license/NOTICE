@@ -21,7 +21,7 @@ Those licenses do not apply to OneShot-owned material.
 
 2. Google ADK research-provider dependencies
    - Used by the isolated researcher provider adapter under
-     backend/role/researcher/provider/adk-gemma2/
+     app/web/cloud/provider/adk-gemma2/
    - Governed by their respective upstream licenses.
    - Manifest: app/requirements/adk.txt
 

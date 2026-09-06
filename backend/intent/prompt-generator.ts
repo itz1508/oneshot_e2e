@@ -10,7 +10,7 @@ function unique(values: string[]): string[] {
  *
  * This is deliberately job-specific: Prompt(id) tells Researcher what this
  * job requires it to investigate. Permanent Researcher operating guidance
- * remains owned by the Researcher Role/Skill and is not copied here.
+ * remains owned by the Researcher Agent/Skill and is not copied here.
  */
 export class PromptGenerator {
   generate(intent: IntentState, promptId: string): Prompt {

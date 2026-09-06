@@ -1,14 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ProviderManager } from "../../runtime/provider-manager.js";
-import { LocalFileSecretStore } from "../../runtime/provider-secret-store.js";
-import { FileProviderRuntimeConfigStore } from "../../runtime/provider-runtime-config.js";
+import { ProviderManager } from "../../../app/web/cloud/provider-manager.js";
+import { LocalFileSecretStore } from "../../../app/web/cloud/provider-secret-store.js";
+import { FileProviderRuntimeConfigStore } from "../../../app/web/cloud/provider-runtime-config.js";
 
 test("catalog loads with all expected providers", async () => {
   const pm = new ProviderManager({
     projectRoot: ".",
     mode: "sample",
-    catalogPath: "backend/config/providers.json",
+    catalogPath: "app/web/cloud/providers.json",
     secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
     runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
   });
@@ -20,7 +20,7 @@ test("environment credential takes precedence over local secret store", async ()
   const pm = new ProviderManager({
     projectRoot: ".",
     mode: "sample",
-    catalogPath: "backend/config/providers.json",
+    catalogPath: "app/web/cloud/providers.json",
     secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
     runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
   });
@@ -35,7 +35,7 @@ test("stable provider IDs", async () => {
   const pm = new ProviderManager({
     projectRoot: ".",
     mode: "sample",
-    catalogPath: "backend/config/providers.json",
+    catalogPath: "app/web/cloud/providers.json",
     secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
     runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
   });
@@ -47,7 +47,7 @@ test("active/configured/ready state is truthful", async () => {
   const pm = new ProviderManager({
     projectRoot: ".",
     mode: "sample",
-    catalogPath: "backend/config/providers.json",
+    catalogPath: "app/web/cloud/providers.json",
     secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
     runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
   });

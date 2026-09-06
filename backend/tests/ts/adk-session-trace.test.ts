@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import type { ProcessingEvent } from "../../contracts/schema/types.js";
-import { resolveResearchProvider } from "../../role/researcher/provider-resolver.js";
+import { resolveResearchProvider } from "../../../app/web/cloud/provider-resolver.js";
 import { ConversationStore } from "../../intent/conversation-store.js";
 import { IntentCollectionService } from "../../intent/intent-collection.js";
 import { startHttpServer } from "../../server/http-server.js";
@@ -63,7 +63,7 @@ async function collectWorkflowEvents(url: string): Promise<ProcessingEvent[]> {
 }
 
 test(
-  "real HTTP conversation session prints input, every SSE workflow event, role artifacts, and final task projection",
+  "real HTTP conversation session prints input, every SSE workflow event, agent artifacts, and final task projection",
   { timeout: 30_000 },
   async () => {
     const saved = {

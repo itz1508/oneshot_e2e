@@ -17,6 +17,7 @@ import {
 import type { ArtifactStore } from "./artifact-store.js";
 import type { ProcessingEventBus } from "./event-bus.js";
 import type { RunRepository } from "./run-repository.js";
+import { PlanReviewService } from "./plan-review.js";
 
 const APP_NAME = "oneshot-dynamic-workflow";
 export type DynamicDependencyFactory = (runId: string) => Promise<BoundDynamicDependencies>;
@@ -58,16 +59,17 @@ function unwrapAdkError(error: unknown): unknown {
 
 /**
  * External runtime facade for the canonical OneShot Google ADK dynamic Workflow.
- * Existing OneShot Roles are imported by connector nodes and invoked through
+ * Existing OneShot agents are imported by connector nodes and invoked through
  * ctx.runNode(); their typed outputs are passed directly to downstream nodes.
  */
 export class WorkflowRuntime {
+  readonly review: PlanReviewService;
   constructor(
     private events: ProcessingEventBus,
     private runs: RunRepository,
     readonly store: ArtifactStore,
     private bindDependencies: DynamicDependencyFactory,
-  ) {}
+  ) { this.review = new PlanReviewService(store); }
 
   private ev(
     runId: string,
@@ -157,6 +159,15 @@ export class WorkflowRuntime {
     try {
       bound = await this.bindDependencies(runId);
       const rootAgent = createOneShotDynamicWorkflow(bound, {
+        review: async (jobId, research) => {
+          if (!await this.review.open(jobId, research)) return research;
+          this.ev(jobId, "PlanReview", "RUNNING", { scope: "SUPPORT", message: "Draft ready. Review and confirm before Planner continues." });
+          const reviewed = await this.review.wait(jobId, () => Boolean(this.runs.get(jobId)?.result));
+          await this.save(jobId, "plan.reviewed", reviewed.plan);
+          await this.save(jobId, "research.reviewed", reviewed);
+          this.ev(jobId, "PlanReview", "COMPLETE", { scope: "SUPPORT", message: "Draft confirmed by the user." });
+          return reviewed;
+        },
         event: (jobId, processor, state, data = {}) => {
           // Triple Validation is an internal validation gate, not a workflow
           // completion result. Keep its public event vocabulary VALID/NOT_VALID.

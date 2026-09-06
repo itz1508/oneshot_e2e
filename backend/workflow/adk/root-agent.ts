@@ -1,6 +1,6 @@
 import { SequentialAgent } from "@google/adk";
 import type { HashProof, RootCause } from "../../contracts/schema/types.js";
-import type { RolePipeline } from "../../pipeline/role-pipeline.js";
+import type { AgentPipeline } from "../../pipeline/agent-pipeline.js";
 import type { ConfirmationWorkflow } from "../confirmation.js";
 import type { HashWorkflow } from "../hash.js";
 import type { TripleValidationWorkflow } from "../triple-validation.js";
@@ -22,7 +22,7 @@ export interface OneShotWorkflowEffects {
 }
 
 export interface OneShotWorkflowDependencies {
-  pipeline: RolePipeline;
+  pipeline: AgentPipeline;
   triple: TripleValidationWorkflow;
   confirmation: ConfirmationWorkflow;
   hash: HashWorkflow;
@@ -32,8 +32,8 @@ export interface OneShotWorkflowDependencies {
 /**
  * Build the canonical OneShot workflow as a real Google ADK SequentialAgent.
  *
- * ADK owns stage ordering. OneShot RolePipeline owns explicit Role activation
- * and binding. No workflow Role can execute from a bootstrap-created instance.
+ * ADK owns stage ordering. OneShot AgentPipeline owns explicit Agent activation
+ * and binding. No workflow Agent can execute from a bootstrap-created instance.
  */
 export function createOneShotRootAgent(
   deps: OneShotWorkflowDependencies,
@@ -42,12 +42,12 @@ export function createOneShotRootAgent(
 
   const researcher = new OneShotStageAgent({
     name: "ResearcherStage",
-    description: "Activates and runs the canonical Researcher role.",
+    description: "Activates and runs the canonical Researcher agent.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
-      const role = await pipeline.activate(runId, "Researcher");
+      const agent = await pipeline.activate(runId, "Researcher");
       effects.event(runId, "Researcher", "RUNNING");
-      const bundle = await role.run(state.prompt(ctx), runId);
+      const bundle = await agent.run(state.prompt(ctx), runId);
 
       await effects.save(runId, "prompt", bundle.prompt);
       await effects.save(runId, "researcher", bundle.researcher);
@@ -73,12 +73,12 @@ export function createOneShotRootAgent(
 
   const planner = new OneShotStageAgent({
     name: "PlannerStage",
-    description: "Activates and runs the canonical Planner review/audit role.",
+    description: "Activates and runs the canonical Planner review/audit agent.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
-      const role = await pipeline.activate(runId, "Planner");
+      const agent = await pipeline.activate(runId, "Planner");
       effects.event(runId, "Planner", "RUNNING");
-      const audit = await role.run(state.bundle(ctx), runId);
+      const audit = await agent.run(state.bundle(ctx), runId);
       await effects.save(runId, "audit", audit);
       effects.event(runId, "Planner", "COMPLETE", {
         result: "PASSED",
@@ -94,9 +94,9 @@ export function createOneShotRootAgent(
     description: "Activates canonical Refactor while preserving logical plan_id.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
-      const role = await pipeline.activate(runId, "Refactor");
+      const agent = await pipeline.activate(runId, "Refactor");
       effects.event(runId, "Refactor", "RUNNING");
-      const plan = await role.run(state.bundle(ctx), state.audit(ctx));
+      const plan = await agent.run(state.bundle(ctx), state.audit(ctx));
       const bundle = { ...state.bundle(ctx), plan };
       await effects.save(runId, "plan.refactored", plan);
       effects.event(runId, "Refactor", "COMPLETE", {
@@ -120,9 +120,9 @@ export function createOneShotRootAgent(
     description: "Activates Evaluation and evaluates the final gap_0 plan.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
-      const role = await pipeline.activate(runId, "Evaluation");
+      const agent = await pipeline.activate(runId, "Evaluation");
       effects.event(runId, "Evaluation", "RUNNING");
-      const result = await role.run(
+      const result = await agent.run(
         state.bundle(ctx),
         state.plan(ctx),
       );
@@ -192,9 +192,9 @@ export function createOneShotRootAgent(
       "Activates Builder and executes the exact confirmed package through the governed sandbox.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
-      const role = await pipeline.activate(runId, "Builder");
+      const agent = await pipeline.activate(runId, "Builder");
       effects.event(runId, "Builder", "RUNNING");
-      const result = await role.run(
+      const result = await agent.run(
         state.confirmed(ctx),
         state.createdHash(ctx),
       );
@@ -284,7 +284,7 @@ export function createOneShotRootAgent(
   return new SequentialAgent({
     name: "OneShotCanonicalWorkflow",
     description:
-      "Runs explicitly activated OneShot Roles, Gap LoopAgent, Evaluation, parallel Triple Validation, confirmation, Builder execution, and sandbox integrity hash verification in canonical order.",
+      "Runs explicitly activated OneShot agents, Gap LoopAgent, Evaluation, parallel Triple Validation, confirmation, Builder execution, and sandbox integrity hash verification in canonical order.",
     subAgents: [
       researcher,
       planner,

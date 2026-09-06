@@ -1,5 +1,5 @@
 import { LoopAgent, SequentialAgent } from "@google/adk";
-import type { RolePipeline } from "../../pipeline/role-pipeline.js";
+import type { AgentPipeline } from "../../pipeline/agent-pipeline.js";
 import { ADK_STATE, state } from "./state.js";
 import { OneShotStageAgent, rootCauseDelta } from "./stage-agent.js";
 
@@ -15,7 +15,7 @@ export interface GapLoopEffects {
 
 /** Build the canonical ADK Gap Analysis workflow. */
 export function createGapAnalysisAgent(
-  pipeline: RolePipeline,
+  pipeline: AgentPipeline,
   effects: GapLoopEffects,
 ): SequentialAgent {
   const start = new OneShotStageAgent({

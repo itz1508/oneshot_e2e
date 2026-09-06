@@ -2,6 +2,8 @@
 
 ## Overview
 
+Provider implementation lives under [`app/web/cloud`](../app/web/cloud/README.md): the manager, resolver, provider interface, runtime configuration, secret-store implementation, catalog, adapters and Python workers. Workspace API provider clients live in `app/web/cloud/workspace/providers.py` and are imported as `web.cloud.workspace.providers` with `app` on `PYTHONPATH`. The browser panel remains in `app/web/src/providers-panel.js` and uses the backend HTTP API. Only `app/web/src` assets are copied into the browser build; cloud code is compiled by the root TypeScript build and runs server-side.
+
 OneShot's provider management system allows users to configure and select research providers through a web UI. The system is designed with security as a primary concern: **credentials never enter the frontend bundle, browser storage, or BullMQ job payloads**.
 
 ## Architecture
@@ -50,7 +52,7 @@ OneShot's provider management system allows users to configure and select resear
 
 Provider credentials are resolved in the following order (highest priority first):
 
-1. **Environment variable** (e.g., `FEATHERLESS_API_KEY`) - deployment/admin-controlled
+1. **Environment variable** (e.g., `OPENAI_API_KEY`) - deployment/admin-controlled
 2. **Local secret store** (`~/.config/oneshot/secrets/` on Linux, `~/Library/Application Support/OneShot/secrets/` on macOS, `%APPDATA%\OneShot\secrets\` on Windows) - user-controlled via UI
 3. **None** - provider is unconfigured
 
@@ -59,12 +61,11 @@ Non-secret configuration (model, apiBase, timeout, parallelism) is stored in `.r
 ## Security Invariants
 
 1. **Credentials are write-only from the browser** - the browser may submit a credential but can never retrieve it
-2. **Credentials never appear in HTTP responses** - `GET /api/providers` returns only `{ configured: boolean, credentialSource: "local-secret-store" | "env-var" | "none" }`
-3. **Credentials never enter BullMQ job payloads** - jobs carry only `{ id, model, configRevision }`
+2. **Credentials never appear in HTTP responses** - `GET /api/providers` returns the catalog and non-secret status/settings, including credential configuration and source metadata
+3. **Credentials never enter BullMQ job payloads** - provider captures contain `{ id, model, configRevision, settings }` with non-secret settings only
 4. **Credentials never enter ProcessingEvents** - event data contains only diagnostic messages
 5. **Credentials are never logged** - error messages use sanitized content
 6. **Environment credentials cannot be deleted from the UI** - they are admin-controlled
-7. **Secret storage is outside the workspace** - never web-servable
 7. **Secret storage is outside the workspace** - never web-servable
 
 ## Supported Providers
@@ -80,7 +81,7 @@ Non-secret configuration (model, apiBase, timeout, parallelism) is stored in `.r
 
 | Artifact | Location | Git-tracked | Web-served |
 |---|---|---|---|
-| Provider catalog | `backend/config/providers.json` | Yes | No |
+| Provider catalog | `app/web/cloud/providers.json` | Yes | No |
 | Non-secret runtime config | `.runtime/config/providers.json` | No | No |
 | Provider credentials | OS user config directory | No | No |
 | Run state | `.runtime/run-state/` | No | No |
@@ -100,10 +101,11 @@ Non-secret configuration (model, apiBase, timeout, parallelism) is stored in `.r
 
 ```
 User submits run → POST /api/runs
-  → ProviderManager.runtimeConfig() → { activeProvider, revision, model }
-  → BullMQ addRun({ runId, prompt, provider: { id, model, configRevision } })
+  → ProviderManager.captureForRun() → { id, model, configRevision, settings }
+  → BullMQ addRun({ runId, prompt, provider: capturedConfiguration })
   → (no credential in payload!)
-Worker dequeues → ProviderManager.createProvider() → resolves credential server-side
+Worker dequeues → ProviderManager.resolveForRun(id, capturedConfiguration)
+  → resolves credential server-side while retaining captured non-secret settings
   → ProviderBinding event → Researcher → ... → DONE
 ```
 
@@ -118,7 +120,7 @@ Worker dequeues → ProviderManager.createProvider() → resolves credential ser
 
 ## Redis/BullMQ Infrastructure
 
-- **Queue name:** `oneshot:run` (colon-free for BullMQ v6)
+- **Queue name:** `run` (the default Redis namespace is `oneshot:run`)
 - **Redis key prefix:** `oneshot` (configurable via `ONESHOT_QUEUE_PREFIX`)
 - **Retry policy:** attempts=1 (no automatic retry)
 - **Graceful shutdown:** server → queue → provider manager → validation lanes → bridge

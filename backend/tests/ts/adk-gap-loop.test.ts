@@ -7,8 +7,8 @@ import type {
   ResearchBundle,
   ResolvedGap,
 } from "../../contracts/schema/types.js";
-import type { GapFinding } from "../../role/gap-analysis/tool/coverage.js";
-import { GapAnalysisWorkflow } from "../../role/gap-analysis/workflow.js";
+import type { GapFinding } from "../../agents/gap-analysis/tool/coverage.js";
+import { GapAnalysisWorkflow } from "../../agents/gap-analysis/workflow.js";
 import { createGapAnalysisNode } from "../../workflow/adk/node/gap-analysis-node.js";
 import { harness, prompt } from "./harness.js";
 

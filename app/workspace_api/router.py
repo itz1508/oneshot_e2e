@@ -30,7 +30,7 @@ from workspace_api.models import (
     ModelProvider,
     ProviderKind,
 )
-from workspace_api.providers import (
+from web.cloud.workspace.providers import (
     AnthropicClient,
     GeminiClient,
     ModelRequest,

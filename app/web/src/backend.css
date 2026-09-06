@@ -1,0 +1,184 @@
+/* backend.css — OneShot real-backend additions and responsive polish.
+   Works on top of the existing prototype-aligned styles. */
+
+.backend-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.backend-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--faint);
+}
+
+.backend-status.online::before {
+  background: var(--green);
+  box-shadow: 0 0 0 3px var(--green-bg);
+}
+
+.backend-status.offline::before {
+  background: var(--red);
+  box-shadow: 0 0 0 3px var(--red-bg);
+}
+
+.backend-status.connecting::before {
+  background: var(--amber);
+  box-shadow: 0 0 0 3px var(--amber-bg);
+  animation: pulse 1.2s infinite;
+}
+
+#runtime-label,
+#rail-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#runtime-label::before,
+#rail-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--faint);
+}
+
+#runtime-label.online::before,
+#rail-status.connected::before,
+#rail-status.ok::before {
+  background: var(--green);
+  box-shadow: 0 0 0 3px var(--green-bg);
+}
+
+#runtime-label.offline::before,
+#rail-status.disconnected::before,
+#rail-status.error::before {
+  background: var(--red);
+  box-shadow: 0 0 0 3px var(--red-bg);
+}
+
+#runtime-label.connecting::before,
+#rail-status.connecting::before,
+#rail-status.reconnecting::before {
+  background: var(--amber);
+  box-shadow: 0 0 0 3px var(--amber-bg);
+  animation: pulse 1.2s infinite;
+}
+
+.exp-file.backend-artifact .exp-file-name,
+.tree-row.backend-artifact {
+  color: var(--text2);
+}
+
+.exp-file.backend-artifact:hover .exp-file-name,
+.tree-row.backend-artifact:hover {
+  color: var(--text);
+}
+
+.runtime-error {
+  margin-top: 8px;
+  padding: 9px 10px;
+  color: #f0a2a7;
+  background: var(--red-bg);
+  border: 1px solid #df777e35;
+  border-radius: var(--r1);
+  font-size: 11px;
+}
+
+.runtime-success {
+  margin-top: 8px;
+  padding: 9px 10px;
+  color: #a7d9bb;
+  background: var(--green-bg);
+  border: 1px solid #6fc39535;
+  border-radius: var(--r1);
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  body {
+    min-width: 0;
+  }
+
+  :root {
+    --drawer-w: min(92vw, 390px);
+  }
+
+  .workspace {
+    left: 0 !important;
+  }
+
+  .sidebar {
+    z-index: 30;
+    width: min(82vw, 280px);
+    box-shadow: 20px 0 50px #0009;
+  }
+
+  .top-context span {
+    display: none;
+  }
+
+  #ready-label {
+    display: none;
+  }
+
+  .provider-trigger small {
+    display: none;
+  }
+
+  .chat {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .operator {
+    width: calc(100% - 24px);
+    bottom: 12px;
+  }
+
+  .drawer {
+    right: var(--rail-w);
+  }
+}
+
+@media (max-width: 620px) {
+  .topbar {
+    gap: 6px;
+    padding-inline: 7px;
+  }
+
+  .brand {
+    font-size: 12px;
+  }
+
+  #readiness {
+    display: none;
+  }
+
+  .provider-trigger {
+    padding-inline: 8px;
+  }
+
+  .chat {
+    padding-top: 15px;
+    padding-bottom: 175px;
+  }
+
+  .message.user p {
+    max-width: calc(100vw - 100px);
+  }
+
+  .drawer {
+    width: calc(100vw - var(--rail-w));
+  }
+
+  .auth-card,
+  .settings-popover {
+    width: calc(100vw - 22px);
+    max-width: none;
+  }
+}

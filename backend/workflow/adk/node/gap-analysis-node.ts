@@ -5,12 +5,12 @@ import type {
   ResearchBundle,
   ResolvedGap,
 } from "../../../contracts/schema/types.js";
-import { GapAnalysisRole } from "../../../role/gap-analysis/role.js";
-import type { GapFinding } from "../../../role/gap-analysis/tool/coverage.js";
+import { GapAnalysisAgent } from "../../../agents/gap-analysis/agent.js";
+import type { GapFinding } from "../../../agents/gap-analysis/tool/coverage.js";
 import type {
   GapAnalysisWorkflow,
   GapFixResult,
-} from "../../../role/gap-analysis/workflow.js";
+} from "../../../agents/gap-analysis/workflow.js";
 
 export interface GapAnalysisNodeInput {
   job_id: string;
@@ -80,7 +80,7 @@ export function createGapAnalysisNode(gapper: GapAnalysisWorkflow) {
   const checkNode = node(
     (_ctx: NodeContext, input: { research: ResearchBundle; plan: Plan }): GapFinding[] =>
       gapper.inspect(input.research, input.plan),
-    { name: `${GapAnalysisRole.id}Check` },
+    { name: `${GapAnalysisAgent.id}Check` },
   );
 
   const fixNode = node(
@@ -88,7 +88,7 @@ export function createGapAnalysisNode(gapper: GapAnalysisWorkflow) {
       _ctx: NodeContext,
       input: { research: ResearchBundle; plan: Plan; finding: GapFinding },
     ): GapFixResult => gapper.resolveOne(input.research, input.plan, input.finding),
-    { name: `${GapAnalysisRole.id}Fix` },
+    { name: `${GapAnalysisAgent.id}Fix` },
   );
 
   const finalizeNode = node(
@@ -96,7 +96,7 @@ export function createGapAnalysisNode(gapper: GapAnalysisWorkflow) {
       _ctx: NodeContext,
       input: { plan: Plan; resolved: ResolvedGap[]; rootCause?: GapFixResult["rootCause"] },
     ): Promise<GapAnalysis> => gapper.finalize(input.plan, input.resolved, input.rootCause),
-    { name: `${GapAnalysisRole.id}Finalize` },
+    { name: `${GapAnalysisAgent.id}Finalize` },
   );
 
   return node(
@@ -155,6 +155,6 @@ export function createGapAnalysisNode(gapper: GapAnalysisWorkflow) {
         }
       }
     },
-    { name: GapAnalysisRole.id, rerunOnResume: true },
+    { name: GapAnalysisAgent.id, rerunOnResume: true },
   );
 }

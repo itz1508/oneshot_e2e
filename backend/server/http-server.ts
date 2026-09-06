@@ -15,11 +15,12 @@ import { id, newRunId } from "../core/id.js";
 import { RunRepository } from "../runtime/run-repository.js";
 import { ProcessingEventBus } from "../runtime/event-bus.js";
 import { WorkflowRuntime } from "../runtime/workflow-runtime.js";
+import { PlanReviewError } from "../runtime/plan-review.js";
 import type { TaskManagement } from "../task/task-management.js";
 import { QUEUE_PREFIX, RUN_QUEUE_NAME, type RunQueue, type RunJobV1 } from "../runtime/queue.js";
-import type { ProviderManager } from "../runtime/provider-manager.js";
-import type { ProviderRuntimeSettings } from "../runtime/provider-runtime-config.js";
-import type { ProviderCredential } from "../runtime/provider-secret-store.js";
+import type { ProviderManager } from "../../app/web/cloud/provider-manager.js";
+import type { ProviderRuntimeSettings } from "../../app/web/cloud/provider-runtime-config.js";
+import type { ProviderCredential } from "../../app/web/cloud/provider-secret-store.js";
 import { projectAdkGraph } from "../graph/adk-graph.js";
 import { projectAuthorityGraph } from "../graph/authority-graph.js";
 import { projectIntentGraph } from "../graph/intent-graph.js";
@@ -247,7 +248,7 @@ export async function startHttpServer(
   );
   const workspacePolicy = await WorkspacePathPolicy.create(workspaceRoot);
 
-  async function submitRun(runId: string, prompt: Prompt, res: ServerResponse, extra: Record<string, unknown> = {}) {
+  async function submitRun(runId: string, prompt: Prompt, res: ServerResponse, extra: Record<string, unknown> = {}, reviewPlan = false) {
     const queueRequired = process.env.ONESHOT_QUEUE_REQUIRED === "true";
     if (queueRequired && (!runQueue || !queueReady)) {
       runs.create(runId);
@@ -261,6 +262,7 @@ export async function startHttpServer(
       return json(res, 409, { error: "Configure and activate a provider before starting a run" });
     }
     runs.create(runId);
+    if (reviewPlan) await runtime.review.enable(runId);
     const job: RunJobV1 = { version: 1, runId, prompt, provider: selector, submittedAt: new Date().toISOString() };
     if (runQueue && queueReady) {
       try {
@@ -557,6 +559,9 @@ export async function startHttpServer(
           /^\/api\/conversations\/([^/]+)\/run$/,
         );
         if (req.method === "POST" && convRun) {
+          const options = await body(req);
+          if (options.review_plan !== undefined && typeof options.review_plan !== "boolean")
+            return json(res, 400, { error: "review_plan must be boolean" });
           if (!intent) return json(res, 503, { error: "intent collection unavailable" });
           const cid = decodeURIComponent(convRun[1]);
           const runId = newRunId();
@@ -576,7 +581,7 @@ export async function startHttpServer(
             prompt_id: made.prompt.prompt_id,
             intent_id: made.intent.intent_id,
             intent_revision: made.intent.revision,
-          });
+          }, options.review_plan === true);
         }
 
         // GET /api/conversations/:id/graph — intent graph projection
@@ -981,6 +986,24 @@ export async function startHttpServer(
             200,
             projectAuthorityGraph(events.list(authorityMatch[1])),
           );
+        }
+
+        const reviewMatch = url.pathname.match(/^\/api\/runs\/([A-Za-z0-9:_-]+)\/review$/);
+        if (reviewMatch && (req.method === "GET" || req.method === "POST")) {
+          const runId = reviewMatch[1];
+          const snapshot = runs.get(runId);
+          if (!snapshot) return json(res, 404, { error: "run not found" });
+          try {
+            if (req.method === "GET") {
+              const review = await runtime.review.get(runId);
+              return review ? json(res, 200, review) : json(res, 404, { error: "No plan review available" });
+            }
+            if (snapshot.result) return json(res, 409, { error: "Run has already finished" });
+            return json(res, 200, await runtime.review.decide(runId, await body(req)));
+          } catch (error) {
+            if (error instanceof PlanReviewError) return json(res, error.status, { error: error.message });
+            throw error;
+          }
         }
 
         // GET /api/runs/:id/artifacts/:name — fetch specific artifact content

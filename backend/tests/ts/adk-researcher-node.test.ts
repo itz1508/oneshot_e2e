@@ -11,7 +11,7 @@ import type { ResearchBundle } from "../../contracts/schema/types.js";
 import { createResearcherNode } from "../../workflow/adk/node/researcher-node.js";
 import { harness, prompt } from "./harness.js";
 
-test("ADK ctx.runNode connects to existing Researcher Role and returns canonical ResearchBundle", async () => {
+test("ADK ctx.runNode connects to existing Researcher Agent and returns canonical ResearchBundle", async () => {
   const h = await harness("adk-researcher-node");
   const jobId = "job-researcher-001";
   const researcherNode = createResearcherNode(h.researcher);
@@ -54,7 +54,7 @@ test("ADK ctx.runNode connects to existing Researcher Role and returns canonical
       sessionId: session.id,
       newMessage: {
         role: "user",
-        parts: [{ text: "Run the existing OneShot Researcher Role" }],
+        parts: [{ text: "Run the existing OneShot Researcher Agent" }],
       },
     })) {
       if ("output" in event && event.output !== undefined) {

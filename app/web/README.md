@@ -1,6 +1,8 @@
-# OneShot Staging Frontend
+# OneShot Web Application
 
-Local staging frontend built from the approved OneShot UI. It is intentionally standalone and does not modify any backend repository.
+Browser code lives under `src/`. Server-side provider integrations live under [`cloud/`](cloud/README.md) and are compiled by the root backend build. The frontend asset build does not copy cloud source or credentials into `dist/`.
+
+The backend serves the built UI from `app/web/dist` and supplies the HTTP and SSE endpoints below.
 
 ## Known OneShot browser contracts
 

@@ -16,9 +16,9 @@ import { HardenedProcessRunner } from "../../sandbox/runner/process-runner.js";
 import type {
   ResearchProvider,
   ResearchProviderReadiness,
-} from "../../role/researcher/provider.js";
+} from "../../../app/web/cloud/provider.js";
 import type { ProcessingEventBus } from "../../runtime/event-bus.js";
-import { resolveResearchProvider } from "../../role/researcher/provider-resolver.js";
+import { resolveResearchProvider } from "../../../app/web/cloud/provider-resolver.js";
 import { ConversationStore } from "../../intent/conversation-store.js";
 import { IntentCollectionService } from "../../intent/intent-collection.js";
 import { PromptGenerator } from "../../intent/prompt-generator.js";

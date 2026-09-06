@@ -1,5 +1,7 @@
 # OneShot
 
+Provider implementation now lives in [`app/web/cloud`](../app/web/cloud/README.md). See the [provider audit and verified move](PROVIDER_MIGRATION.md) for the source map and test results.
+
 OneShot is an enterprise-grade deterministic AI execution platform that transforms natural language intent into a provably correct, cryptographically hash-verified execution plan. Every operation traverses a canonical state machine governed by JSON Schema Draft 2020-12 contracts, independent multi-tier Triple Validation, RFC 8785 JSON Canonicalization Scheme (JCS), and sandbox isolation.
 
 ---

@@ -7,7 +7,7 @@ on:
       - '.github/workflows/tmp-adk-live-real-e2e.yml'
       - '.env.example'
       - 'backend/intent/**'
-      - 'backend/role/researcher/provider/adk-gemma2/**'
+      - 'app/web/cloud/provider/adk-gemma2/**'
       - 'config/gemini.env.example'
       - 'tests/test_adk_gemma_worker.py'
       - 'tests_ts/intent-collection.test.ts'

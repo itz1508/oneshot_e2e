@@ -21,7 +21,7 @@ import { FileArtifactStore } from "../runtime/artifact-store.js";
 import { AppendOnlyProcessingEventStore } from "../task/event/event-store.js";
 import { CheckpointStore } from "../task/checkpoint/checkpoint-store.js";
 import { TaskManagement } from "../task/task-management.js";
-import { ProviderManager } from "../runtime/provider-manager.js";
+import { ProviderManager } from "../../app/web/cloud/provider-manager.js";
 import { BullMQRunQueue, RUN_QUEUE_NAME, type RunQueueDeps } from "../runtime/queue.js";
 import {
   getRuntimePaths,
@@ -29,12 +29,12 @@ import {
 } from "../runtime/runtime-config.js";
 import { WorkflowRuntime } from "../runtime/workflow-runtime.js";
 import { createDynamicDependencyFactory } from "../workflow/adk/dynamic-dependencies.js";
-import { ResearcherWorkflow } from "../role/researcher/workflow.js";
-import { PlannerWorkflow } from "../role/planner/workflow.js";
-import { RefactorWorkflow } from "../role/refactor/workflow.js";
-import { GapAnalysisWorkflow } from "../role/gap-analysis/workflow.js";
-import { EvaluationWorkflow } from "../role/evaluation/workflow.js";
-import { BuilderWorkflow } from "../role/builder/workflow.js";
+import { ResearcherWorkflow } from "../agents/researcher/workflow.js";
+import { PlannerWorkflow } from "../agents/planner/workflow.js";
+import { RefactorWorkflow } from "../agents/refactor/workflow.js";
+import { GapAnalysisWorkflow } from "../agents/gap-analysis/workflow.js";
+import { EvaluationWorkflow } from "../agents/evaluation/workflow.js";
+import { BuilderWorkflow } from "../agents/builder/workflow.js";
 import { TripleValidationWorkflow } from "../workflow/triple-validation.js";
 import { ConfirmationWorkflow } from "../workflow/confirmation.js";
 import { HashWorkflow } from "../workflow/hash.js";

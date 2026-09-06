@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
-import { resolveResearchProvider } from "../../role/researcher/provider-resolver.js";
+import { resolveResearchProvider } from "../../../app/web/cloud/provider-resolver.js";
 import { harness } from "./harness.js";
 import { startHttpServer } from "../../server/http-server.js";
 

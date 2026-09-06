@@ -27,7 +27,7 @@ from workspace_api.models import (
     UsageEvent,
     UsageStatus,
 )
-from workspace_api.providers import ModelResult
+from web.cloud.workspace.providers import ModelResult
 
 
 def _period_start(now: datetime) -> datetime:

@@ -17,7 +17,7 @@ interface ProbeOutput {
   audit: Audit;
 }
 
-test("ADK passes Researcher output directly into existing Planner Role", async () => {
+test("ADK passes Researcher output directly into existing Planner Agent", async () => {
   const h = await harness("adk-planner-node");
   const jobId = "job-planner-001";
   const researcherNode = createResearcherNode(h.researcher);

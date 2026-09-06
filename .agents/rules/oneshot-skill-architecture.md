@@ -6,7 +6,7 @@ The user's architecture definition governs this repository: **Role is IAM identi
 
 | Concept | Responsibility | Placement |
 |---|---|---|
-| Agent | Executes behavior and owns its workflow outputs | `backend/role/<name>/` (current implementation location) |
+| Agent | Executes behavior and owns its workflow outputs | `backend/agents/<name>/` (current implementation location) |
 | Role | IAM identity associated with access permissions | No IAM implementation exists yet; do not fabricate one |
 | Workflow | Controls execution order, transitions and routing | `backend/workflow/` |
 | Skill | Reusable capability/procedure available to authorized callers | Existing discovery and bindings under `backend/skills/` |
@@ -17,11 +17,11 @@ Agent, Role, Skill, Tool and Workflow remain distinct. An agent name or an artif
 
 ## Current boundary
 
-Workflow execution is implemented under `backend/role/`; a role-named path is not an IAM identity, and do not invent an IAM backend or claim permission enforcement from a directory name.
+Workflow execution is implemented under `backend/agents/`; a role-named path is not an IAM identity, and do not invent an IAM backend or claim permission enforcement from a directory name.
 
 ## Agent instructions and reusable skills
 
-`backend/role/<name>/SKILL.md` files contain agent operating instructions (SOPs). They are not IAM definitions and must not automatically become globally discoverable reusable skills.
+`backend/agents/<name>/SKILL.md` files contain agent operating instructions (SOPs). They are not IAM definitions and must not automatically become globally discoverable reusable skills.
 
 Before exposing a capability as a reusable skill, determine whether multiple authorized callers can use it without inheriting an agent's workflow responsibility. Keep agent-private operations with the agent and subsystem-private operations with the subsystem. A reusable surface does not transfer ownership of the underlying subsystem.
 

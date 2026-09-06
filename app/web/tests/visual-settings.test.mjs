@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { VISUAL_DEFAULTS, mergeVisual, hueTokenFor, STATE_NAMES, HUE_TOKENS } from '../src/visual-settings.js';
 
+
 test('defaults cover the five semantic states with editable color channels', () => {
   assert.deepEqual(STATE_NAMES, ['IDLE', 'PLANNING', 'RUNNING', 'COMPLETE', 'ERROR']);
   for (const name of STATE_NAMES) {

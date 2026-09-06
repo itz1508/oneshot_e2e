@@ -1,73 +1,111 @@
-# oneshot
-
-you are an assistant agent. your job is to install oneshot on this machine and verify the installation works. follow the steps in order. do not skip a step. do not run commands that are not listed here. if a step fails, stop and report the step number, the command, and the error text.
-
-## setup: get the source
-
-```bash
-git clone https://github.com/itz1508/oneshot_e2e.git oneshot
-cd oneshot
-```
-
-git creates the target folder itself, so no mkdir is needed. replace `oneshot` with the folder name you want. all later steps run from inside this folder.
-
-## step 1: check the system requirements
-
-| requirement | minimum | check |
-|-------------|---------|-------|
-| git | any recent | `git --version` |
-| node.js | >= 24.13.0 | `node -v` |
-| npm | >= 11.8.0 | `npm -v` |
-| python | 3.11+ (3.12 verified) | `python --version` |
-
-run all four checks. if any tool is missing or older than the minimum, stop and report it. do not install or upgrade system toolchains yourself.
-
-redis and docker are optional. they are not required for installation or verification.
-
-## step 2: select and install the correct packages
-
-run these commands in this order. each command must finish successfully before you start the next one.
-
-```bash
-npm ci
-npm --prefix app/web ci
-
-python -m venv .venv
-
-# windows:
-.venv\Scripts\python -m pip install -r app/requirements/base.txt -r app/requirements/workspace-api.txt
-
-# linux/macos:
-.venv/bin/python -m pip install -r app/requirements/base.txt -r app/requirements/workspace-api.txt
-
-npm run build
-```
-
-- `npm ci` and `npm --prefix app/web ci`: backend toolchain and web ui dependencies, installed from the lockfiles. do not use `npm install`.
-- `python -m venv .venv` plus pip install: the pinned python requirements from `app/requirements/`.
-- `npm run build`: compiles the backend to `dist/` and the web ui to `app/web/dist`.
-
-## step 3: verify
-
-```bash
-npm run verify
-```
-
-this re-runs the dependency check, python tests, workspace api checks, a clean build, and the full typescript test suite. success means the output ends with:
+# Agent Instruction Prompt
 
 ```text
-ONESHOT_PRODUCTION_E2E_VERIFIED
+You are an autonomous setup agent.
+
+1. Create a new working directory for this project.
+2. Follow the Installation steps below, using the variant that matches the machine's OS (Windows, Linux/macOS, or Docker).
+3. If a step fails, diagnose and fix it yourself before continuing — do not stop to ask.
+4. Finish by confirming the app is running and report the local URL.
 ```
 
-then run the functional proof (no api key needed):
+---
+
+# Installation
+
+---
+
+
+🖥️ Windows
+
+```powershell
+# Step 1: Clone
+git clone https://github.com/itz1508/oneshot_e2e.git oneshot
+cd oneshot
+
+# Step 2: Check Requirements
+node --version
+npm --version
+python --version
+
+# Step 3: Install
+npm ci
+npm --prefix app/web ci
+python -m venv .venv
+.venv\Scripts\Activate
+python -m pip install -r app/requirements/base.txt -r app/requirements/workspace-api.txt
+
+# Step 4: Build
+npm run build
+
+# Step 5: Verify
+npm run verify
+
+# Step 6: Launch
+npm start
+```
+
+</details>
+
+<details>
+<summary>🐧 Linux/macOS</summary>
 
 ```bash
-npm run demo
+# Step 1: Clone
+git clone https://github.com/itz1508/oneshot_e2e.git oneshot
+cd oneshot
+
+# Step 2: Check Requirements
+node --version
+npm --version
+python3 --version
+
+# Step 3: Install
+npm ci
+npm --prefix app/web ci
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r app/requirements/base.txt -r app/requirements/workspace-api.txt
+
+# Step 4: Build
+npm run build
+
+# Step 5: Verify
+npm run verify
+
+# Step 6: Launch
+npm start
 ```
 
-success means the run ends with `PASSED` and prints a sha-256 hash proof.
+</details>
 
-## done
+<details>
+<summary>🐳 Docker</summary>
 
-- step 3 printed `ONESHOT_PRODUCTION_E2E_VERIFIED` and the demo printed `PASSED` with a hash proof: the installation is complete. report `done`.
-- anything else: the installation failed. report the step number, the exact command, and the error text. do not attempt fixes that are not listed here.
+```bash
+# Step 1: Clone
+git clone https://github.com/itz1508/oneshot_e2e.git oneshot
+cd oneshot
+
+# Step 2: Check Requirements
+docker --version
+docker-compose --version
+
+# Step 3: Install
+docker build -t oneshot:local .
+
+# Step 4: Verify
+docker run --rm oneshot:local node dist/backend/index.js --health
+
+# Step 5: Launch
+docker run -p 8787:8787 oneshot:local
+```
+
+</details>
+
+---
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).
+Copyright 2026 OneShot Authors. See [NOTICE](docs/license/NOTICE) for third-party software notices.

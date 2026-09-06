@@ -1,7 +1,7 @@
 import { node, type NodeContext } from "@google/adk";
 import type { ConfirmedPackage } from "../../../contracts/schema/types.js";
-import { BuilderRole } from "../../../role/builder/role.js";
-import type { BuilderWorkflow } from "../../../role/builder/workflow.js";
+import { BuilderAgent } from "../../../agents/builder/agent.js";
+import type { BuilderWorkflow } from "../../../agents/builder/workflow.js";
 import type { SandboxExecutionResult } from "../../../sandbox/types.js";
 
 export interface BuilderNodeInput {
@@ -18,6 +18,6 @@ export function createBuilderNode(builder: BuilderWorkflow) {
       }
       return await builder.run(input.confirmed, input.hash);
     },
-    { name: BuilderRole.id },
+    { name: BuilderAgent.id },
   );
 }

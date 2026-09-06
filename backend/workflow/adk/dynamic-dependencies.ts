@@ -1,11 +1,11 @@
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
-import { BuilderWorkflow } from "../../role/builder/workflow.js";
-import { EvaluationWorkflow } from "../../role/evaluation/workflow.js";
-import { GapAnalysisWorkflow } from "../../role/gap-analysis/workflow.js";
-import { PlannerWorkflow } from "../../role/planner/workflow.js";
-import { RefactorWorkflow } from "../../role/refactor/workflow.js";
-import type { ResearchProvider } from "../../role/researcher/provider.js";
-import { ResearcherWorkflow } from "../../role/researcher/workflow.js";
+import { BuilderWorkflow } from "../../agents/builder/workflow.js";
+import { EvaluationWorkflow } from "../../agents/evaluation/workflow.js";
+import { GapAnalysisWorkflow } from "../../agents/gap-analysis/workflow.js";
+import { PlannerWorkflow } from "../../agents/planner/workflow.js";
+import { RefactorWorkflow } from "../../agents/refactor/workflow.js";
+import type { ResearchProvider } from "../../../app/web/cloud/provider.js";
+import { ResearcherWorkflow } from "../../agents/researcher/workflow.js";
 import type { SandboxService } from "../../sandbox/sandbox-service.js";
 import type { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";
 import type { ProcessingEventBus } from "../../runtime/event-bus.js";

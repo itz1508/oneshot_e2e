@@ -1,8 +1,8 @@
 import { node, type NodeContext } from "@google/adk";
 
 import type { Prompt, ResearchBundle } from "../../../contracts/schema/types.js";
-import { ResearcherRole } from "../../../role/researcher/role.js";
-import type { ResearcherWorkflow } from "../../../role/researcher/workflow.js";
+import { ResearcherAgent } from "../../../agents/researcher/agent.js";
+import type { ResearcherWorkflow } from "../../../agents/researcher/workflow.js";
 
 export interface ResearcherNodeInput {
   job_id: string;
@@ -10,10 +10,10 @@ export interface ResearcherNodeInput {
 }
 
 /**
- * ADK connector for the existing OneShot Researcher Role.
+ * ADK connector for the existing OneShot Researcher Agent.
  *
  * ADK owns node execution/lifecycle. The existing ResearcherWorkflow remains
- * the Role implementation and continues to enforce the canonical Prompt and
+ * the Agent implementation and continues to enforce the canonical Prompt and
  * ResearchBundle contracts.
  */
 export function createResearcherNode(researcher: ResearcherWorkflow) {
@@ -29,6 +29,6 @@ export function createResearcherNode(researcher: ResearcherWorkflow) {
       }
       return await researcher.run(nodeInput.prompt, nodeInput.job_id);
     },
-    { name: ResearcherRole.id },
+    { name: ResearcherAgent.id },
   );
 }

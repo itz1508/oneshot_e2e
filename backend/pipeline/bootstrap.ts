@@ -1,18 +1,18 @@
 import { WorkflowRootCauseError } from "../core/root-cause-error.js";
-import { BuilderWorkflow } from "../role/builder/workflow.js";
-import { EvaluationWorkflow } from "../role/evaluation/workflow.js";
-import { GapAnalysisWorkflow } from "../role/gap-analysis/workflow.js";
-import { PlannerWorkflow } from "../role/planner/workflow.js";
-import { RefactorWorkflow } from "../role/refactor/workflow.js";
-import type { ResearchProvider } from "../role/researcher/provider.js";
-import { resolveResearchProvider } from "../role/researcher/provider-resolver.js";
-import { ResearcherWorkflow } from "../role/researcher/workflow.js";
+import { BuilderWorkflow } from "../agents/builder/workflow.js";
+import { EvaluationWorkflow } from "../agents/evaluation/workflow.js";
+import { GapAnalysisWorkflow } from "../agents/gap-analysis/workflow.js";
+import { PlannerWorkflow } from "../agents/planner/workflow.js";
+import { RefactorWorkflow } from "../agents/refactor/workflow.js";
+import type { ResearchProvider } from "../../app/web/cloud/provider.js";
+import { resolveResearchProvider } from "../../app/web/cloud/provider-resolver.js";
+import { ResearcherWorkflow } from "../agents/researcher/workflow.js";
 import type { SandboxService } from "../sandbox/sandbox-service.js";
 import type { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 import type { ProcessingEventBus } from "../runtime/event-bus.js";
-import { RolePipeline } from "./role-pipeline.js";
+import { AgentPipeline } from "./agent-pipeline.js";
 
-export interface RolePipelineBootstrapInput {
+export interface AgentPipelineBootstrapInput {
   projectRoot: string;
   events: ProcessingEventBus;
   contracts: CanonicalContractSkill;
@@ -20,12 +20,12 @@ export interface RolePipelineBootstrapInput {
 }
 
 /**
- * Register canonical Role factories without activating them.
- * Activation is explicit and happens only when the ADK workflow reaches a Role.
+ * Register canonical Agent factories without activating them.
+ * Activation is explicit and happens only when the ADK workflow reaches a Agent.
  */
-export function createRolePipeline(input: RolePipelineBootstrapInput): RolePipeline {
+export function createAgentPipeline(input: AgentPipelineBootstrapInput): AgentPipeline {
   const { projectRoot, events, contracts, sandbox } = input;
-  const pipeline = new RolePipeline(events);
+  const pipeline = new AgentPipeline(events);
 
   pipeline.register("Researcher", async (runId) => {
     events.emit(runId, "ProviderBinding:Researcher", "RUNNING", {
@@ -59,7 +59,7 @@ export function createRolePipeline(input: RolePipelineBootstrapInput): RolePipel
 
       const boundProvider = provider;
       return {
-        role_id: "Researcher" as const,
+        agent_id: "Researcher" as const,
         runtime: new ResearcherWorkflow(boundProvider, contracts),
         deactivate: () => boundProvider.close?.(),
       };
@@ -75,27 +75,27 @@ export function createRolePipeline(input: RolePipelineBootstrapInput): RolePipel
   });
 
   pipeline.register("Planner", () => ({
-    role_id: "Planner" as const,
+    agent_id: "Planner" as const,
     runtime: new PlannerWorkflow(contracts),
   }));
 
   pipeline.register("Refactor", () => ({
-    role_id: "Refactor" as const,
+    agent_id: "Refactor" as const,
     runtime: new RefactorWorkflow(contracts),
   }));
 
   pipeline.register("GapAnalysis", () => ({
-    role_id: "GapAnalysis" as const,
+    agent_id: "GapAnalysis" as const,
     runtime: new GapAnalysisWorkflow(contracts),
   }));
 
   pipeline.register("Evaluation", () => ({
-    role_id: "Evaluation" as const,
+    agent_id: "Evaluation" as const,
     runtime: new EvaluationWorkflow(contracts),
   }));
 
   pipeline.register("Builder", () => ({
-    role_id: "Builder" as const,
+    agent_id: "Builder" as const,
     runtime: new BuilderWorkflow(sandbox),
   }));
 

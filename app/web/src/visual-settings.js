@@ -89,10 +89,10 @@ export function saveVisual(v) {
   } catch {}
 }
 
-/** Pure: Smart Hue token for a role, or null when disabled/unmapped. */
-export function hueTokenFor(settings, role) {
+/** Pure: Smart Hue token for a agent, or null when disabled/unmapped. */
+export function hueTokenFor(settings, agent) {
   if (!settings || !settings.smartHue) return null;
-  const key = settings.hueMap?.[role];
+  const key = settings.hueMap?.[agent];
   return key ? HUE_TOKENS[key] || null : null;
 }
 
@@ -398,6 +398,6 @@ export function createVisualSettings(app) {
     },
     renderInto,
     bindToggle,
-    hueTokenFor: role => hueTokenFor(settings, role),
+    hueTokenFor: agent => hueTokenFor(settings, agent),
   };
 }

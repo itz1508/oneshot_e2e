@@ -19,8 +19,8 @@ def run(command: list[str]) -> None:
     """Run one verification command from the repository root.
 
     The workspace_api package lives at app/workspace_api/. It is imported by its
-    canonical Python package name ``workspace_api``, so ``app`` is placed on
-    PYTHONPATH deterministically for every child process.
+    canonical Python package name ``workspace_api``. The ``app`` import root
+    also exposes ``web.cloud`` provider clients for every child process.
     """
     env = {**os.environ, "PYTHONPATH": str(APP.resolve())}
     print("+", " ".join(command))

@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveResearchProvider } from "../../role/researcher/provider-resolver.js";
-import { FixtureResearchProvider } from "../../role/researcher/tool/fixture-provider.js";
-import { OpenAIModelProvider } from "../../role/researcher/provider/openai/provider.js";
-import { AnthropicModelProvider } from "../../role/researcher/provider/anthropic/provider.js";
-import { GeminiModelProvider } from "../../role/researcher/provider/gemini/provider.js";
+import { resolveResearchProvider } from "../../../app/web/cloud/provider-resolver.js";
+import { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";
+import { OpenAIModelProvider } from "../../../app/web/cloud/provider/openai/provider.js";
+import { AnthropicModelProvider } from "../../../app/web/cloud/provider/anthropic/provider.js";
+import { GeminiModelProvider } from "../../../app/web/cloud/provider/gemini/provider.js";
 
 test("ResearchProvider resolution separates sample, unconfigured production, and explicit remote providers", async () => {
   const saved = {

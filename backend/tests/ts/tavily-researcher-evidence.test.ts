@@ -4,11 +4,11 @@ import assert from "node:assert/strict";
 import type { Prompt } from "../../contracts/schema/types.js";
 import {
   TavilyEvidenceCollector,
-} from "../../role/researcher/tool/tavily/evidence.js";
+} from "../../agents/researcher/tool/tavily/evidence.js";
 import type {
   TavilyRequest,
   TavilyRunner,
-} from "../../role/researcher/tool/tavily/bridge.js";
+} from "../../agents/researcher/tool/tavily/bridge.js";
 
 const prompt: Prompt = {
   prompt_id: "prompt:tavily-test",

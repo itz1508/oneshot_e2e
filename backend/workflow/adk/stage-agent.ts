@@ -17,7 +17,7 @@ export type StageHandler = (
 ) => Promise<StageOutcome | void>;
 
 /**
- * Adapter that lets deterministic OneShot role/workflow functions participate
+ * Adapter that lets deterministic OneShot agent/workflow functions participate
  * as real ADK BaseAgent children without converting them into LLM calls.
  */
 export class OneShotStageAgent extends BaseAgent {

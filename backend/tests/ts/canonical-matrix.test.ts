@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { clone } from "../../core/clone.js";
 import type { Fixture, ResearchBundle } from "../../contracts/schema/types.js";
-import type { ResearchProvider } from "../../role/researcher/provider.js";
+import type { ResearchProvider } from "../../../app/web/cloud/provider.js";
 import { harness, prompt } from "./harness.js";
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
 
@@ -16,7 +16,7 @@ const seven=(b:ResearchBundle):Fixture=>({fixture_id:b.fixture.fixture_id,resear
  {assertion_id:"op:files",operator:"allFilesSpecified",target:"$.steps.0.requirement_refs",expected:[b.plan.requirements[0].requirement_id],evidence_ids:b.researcher.success_definition.evidence_ids}
 ]});
 
-test("canonical Role/runtime fixture matrix",async(t)=>{const h=await harness("matrix");try{const runId="matrix",b=await h.researcher.run(prompt(runId),runId);
+test("canonical Agent/runtime fixture matrix",async(t)=>{const h=await harness("matrix");try{const runId="matrix",b=await h.researcher.run(prompt(runId),runId);
  await t.test("plan identity through Planner and Refactor",async()=>{const x=clone(b);x.plan.steps[0].goal_refs=[];const audit=await h.planner.run(x,"matrix-refactor");assert.ok(audit.findings.length);const before=x.plan.plan_id,rev=x.plan.revision;const out=await h.refactor.run(x,audit);assert.equal(out.plan_id,before);assert.equal(out.revision,rev+1);assert.ok(out.revision_evidence.length);});
  await t.test("Gap correction performs fresh recheck",async()=>{const x=clone(b);x.plan.steps[0].requirement_refs=[];const out=await h.gapper.run(x,x.plan);assert.equal(out.gap.result,"PASSED");assert.equal(out.gap.gap_0,true);assert.ok(out.gap.resolved_gaps.length);});
  await t.test("Evaluation ROOT_CAUSE has all nine evidence areas",async()=>{const x=clone(b);x.plan.steps[0].goal_refs=[];const e=await h.evaluator.run(x,x.plan);assert.equal(e.result,"ROOT_CAUSE");assert.equal(e.evidence.length,9);});

@@ -20,7 +20,7 @@ class AdkGemmaWorkerTests(unittest.TestCase):
                 sys.executable,
                 str(
                     ROOT
-                    / "backend/role/researcher/provider/adk-gemma2/worker.py"
+                    / "app/web/cloud/provider/adk-gemma2/worker.py"
                 ),
             ],
             cwd=ROOT,

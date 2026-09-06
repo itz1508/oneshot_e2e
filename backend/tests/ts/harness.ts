@@ -1,8 +1,8 @@
 ﻿import { rmSync } from "node:fs";
 import { resolve } from "node:path";
 import type { Prompt } from "../../contracts/schema/types.js";
-import type { ResearchProvider } from "../../role/researcher/provider.js";
-import { RolePipeline } from "../../pipeline/role-pipeline.js";
+import type { ResearchProvider } from "../../../app/web/cloud/provider.js";
+import { AgentPipeline } from "../../pipeline/agent-pipeline.js";
 import { ProcessingEventBus } from "../../runtime/event-bus.js";
 import { AppendOnlyProcessingEventStore } from "../../task/event/event-store.js";
 import { CheckpointStore } from "../../task/checkpoint/checkpoint-store.js";
@@ -13,13 +13,13 @@ import { PythonBridge } from "../../validation/python-bridge.js";
 import { ValidationLanePool } from "../../validation/validation-lane-pool.js";
 import { DeterministicValidationRuntime } from "../../validation/deterministic-validation.js";
 import { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";
-import { FixtureResearchProvider } from "../../role/researcher/tool/fixture-provider.js";
-import { ResearcherWorkflow } from "../../role/researcher/workflow.js";
-import { PlannerWorkflow } from "../../role/planner/workflow.js";
-import { RefactorWorkflow } from "../../role/refactor/workflow.js";
-import { GapAnalysisWorkflow } from "../../role/gap-analysis/workflow.js";
-import { EvaluationWorkflow } from "../../role/evaluation/workflow.js";
-import { BuilderWorkflow } from "../../role/builder/workflow.js";
+import { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";
+import { ResearcherWorkflow } from "../../agents/researcher/workflow.js";
+import { PlannerWorkflow } from "../../agents/planner/workflow.js";
+import { RefactorWorkflow } from "../../agents/refactor/workflow.js";
+import { GapAnalysisWorkflow } from "../../agents/gap-analysis/workflow.js";
+import { EvaluationWorkflow } from "../../agents/evaluation/workflow.js";
+import { BuilderWorkflow } from "../../agents/builder/workflow.js";
 import { TripleValidationWorkflow } from "../../workflow/triple-validation.js";
 import { ConfirmationWorkflow } from "../../workflow/confirmation.js";
 import { HashWorkflow } from "../../workflow/hash.js";
@@ -134,13 +134,13 @@ export async function harness(
 
   // Kept only for legacy unit tests of the superseded registry itself. The
   // production/test WorkflowRuntime below executes through ADK dynamic nodes.
-  const pipeline = new RolePipeline(events);
-  pipeline.register("Researcher", () => ({ role_id: "Researcher", runtime: researcher }));
-  pipeline.register("Planner", () => ({ role_id: "Planner", runtime: planner }));
-  pipeline.register("Refactor", () => ({ role_id: "Refactor", runtime: refactor }));
-  pipeline.register("GapAnalysis", () => ({ role_id: "GapAnalysis", runtime: gapper }));
-  pipeline.register("Evaluation", () => ({ role_id: "Evaluation", runtime: evaluator }));
-  pipeline.register("Builder", () => ({ role_id: "Builder", runtime: builder }));
+  const pipeline = new AgentPipeline(events);
+  pipeline.register("Researcher", () => ({ agent_id: "Researcher", runtime: researcher }));
+  pipeline.register("Planner", () => ({ agent_id: "Planner", runtime: planner }));
+  pipeline.register("Refactor", () => ({ agent_id: "Refactor", runtime: refactor }));
+  pipeline.register("GapAnalysis", () => ({ agent_id: "GapAnalysis", runtime: gapper }));
+  pipeline.register("Evaluation", () => ({ agent_id: "Evaluation", runtime: evaluator }));
+  pipeline.register("Builder", () => ({ agent_id: "Builder", runtime: builder }));
 
   const runtime = new WorkflowRuntime(
     events,

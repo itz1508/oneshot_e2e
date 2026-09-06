@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OneShot Console</title>
+<style>
+/* ============================================================
+   OneShot Console - refined prototype.
+   Design tokens are the single source of truth; every surface
+   references them. Token block is ported into app/web styles.
+   ============================================================ */
+:root{
+  color-scheme:dark;
+  /* color hierarchy (step 5) */
+  --bg:#0b0d11;            /* BACKGROUND - app behind everything  */
+  --surface-1:#10131a;     /* SURFACE_1  - topbar, sidebar        */
+  --surface-2:#141821;     /* SURFACE_2  - workspace, cards       */
+  --surface-3:#1b202b;     /* SURFACE_3  - raised: inputs, modals */
+  --border:#ffffff12;      /* BORDER     - hairline separators    */
+  --border-strong:#ffffff22;
+  --text-1:#e9edf4;        /* PRIMARY_TEXT                        */
+  --text-2:#aeb8c6;        /* SECONDARY_TEXT                      */
+  --text-3:#7e8896;        /* tertiary: meta, labels              */
+  --text-4:#5a6472;        /* faintest: hints, empty states       */
+  --accent:#78a7e8;        /* ACCENT - interactive                */
+  --accent-bg:rgba(120,167,232,.10);
+  --success:#6fc395;  --success-bg:rgba(111,195,149,.09);
+  --warning:#d8aa64;  --warning-bg:rgba(216,170,100,.09);
+  --failure:#df777e;  --failure-bg:rgba(223,119,126,.09);
+  --active:#8bb7f2;        /* ACTIVE - pressed / current item     */
+  --focus:#8bb7f2;         /* FOCUS  - focus ring                 */
+  /* typography (step 4) */
+  --font-ui:"Inter","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif;
+  --font-mono:"Cascadia Code","SFMono-Regular",ui-monospace,Consolas,"Liberation Mono",monospace;
+  --fs-ui:13px;      /* UI_TEXT  - body, buttons            */
+  --fs-heading:12.5px; /* HEADINGS - panel + card titles (650) */
+  --fs-status:10px;  /* STATUS - 650, uppercase, +.06em      */
+  --fs-code:11.5px;  /* CODE - file bodies, diffs            */
+  --fs-event:10.5px; /* EVENTS - activity feed, queue lines  */
+  --fs-input:13px;   /* INPUT - composer + form fields       */
+  /* spacing & shape (step 6) */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:22px; --s6:30px;
+  --r1:7px; --r2:10px;
+  /* layout */
+  --topbar-h:44px; --sidebar-w:230px; --drawer-w:360px; --rail-w:44px;
+  --shadow:0 16px 40px rgba(0,0,0,.55);
+  --ring:0 0 0 3px rgba(139,183,242,.22);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;min-width:0;background:var(--bg);color:var(--text-1);
+  font:var(--fs-ui)/1.5 var(--font-ui);letter-spacing:-.004em;-webkit-font-smoothing:antialiased}
+
+/* typography utilities (step 4) */
+.t-heading{font-size:var(--fs-heading);font-weight:650;color:var(--text-1)}
+.t-code,.t-event{font-family:var(--font-mono)}
+.t-code{font-size:var(--fs-code);line-height:1.6;color:#b9c4d2}
+.t-event{font-size:var(--fs-event);line-height:1.55}
+
+/* interaction states (step 7) */
+button{cursor:pointer;background:none;border:0;color:inherit;font:inherit;padding:0}
+button:disabled{cursor:not-allowed}
+button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,
+textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{
+  outline:2px solid var(--focus);outline-offset:2px;border-radius:var(--r1)}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#ffffff14;border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:#ffffff26}
+::selection{background:#78a7e840}
+
+.btn{height:30px;padding:0 var(--s3);border-radius:var(--r1);border:1px solid transparent;
+  display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-ui);font-weight:550;
+  color:var(--text-2);transition:background .14s,border-color .14s,color .14s,transform .05s}
+.btn:hover{background:#ffffff0a;color:var(--text-1)}
+.btn:active{background:#ffffff12;transform:translateY(.5px)}
+.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.btn[disabled]{background:transparent;color:var(--text-4)}
+.btn.secondary{background:var(--surface-3);border-color:var(--border-strong);color:var(--text-1)}
+.btn.secondary:hover{background:#242b38}
+.btn.secondary[disabled]{background:var(--surface-3);border-color:var(--border);color:var(--text-4)}
+.btn.primary{background:#4d76b3;color:#fff}
+.btn.primary:hover{background:#5c86c4}
+.btn.primary:active{background:#466da6;transform:translateY(.5px)}
+.btn.primary[disabled]{background:#232937;color:#68717e}
+.btn.processing{color:var(--accent);cursor:progress}
+.btn.danger-soft:hover{background:var(--failure-bg);color:var(--failure)}
+.btn.sm{height:26px;padding:0 9px;font-size:11px}
+.icon{width:15px;height:15px;stroke:currentColor;stroke-width:1.7;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+
+/* status chips - semantic color only (step 5) */
+.chip{display:inline-flex;align-items:center;gap:5px;height:19px;padding:0 8px;border-radius:99px;
+  font-size:var(--fs-status);font-weight:650;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid var(--border);color:var(--text-3)}
+.chip::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.chip.queued{color:var(--text-2);border-color:var(--border-strong)}
+.chip.running{color:var(--accent);border-color:#78a7e855;background:var(--accent-bg)}
+.chip.running::before{animation:pulse 1.4s ease-in-out infinite}
+.chip.done{color:var(--success);border-color:#6fc39555;background:var(--success-bg)}
+.chip.failed{color:var(--failure);border-color:#df777e55;background:var(--failure-bg)}
+.chip.blocked{color:var(--warning);border-color:#d8aa6455;background:var(--warning-bg)}
+@keyframes pulse{50%{opacity:.3}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:10px;height:10px;border:1.5px solid #ffffff2a;border-top-color:var(--accent);
+  border-radius:50%;animation:spin .8s linear infinite;flex:0 0 auto}
+
+/* ---- shell ---- */
+.app{height:100%;display:grid;grid-template-rows:var(--topbar-h) 1fr;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:var(--s3);padding:0 var(--s3);
+  background:var(--surface-1);border-bottom:1px solid var(--border);z-index:40}
+.brand{display:flex;align-items:center;gap:8px;font-weight:650;font-size:var(--fs-ui);color:var(--text-1)}
+.mark{width:22px;height:22px;display:grid;place-items:center;border-radius:6px;
+  background:linear-gradient(135deg,#2a3f61,#1c2c46);color:#c6ddfc;font:700 10px var(--font-mono)}
+.top-context{display:flex;align-items:center;gap:9px;min-width:0;flex:1;color:var(--text-3);font-size:12px}
+.top-context .sep{width:1px;height:14px;background:var(--border)}
+/* queue transport status - EXECUTION_INFORMATION */
+.transport{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border:1px solid var(--border);
+  border-radius:99px;font:650 var(--fs-status)/1 var(--font-mono);letter-spacing:.05em;color:var(--text-3)}
+.transport.live{color:var(--success);border-color:#6fc39544;background:var(--success-bg)}
+.transport.inline{color:var(--warning);border-color:#d8aa6444;background:var(--warning-bg)}
+.top-actions{display:flex;align-items:center;gap:var(--s2);flex:0 0 auto}
+
+/* readiness - STATUS_INFORMATION gating the primary action */
+.readiness{display:flex;align-items:center;gap:8px}
+.leds{display:flex;gap:5px}
+.led{width:7px;height:7px;border-radius:50%;background:#232933;border:1px solid #3d4551;
+  transition:background .18s,border-color .18s}
+.led.lit{background:var(--success);border-color:#89d2a9}
+.led.next{background:var(--warning);border-color:#e1ba7c;animation:pulse 1.5s ease-in-out infinite}
+.readiness-label{font-size:var(--fs-status);font-weight:650;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--text-3);min-width:112px}
+
+/* ---- body / panes (step 6: workspace always fits remaining space) ---- */
+:root{--left-open:0px;--right-open:0px}
+.app:not(.sidebar-off){--left-open:var(--sidebar-w)}
+.app.drawer-open{--right-open:var(--drawer-w)}
+.body{position:relative;min-height:0;overflow:hidden;background:var(--bg)}
+
+.sidebar{position:absolute;z-index:20;left:0;top:0;bottom:0;width:var(--sidebar-w);
+  background:var(--surface-1);border-right:1px solid var(--border);
+  padding:var(--s2) 8px;display:flex;flex-direction:column;gap:2px;overflow:auto;
+  transform:translateX(-100%);visibility:hidden;transition:transform .18s ease,visibility .18s ease}
+.app:not(.sidebar-off) .sidebar{transform:none;visibility:visible}
+.section-label{margin:var(--s3) 8px 6px;color:var(--text-4);font-size:var(--fs-status);
+  font-weight:650;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center}
+.section-label .cnt{margin-left:auto;font:var(--fs-event) var(--font-mono);color:var(--text-4)}
+.nav{width:100%;height:31px;border-radius:var(--r1);color:var(--text-2);display:flex;
+  align-items:center;gap:9px;padding:0 9px;text-align:left;transition:background .14s,color .14s}
+.nav:hover{background:#ffffff08;color:var(--text-1)}
+.nav:active{background:#ffffff0e}
+.nav.active{background:#ffffff0c;color:var(--text-1);box-shadow:inset 2px 0 var(--accent)}
+.nav .icon{width:14px;height:14px}
+
+/* explorer - SECONDARY_CONTENT */
+.explorer{font:var(--fs-event)/1.5 var(--font-mono);color:var(--text-3);flex:1;overflow:auto;
+  min-height:0;padding-bottom:var(--s3)}
+.exp-folder>summary{list-style:none;cursor:pointer;height:25px;display:flex;align-items:center;
+  gap:6px;padding:0 6px;border-radius:6px}
+.exp-folder>summary::-webkit-details-marker{display:none}
+.exp-folder>summary:hover{background:#ffffff07;color:var(--text-2)}
+.exp-chevron{color:var(--text-4);font-size:9px;transition:transform .15s}
+.exp-folder[open]>summary .exp-chevron{transform:rotate(90deg)}
+.exp-file{display:flex;align-items:center;gap:6px;height:23px;padding:0 6px 0 24px;border-radius:6px;
+  cursor:pointer;color:var(--text-3)}
+.exp-file:hover{background:#ffffff07;color:var(--text-2)}
+.exp-file .badge{margin-left:auto;width:6px;height:6px;border-radius:50%;flex:0 0 auto}
+.exp-file .badge.created{background:var(--success)}
+.exp-file .badge.modified{background:var(--warning)}
+.exp-file.pending{opacity:.42}
+.exp-empty{color:var(--text-4);padding:4px 6px;font-size:var(--fs-event)}
+
+/* ---- workspace / primary ---- */
+.workspace{position:absolute;z-index:10;top:0;bottom:0;left:var(--left-open);
+  right:calc(var(--rail-w) + var(--right-open));background:var(--surface-2);overflow:hidden;
+  transition:left .2s cubic-bezier(.2,.8,.2,1),right .2s cubic-bezier(.2,.8,.2,1)}
+.main-scroll{width:100%;height:100%;overflow:auto;padding:var(--s5) clamp(16px,2.4vw,32px) 190px}
+.main-content{width:100%;max-width:820px;margin-inline:auto}
+
+.welcome{padding:var(--s6) 0 var(--s5);border-bottom:1px solid var(--border);margin-bottom:var(--s4)}
+.welcome h1{margin:0 0 6px;font-size:15px;font-weight:650}
+.welcome p{margin:0;color:var(--text-3);font-size:var(--fs-ui)}
+
+.chat-thread{display:flex;flex-direction:column;gap:var(--s4)}
+.message{display:flex;gap:10px}
+.message.user{flex-direction:row-reverse}
+.avatar{flex:0 0 26px;height:26px;border-radius:7px;display:grid;place-items:center;
+  background:#2b3440;color:#cbd4df;font:650 10px var(--font-mono)}
+.avatar.ai{background:#22364a;color:#b9d5f7}
+.bubble{max-width:640px;min-width:0}
+.message.user .bubble{background:var(--surface-3);border:1px solid var(--border);
+  border-radius:var(--r2);padding:10px 12px}
+.bubble p{margin:0;color:var(--text-2);white-space:pre-wrap}
+
+/* stage track - EXECUTION_INFORMATION (canonical stages) */
+.stage-track{display:flex;flex-direction:column;gap:2px;margin:var(--s2) 0 var(--s4)}
+.stage-row{display:flex;align-items:center;gap:10px;height:30px;padding:0 10px;border-radius:var(--r1)}
+.stage-row .idx{font:650 var(--fs-event) var(--font-mono);color:var(--text-4);width:18px}
+.stage-row .name{font-size:12px;color:var(--text-3);flex:1}
+.stage-row.active{background:var(--accent-bg)}
+.stage-row.active .name{color:var(--text-1)}
+.stage-row.active .idx{color:var(--accent)}
+.stage-row.done .name{color:var(--text-2)}
+.stage-row.done .idx{color:var(--success)}
+.stage-row .chip{height:16px;padding:0 7px}
+
+/* plan review card - PRIMARY_CONTENT pause point */
+.plan-card{border:1px solid var(--border-strong);border-radius:var(--r2);background:var(--surface-3);
+  padding:var(--s3) var(--s4);margin-top:2px}
+.plan-card-head{display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s2)}
+.plan-field label{display:block;font-size:var(--fs-status);color:var(--text-3);font-weight:650;
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.plan-field textarea{width:100%;min-height:56px;background:var(--surface-2);border:1px solid var(--border-strong);
+  border-radius:var(--r1);padding:8px 9px;color:var(--text-2);font:12px/1.5 var(--font-ui);resize:vertical}
+.plan-field textarea:focus{outline:none;border-color:#78a7e866;box-shadow:var(--ring)}
+.plan-field textarea:disabled{opacity:.55;resize:none}
+.plan-note{display:flex;gap:7px;margin-top:10px;padding:8px 9px;border:1px solid #d8aa6440;
+  border-radius:var(--r1);background:var(--warning-bg);color:#e4c493;font-size:11px;line-height:1.5}
+.plan-actions{display:flex;align-items:center;gap:var(--s2);margin-top:var(--s3);
+  padding-top:var(--s3);border-top:1px solid var(--border)}
+.plan-actions .hint{color:var(--text-4);font-size:10px}
+.plan-card.confirmed{opacity:.8}
+.plan-card.confirmed .plan-actions{display:none}
+
+/* code build card - CODE surface (monospace, step 4) */
+.code-card{border:1px solid var(--border-strong);border-radius:var(--r2);background:#0e1116;overflow:hidden}
+.code-card-head{height:30px;display:flex;align-items:center;gap:7px;padding:0 10px;
+  border-bottom:1px solid var(--border);color:var(--text-3);
+  font:650 var(--fs-status) var(--font-mono);letter-spacing:.05em}
+.code-card-head .chip{margin-left:auto}
+.code-body{padding:11px 12px;white-space:pre;overflow:auto;color:#b9c4d2;
+  font:var(--fs-code)/1.65 var(--font-mono);max-height:260px}
+.code-body .add{color:var(--success);display:block}
+.code-body .rem{color:var(--failure);display:block;opacity:.85}
+
+/* composer - INPUT + PRIMARY_ACTION */
+.composer{position:absolute;z-index:15;left:50%;bottom:var(--s5);transform:translateX(-50%);
+  width:min(720px,calc(100% - 48px));background:var(--surface-3);
+  border:1px solid var(--border-strong);border-radius:var(--r2);box-shadow:var(--shadow);
+  display:flex;flex-direction:column;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.composer:focus-within{border-color:#78a7e866;box-shadow:var(--ring),var(--shadow)}
+.composer textarea{height:86px;padding:12px 14px 8px;background:transparent;border:0;resize:none;
+  outline:none;font:var(--fs-input)/1.5 var(--font-ui);color:var(--text-1)}
+.composer textarea::placeholder{color:var(--text-4)}
+.composer-foot{display:flex;align-items:center;gap:var(--s3);padding:8px 10px 10px;
+  border-top:1px solid var(--border)}
+.composer-foot .spacer{flex:1}
+.composer-foot .hint{color:var(--text-4);font-size:10px}
+
+/* ---- right rail ---- */
+.rail{position:absolute;z-index:30;top:0;right:0;bottom:0;width:var(--rail-w);
+  background:var(--surface-1);border-left:1px solid var(--border);display:flex;
+  flex-direction:column;align-items:center;padding-top:var(--s2)}
+.rail-btn{width:32px;height:32px;border-radius:var(--r1);display:grid;place-items:center;
+  color:var(--text-3);transition:background .14s,color .14s}
+.rail-btn:hover{background:#ffffff0a;color:var(--text-1)}
+.rail-btn:active{background:#ffffff12}
+.rail-btn.on{background:var(--accent-bg);color:var(--accent)}
+.rail-status{margin-top:auto;margin-bottom:10px;writing-mode:vertical-rl;
+  font:650 var(--fs-status) var(--font-mono);letter-spacing:.08em;color:var(--text-4)}
+.rail-status.ok{color:var(--success)}
+
+/* ---- drawer - SECONDARY_PANELS ---- */
+.drawer{position:absolute;z-index:25;top:0;right:var(--rail-w);bottom:0;width:var(--drawer-w);
+  background:var(--surface-1);border-left:1px solid var(--border);display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;transform:translateX(100%);
+  transition:transform .18s ease,opacity .12s ease}
+.drawer.open{opacity:1;pointer-events:auto;transform:none}
+.drawer-head{flex:0 0 auto;display:flex;align-items:center;gap:var(--s2);
+  padding:var(--s3) var(--s3) 10px;border-bottom:1px solid var(--border)}
+.drawer-head h2{margin:0;font-size:var(--fs-heading);font-weight:650}
+.drawer-head p{margin:2px 0 0;font-size:10.5px;color:var(--text-3)}
+.drawer-close{margin-left:auto;width:26px;height:26px;border-radius:6px;display:grid;
+  place-items:center;color:var(--text-3)}
+.drawer-close:hover{background:#ffffff0a;color:var(--text-1)}
+.drawer-tabs{display:flex;gap:2px;padding:6px 8px;border-bottom:1px solid var(--border)}
+.drawer-tab{height:26px;padding:0 10px;border-radius:var(--r1);font-size:11px;font-weight:550;color:var(--text-3)}
+.drawer-tab:hover{background:#ffffff08;color:var(--text-1)}
+.drawer-tab.active{background:#ffffff0c;color:var(--text-1);box-shadow:inset 0 -2px var(--accent)}
+.drawer-body{flex:1;overflow:auto;padding:var(--s3)}
+
+/* activity feed - EVENTS (monospace, step 4) */
+.feed{display:flex;flex-direction:column;gap:1px;font-family:var(--font-mono)}
+.feed-row{display:flex;gap:8px;padding:4px 6px;border-radius:5px;align-items:baseline}
+.feed-row:hover{background:#ffffff06}
+.feed-time{flex:0 0 54px;color:var(--text-4);font-size:var(--fs-event)}
+.feed-kind{flex:0 0 96px;color:var(--accent);font-size:var(--fs-event);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.feed-row.phase-COMPLETE .feed-kind{color:var(--success)}
+.feed-row.phase-ROOT_CAUSE .feed-kind{color:var(--failure)}
+.feed-msg{color:var(--text-2);font-size:var(--fs-event);min-width:0;overflow-wrap:anywhere}
+.feed-empty{color:var(--text-4);font-size:var(--fs-event);padding:6px}
+
+/* files panel */
+.file-row{display:flex;align-items:center;gap:8px;height:28px;padding:0 6px;border-radius:6px;
+  font:var(--fs-event) var(--font-mono);color:var(--text-2);cursor:pointer}
+.file-row:hover{background:#ffffff07}
+
+/* ---- modal - CONFIGURATION_CONTROLS ---- */
+.veil{position:fixed;inset:0;z-index:60;background:rgba(5,7,10,.62);display:grid;
+  place-items:center;opacity:0;pointer-events:none;transition:opacity .15s}
+.veil.open{opacity:1;pointer-events:auto}
+.modal{width:420px;max-width:calc(100vw - 32px);background:var(--surface-3);
+  border:1px solid var(--border-strong);border-radius:var(--r2);box-shadow:var(--shadow);
+  transform:translateY(6px);transition:transform .15s}
+.veil.open .modal{transform:none}
+.modal-head{display:flex;align-items:flex-start;gap:var(--s2);padding:var(--s4) var(--s4) 12px}
+.modal-head h2{margin:0;font-size:var(--fs-heading);font-weight:650}
+.modal-head p{margin:3px 0 0;font-size:10.5px;color:var(--text-3);line-height:1.45}
+.modal-body{padding:0 var(--s4) var(--s4)}
+.field{margin-bottom:var(--s3)}
+.field label{display:block;font-size:var(--fs-status);color:var(--text-3);font-weight:650;
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.field input,.field select{width:100%;height:32px;background:var(--surface-2);
+  border:1px solid var(--border-strong);border-radius:var(--r1);padding:0 9px;
+  color:var(--text-1);font:var(--fs-input) var(--font-ui)}
+.field input:focus,.field select:focus{outline:none;border-color:#78a7e866;box-shadow:var(--ring)}
+.field .help{margin-top:4px;color:var(--text-4);font-size:10px}
+.provider-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:var(--s3)}
+.provider-tile{border:1px solid var(--border-strong);border-radius:var(--r1);padding:9px;
+  display:flex;flex-direction:column;gap:3px;text-align:left;
+  transition:border-color .14s,background .14s}
+.provider-tile:hover{background:#ffffff06}
+.provider-tile.selected{border-color:#78a7e877;background:var(--accent-bg)}
+.p-name{font-size:12px;font-weight:600;color:var(--text-1)}
+.p-sub{font-size:9.5px;color:var(--text-4)}
+.status-row{display:flex;align-items:center;gap:7px;padding:8px 9px;border:1px solid var(--border);
+  border-radius:var(--r1);background:var(--surface-2);color:var(--text-3);font-size:11px;margin-bottom:var(--s3)}
+.status-row.testing{color:var(--accent);border-color:#78a7e855}
+.status-row.connected{color:var(--success);border-color:#6fc39555;background:var(--success-bg)}
+.status-row.error{color:var(--failure);border-color:#df777e55;background:var(--failure-bg)}
+.modal-actions{display:flex;align-items:center;gap:var(--s2)}
+.modal-actions .spacer{flex:1}
+
+/* file preview */
+.preview-modal{width:560px}
+.preview-title{font:650 var(--fs-code) var(--font-mono)}
+.preview-body{max-height:56vh;padding:var(--s3) var(--s4)}
+
+/* toast - SUCCESS/FAILURE feedback */
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(8px);z-index:80;
+  background:var(--surface-3);border:1px solid var(--border-strong);border-radius:var(--r1);
+  padding:8px 14px;font-size:12px;color:var(--text-1);box-shadow:var(--shadow);
+  opacity:0;pointer-events:none;transition:opacity .15s,transform .15s}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.toast.success{border-color:#6fc39555;color:var(--success)}
+.toast.failure{border-color:#df777e55;color:var(--failure)}
+
+/* ---- responsive (step 6: shrink panes before squeezing workspace) ---- */
+@media(max-width:1080px){:root{--sidebar-w:196px;--drawer-w:320px}}
+@media(max-width:900px){
+  :root{--sidebar-w:176px;--drawer-w:min(300px,42vw)}
+  .readiness-label,.top-context .sep,.top-context em{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app sidebar-off" id="app">
+
+  <header class="topbar">
+    <b class="brand"><span class="mark">1S</span>OneShot</b>
+    <div class="top-context">
+      <span id="transport" class="transport live">QUEUE &middot; REDIS</span>
+      <span class="sep"></span>
+      <em id="top-run" style="font-style:normal">No active run</em>
+    </div>
+    <div class="top-actions">
+      <div class="readiness" aria-label="Prompt readiness">
+        <span class="readiness-label" id="readinessLabel">Describe a request</span>
+        <span class="leds" aria-hidden="true">
+          <i class="led" data-k="intent"></i><i class="led" data-k="outcome"></i><i class="led" data-k="constraints"></i>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="body">
+
+    <aside class="sidebar" id="sidebar" aria-label="Workspace">
+      <div class="section-label">Workspace</div>
+      <button class="nav active" id="navChat">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Run
+      </button>
+      <button class="nav" id="navNew">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        New run
+      </button>
+      <div class="section-label">Files<span class="cnt" id="fileCount">0</span></div>
+      <div class="explorer" id="explorer"><div class="exp-empty">Generated files appear here as stages complete.</div></div>
+    </aside>
+
+    <main class="workspace">
+      <div class="main-scroll" id="mainScroll">
+        <div class="main-content">
+          <section class="welcome" id="welcome">
+            <h1>Run the pipeline</h1>
+            <p>Describe the outcome and constraints. OneShot plans, builds, and verifies in one queued run.</p>
+          </section>
+          <div class="chat-thread" id="thread"></div>
+        </div>
+      </div>
+
+      <div class="composer" role="form" aria-label="Run request">
+        <textarea id="composerInput" class="t-input" placeholder="Describe the outcome and constraints for this run"></textarea>
+        <div class="composer-foot">
+          <div class="readiness">
+            <span class="readiness-label" id="composerReadiness">Describe a request</span>
+            <span class="leds" aria-hidden="true">
+              <i class="led" data-k="intent"></i><i class="led" data-k="outcome"></i><i class="led" data-k="constraints"></i>
+            </span>
+          </div>
+          <span class="spacer"></span>
+          <span class="hint">Shift+Enter for newline</span>
+          <button class="btn primary" id="generate" disabled>
+            Generate
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <nav class="rail" aria-label="Panels">
+      <button class="rail-btn" id="railSidebar" title="Toggle sidebar" aria-label="Toggle sidebar" aria-expanded="false">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>
+      </button>
+      <button class="rail-btn" id="railStatus" title="Run status" aria-label="Run status" aria-expanded="false">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+      </button>
+      <button class="rail-btn" id="railProvider" title="Provider" aria-label="Provider" aria-haspopup="dialog">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>
+      </button>
+      <span class="rail-status ok" id="railStatusText">QUEUE OK</span>
+    </nav>
+
+    <aside class="drawer" id="statusDrawer" aria-label="Run status">
+      <div class="drawer-head">
+        <div><h2>Run status</h2><p id="drawerRunLabel">No active run</p></div>
+        <button class="drawer-close" data-close aria-label="Close run status">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="drawer-tabs" role="tablist">
+        <button class="drawer-tab active" data-tab="activity" role="tab" aria-selected="true">Activity</button>
+        <button class="drawer-tab" data-tab="files" role="tab" aria-selected="false">Files</button>
+        <button class="drawer-tab" data-tab="queue" role="tab" aria-selected="false">Queue</button>
+      </div>
+      <div class="drawer-body">
+        <section data-panel="activity"><div class="feed" id="activityFeed"><div class="feed-empty">Waiting for run events.</div></div></section>
+        <section data-panel="files" hidden><div id="drawerFiles"><div class="feed-empty">No files generated yet.</div></div></section>
+        <section data-panel="queue" hidden><div class="feed" id="queueCounts"></div></section>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<!-- PROVIDER MODAL -->
+<div class="veil" id="providerVeil">
+  <div class="modal" role="dialog" aria-labelledby="providerTitle">
+    <div class="modal-head">
+      <div>
+        <h2 id="providerTitle">Provider</h2>
+        <p>Keys are held by the local server for this session only.</p>
+      </div>
+      <button class="drawer-close" id="providerClose" aria-label="Close">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="provider-tiles" id="providerTiles">
+        <button class="provider-tile selected" data-provider="gemini">
+          <span class="p-name">Gemini</span><span class="p-sub">Default</span>
+        </button>
+        <button class="provider-tile" data-provider="openai">
+          <span class="p-name">OpenAI</span><span class="p-sub">GPT family</span>
+        </button>
+        <button class="provider-tile" data-provider="anthropic">
+          <span class="p-name">Anthropic</span><span class="p-sub">Claude family</span>
+        </button>
+      </div>
+      <div class="field">
+        <label for="modelSelect">Model</label>
+        <select id="modelSelect"></select>
+      </div>
+      <div class="field">
+        <label for="apiKey">API key</label>
+        <input id="apiKey" type="password" placeholder="Paste key" autocomplete="off">
+        <div class="help">Resolved server-side per run. Never stored in the browser.</div>
+      </div>
+      <div class="status-row" id="providerStatus">Not tested</div>
+      <div class="modal-actions">
+        <button class="btn secondary sm" id="testProvider">Test connection</button>
+        <span class="spacer"></span>
+        <button class="btn danger-soft sm" id="removeKey">Remove key</button>
+        <button class="btn primary sm" id="saveProvider">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FILE PREVIEW -->
+<div class="veil" id="previewVeil">
+  <div class="modal preview-modal" role="dialog" aria-labelledby="previewTitle">
+    <div class="modal-head">
+      <h2 class="preview-title" id="previewTitle">path</h2>
+      <button class="drawer-close" id="previewClose" aria-label="Close" style="margin-left:auto">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="code-body preview-body" id="previewBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+"use strict";
+
+/* ===== data ===== */
+const STAGES = [
+  {id:"researcher", name:"Researcher"},
+  {id:"review",      name:"Plan review", pause:true},
+  {id:"planner",     name:"Planner"},
+  {id:"refactor",    name:"Refactor"},
+  {id:"gap",         name:"Gap analysis"},
+  {id:"evaluation",  name:"Evaluation"},
+  {id:"triple",      name:"Triple validation"},
+  {id:"promote",     name:"Promote \u0026 build"}
+];
+const MODELS = {gemini:["gemini-3-pro","gemini-3-flash"],openai:["gpt-5.1","gpt-5.1-mini"],anthropic:["claude-sonnet-5","claude-haiku-5"]};
+const FILES = {
+  "fixtures/case_001.json":"{\n  \"fixture_id\": \"case_001\",\n  \"expected_result\": \"PASS\"\n}",
+  "goal/success_criteria.md":"# Success criteria\n\n- case_001 and case_002 pass\n- No public behavior regresses",
+  "schema/schema.json":"{\n  \"type\": \"object\",\n  \"required\": [\"plan_id\", \"status\"]\n}",
+  "plan/plan.json":"{\n  \"plan_id\": \"plan_2291\",\n  \"status\": \"confirmed\"\n}",
+  "validation/schema_validation.hash":"status: PASS\ntarget: schema/schema.json",
+  "build/Build_Result.json":"{\n  \"build_id\": \"build_5510\",\n  \"status\": \"SUCCESS\"\n}"
+};
+const state = {running:false, stage:-1, files:new Set(), activeProvider:"gemini", queue:{waiting:0,active:0,completed:0,failed:0}};
+
+const $ = id => document.getElementById(id);
+
+/* ===== readiness (STATUS_INFORMATION gating PRIMARY_ACTION) ===== */
+const OUTCOME_WORDS = ["build","create","fix","repair","refactor","add","update","generate","implement","migrate","verify"];
+const CONSTRAINT_WORDS = ["while","preserve","must","should","keep","without","ensure","cannot"];
+function assess(text){
+  const low = (text||"").toLowerCase(), t = (text||"").trim();
+  return {
+    intent: t.length > 6,
+    outcome: OUTCOME_WORDS.some(w=>low.includes(w)),
+    constraints: t.length > 70 || CONSTRAINT_WORDS.some(w=>low.includes(w))
+  };
+}
+function renderReadiness(text){
+  const r = assess(text), lit = Object.values(r).filter(Boolean).length;
+  document.querySelectorAll(".led").forEach(led=>{
+    led.classList.toggle("lit", !!r[led.dataset.k]);
+    const order=["intent","outcome","constraints"], i=order.indexOf(led.dataset.k);
+    led.classList.toggle("next", !r[led.dataset.k] && order.slice(0,i).every(o=>r[o]));
+  });
+  const label = lit===3 ? "Ready" : (lit===0 ? "Describe a request" : "Missing "+(3-lit)+" of 3");
+  $("readinessLabel").textContent = label;
+  $("composerReadiness").textContent = label;
+  $("generate").disabled = state.running || lit < 3;
+  return r;
+}
+$("composerInput").addEventListener("input", e=>renderReadiness(e.target.value));
+$("composerInput").addEventListener("keydown", e=>{
+  if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); if(!$("generate").disabled) $("generate").click(); }
+});
+
+/* ===== thread rendering (PRIMARY_CONTENT) ===== */
+function esc(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML;}
+function addUserMsg(text){
+  const el=document.createElement("div");el.className="message user";
+  el.innerHTML=`<div class="bubble"><p>${esc(text)}</p></div>`;
+  $("thread").appendChild(el);scrollEnd();
+}
+function addAiCard(html){
+  const el=document.createElement("div");el.className="message";
+  el.innerHTML=`<div class="avatar ai">1S</div><div class="bubble">${html}</div>`;
+  $("thread").appendChild(el);scrollEnd();return el;
+}
+function scrollEnd(){$("mainScroll").scrollTop=$("mainScroll").scrollHeight;}
+
+function stageTrack(activeIdx){
+  return `<div class="stage-track">` + STAGES.map((s,i)=>{
+    const cls = i<activeIdx?"done":(i===activeIdx?"active":"");
+    const chip = i<activeIdx?`<span class="chip done">Done</span>`
+      : i===activeIdx?`<span class="chip running">Running</span>`
+      : s.pause?`<span class="chip blocked">Pause</span>`:`<span class="chip queued">Queued</span>`;
+    return `<div class="stage-row ${cls}"><span class="idx">${String(i+1).padStart(2,"0")}</span><span class="name">${s.name}</span>${chip}</div>`;
+  }).join("") + `</div>`;
+}
+
+function planCard(assumptions){
+  return `
+  <div class="plan-card" id="planCard">
+    <div class="plan-card-head"><b class="t-heading">Plan ready for review</b><span class="chip running" id="planChip">Review</span></div>
+    ${assumptions?`<div class="plan-note">Assumed: ${esc(assumptions)}. Edit the plan if this is wrong.</div>`:""}
+    <div class="plan-field"><label for="planText">Plan</label>
+      <textarea id="planText">1. Implement requested behavior\n2. Add fixture coverage (case_001, case_002)\n3. Preserve existing caller contract</textarea>
+    </div>
+    <div class="plan-actions">
+      <button class="btn primary sm" id="planApprove">Approve \u0026 continue</button>
+      <span class="hint">Pipeline pauses here until approved.</span>
+    </div>
+  </div>`;
+}
+
+function codeCard(){
+  return `
+  <div class="code-card">
+    <div class="code-card-head">build/output.patch<span class="chip running" id="codeChip">Building</span></div>
+    <div class="code-body"><span class="add">+ function handle(payload){</span><span class="add">+   if(!payload) return badRequest("empty_payload");</span><span class="rem">- function handle(payload){</span><span class="rem">-   return ok(payload);</span><span class="add">+   return ok(transform(payload));</span><span class="add">+ }</span></div>
+  </div>`;
+}
+
+/* ===== activity feed (EVENTS, monospace) ===== */
+function feedRow(kind,phase,msg){
+  const t=new Date().toTimeString().slice(0,8);
+  return `<div class="feed-row phase-${esc(phase)}"><span class="feed-time">${t}</span><span class="feed-kind">${esc(kind)}</span><span class="feed-msg">${esc(msg)}</span></div>`;
+}
+function pushEvent(kind,phase,msg){
+  const feed=$("activityFeed");
+  const empty=feed.querySelector(".feed-empty"); if(empty) empty.remove();
+  feed.insertAdjacentHTML("afterbegin",feedRow(kind,phase,msg));
+}
+
+/* ===== explorer + files (SECONDARY_CONTENT) ===== */
+function renderExplorer(){
+  const groups={};
+  for(const f of state.files){ const dir=f.split("/")[0]; (groups[dir]=groups[dir]||[]).push(f); }
+  const order=["fixtures","goal","schema","plan","validation","build"];
+  let html="";
+  for(const dir of order){
+    if(!groups[dir]) continue;
+    html+=`<details class="exp-folder" open><summary><span class="exp-chevron">\u25b8</span><span>${dir}/</span><span style="margin-left:auto;color:var(--text-4);font-size:9px">${groups[dir].length}</span></summary>`;
+    for(const f of groups[dir]){
+      html+=`<div class="exp-file" data-file="${esc(f)}"><span>${f.split("/").pop()}</span><span class="badge created"></span></div>`;
+    }
+    html+=`</details>`;
+  }
+  $("explorer").innerHTML = html || `<div class="exp-empty">Generated files appear here as stages complete.</div>`;
+  $("fileCount").textContent = state.files.size;
+}
+function addFile(path){ if(state.files.has(path))return; state.files.add(path); renderExplorer(); refreshDrawerFiles(); }
+function refreshDrawerFiles(){
+  $("drawerFiles").innerHTML = state.files.size
+    ? [...state.files].map(f=>`<div class="file-row" data-file="${esc(f)}">${esc(f)}</div>`).join("")
+    : `<div class="feed-empty">No files generated yet.</div>`;
+}
+function renderQueueCounts(){
+  const q=state.queue;
+  $("queueCounts").innerHTML =
+    feedRow("waiting","",q.waiting)+feedRow("active","",q.active)+
+    feedRow("completed","COMPLETE",q.completed)+feedRow("failed","ROOT_CAUSE",q.failed);
+}
+
+/* ===== drawers / rail ===== */
+function setDrawer(open){
+  $("app").classList.toggle("drawer-open",open);
+  $("statusDrawer").classList.toggle("open",open);
+  $("railStatus").classList.toggle("on",open);
+  $("railStatus").setAttribute("aria-expanded",String(open));
+}
+$("railStatus").onclick=()=>setDrawer(!$("statusDrawer").classList.contains("open"));
+$("railSidebar").onclick=()=>{
+  const off=$("app").classList.toggle("sidebar-off");
+  $("railSidebar").setAttribute("aria-expanded",String(!off));
+};
+document.querySelectorAll(".drawer-close[data-close],#statusDrawer [data-close]").forEach(b=>b.onclick=()=>setDrawer(false));
+document.querySelectorAll(".drawer-tab").forEach(tab=>tab.onclick=()=>{
+  document.querySelectorAll(".drawer-tab").forEach(t=>{t.classList.toggle("active",t===tab);t.setAttribute("aria-selected",String(t===tab));});
+  document.querySelectorAll(".drawer-body [data-panel]").forEach(p=>p.hidden=p.dataset.panel!==tab.dataset.tab);
+  if(tab.dataset.tab==="queue") renderQueueCounts();
+});
+
+/* ===== provider modal (CONFIGURATION_CONTROLS) ===== */
+function providerStatus(kind,msg){
+  const row=$("providerStatus"); row.className="status-row"+(kind!=="idle"?" "+kind:""); row.textContent=msg;
+}
+function renderTiles(){
+  document.querySelectorAll(".provider-tile").forEach(t=>t.classList.toggle("selected",t.dataset.provider===state.activeProvider));
+  $("modelSelect").innerHTML=MODELS[state.activeProvider].map(m=>`<option>${m}</option>`).join("");
+}
+$("railProvider").onclick=()=>{renderTiles();providerStatus("idle","Not tested");$("providerVeil").classList.add("open");$("modelSelect").focus();};
+$("providerClose").onclick=()=>$("providerVeil").classList.remove("open");
+$("providerVeil").addEventListener("click",e=>{if(e.target.id==="providerVeil")$("providerVeil").classList.remove("open");});
+$("providerTiles").addEventListener("click",e=>{
+  const t=e.target.closest(".provider-tile");if(!t)return;
+  state.activeProvider=t.dataset.provider;renderTiles();providerStatus("idle","Not tested");
+});
+$("testProvider").onclick=()=>{
+  if(!$("apiKey").value.trim()){providerStatus("error","Enter a key first");return;}
+  providerStatus("testing","Testing connection\u2026");
+  setTimeout(()=>providerStatus("connected","Connected \u2014 model available"),900);
+};
+$("removeKey").onclick=()=>{$("apiKey").value="";providerStatus("idle","Key removed");};
+$("saveProvider").onclick=()=>{
+  $("providerVeil").classList.remove("open");
+  toast(state.activeProvider+" active","success");
+};
+
+/* ===== toast ===== */
+let toastTimer=null;
+function toast(msg,kind){
+  const el=$("toast");el.textContent=msg;el.className="toast show"+(kind?" "+kind:"");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600);
+}
+
+/* ===== run simulation (BullMQ run lifecycle) ===== */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const waitApproval=()=>new Promise(res=>{ $("planApprove").onclick=()=>res("approved"); });
+
+$("generate").onclick=async ()=>{
+  const text=$("composerInput").value.trim();
+  if(!text||state.running)return;
+  state.running=true; $("generate").disabled=true;
+  $("generate").innerHTML=`<span class=\"spinner\"></span>Queued`;
+  $("generate").classList.add("processing");
+  $("top-run").textContent="Run queued \u00b7 provider="+state.activeProvider;
+  $("drawerRunLabel").textContent="Run queued \u00b7 provider="+state.activeProvider;
+  setDrawer(true);
+  addUserMsg(text);
+  pushEvent("RunWorker","RUNNING","Job dequeued (queue=run, prefix=oneshot)");
+  state.queue.waiting=0;state.queue.active=1;state.queue.completed=state.queue.completed;
+  renderQueueCounts();
+  await sleep(700);
+  $("generate").innerHTML="Generate";$("generate").classList.remove("processing");
+
+  // stage 0: researcher
+  state.stage=0; pushEvent("Researcher","RUNNING","Gathering evidence; deriving fixtures");
+  addAiCard(stageTrack(0)); scrollEnd();
+  await sleep(1200);
+  addFile("fixtures/case_001.json");addFile("goal/success_criteria.md");
+  pushEvent("Researcher","COMPLETE","plan_2291 drafted; 2 fixtures derived");
+
+  // stage 1: review pause
+  state.stage=1; pushEvent("PlanReview","RUNNING","Waiting for approval");
+  addAiCard(stageTrack(1)+planCard("existing callers keep the v1 contract"));
+  const decision=await waitApproval();
+  const card=$("planCard"); card.classList.add("confirmed");
+  $("planChip").className="chip done"; $("planChip").textContent="Confirmed";
+  pushEvent("PlanReview","COMPLETE","Plan "+decision);
+
+  // stages 2..4: planner, refactor, gap
+  const codeEl=addAiCard(stageTrack(2)+codeCard()); scrollEnd();
+  for(const [i,kind,msg] of [[2,"Planner","audit_118: evidence sufficient, cleared"],[3,"Refactor","build/output.patch applied"],[4,"GapAnalysis","gap_0 confirmed \u2014 no remaining gaps"]]){
+    codeEl.querySelector(".stage-track").outerHTML=stageTrack(i); scrollEnd();
+    pushEvent(kind,"RUNNING",msg.split(":")[0]); await sleep(1000);
+    pushEvent(kind,"COMPLETE",msg);
+    if(i===3){addFile("plan/plan.json");addFile("schema/schema.json");}
+    if(i===4){addFile("validation/schema_validation.hash");}
+  }
+  const chip=codeEl.querySelector("#codeChip"); chip.className="chip done"; chip.textContent="Built";
+
+  // stage 5: evaluation -> triple -> promote
+  for(const [i,kind,msg] of [[5,"Evaluation","goal achieved; 0 regressions"],[6,"TripleValidation","schema, fixture, goal all PASS"],[7,"Promote","build_5510 SUCCESS; hash verified"]]){
+    codeEl.querySelector(".stage-track").outerHTML=stageTrack(i); scrollEnd();
+    pushEvent(kind,"RUNNING",msg); await sleep(950);
+    pushEvent(kind,"COMPLETE",msg);
+  }
+  codeEl.querySelector(".stage-track").outerHTML=stageTrack(8); scrollEnd();
+  addFile("build/Build_Result.json");
+  state.queue.active=0;state.queue.completed++; renderQueueCounts();
+  pushEvent("RunWorker","COMPLETE","Run PASSED");
+  $("top-run").textContent="Run PASSED";
+  $("drawerRunLabel").textContent="Run PASSED";
+  $("railStatusText").textContent="QUEUE OK";
+  toast("Run PASSED","success");
+  state.running=false; state.stage=-1; renderReadiness($("composerInput").value);
+};
+
+/* file preview */
+document.addEventListener("click",e=>{
+  const f=e.target.closest("[data-file]");if(!f)return;
+  $("previewTitle").textContent=f.dataset.file;
+  $("previewBody").textContent=FILES[f.dataset.file]||"(no preview)";
+  $("previewVeil").classList.add("open");
+});
+$("previewClose").onclick=()=>$("previewVeil").classList.remove("open");
+$("previewVeil").addEventListener("click",e=>{if(e.target.id==="previewVeil")$("previewVeil").classList.remove("open");});
+
+/* ===== init ===== */
+renderReadiness("");renderExplorer();refreshDrawerFiles();renderQueueCounts();
+})();
+</script>
+</body>
+</html>

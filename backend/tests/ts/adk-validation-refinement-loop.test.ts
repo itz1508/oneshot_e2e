@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { InMemoryRunner, node, type NodeContext, Workflow } from "@google/adk";
 import type { Evaluation, GapAnalysis, Plan, ResearchBundle, TripleValidation } from "../../contracts/schema/types.js";
-import { validationFeedback } from "../../role/gap-analysis/tool/validation-feedback.js";
+import { validationFeedback } from "../../agents/gap-analysis/tool/validation-feedback.js";
 import { createEvaluationNode } from "../../workflow/adk/node/evaluation-node.js";
 import { createGapAnalysisNode } from "../../workflow/adk/node/gap-analysis-node.js";
 import { createResearcherNode } from "../../workflow/adk/node/researcher-node.js";

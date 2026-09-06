@@ -1,10 +1,10 @@
 import type { ProcessingEvent } from "../contracts/schema/types.js";
-import { BuilderRole } from "../role/builder/role.js";
-import { EvaluationRole } from "../role/evaluation/role.js";
-import { GapAnalysisRole } from "../role/gap-analysis/role.js";
-import { PlannerRole } from "../role/planner/role.js";
-import { RefactorRole } from "../role/refactor/role.js";
-import { ResearcherRole } from "../role/researcher/role.js";
+import { BuilderAgent } from "../agents/builder/agent.js";
+import { EvaluationAgent } from "../agents/evaluation/agent.js";
+import { GapAnalysisAgent } from "../agents/gap-analysis/agent.js";
+import { PlannerAgent } from "../agents/planner/agent.js";
+import { RefactorAgent } from "../agents/refactor/agent.js";
+import { ResearcherAgent } from "../agents/researcher/agent.js";
 
 export interface AuthorityNode {
   id: string;
@@ -26,8 +26,8 @@ const CATALOG: Record<
   Omit<AuthorityNode, "id" | "label" | "state" | "artifact_id">
 > = {
   Researcher: {
-    authority: ResearcherRole.id,
-    owns: ResearcherRole.owns,
+    authority: ResearcherAgent.id,
+    owns: ResearcherAgent.owns,
     responsibility: "research and evidence synthesis",
     skill: "researcher",
     tool: "evidence-collector",
@@ -36,8 +36,8 @@ const CATALOG: Record<
     output: "Researcher(id)",
   },
   Planner: {
-    authority: PlannerRole.id,
-    owns: PlannerRole.owns,
+    authority: PlannerAgent.id,
+    owns: PlannerAgent.owns,
     responsibility: "read-only review and audit",
     skill: "planner",
     tool: "coverage",
@@ -45,8 +45,8 @@ const CATALOG: Record<
     output: "audit_id",
   },
   Refactor: {
-    authority: RefactorRole.id,
-    owns: RefactorRole.owns,
+    authority: RefactorAgent.id,
+    owns: RefactorAgent.owns,
     responsibility: "apply audit refinements",
     skill: "refactor",
     tool: "apply-audit",
@@ -54,8 +54,8 @@ const CATALOG: Record<
     output: "same plan_id",
   },
   GapAnalysis: {
-    authority: GapAnalysisRole.id,
-    owns: GapAnalysisRole.owns,
+    authority: GapAnalysisAgent.id,
+    owns: GapAnalysisAgent.owns,
     responsibility: "identify/correct remaining plan gaps through ADK LoopAgent",
     skill: "gap-analysis",
     tool: "coverage",
@@ -64,8 +64,8 @@ const CATALOG: Record<
     output: "gap_0 + plan_id",
   },
   Evaluation: {
-    authority: EvaluationRole.id,
-    owns: EvaluationRole.owns,
+    authority: EvaluationAgent.id,
+    owns: EvaluationAgent.owns,
     responsibility: "evaluate completed plan",
     skill: "evaluation",
     tool: "evaluate-plan",
@@ -123,8 +123,8 @@ const CATALOG: Record<
     output: "HASH",
   },
   Builder: {
-    authority: BuilderRole.id,
-    owns: BuilderRole.owns,
+    authority: BuilderAgent.id,
+    owns: BuilderAgent.owns,
     responsibility: "execute the exact confirmed package through the governed sandbox",
     skill: "sandbox-runtime",
     tool: "execute_sandbox",
