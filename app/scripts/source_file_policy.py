@@ -28,6 +28,7 @@ IGNORED_LOCAL_FILES = frozenset(
         # in general, so these are excluded by exact name, not by suffix).
         "unit-log.txt",
         "npmci-log.txt",
+        "build-log.txt",
     }
 )
 # Local-only scratch/runtime directories at the repository root. Root-anchored
