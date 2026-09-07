@@ -1,381 +1,162 @@
-# OneShot Workflow_Tree — Source of Truth
+# OneShot Workflow Tree — Source of Truth
 
-## Core execution model
+## Agent pipeline
+
+```
+Prompt(id)
+   │
+   ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Researcher                                                  │
+│  backend/agents/researcher/{agent,workflow,SKILL}.ts        │
+│  tools: registry, evidence/collector, tavily/{bridge,…}     │
+│  produces: Researcher(id)                                   │
+│    ├── plan_id                                              │
+│    ├── schema_id                                            │
+│    ├── fixture_id                                           │
+│    ├── goal_id                                              │
+│    └── validation_id                                        │
+└─────────────────────────────────────────────────────────────┘
+   │
+   ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Planner                                                     │
+│  backend/agents/planner/{agent,workflow,SKILL}.ts           │
+│  tool: coverage                                             │
+│  consumes: plan_id                                          │
+│  produces: audit_id                                         │
+└─────────────────────────────────────────────────────────────┘
+   │
+   ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Refactor                                                    │
+│  backend/agents/refactor/{agent,workflow,SKILL}.ts          │
+│  tool: apply-audit                                          │
+│  consumes: plan_id + audit_id                               │
+│  produces: updated plan_id (same logical plan)              │
+└─────────────────────────────────────────────────────────────┘
+   │
+   ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Gap Analysis                                                │
+│  backend/agents/gap-analysis/{agent,workflow,SKILL}.ts      │
+│  tools: coverage, validation-feedback                       │
+│  consumes: plan_id                                          │
+│  produces: gap_0 + plan_id                                  │
+└─────────────────────────────────────────────────────────────┘
+   │
+   ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Evaluation                                                  │
+│  backend/agents/evaluation/{agent,workflow,SKILL}.ts        │
+│  tool: evaluate-plan                                        │
+│  consumes: plan_id                                          │
+│  produces: evaluation evidence                              │
+└─────────────────────────────────────────────────────────────┘
+   │
+   ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Triple Validation                                           │
+│  backend/workflow/triple-validation.ts                      │
+│                                                             │
+│  ┌─ Schema Validation  ─── schema_validator.py              │
+│  │  schema_id + plan_id  →  VALID | NOT_VALID               │
+│  │                                                           │
+│  ├─ Fixture Validation ─── fixture_runner.py                │
+│  │  fixture_id + plan_id →  VALID | NOT_VALID               │
+│  │                                                           │
+│  └─ Goal Validation    ─── reference_validator.py           │
+│     goal_id + plan_id    →  VALID | NOT_VALID               │
+│                                                             │
+│  all VALID → CONFIRMED                                      │
+└─────────────────────────────────────────────────────────────┘
+   │
+   ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Hash & Confirm                                              │
+│  backend/workflow/{hash,confirmation,canonical-transition}.ts│
+│  backend/validation/python/validation/{canonicalize,hash_proof}.py│
+│  produces: confirmed_package.core + SHA-256 hash            │
+└─────────────────────────────────────────────────────────────┘
+   │
+   ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Builder                                                     │
+│  backend/agents/builder/{agent,workflow}.ts                 │
+│  consumes: Prompt_id + Plan_id                              │
+│  produces: Build Result → Hash Verification → DONE          │
+└─────────────────────────────────────────────────────────────┘
+```
 
 
-# WORKFLOW_TREE
 
-```text
-START
-│
-▼
-USER
-│
-▼
-CHAT
-│
-├── collect intent
-├── collect requested outcome
-├── collect requirements
-└── collect constraints
-│
-▼
-INTENT READY
-│
-▼
-GENERATOR
-│
-└── Generator/text.ts
-    │
-    ├── REQUIREMENT
-    │   └── input schema
-    │
-    └── OUTPUT
-        │
-        ▼
-     Prompt_id
-        │
-        ├──────────────────────────────────────────────┐
-        │                                              │
-        │                                              │ RECORD
-        │                                              └── JOB_ID
-        │                                                  └── Prompt_id ✓
-        │
-        ▼
-RESEARCHER
-│
-├── ROLE
-│   ├── agent/researcher/role.ts
-│   └── agent/researcher/workflow.ts
-│
-├── INPUT
-│   └── Prompt_id
-│
-├── determine what this job requires
-│   ├── evidence
-│   ├── repository information
-│   ├── external authority
-│   ├── requirements
-│   ├── dependencies
-│   ├── constraints
-│   ├── goals
-│   ├── success criteria
-│   ├── fixtures
-│   ├── schemas/contracts
-│   ├── validation requirements
-│   └── additional required datasets
-│
-├── WHEN operating guidance is required
-│   │
-│   ▼
-│   LOAD SKILL
-│   │
-│   └── agent/researcher/skill/SKILL.md
-│       │
-│       ├── source authority needed
-│       │   └── source-policy.md
-│       │
-│       ├── evidence/provenance needed
-│       │   └── evidence-guidance.md
-│       │
-│       ├── fixture/success derivation needed
-│       │   └── fixture-guidance.md
-│       │
-│       └── example/reference needed
-│           └── examples.md
-│
-├── WHEN repository work is required
-│   │
-│   ▼
-│   resolve required Tool / Capability
-│   │
-│   ├── repository-read
-│   ├── Scan
-│   └── Discovery when required
-│
-├── WHEN external research is required
-│   │
-│   ▼
-│   resolve required Skill / Tool / Provider
-│   │
-│   ├── LOAD only required resource
-│   ├── execute research
-│   ├── collect evidence
-│   └── preserve provenance
-│
-├── WHEN parallel research is required
-│   │
-│   ▼
-│   LOAD parallel capability
-│   │
-│   ├── execute bounded parallel research
-│   ├── collect results
-│   └── consolidate results
-│
-├── evidence processing
-│   ├── agent/researcher/evidence/consolidate.ts
-│   └── agent/researcher/evidence/provenance.ts
-│
-├── synthesis
-│   └── agent/researcher/synthesis/research-synthesis.ts
-│
-└── OUTPUT
-    │
-    ▼
-Researcher(id)
-│
-├── plan_id
-│   │
-│   ├── Design
-│   │   ├── required design
-│   │   ├── affected responsibility
-│   │   ├── affected component
-│   │   ├── target when established
-│   │   ├── dependency
-│   │   ├── constraint
-│   │   └── expected result
-│   │
-│   ├── TODO / Action
-│   │   │
-│   │   ├── task_1
-│   │   │   ├── action
-│   │   │   ├── target
-│   │   │   ├── dependency
-│   │   │   ├── constraint
-│   │   │   ├── expected result
-│   │   │   │
-│   │   │   └── only when required
-│   │   │       ├── Skill
-│   │   │       ├── Tool
-│   │   │       ├── Capability
-│   │   │       ├── file
-│   │   │       ├── script
-│   │   │       └── schema
-│   │   │
-│   │   ├── task_2
-│   │   └── task_n
-│   │
-│   └── Requirements
-│       ├── requirement_1
-│       │   ├── statement
-│       │   ├── evidence
-│       │   ├── target
-│       │   ├── dependency
-│       │   ├── constraint
-│       │   └── expected result
-│       │
-│       └── requirement_n
-│
-├── schema_id
-│   ├── required structure
-│   ├── required contracts
-│   ├── required properties
-│   ├── constraints
-│   └── schema/reference when required
-│
-├── fixture_id
-│   ├── validation case
-│   ├── related success criterion
-│   ├── input/reference
-│   ├── assertion/condition
-│   └── expected result
-│
-├── goal_id
-│   ├── required outcome
-│   ├── why it matters
-│   ├── success criteria
-│   └── supporting evidence
-│
-├── validation_id
-│   ├── what must be validated
-│   ├── required input
-│   ├── required condition
-│   └── required proof
-│
-└── <additional_name>_id ... n
-    └── expand recursively only when required
-        ├── requirement
-        ├── action
-        ├── dependency
-        ├── constraint
-        ├── resource
-        └── expected result
-│
-▼
-plan_id
-│
-▼
-PLANNER
-│
-├── ROLE
-│   ├── agent/planner/role.ts
-│   └── agent/planner/workflow.ts
-│
-├── INPUT
-│   └── plan_id
-│
-├── LOAD SKILL when Planner work requires it
-│   └── agent/planner/skill/SKILL.md
-│
-├── REVIEW
-│   ├── LOAD review-guidance.md when required
-│   ├── evidence sufficiency
-│   ├── file coverage
-│   ├── structure
-│   ├── design
-│   ├── goal clarity
-│   ├── fixture usability
-│   └── unresolved conflicts
-│
-├── implementation support
-│   ├── agent/planner/review/survey.ts
-│   ├── agent/planner/review/review-report.ts
-│   ├── agent/planner/verification/research.ts
-│   └── agent/planner/verification/structure.ts
-│
-├── PLAN WORK
-│   ├── LOAD plan-guidance.md when required
-│   ├── inspect plan_id
-│   ├── identify required refinement
-│   └── preserve every required branch
-│
-└── OUTPUT
-    │
-    ▼
- audit_id
-    │
-    ├── findings
-    ├── design issues
-    ├── structure issues
-    ├── requirement gaps
-    └── required refinement
-│
-▼
-REFACTOR / REFINEMENT
-│
-├── ROLE
-│   ├── agent/refactor/role.ts
-│   └── agent/refactor/workflow.ts
-│
-├── INPUT
-│   ├── plan_id
-│   └── audit_id
-│
-├── LOAD SKILL when required
-│   └── agent/refactor/skill/SKILL.md
-│
-├── LOAD transformation-guidance.md
-│   └── when transformation is required
-│
-├── LOAD scope-guidance.md
-│   └── when scope confirmation is required
-│
-├── refine SAME plan_id
-├── preserve provenance
-├── preserve required branches
-│
-└── OUTPUT
-    │
-    ▼
-updated plan_id
-│
-▼
-GAP ANALYSIS
-│
-├── inspect updated plan_id
-│
-├── gap_1 ... gap_n
-│   ├── affected branch
-│   ├── missing requirement
-│   ├── required correction
-│   └── expected resolved state
-│
-├── fix gaps
-├── recheck
-│
-└── gap_0
-    │
-    ▼
-FINAL plan_id
-│
-├── original requirements preserved
-├── required refinement complete
-├── dependencies satisfied
-├── constraints preserved
-├── expected results defined
-│
-└── INVARIANT
-    └── FINAL plan_id >= Job requirements
-│
-▼
-EVALUATION
-│
-└── when applicable case exists
-    ├── evaluate FINAL plan_id
-    ├── compare expected behavior
-    └── preserve result
-│
-▼
-TRIPLE VALIDATION
-│
-├── validation_id
-│
-├── SCHEMA VALIDATION
-│   ├── schema_id
-│   ├── FINAL plan_id
-│   ├── schema/plan/artifact/plan.schema.json
-│   ├── validation/schema/validator/schema_validator.py
-│   └── schema_validation(hash)
-│
-├── FIXTURE VALIDATION
-│   ├── fixture_id
-│   ├── FINAL plan_id
-│   ├── validation/fixture/validator/fixture_validator.py
-│   └── fixture_validation(hash)
-│
-└── GOAL VALIDATION
-    ├── goal_id
-    ├── FINAL plan_id
-    ├── validation/goal/validator/goal_validator.py
-    └── goal_validation(hash)
-│
-▼
-Final_Confirmed_Validation(hash)
-│
-└── FINAL plan_id CONFIRMED
-│
-▼
-PROMOTE
-│
-▼
-Researcher(id)
-│
-├── plan_id          ✓ CONFIRMED
-├── schema_id        ✓ CONFIRMED
-├── fixture_id       ✓ CONFIRMED
-├── goal_id          ✓ CONFIRMED
-├── validation_id    ✓ CONFIRMED
-└── <required>_id    ✓ CONFIRMED
-│
-▼
-Researcher(id) FINAL
-│
-│
-│ update JOB_ID record
-│
-├─────────────────────────────────────► JOB_ID
-│                                       ├── Prompt_id ✓
-│                                       └── Plan_id   ✓ CONFIRMED
-│
-▼
-Builder
-        |
-Prompt_id + Plan_id
-        ↓
-Builder Execution
-        ↓
-Build Result
-        ↓
-Hash Verification
-        ↓
-DONE   
+## Support layers (precede the pipeline)
+
+```
+Chat turns
+   → Intent(id) revision
+   → required information check
+      ├─ missing  → ROOT_CAUSE + targeted help → user answer → Intent revision
+      └─ sufficient → Prompt(id) → [pipeline above]
+```
+
+Task Management, ADK graph, Intent graph, and Authority graph are
+projections/support metadata — excluded from `confirmed_package.core`.
+
+## Artifact ownership
+
+Defined in `backend/workflow/graph.json`:
+
+| Artifact | Owner | Consumers |
+|---|---|---|
+| Researcher(id), plan_id, schema_id, fixture_id, goal_id, validation_id | Researcher | downstream agents + validators |
+| audit_id | Planner | Refactor |
+| gap_0 | GapAnalysis | Evaluation |
+| evaluation | Evaluation | SchemaValidation, FixtureValidation, GoalValidation |
+
+## Result vocabulary
+
+- Workflow operations: `PASSED | ROOT_CAUSE`
+- Validation operations: `VALID | NOT_VALID`
+
+## External verification boundary
+
+The confirmed immutable package and its hash may be handed to the external
+Builder/Sandbox boundary. Verification uses the same canonical comparable
+representation and direct equality: `HASH == hash_sandbox`.
+
+Execution/checkpoint metadata remains outside `confirmed_package.core`.
+
+## File map
+
+```
+backend/
+├── agents/
+│   ├── researcher/   agent.ts  workflow.ts  SKILL.md  tool/{registry,evidence/collector,tavily/}
+│   ├── planner/      agent.ts  workflow.ts  SKILL.md  tool/coverage.ts
+│   ├── refactor/     agent.ts  workflow.ts  SKILL.md  tool/apply-audit.ts
+│   ├── gap-analysis/ agent.ts  workflow.ts  SKILL.md  tool/{coverage,validation-feedback}.ts
+│   ├── evaluation/   agent.ts  workflow.ts  SKILL.md  tool/evaluate-plan.ts
+│   └── builder/      agent.ts  workflow.ts
+├── workflow/
+│   ├── graph.json              artifact ownership & consumers
+│   ├── canonical-transition.ts state machine transitions
+│   ├── confirmation.ts         CONFIRMED state logic
+│   ├── hash.ts                 SHA-256 hash creation
+│   └── triple-validation.ts    orchestrates the three validators
+├── validation/python/validation/
+│   ├── schema_validator.py     JSON Schema Draft 2020-12 validation
+│   ├── fixture_runner.py       deterministic operator assertions
+│   ├── reference_validator.py  goal/intent satisfaction proof
+│   ├── triple_validation.py    runs all three validators
+│   ├── canonicalize.py         RFC 8785 JCS canonicalization
+│   ├── hash_proof.py           SHA-256 equality proof
+│   └── …                       cli, rpc, registry, models, etc.
+└── schema/                      25+ JSON Schema authorities
+    ├── plan.schema.json
+    ├── goal.schema.json
+    ├── fixture.schema.json
+    ├── schema-validation.schema.json
+    ├── triple-validation.schema.json
+    └── …
+```
