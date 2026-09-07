@@ -8,7 +8,7 @@ Role means IAM identity. Agents execute workflow behavior; skills provide reusab
 
 ## Build, Test, and Development Commands
 
-Server-side provider implementation lives in `app/web/cloud/`: provider manager, configuration and credential stores, catalog, adapters and Python workers. Backend callers import this shared implementation. The browser build uses `app/web/src/` only. The standalone workspace API imports `web.cloud.workspace.providers` with `app` on `PYTHONPATH`. See [the provider API guide](PROVIDER_MANAGEMENT.md).
+Server-side provider implementation lives in `app/web/cloud/`: provider manager, configuration and credential stores, catalog, adapters and Python workers. Backend callers import this shared implementation. The browser build uses `app/web/src/` only. The standalone workspace API imports `web.cloud.workspace.providers` with `app` on `PYTHONPATH`. See the [provider source map](../app/web/cloud/README.md).
 
 - `npm run oneshot`: bootstrap, build, verify, start, and open the IDE.
 - `npm run build`: compile the strict TypeScript backend and frontend.
