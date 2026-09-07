@@ -23,4 +23,4 @@ Run `npm run build:backend` at the repository root to compile TypeScript into `d
 
 The browser build copies an explicit asset list from `app/web/src`; it does not copy this directory. Docker includes compiled cloud modules, the catalog and worker source files. The source relocation preserves provider IDs, HTTP routes, credential storage, model selection and per-run binding behavior.
 
-See the [provider audit and move record](../../../docs/PROVIDER_MIGRATION.md) and [provider API guide](../../../docs/PROVIDER_MANAGEMENT.md).
+See the [provider API guide](../../../docs/PROVIDER_MANAGEMENT.md).

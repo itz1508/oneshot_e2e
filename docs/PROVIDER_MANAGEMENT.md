@@ -75,7 +75,7 @@ Non-secret configuration (model, apiBase, timeout, parallelism) is stored in `.r
 | `sample` | OneShot Sample | fixture | none | - |
 | `openai` | OpenAI | openai | api_key | `OPENAI_API_KEY` |
 | `anthropic` | Anthropic | anthropic | api_key | `ANTHROPIC_API_KEY` |
-| `gemini` | Gemini | gemini | api_key | - |
+| `gemini` | Gemini | gemini | api_key | `GEMINI_API_KEY` (fallback: `GOOGLE_API_KEY`) |
 
 ## File Locations
 
