@@ -117,9 +117,10 @@ docker compose --env-file app/env/.env -f docker/docker-compose.gemma.yml restar
 |------|---------|
 | docker/Dockerfile.gemma | Build image with Ollama + Gemma |
 | docker/docker-compose.gemma.yml | One-command deployment |
+| docker/README.md | Docker configuration overview |
+| docker/Dockerfile | Standard (non-Gemma) runtime image |
 | app/env/.env.example | Config template for users |
 | scripts/docker-entrypoint-gemma.sh | Startup logic |
-| GEMMA_IMAGE_GUIDE.md | Full documentation |
 
 ---
 
