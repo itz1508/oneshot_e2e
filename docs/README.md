@@ -104,12 +104,12 @@ Web IDE will be available at `http://localhost:8787`.
 ```text
 oneshot/
 ├── backend/                  # TypeScript runtime & canonical workflow
-│   ├── graph/               # Canonical workflow graph & state machine
-│   ├── role/                # Role definitions (Researcher, Planner, Refactor, Evaluator)
+│   ├── graph/               # Graph projections (adk, authority, intent)
+│   ├── agents/              # Agent definitions & operating instructions (Researcher, Planner, Refactor, Evaluator)
 │   ├── sandbox/             # Hardened process execution & boundary admission
 │   ├── schema/              # JSON Schema Draft 2020-12 contract authorities
 │   ├── server/              # HTTP server, SSE event streaming & security
-│   ├── skill/               # Governed reusable skills & activation engine
+│   ├── skills/              # Governed reusable skills & activation engine
 │   ├── task/                # Append-only event store & task management
 │   └── validation/          # JCS canonicalization & SHA-256 verification bridge
 ├── app/                       # Control plane & validation engine
@@ -126,7 +126,7 @@ oneshot/
 │   └── e2e/browser/           # CDP-based state-adaptive browser test suite
 ├── docs/                      # Documentation, judge materials, evidence & licenses
 │   └── evidence/video/        # Verified demonstration video
-└── app/contract-registry.json # Canonical contract registry
+└── backend/schema/contract-registry.json # Canonical contract registry
 ```
 
 ---

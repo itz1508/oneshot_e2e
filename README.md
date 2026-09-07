@@ -31,7 +31,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-e2e.ps1
 ```text
 [1/5] Checking prerequisites (Node.js, npm, Python)... OK
 [2/5] Installing dependencies (Node.js & Python)... OK
-[3/5] Building project (TypeScript backend & React Web IDE)... OK
+[3/5] Building project (TypeScript backend & Web IDE)... OK
 [4/5] Running canonical verification suite...
       Checking repository manifest SHA-256 integrity...
       Manifest verified: MANIFEST_VERIFIED.
@@ -74,7 +74,7 @@ chmod +x ./scripts/install-e2e.sh && ./scripts/install-e2e.sh
 ```text
 [1/5] Checking prerequisites (Node.js, npm, Python)... OK
 [2/5] Installing dependencies (Node.js & Python)... OK
-[3/5] Building project (TypeScript backend & React Web IDE)... OK
+[3/5] Building project (TypeScript backend & Web IDE)... OK
 [4/5] Running canonical verification suite...
       Checking repository manifest SHA-256 integrity...
       Manifest verified: MANIFEST_VERIFIED.

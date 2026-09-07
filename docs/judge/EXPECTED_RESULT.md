@@ -30,9 +30,11 @@ curl -H "Authorization: Bearer <token>" http://localhost:8787/api/health
 
 ### 3. Static Assets
 
-**URLs**:
-- `http://localhost:8787/app.js` → HTTP 200
-- `http://localhost:8787/styles.css` → HTTP 200
+The Web IDE is a plain-JS Vite build served from `app/web/dist` (built from `app/web/src`). The entry document is served at `/` and references hashed bundle assets:
+
+- `http://localhost:8787/` → HTTP 200 (HTML entry, references `/assets/index-*.js` and `/assets/index-*.css`)
+- `http://localhost:8787/assets/index-*.js` → HTTP 200
+- `http://localhost:8787/assets/index-*.css` → HTTP 200
 
 ### 4. Authentication
 

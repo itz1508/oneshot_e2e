@@ -14,8 +14,8 @@
 ## 2. 60-Second Setup
 
 ### Prerequisites
-- **Node.js 20+** — [nodejs.org](https://nodejs.org)
-- **Python 3.11+** — [python.org](https://www.python.org)
+- **Node.js** `>= 24.13.0` — [nodejs.org](https://nodejs.org)
+- **Python** `>= 3.11` — [python.org](https://www.python.org)
 
 ### Windows, macOS, or Linux
 ```bash
@@ -25,12 +25,12 @@ npm run oneshot
 ```
 
 **What `npm run oneshot` does:**
-- ✅ Verifies Node.js (≥20) and Python (≥3.11)
+- ✅ Verifies Node.js (≥24.13.0) and Python (≥3.11)
 - ✅ Creates `.venv` when it is missing and verifies pinned Python profiles
-- ✅ Installs root and `web/` Node dependencies from their lockfiles
-- ✅ Builds the TypeScript backend and OneShot React IDE
+- ✅ Installs root and `app/web` Node dependencies from their lockfiles
+- ✅ Builds the TypeScript backend and the plain-JS Web IDE
 - ✅ Verifies canonical contracts and `MANIFEST.sha256`
-- ✅ Runs the entire 94-test verification suite (47 Python + 47 TypeScript)
+- ✅ Runs the full verification suite (backend tests, frontend tests, and dependency gates)
 - ✅ Starts the runtime, waits for `/api/health`, and opens `http://localhost:8787`
 
 ---
@@ -44,7 +44,7 @@ npm run oneshot
 ### What Happens:
 
 1. **Bootstrap & Build** — Verifies the environment and compiles current backend and web source
-2. **Proof Gates** — Verifies contracts, manifest integrity, and all 94 tests
+2. **Proof Gates** — Verifies contracts, manifest integrity, and the full test suite
 3. **Backend Startup** — Boots the real OneShot HTTP & Server-Sent Events (SSE) backend on port 8787
 4. **IDE Launch** — Waits for health and opens your default browser at `http://localhost:8787`
 5. **Status Verification** — Status bar displays active `MODE` and `PROVIDER`
@@ -128,12 +128,13 @@ npm run demo
 Run the full end-to-end verification suite across all layers:
 
 ```bash
-python scripts/verify_all.py
+python app/scripts/verify_all.py
 ```
 
 ### Verification Matrix:
-- **47 Python unit tests** (`tests/`): Schema validation, model parity, graph structure, fixture assertions, RFC 8785 JCS canonicalization, SHA-256 equality, Workspace API security, rate limiting, and archive secret-selection parity.
-- **47 TypeScript integration tests** (`tests_ts/`): Google ADK adapter, Featherless adapter, intent collection, sandbox admission boundary, process isolation, SSE streaming, task event store, and workspace filesystem security.
+- **Backend TypeScript suite** (`backend/tests/ts/`, run via `npm run verify` / `node --test`): provider adapters, intent collection, sandbox admission boundary, process isolation, SSE streaming, task event store, workspace filesystem security, and run-job contract.
+- **Python suites** (`backend/tests/python/`, `app/workspace_api/tests`): schema validation, RFC 8785 JCS canonicalization, SHA-256 equality, workspace API security, and rate limiting.
+- **Web tests** (`app/web/tests`, node:test).
 - **Expected result:** `ONESHOT_PRODUCTION_E2E_VERIFIED`
 
 To run TypeScript tests directly:
@@ -165,7 +166,7 @@ npm test
 - **Port in use:** If port 8787 is occupied, pass a custom port: `PORT=9090 npm run demo`
 - **Browser popup blocked:** Open `http://localhost:8787` manually in your browser.
 - **Python version:** Ensure Python 3.11+ is available (`python --version`).
-- **Node version:** Ensure Node.js 20+ is available (`node --version`).
+- **Node version:** Ensure Node.js `>= 24.13.0` is available (`node --version`).
 
 ---
 
@@ -180,4 +181,4 @@ Apache License, Version 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE) for
 docker build -t oneshot:latest .
 docker run -d -p 8787:8787 --name oneshot-runner oneshot:latest
 ```
-Open **http://localhost:8787** in your browser. The multi-stage container compiles the TypeScript backend and React IDE bundle, installs Python validation engines, and serves the live platform.
+Open **http://localhost:8787** in your browser. The multi-stage container compiles the TypeScript backend and the plain-JS Web IDE bundle, installs Python validation engines, and serves the live platform.

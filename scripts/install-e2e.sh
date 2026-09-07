@@ -208,7 +208,7 @@ echo "      Installing Python requirements..."
 echo "      All dependencies installed successfully."
 
 # Step 3: Build
-echo "[3/5] Building project (TypeScript backend & React Web IDE)..."
+echo "[3/5] Building project (TypeScript backend & Web IDE)..."
 npm run build || fail "Build failed (TypeScript or Web IDE compilation error)."
 echo "      Build completed successfully."
 

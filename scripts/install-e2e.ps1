@@ -215,7 +215,7 @@ if ($LASTEXITCODE -ne 0) { Fail "Python package installation failed." }
 Write-Host "      All dependencies installed successfully." -ForegroundColor Green
 
 # Step 3: Build
-Write-Host "[3/5] Building project (TypeScript backend & React Web IDE)..." -ForegroundColor Yellow
+Write-Host "[3/5] Building project (TypeScript backend & Web IDE)..." -ForegroundColor Yellow
 cmd.exe /c "npm run build"
 if ($LASTEXITCODE -ne 0) { Fail "Build failed (TypeScript or Web IDE compilation error)." }
 Write-Host "      Build completed successfully." -ForegroundColor Green
