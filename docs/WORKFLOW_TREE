@@ -198,86 +198,8 @@ Researcher(id)
 │   └── required proof
 │
 └── <additional_name>_id ... n
-    └── expand recursively only when required
-        ├── requirement
-        ├── action
-        ├── dependency
-        ├── constraint
-        ├── resource
-        └── expected result
-│
-▼
-plan_id
-│
-▼
-PLANNER
-│
-├── ROLE
-│   ├── backend/agents/planner/agent.ts
-│   └── backend/agents/planner/workflow.ts
-│
-├── INPUT
-│   └── plan_id
-│
-├── LOAD SKILL when Planner work requires it
-│   └── backend/agents/planner/SKILL.md
-│
-├── TOOLS
-│   └── backend/agents/planner/tool/coverage.ts
-│
-├── REVIEW
-│   ├── evidence sufficiency
-│   ├── file coverage
-│   ├── structure
-│   ├── design
-│   ├── goal clarity
-│   ├── fixture usability
-│   └── unresolved conflicts
-│
-├── PLAN WORK
-│   ├── inspect plan_id
-│   ├── identify required refinement
-│   └── preserve every required branch
-│
-└── OUTPUT
-    │
-    ▼
- audit_id
-    │
-    ├── findings
-    ├── design issues
-    ├── structure issues
-    ├── requirement gaps
-    └── required refinement
-│
-▼
-REFACTOR / REFINEMENT
-│
-├── ROLE
-│   ├── backend/agents/refactor/agent.ts
-│   └── backend/agents/refactor/workflow.ts
-│
-├── INPUT
-│   ├── plan_id
-│   └── audit_id
-│
-├── LOAD SKILL when required
-│   └── backend/agents/refactor/SKILL.md
-│
-├── TOOLS
-│   └── backend/agents/refactor/tool/apply-audit.ts
-│
-├── refine SAME plan_id
-├── preserve provenance
-├── preserve required branches
-│
-└── OUTPUT
-    │
-    ▼
-updated plan_id
-```
 
-
+│
 ▼
 GAP ANALYSIS
 │
@@ -415,3 +337,89 @@ Hash Verification
     ▼
 DONE
 ```
+
+    └── expand recursively only when required
+        ├── requirement
+        ├── action
+        ├── dependency
+        ├── constraint
+        ├── resource
+        └── expected result
+│
+▼
+plan_id
+│
+▼
+PLANNER
+│
+├── ROLE
+│   ├── backend/agents/planner/agent.ts
+│   └── backend/agents/planner/workflow.ts
+│
+├── INPUT
+│   └── plan_id
+│
+├── LOAD SKILL when Planner work requires it
+│   └── backend/agents/planner/SKILL.md
+│
+├── TOOLS
+│   └── backend/agents/planner/tool/coverage.ts
+│
+├── REVIEW
+│   ├── LOAD review-guidance.md when required
+│   ├── evidence sufficiency
+│   ├── file coverage
+│   ├── structure
+│   ├── design
+│   ├── goal clarity
+│   ├── fixture usability
+│   └── unresolved conflicts
+│
+├── PLAN WORK
+│   ├── LOAD plan-guidance.md when required
+│   ├── inspect plan_id
+│   ├── identify required refinement
+│   └── preserve every required branch
+│
+└── OUTPUT
+    │
+    ▼
+ audit_id
+    │
+    ├── findings
+    ├── design issues
+    ├── structure issues
+    ├── requirement gaps
+    └── required refinement
+│
+▼
+REFACTOR / REFINEMENT
+│
+├── ROLE
+│   ├── backend/agents/refactor/agent.ts
+│   └── backend/agents/refactor/workflow.ts
+│
+├── INPUT
+│   ├── plan_id
+│   └── audit_id
+│
+├── LOAD SKILL when required
+│   └── backend/agents/refactor/SKILL.md
+│
+├── TOOLS
+│   └── backend/agents/refactor/tool/apply-audit.ts
+│
+├── LOAD transformation-guidance.md
+│   └── when transformation is required
+│
+├── LOAD scope-guidance.md
+│   └── when scope confirmation is required
+│
+├── refine SAME plan_id
+├── preserve provenance
+├── preserve required branches
+│
+└── OUTPUT
+    │
+    ▼
+updated plan_id
