@@ -10,11 +10,12 @@ This directory owns server-side provider integrations for the OneShot web applic
 | `providers.json` | Versioned, non-secret provider catalog |
 | `provider.ts`, `provider-resolver.ts` | Research provider contract and runtime resolution |
 | `provider/{openai,anthropic,gemini}/` | Native adapters, types and worker bridges |
-| `provider/native_worker.py` | Native provider transport |
+| `provider/shared/` | Shared worker bridge, worker-pool provider base and catalog adapter registry |
+| `provider/native_worker.py`, `provider/_worker_common.py` | Native provider transport and shared worker helpers |
 | `provider/featherless/` | Compatibility adapter and its worker |
 | `provider/fixture-provider.ts` | Deterministic sample provider |
 | `provider/structured-draft.ts` | Convert provider output to the canonical research bundle |
-| `workspace/providers.py` | Provider clients for the standalone workspace API |
+| `workspace/providers.py` | Provider clients for the standalone workspace API (shared client options and Gemini call teardown live beside them) |
 
 The backend entrypoint, HTTP server, queue and researcher agent import these modules. Research evidence acquisition, canonical contracts, workflow execution and IAM identity retain their own responsibilities.
 

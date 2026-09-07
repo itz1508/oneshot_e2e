@@ -6,6 +6,11 @@ app/env/.env
 app/env/.env.*
 **/*.env
 .venv
+# Keep models out of the build context entirely. On this machine the Docker
+# daemon crashes under large (~1.6-7GB) context transfers, so the image is
+# built lightweight and the local model cache is bind-mounted at runtime
+# (see docker/docker-compose.gemma.yml). The entrypoint still runs `ollama pull`
+# automatically if the mounted cache is missing a model.
 .ollama
 node_modules
 app/web/node_modules

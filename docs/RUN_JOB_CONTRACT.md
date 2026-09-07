@@ -205,7 +205,7 @@ non-secret `settings`. The queue worker passes that capture to
 
 ## 17. Docker / local deployment
 
-`docker-compose.local.yml` adds Redis to the supported deployment:
+`docker/docker-compose.local.yml` adds Redis to the supported deployment:
 
 - `redis`: `redis:7-alpine`, `--appendonly yes`, `restart: unless-stopped`, a real
   healthcheck (`redis-cli ping`), and a named volume for AOF persistence.

@@ -53,7 +53,7 @@ below was captured with repository tooling; A-Flow closure remains open.
   failed" OOM inside `tsc -p tsconfig.json` at ~73MB (Node 24.17.0); a clean
   retry succeeded with no changes. Recorded as transient, no repair needed.
 - 2026-09-06T18:00Z — Incident during closure: unrelated uncommitted gemma
-  work (modified `Dockerfile.gemma`, `docker-compose.gemma.yml`; untracked
+  work (modified `docker/Dockerfile.gemma`, `docker/docker-compose.gemma.yml`; untracked
   `BUILD_GEMMA_NOW.md`, `GEMMA_MODES_GUIDE.md`, `READY_TO_BUILD.txt`,
   `VERIFICATION_CHECKLIST.txt`) appeared in the working tree and was briefly
   hashed into the committed manifest (`592789e`). Canonical Runtime

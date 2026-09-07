@@ -1,4 +1,4 @@
-# OneShot Docker Image with Ollama + Gemma 7B Support
+# OneShot Docker Image with Ollama + Gemma Support
 # Usage: docker run -p 8787:8787 -p 11434:11434 -e ONESHOT_RESEARCH_PROVIDER=ollama oneshot:latest
 
 FROM node:24.13.0-slim AS node-builder
@@ -22,27 +22,28 @@ RUN cd app/web && npm ci --no-audit --no-fund && npm run build
 RUN npm prune --omit=dev --no-audit --no-fund
 
 # ==========================================
-# Ollama Base Stage - Download and prepare
-# ==========================================
-FROM ollama/ollama:latest AS ollama-builder
-
-# Pre-download Gemma 7B model
-RUN ollama pull gemma:7b
-
-# ==========================================
 # Final Runtime Image
 # ==========================================
 FROM python:3.12-slim-bookworm AS runner
 WORKDIR /app
 
-# Install Ollama CLI dependencies
+# Install runtime dependencies (zstd is required to unpack the Ollama archive
+# at first container startup, see scripts/docker-entrypoint-gemma.sh)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
+    zstd \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Ollama from builder
-COPY --from=ollama-builder /root/.ollama /root/.ollama
+# NOTE: The Ollama runtime is intentionally NOT installed at build time. The
+# ~1.2GB tarball (~4GB extracted) crashed the Docker buildkit daemon on this
+# Windows/WSL2 setup (6GB VM memory cap) on every attempt. The entrypoint
+# streams `curl | tar` into /opt/ollama at first container startup instead
+# (cached in the `ollama_runtime` named volume). Same pattern as the model:
+# models are also NOT baked in — the local model cache is bind-mounted at
+# runtime:
+#   -v ./.ollama/models:/root/.ollama/models
+# The entrypoint installs Ollama and pulls $OLLAMA_MODEL automatically.
 
 # Use exact Node runtime from Node build stage
 COPY --from=node-builder /usr/local/bin/node /usr/local/bin/node
@@ -55,9 +56,6 @@ RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 # Install Python dependencies
 COPY app/requirements ./app/requirements
 RUN pip install --no-cache-dir -r app/requirements/base.txt
-
-# Install Ollama from official source
-RUN curl -fsSL https://ollama.ai/install.sh | sh
 
 # Copy runtime dependencies
 COPY package*.json ./
@@ -88,81 +86,33 @@ RUN mkdir -p .runtime/runs .runtime/run-state .runtime/task-events .runtime/chec
 # ==========================================
 
 # OneShot HTTP Server
+# 0.0.0.0 is REQUIRED inside the container so the published port
+# (docker -p / compose ports:) can forward traffic from the host.
 ENV ONESHOT_BIND_HOST=0.0.0.0
 ENV PORT=8787
 ENV NODE_ENV=production
-
-# Ollama Configuration
-ENV OLLAMA_HOST=0.0.0.0:11434
-ENV OLLAMA_MODELS=/root/.ollama/models
-ENV OLLAMA_NUM_GPU=0
-
-# Research Provider - default to Ollama
 ENV ONESHOT_MODE=production
+ENV ONESHOT_API_TOKEN=
+
+# Research Provider - default to local Gemma via Ollama (user can override)
 ENV ONESHOT_RESEARCH_PROVIDER=ollama
+
+# Ollama configuration (local, in-container)
+ENV OLLAMA_MODEL=gemma2:2b
+ENV OLLAMA_HOST=127.0.0.1:11434
+ENV OLLAMA_MODELS=/root/.ollama/models
 
 # Optional: Cloud API keys (users can set via docker run -e)
 # ENV FEATHERLESS_API_KEY=your_key_here
 # ENV GEMINI_API_KEY=your_key_here
 
-EXPOSE 8787 11434
+EXPOSE 8787
 
-# Create startup script that runs both services
-RUN mkdir -p /scripts
-COPY --chown=root:root <<'EOF' /scripts/start.sh
-#!/bin/bash
-set -e
+# Startup script: installs Ollama on first run (streamed, low peak memory),
+# starts Ollama, ensures the Gemma model is loaded,
+# seeds the provider config so the production ProviderManager routes
+# research requests to local Gemma, then execs the OneShot server.
+COPY scripts/docker-entrypoint-gemma.sh /scripts/entrypoint.sh
+RUN chmod +x /scripts/entrypoint.sh
 
-# Function to wait for Ollama to be ready
-wait_for_ollama() {
-    echo "Starting Ollama service..."
-    ollama serve &
-    OLLAMA_PID=$!
-    
-    # Wait for Ollama to be responsive
-    for i in {1..30}; do
-        if curl -s http://127.0.0.1:11434/api/tags > /dev/null 2>&1; then
-            echo "✓ Ollama ready"
-            break
-        fi
-        echo "  Waiting for Ollama... ($i/30)"
-        sleep 2
-    done
-    
-    # Load Gemma 7B if not already loaded
-    echo "Ensuring Gemma 7B is available..."
-    if ! ollama list | grep -q "gemma:7b"; then
-        echo "  Pulling gemma:7b (this may take a few minutes)..."
-        ollama pull gemma:7b
-    else
-        echo "✓ Gemma 7B already available"
-    fi
-}
-
-# Function to run OneShot
-run_oneshot() {
-    echo "Starting OneShot server on port $PORT..."
-    exec node dist/backend/index.js
-}
-
-# Main
-echo "==============================================="
-echo "OneShot with Ollama + Gemma 7B"
-echo "==============================================="
-echo ""
-echo "Configuration:"
-echo "  OneShot HTTP:  http://0.0.0.0:$PORT"
-echo "  Ollama API:    http://0.0.0.0:11434"
-echo "  Research Mode: $ONESHOT_RESEARCH_PROVIDER"
-echo ""
-
-# Start Ollama in background
-wait_for_ollama
-
-# Start OneShot (foreground)
-run_oneshot
-EOF
-
-RUN chmod +x /scripts/start.sh
-
-CMD ["/scripts/start.sh"]
+CMD ["/scripts/entrypoint.sh"]

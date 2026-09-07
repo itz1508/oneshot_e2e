@@ -1,46 +1,50 @@
-# OneShot with Ollama + Gemma 7B - Ready-to-Use Image
+# OneShot with Ollama + Gemma — Ready-to-Use Image
 
-**Status:** ✅ Self-contained image with local LLM support  
-**Gemma Model:** 7B (5GB, recommended balance)  
-**Runtime:** Ollama (local) + Cloud API support (Featherless, Gemini)
+**Status:** ✅ Self-contained runtime with local LLM support
+**Default model:** `gemma2:2b` (1.6GB; `OLLAMA_MODEL=gemma2:9b` for higher quality)
+**Runtime:** Ollama (local) + cloud API support (Featherless, Gemini)
+
+The image ships the application only. The Ollama runtime is streamed into the
+`ollama_runtime` named volume on first startup (not baked into the image), and
+models load from a host-side cache bind-mounted at `/root/.ollama/models`.
+This keeps the image small, keeps the build context free of multi-GB data
+(`.dockerignore` excludes `.ollama`), and avoids the buildkit OOM crashes a
+build-time install caused on memory-constrained Windows/WSL2 hosts.
 
 ---
 
-## Quick Start (60 seconds)
+## Quick Start
 
-### 1. Build Image with Gemma
+### 1. Build the Image
 
 ```bash
 cd D:\oneshot_e2e
-docker build --no-cache --pull -f Dockerfile.gemma -t oneshot:gemma-latest .
+docker build -f docker/Dockerfile.gemma -t oneshot:gemma-latest .
 ```
 
-**⏱️ Estimated build time:** 8-12 minutes (includes downloading Gemma 7B model)
+**⏱️ Estimated build time:** a few minutes; no LLM data is downloaded during
+the build.
 
-### 2. Run Container
+### 2. Run (Compose recommended)
 
 ```bash
-docker run -d \
-  --name oneshot \
-  -p 8787:8787 \
-  -p 11434:11434 \
-  -e ONESHOT_RESEARCH_PROVIDER=ollama \
-  -e ONESHOT_API_TOKEN=your-secure-token \
-  oneshot:gemma-latest
+docker compose --env-file app/env/.env -f docker/docker-compose.gemma.yml up -d
+docker logs -f oneshot-gemma
 ```
 
 ### 3. Wait for Startup
 
-```bash
-docker logs -f oneshot
+Wait for:
+
+```
+[SUCCESS] Ollama is ready
+[SUCCESS] gemma2:2b is already loaded (cached)
+[SUCCESS] OneShot Ready!
 ```
 
-Wait for:
-```
-✓ Ollama ready
-✓ Gemma 7B already available
-Starting OneShot server on port 8787...
-```
+First startup on a new host additionally streams the ~1.2GB Ollama runtime
+(~2 minutes at the capped 10MB/s) and pulls `gemma2:2b` (~1.6GB) if the
+mounted model cache does not have it. Both are cached for later starts.
 
 ### 4. Open Browser
 
@@ -48,233 +52,187 @@ Starting OneShot server on port 8787...
 http://localhost:8787
 ```
 
-Authenticate with the token you set.
+Authenticate with the API token. Compose defaults it to
+`43da785bb20cf57d5b205274f12b620a` — override with `ONESHOT_API_TOKEN` and
+change it for anything beyond local testing.
 
-### 5. Run Research Workflow
+### 5. Run a Research Workflow
 
-Submit a prompt → OneShot uses **local Gemma 7B** automatically via Ollama
+Submit a prompt — the entrypoint seeds the runtime provider config so the
+production ProviderManager routes research through the OpenAI-compatible
+adapter to local Gemma via Ollama automatically.
+
+---
+
+## What Is (and Is Not) in the Image
+
+```
+oneshot:gemma-latest
+├── Node.js runtime + compiled OneShot backend
+├── Web IDE (built)
+├── Python 3.12 + validation tools
+└── Startup script (installs/starts Ollama, loads the model, seeds providers)
+
+NOT in the image (by design):
+├── Ollama runtime  → streamed into the ollama_runtime volume on first start
+└── Gemma model     → bind-mounted from ./.ollama/models (pull if missing)
+```
 
 ---
 
 ## Features
 
-✅ **Local LLM** - Gemma 7B runs locally (no external API calls)  
-✅ **Offline Capable** - Works without internet after first run  
-✅ **Chat Ready** - Conversational interface built-in  
-✅ **API Fallback** - Can switch to Featherless/Gemini if needed  
-✅ **Deterministic Testing** - Fixture mode still available  
-✅ **Pre-loaded** - Gemma model already in image, no download on startup
+✅ **Local LLM** — Gemma runs locally (no external API calls)
+✅ **Offline Capable** — works without internet once runtime + model are cached
+✅ **Chat Ready** — conversational interface built in
+✅ **API Fallback** — switch to Featherless/Gemini with one env var
+✅ **Deterministic Testing** — fixture mode still available
+✅ **Persistent** — runtime install and models survive container recreation
 
----
-
-## Docker Compose (Recommended)
-
-Create `docker-compose.gemma.yml`:
-
-```yaml
-version: '3.8'
-
-services:
-  oneshot:
-    image: oneshot:gemma-latest
-    container_name: oneshot-gemma
-    ports:
-      - "8787:8787"      # OneShot HTTP
-      - "11434:11434"    # Ollama API
-    environment:
-      ONESHOT_RESEARCH_PROVIDER: ollama
-      ONESHOT_API_TOKEN: your-secure-token-here
-      OLLAMA_MODEL: gemma:7b
-      PORT: 8787
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8787/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-    volumes:
-      - oneshot_cache:/root/.ollama/models
-      - oneshot_runtime:/app/.runtime
-
-volumes:
-  oneshot_cache:
-  oneshot_runtime:
-```
-
-**Run:**
-```bash
-docker-compose -f docker-compose.gemma.yml up -d
-```
 
 ---
 
 ## Configuration Options
 
-### Use Local Gemma 7B (Default)
+All commands run from the repository root.
+
+### Local Gemma via Ollama (default)
 
 ```bash
-docker run -e ONESHOT_RESEARCH_PROVIDER=ollama oneshot:gemma-latest
+docker compose --env-file app/env/.env -f docker/docker-compose.gemma.yml up -d
 ```
+
+Override the model: set `OLLAMA_MODEL=gemma2:9b` in `app/env/.env` (5.4GB,
+needs more RAM) before `up -d`.
 
 ### Switch to Cloud API (Featherless)
 
 ```bash
-docker run \
+docker run -d --name oneshot-gemma \
   -e ONESHOT_RESEARCH_PROVIDER=featherless \
   -e FEATHERLESS_API_KEY=your_key \
-  oneshot:gemma-latest
+  -e ONESHOT_API_TOKEN=your-secure-token \
+  -p 8787:8787 oneshot:gemma-latest
 ```
 
 ### Switch to Google Gemini
 
 ```bash
-docker run \
+docker run -d --name oneshot-gemma \
   -e ONESHOT_RESEARCH_PROVIDER=gemini \
   -e GEMINI_API_KEY=your_key \
-  oneshot:gemma-latest
+  -e ONESHOT_API_TOKEN=your-secure-token \
+  -p 8787:8787 oneshot:gemma-latest
 ```
 
 ### Testing with Fixtures (No LLM)
 
 ```bash
-docker run \
+docker run -d --name oneshot-gemma \
   -e ONESHOT_MODE=sample \
-  -e ONESHOT_RESEARCH_PROVIDER=fixture \
-  oneshot:gemma-latest
+  -e ONESHOT_API_TOKEN=your-secure-token \
+  -p 8787:8787 oneshot:gemma-latest
 ```
 
 ---
 
 ## Resource Requirements
 
-| Component | Memory | CPU | Storage |
-|-----------|--------|-----|---------|
-| OneShot   | 512MB  | 1   | -       |
-| Gemma 7B  | 4GB    | 2   | 5GB     |
-| **Total** | **4.5GB** | **3** | **5GB** |
+| Component | Memory | Storage |
+|-----------|--------|---------|
+| OneShot (Node + Python) | ~512MB | image ~1.0GB |
+| Ollama runtime (volume) | — | ~2GB extracted (CUDA runners excluded) |
+| gemma2:2b (host cache) | ~2GB | 1.6GB |
+| **Total (2B)** | **~2.5GB** | **~4.5GB** |
 
-**Recommended Docker allocation:** 6GB RAM, 4 CPU cores
+**Recommended Docker allocation:** 6GB RAM, 4 CPU cores (the compose file caps
+the container at 8GB with a 4GB reservation).
 
 ---
 
 ## Troubleshooting
 
-### Ollama slow to start
+### Startup takes long on a new host
 
-**Symptom:** Takes >5 minutes to see "Ollama ready"
-
-**Solution:** First run downloads model cache. Subsequent runs are faster.
+First run streams the Ollama runtime into the volume and pulls the model once.
+Later starts reuse both caches and are fast.
 
 ```bash
-docker exec oneshot ollama list
+docker exec oneshot-gemma sh -c 'PATH=/opt/ollama/bin:$PATH ollama list'
 ```
 
-### Gemma 7B not loading
+### Model not loading
 
 **Check logs:**
+
 ```bash
-docker logs oneshot | grep -i gemma
+docker logs oneshot-gemma | grep -i gemma
 ```
 
-**Manual load:**
+**Manual pull** (uses the bind-mounted host cache):
+
 ```bash
-docker exec oneshot ollama pull gemma:7b
+docker exec oneshot-gemma sh -c 'PATH=/opt/ollama/bin:$PATH ollama pull gemma2:2b'
 ```
+
+### Incomplete install after a host crash
+
+The entrypoint detects a partial extraction (missing runner binary), wipes the
+install directory, and re-streams the archive on the next start. No manual
+action needed.
 
 ### Out of memory
 
-**Error:** `OOM kill`
+Lower the model tier or raise the Docker memory allocation; the compose file
+caps the container at 8GB. Prefer `gemma2:2b` over `gemma2:9b` on constrained
+hosts.
 
-**Solution:** Allocate more Docker memory:
-```bash
-docker update --memory 8g oneshot
-```
+### Health check returns 401
 
-Or use smaller model:
-```bash
-docker run -e OLLAMA_MODEL=gemma:2b oneshot:gemma-latest
-```
-
-### Want to use cloud API instead
-
-**Switch to Featherless without rebuilding:**
-```bash
-docker stop oneshot
-docker run -e ONESHOT_RESEARCH_PROVIDER=featherless \
-  -e FEATHERLESS_API_KEY=key \
-  oneshot:gemma-latest
-```
-
----
-
-## Image Contents
-
-```
-oneshot:gemma-latest (1.2GB compressed, ~8GB extracted)
-├── Node.js runtime + OneShot backend
-├── React web IDE + assets
-├── Python 3.12 + validation tools
-├── Ollama runtime
-└── Gemma 7B model (pre-downloaded)
-```
-
----
-
-## For Users/Teams
-
-**Share this image:**
-```bash
-docker save oneshot:gemma-latest -o oneshot-gemma.tar.gz
-```
-
-**Load on another machine:**
-```bash
-docker load -i oneshot-gemma.tar.gz
-docker run -p 8787:8787 oneshot:gemma-latest
-```
-
-**Next users just need:**
-1. Docker Desktop/Engine installed
-2. 6GB RAM available
-3. One command to run
+The auth gate requires the API token on `/api/health`; the compose healthcheck
+sends it. If you override `ONESHOT_API_TOKEN`, keep the env var and token in
+sync.
 
 ---
 
 ## API & Chat Interface
 
 ### Web Chat
+
 ```
 http://localhost:8787
 ```
-- Conversational chat with local Gemma 7B
+
+- Conversational chat with local Gemma
 - Real-time task tracking
 - Workflow visualization
 
 ### API Access
+
 ```bash
 curl -H "Authorization: Bearer your-token" \
   http://localhost:8787/api/health
 ```
 
 ### Ollama API (Advanced)
-```bash
-curl http://localhost:11434/api/generate \
-  -d '{"model":"gemma:7b", "prompt":"Hello"}'
-```
+
+Ollama is bound to loopback inside the container; expose it deliberately by
+publishing 11434 and setting `OLLAMA_HOST=0.0.0.0:11434`.
 
 ---
 
 ## Next Steps
 
-1. **Build image:** See "Quick Start" above
-2. **Run container:** docker-compose recommended
-3. **Test locally:** Submit workflow via web UI
-4. **Configure providers:** Update `app/env/.env.gemma.example` as needed
-5. **Share image:** `docker save` for offline distribution
+1. **Build image:** `docker build -f docker/Dockerfile.gemma -t oneshot:gemma-latest .`
+2. **Run container:** Compose recommended (`docker/docker-compose.gemma.yml`)
+3. **Test locally:** submit a workflow via the web UI
+4. **Configure providers:** `app/env/.env` (see `app/env/.env.example`)
+5. **Share image:** `docker save oneshot:gemma-latest -o oneshot-gemma.tar`
+   (recipients provide their own model cache; `docker load` + one `up -d`)
 
 ---
 
-**Status:** Ready for production use  
-**Support:** Local Gemma 7B + cloud API fallback  
-**Users:** Fully self-contained, no setup needed
+**Status:** Production-ready — verified live: image rebuilt with the current
+provider refactor, container healthy, `/api/health` fully green, provider
+connection test `{"ok":true}` against Ollama `gemma2:2b`.
+**Support:** Local Gemma via Ollama + cloud API fallback

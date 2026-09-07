@@ -1,8 +1,11 @@
 import type { StructuredResearchDraft } from "../structured-draft.js";
+import type { ProviderWorkerEvent, WorkerPoolConfig } from "../shared/types.js";
 
 export type GeminiResearchDraft = StructuredResearchDraft;
 
-export interface GeminiConfig {
+export type GeminiWorkerNodeEvent = ProviderWorkerEvent;
+
+export interface GeminiConfig extends WorkerPoolConfig {
   apiKey?: string;
   temperature?: number;
   baseUrl?: string;
@@ -13,10 +16,8 @@ export interface GeminiConfig {
   googleCloudProject?: string;
   googleCloudLocation: string;
   useVertexAi: boolean;
-  workerPoolSize: number;
   cacheUrl?: string;
   cacheTtlSeconds: number;
-  timeoutSeconds: number;
   testDraftFile?: string;
 }
 
@@ -28,10 +29,4 @@ export interface GeminiProviderHealth {
   google_cloud_project?: string;
   google_cloud_location?: string;
   detail?: string;
-}
-
-export interface GeminiWorkerNodeEvent {
-  node: string;
-  state: "Running" | "Completed";
-  message?: string;
 }

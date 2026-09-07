@@ -42,7 +42,7 @@ if (-not $existing) {
         }
     } else {
         Write-Host "Building judge image from source..."
-        docker build -t $ImageTag -t oneshot:1.3.0 .
+        docker build -f docker/Dockerfile -t $ImageTag -t oneshot:1.3.0 .
         if ($LASTEXITCODE -ne 0) {
             Write-Error "ROOT_CAUSE: Docker build failed"
             exit 1

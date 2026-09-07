@@ -3,46 +3,13 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import sys
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import quote
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
-from pydantic import BaseModel, ConfigDict, Field
-
-
-class Strict(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
-
-
-class DraftDependency(Strict):
-    description: str
-    required_by: list[int]
-
-
-class DraftStep(Strict):
-    description: str
-    responsibility: str
-    requirement_indexes: list[int] = Field(min_length=1)
-
-
-class DraftCriterion(Strict):
-    statement: str
-    measurement: str
-    expected_result: str
-    requirement_indexes: list[int] = Field(min_length=1)
-
-
-class ResearchDraft(Strict):
-    deliverable: str | None = None
-    summary: str
-    requirements: list[str] = Field(min_length=1)
-    dependencies: list[DraftDependency]
-    plan_steps: list[DraftStep] = Field(min_length=1)
-    success_meaning: str
-    success_criteria: list[DraftCriterion] = Field(min_length=1)
+from _worker_common import ResearchDraft, extract_json_content, serve
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -52,6 +19,32 @@ class NoRedirect(HTTPRedirectHandler):
 
 class SafeFailure(Exception):
     pass
+
+
+class DraftInvalid(Exception):
+    pass
+
+
+def _parse_draft(raw: str) -> ResearchDraft:
+    """Validate a raw model reply against the strict ResearchDraft schema.
+
+    Raises DraftInvalid with the concrete reason so the feedback retry loop
+    can echo it back to the model. Never embeds credentials or evidence.
+    """
+    from _worker_common import extract_json_content
+
+    try:
+        draft = ResearchDraft.model_validate_json(extract_json_content(raw))
+    except Exception as exc:
+        raise DraftInvalid(str(exc).splitlines()[0] if str(exc) else "invalid JSON") from None
+    indexes = [x.required_by for x in draft.dependencies] + [
+        x.requirement_indexes for x in [*draft.plan_steps, *draft.success_criteria]]
+    if any(i < 0 or i >= len(draft.requirements) for group in indexes for i in group):
+        raise DraftInvalid(
+            "requirement_indexes must be zero-based indexes into the requirements array"
+        )
+    return draft
+
 
 
 def main():
@@ -131,47 +124,63 @@ def main():
         except Exception:
             raise SafeFailure("Provider request failed or returned an invalid response") from None
 
-    for line in sys.stdin:
-        message = {}
-        try:
-            message = json.loads(line)
-            op = message.get("op")
-            if op == "health":
-                if test_draft:
-                    ResearchDraft.model_validate_json(Path(test_draft).read_text(encoding="utf-8"))
-                else:
-                    for selected in models:
-                        generate(selected, "Reply with OK.")
-                result = {"ready": True, "provider": provider, "model": models[-1] if models else model,
-                          "models": models, "api_base": base, "backend": "gemini-api" if provider == "gemini" else f"{provider}-api",
-                          "detail": "Live model connection verified" if not test_draft else "Explicit deterministic test"}
-            elif op == "research":
-                if test_draft:
-                    raw = Path(test_draft).read_text(encoding="utf-8")
-                else:
-                    payload = message["payload"]
-                    text = ("You are OneShot Researcher. Return one JSON object matching output_schema. "
-                            "Use only supplied evidence. Preserve all explicit user constraints and commands. "
-                            "All requirement indexes are zero-based indexes into requirements. "
-                            "Supply the requested user-facing text artifact in deliverable when applicable. "
-                            "Do not invent facts or unrelated architecture.\n" +
-                            json.dumps({"prompt": payload["prompt"], "evidence": payload.get("evidence", []),
-                                        "output_schema": ResearchDraft.model_json_schema()}))
-                    raw = generate(models[-1], text, structured=True)
-                fenced = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", raw.strip(), re.DOTALL)
-                draft = ResearchDraft.model_validate_json(fenced.group(1) if fenced else raw)
-                indexes = [x.required_by for x in draft.dependencies] + [
-                    x.requirement_indexes for x in [*draft.plan_steps, *draft.success_criteria]]
-                if any(i < 0 or i >= len(draft.requirements) for group in indexes for i in group):
-                    raise SafeFailure("Provider returned invalid requirement references")
-                result = draft.model_dump()
+    def dispatch(message):
+        op = message.get("op")
+        if op == "health":
+            if test_draft:
+                ResearchDraft.model_validate_json(Path(test_draft).read_text(encoding="utf-8"))
             else:
-                raise SafeFailure("Unsupported provider operation")
-            output = {"id": message.get("id"), "ok": True, "result": result}
-        except Exception as error:
-            output = {"id": message.get("id"), "ok": False,
-                      "error": str(error) if isinstance(error, SafeFailure) else "Provider response failed validation"}
-        print(json.dumps(output, separators=(",", ":")), flush=True)
+                for selected in models:
+                    generate(selected, "Reply with OK.")
+            return {"ready": True, "provider": provider, "model": models[-1] if models else model,
+                    "models": models, "api_base": base, "backend": "gemini-api" if provider == "gemini" else f"{provider}-api",
+                    "detail": "Live model connection verified" if not test_draft else "Explicit deterministic test"}
+        if op == "research":
+            if test_draft:
+                raw = Path(test_draft).read_text(encoding="utf-8")
+                draft = _parse_draft(raw)
+            else:
+                payload = message["payload"]
+                text = ("You are OneShot Researcher. Return one JSON object matching output_schema. "
+                        "Use only supplied evidence. Preserve all explicit user constraints and commands. "
+                        "All requirement indexes are zero-based indexes into requirements. "
+                        "Supply the requested user-facing text artifact in deliverable when applicable. "
+                        "Do not invent facts or unrelated architecture.\n" +
+                        json.dumps({"prompt": payload["prompt"], "evidence": payload.get("evidence", []),
+                                    "output_schema": ResearchDraft.model_json_schema()}))
+                # Small local models frequently miss a strict-schema detail on the
+                # first attempt. Re-prompt with the concrete validation errors so
+                # the model can correct its own output before the run fails.
+                retries = max(0, int(os.getenv("ONESHOT_PROVIDER_DRAFT_RETRIES", "2") or "0"))
+                raw = generate(models[-1], text, structured=True)
+                draft = None
+                for attempt in range(retries + 1):
+                    try:
+                        draft = _parse_draft(raw)
+                        break
+                    except DraftInvalid as invalid:
+                        if attempt >= retries:
+                            raise SafeFailure(
+                                "Provider response failed validation"
+                            ) from None
+                        raw = generate(
+                            models[-1],
+                            text
+                            + "\n\nYour previous reply was:\n" + raw
+                            + "\n\nIt was rejected by the schema validator: "
+                            + str(invalid)
+                            + "\nReturn the corrected single JSON object only. No prose.",
+                            structured=True,
+                        )
+                if draft is None:
+                    raise SafeFailure("Provider response failed validation")
+            return draft.model_dump()
+        raise SafeFailure("Unsupported provider operation")
+
+    def format_error(error):
+        return str(error) if isinstance(error, SafeFailure) else "Provider response failed validation"
+
+    serve(dispatch, format_error)
 
 
 if __name__ == "__main__":

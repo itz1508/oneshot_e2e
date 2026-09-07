@@ -85,6 +85,30 @@ def _provider_failure(provider: ModelProvider, error: Exception) -> ProviderErro
     )
 
 
+def _client_kwargs(
+    settings: WorkspaceSettings, base_url: str | None
+) -> dict[str, Any]:
+    """Shared SDK client options: timeout, retry budget, and optional base URL."""
+
+    kwargs: dict[str, Any] = {
+        "timeout": settings.provider_timeout_seconds,
+        "max_retries": settings.provider_max_retries,
+    }
+    if base_url:
+        kwargs["base_url"] = base_url
+    return kwargs
+
+
+async def _generate_content_once(client: Any, **kwargs: Any) -> Any:
+    """Run one async Gemini call, releasing the underlying client afterwards."""
+
+    async_client = client.aio
+    try:
+        return await async_client.models.generate_content(**kwargs)
+    finally:
+        await async_client.aclose()
+
+
 class OpenAICompatibleClient:
     """Call Featherless, OpenAI, or Ollama through Chat Completions."""
 
@@ -136,9 +160,7 @@ class OpenAICompatibleClient:
             }
             async with AsyncOpenAI(
                 api_key=api_key,
-                base_url=provider.base_url,
-                timeout=self.settings.provider_timeout_seconds,
-                max_retries=self.settings.provider_max_retries,
+                **_client_kwargs(self.settings, provider.base_url),
                 default_headers=default_headers,
             ) as client:
                 completion = await client.chat.completions.create(
@@ -250,20 +272,17 @@ class GeminiClient:
                 for message in request.messages
                 if message.role != MessageRole.SYSTEM
             ]
-            async_client = client.aio
-            try:
-                response = await async_client.models.generate_content(
-                    model=model.provider_model_id,
-                    contents=contents,
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_instruction or None,
-                        temperature=request.temperature,
-                        max_output_tokens=request.max_tokens
-                        or model.max_output_tokens,
-                    ),
-                )
-            finally:
-                await async_client.aclose()
+            response = await _generate_content_once(
+                client,
+                model=model.provider_model_id,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction or None,
+                    temperature=request.temperature,
+                    max_output_tokens=request.max_tokens
+                    or model.max_output_tokens,
+                ),
+            )
             if not response.text:
                 raise ValueError("Gemini returned no text content")
             usage = response.usage_metadata
@@ -329,11 +348,8 @@ class AnthropicClient:
         try:
             client_kwargs: dict[str, Any] = {
                 "api_key": credential,
-                "timeout": self.settings.provider_timeout_seconds,
-                "max_retries": self.settings.provider_max_retries,
+                **_client_kwargs(self.settings, provider.base_url),
             }
-            if provider.base_url:
-                client_kwargs["base_url"] = provider.base_url
             async with AsyncAnthropic(**client_kwargs) as client:
                 optional: dict[str, Any] = {}
                 for name in (

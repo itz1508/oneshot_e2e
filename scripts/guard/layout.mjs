@@ -30,6 +30,7 @@ const APPROVED_DIRECTORIES = new Set([
   "app",
   "docs",
   "scripts",
+  "docker",
 
   // External dependencies (cloned Google ADK)
   "external",
@@ -68,9 +69,7 @@ const APPROVED_FILES = new Set([
   "package-lock.json",
   "tsconfig.json",
   "tsconfig.test.json",
-  "Dockerfile",
   ".dockerignore",
-  "docker-compose.local.yml",
   "README.md",
   "MANIFEST.sha256",
 

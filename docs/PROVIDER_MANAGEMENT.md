@@ -148,4 +148,4 @@ Worker dequeues → ProviderManager.resolveForRun(id, capturedConfiguration)
 
 ## Docker Deployment
 
-See `docker-compose.local.yml` for a complete local development setup with Redis.
+See `docker/docker-compose.local.yml` for a complete local development setup with Redis.

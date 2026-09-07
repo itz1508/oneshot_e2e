@@ -1,4 +1,4 @@
-# OneShot multi-stage runtime with Google ADK TypeScript workflow support
+# OneShot multi-stage runtime. Build from repo root: docker build -f docker/Dockerfile .
 FROM node:24.13.0-slim AS node-builder
 WORKDIR /app
 

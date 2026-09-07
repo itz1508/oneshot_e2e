@@ -15,19 +15,13 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { ProcessingEventBus } from "../../../backend/runtime/event-bus.js";
 import type { ResearchProvider } from "./provider.js";
-import { FixtureResearchProvider } from "./provider/fixture-provider.js";
 import {
-  GeminiModelProvider,
-  loadGeminiConfig,
-} from "./provider/gemini/provider.js";
-import {
-  OpenAIModelProvider,
-  loadOpenAIConfig,
-} from "./provider/openai/provider.js";
-import {
-  AnthropicModelProvider,
-  loadAnthropicConfig,
-} from "./provider/anthropic/provider.js";
+  DEFAULT_PROVIDER_ID,
+  PROVIDER_ADAPTERS,
+  createUnconfiguredProvider,
+  defaultProviderIdFor,
+  fixtureProviderFor,
+} from "./provider/shared/registry.js";
 import type {
   ProviderCredential,
   ProviderSecretStore,
@@ -138,7 +132,7 @@ export class ProviderManager {
       ? this.runtimeConfigStore.load()
       : seedConfig();
     const active = this.runtimeState.activeProvider;
-    if (active === "google") this.runtimeState.activeProvider = "gemini";
+    this.runtimeState.activeProvider = defaultProviderIdFor(active);
     if (!this.catalog.providers[this.runtimeState.activeProvider]) {
       this.runtimeState.activeProvider = this.mode === "sample" ? "sample" : "<default>";
     }
@@ -207,13 +201,13 @@ export class ProviderManager {
       const defaults = this.runtimeDefaults(id);
       const adapter = def.type ?? "fixture";
       const credentialType = def.credentialType ?? "none";
-      this.catalogEnv[id] = def.credentialEnv ?? "";
+      this.catalogEnv[id] = def.credentialEnv ?? PROVIDER_ADAPTERS[id]?.envVar ?? "";
       this.catalog.providers[id] = {
         id,
         providerId: id,
         displayName: def.label ?? id,
         adapter,
-        protocol: protocolFor(adapter),
+        protocol: catalogProtocolFor(id, adapter),
         apiBaseUrl: def.baseUrl ?? defaults.apiBase ?? "",
         model: def.model ?? defaults.model ?? "fixture",
         credential: {
@@ -248,9 +242,8 @@ export class ProviderManager {
    * the catalog display name for known providers, or the id as a fallback.
    */
   publicNameFor(id: string): string {
-    if (id === "sample") return "<default>";
-    const entry = this.catalog.providers[id];
-    return ({ openai: "OpenAI", anthropic: "Anthropic", gemini: "Gemini" } as Record<string,string>)[id] ?? "<default>";
+    if (id === "sample") return DEFAULT_PROVIDER_ID;
+    return PROVIDER_ADAPTERS[id]?.displayName ?? DEFAULT_PROVIDER_ID;
   }
 
   private async resolveCredentialSource(
@@ -258,7 +251,12 @@ export class ProviderManager {
   ): Promise<string> {
     if (entry.credential.type === "none") return "none";
     const envName = this.catalogEnv[entry.id];
-    if ((envName && process.env[envName]) || (entry.id === "gemini" && process.env.GOOGLE_API_KEY)) return "env-var";
+    const adapter = PROVIDER_ADAPTERS[entry.id];
+    const envConfigured = Boolean(
+      (envName && process.env[envName]) ||
+        (adapter?.fallbackEnvVar && process.env[adapter.fallbackEnvVar]),
+    );
+    if (envConfigured) return "env-var";
     if ((await this.secretStore.get(entry.id))?.value.trim()) return "local-secret-store";
     return "none";
   }
@@ -272,8 +270,8 @@ export class ProviderManager {
       entry.credential.type === "none" || source !== "none";
     return {
       ...entry,
-      supportsTemperature: id === "gemini" || (id === "openai" && /^gpt-4/.test(settings.model)) ||
-        (id === "anthropic" && /^claude-(sonnet-4-20250514|3)/.test(settings.model)),
+      supportsTemperature:
+        PROVIDER_ADAPTERS[id]?.supportsTemperature(settings.model) ?? false,
       active: this.runtimeState.activeProvider === id,
       configured: credentialConfigured,
       enabled: entry.enabled && settings.enabled,
@@ -482,8 +480,9 @@ export class ProviderManager {
   private async credentialValue(id: string, transient?: ProviderCredential): Promise<string> {
     if (transient) return transient.value;
     const env = this.catalogEnv[id];
+    const fallbackEnv = PROVIDER_ADAPTERS[id]?.fallbackEnvVar;
     return (env && process.env[env]?.trim()) ||
-      (id === "gemini" && process.env.GOOGLE_API_KEY?.trim()) ||
+      (fallbackEnv && process.env[fallbackEnv]?.trim()) ||
       (await this.secretStore.get(id))?.value || "";
   }
 
@@ -493,53 +492,27 @@ export class ProviderManager {
     captured?: ProviderRuntimeSettings,
     transient?: ProviderCredential,
   ): Promise<ResearchProvider> {
-    if (providerId === "<default>") {
-      return {
-        ready: async () => ({ ready: false, provider: "<default>", models: [], detail: "Configure and activate a provider" }),
-        research: async () => { throw new Error("Configure and activate a provider"); },
-      };
+    if (providerId === DEFAULT_PROVIDER_ID) {
+      return createUnconfiguredProvider();
     }
     const entry = this.catalog.providers[providerId];
     if (!entry) throw new Error("Unknown provider");
     const settings = captured ?? this.runtimeSettings(providerId);
     if (!settings.enabled) throw new Error("Provider is disabled");
     if (entry.adapter === "fixture" && this.mode !== "production")
-      return new FixtureResearchProvider(resolve(projectRoot, "app/fixtures/product/complete-success-seed.json"));
+      return fixtureProviderFor(projectRoot);
+    const adapter = PROVIDER_ADAPTERS[providerId];
+    if (!adapter) throw new Error("Unsupported provider adapter");
     const apiKey = await this.credentialValue(providerId, transient);
-    const shared = { apiKey, temperature: settings.temperature,
-      workerPoolSize: settings.parallelism ?? 2, timeoutSeconds: settings.timeoutSeconds ?? 300 };
-    let provider: ResearchProvider;
-    if (entry.adapter === "openai") {
-      provider = new OpenAIModelProvider(projectRoot, { ...loadOpenAIConfig(projectRoot), ...shared,
-        model: settings.model, baseUrl: settings.apiBase || "https://api.openai.com/v1", testDraftFile: undefined });
-    } else if (entry.adapter === "anthropic") {
-      provider = new AnthropicModelProvider(projectRoot, { ...loadAnthropicConfig(projectRoot), ...shared,
-        model: settings.model, baseUrl: settings.apiBase || "https://api.anthropic.com/v1", testDraftFile: undefined });
-    } else if (entry.adapter === "gemini") {
-      provider = new GeminiModelProvider(projectRoot, { ...loadGeminiConfig(projectRoot, settings.model), ...shared,
-        baseUrl: settings.apiBase || "https://generativelanguage.googleapis.com/v1beta",
-        useVertexAi: false, testDraftFile: undefined });
-    } else throw new Error("Unsupported provider adapter");
+    const provider = adapter.create(projectRoot, settings, apiKey);
     if (this.options.events) provider.attachEvents?.(this.options.events);
     return provider;
   }
 
-  close(): void {
-    this.options = this.options;
-  }
+  close(): void {}
 }
 
-function protocolFor(adapter: string): string {
-  switch (adapter) {
-    case "fixture":
-      return "fixture://";
-    case "openai":
-      return "https";
-    case "anthropic":
-      return "https";
-    case "gemini":
-      return "https";
-    default:
-      return "unknown";
-  }
+function catalogProtocolFor(id: string, adapter: string): string {
+  if (adapter === "fixture") return "fixture://";
+  return PROVIDER_ADAPTERS[id]?.protocol ?? "unknown";
 }

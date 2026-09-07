@@ -3,45 +3,20 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import re
 import sys
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+# This worker lives one directory below the shared worker helpers.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-
-class Strict(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
-
-
-class DraftDependency(Strict):
-    description: str
-    required_by: list[int]
-
-
-class DraftStep(Strict):
-    description: str
-    responsibility: str
-    requirement_indexes: list[int] = Field(min_length=1)
-
-
-class DraftCriterion(Strict):
-    statement: str
-    measurement: str
-    expected_result: str
-    requirement_indexes: list[int] = Field(min_length=1)
-
-
-class ResearchDraft(Strict):
-    deliverable: str | None = None
-    summary: str
-    requirements: list[str] = Field(min_length=1)
-    dependencies: list[DraftDependency]
-    plan_steps: list[DraftStep] = Field(min_length=1)
-    success_meaning: str
-    success_criteria: list[DraftCriterion] = Field(min_length=1)
-
+from _worker_common import (  # noqa: E402
+    ResearchDraft,
+    emit,
+    extract_json_content,
+    serve,
+    set_emit_enabled,
+)
 
 MODEL = os.getenv("FEATHERLESS_MODEL", "google/gemma-4-31B-it")
 BASE = os.getenv("FEATHERLESS_API_BASE", "https://api.featherless.ai/v1").rstrip("/")
@@ -49,19 +24,7 @@ TIMEOUT = max(1, int(os.getenv("FEATHERLESS_TIMEOUT_SECONDS", "300")))
 MAX_TOKENS = max(256, int(os.getenv("FEATHERLESS_MAX_TOKENS", "4096")))
 APP_URL = os.getenv("FEATHERLESS_APP_URL", "").strip()
 TEST_DRAFT = os.getenv("ONESHOT_FEATHERLESS_TEST_DRAFT_FILE", "").strip()
-EMIT_EVENTS = (
-    os.getenv("ONESHOT_FEATHERLESS_EMIT_EVENTS", "false").lower() == "true"
-)
 _client_instance = None
-
-
-def emit(req_id: int | None, node: str, state: str, message: str | None = None):
-    if not EMIT_EVENTS:
-        return
-    payload = {"id": req_id, "event": {"node": node, "state": state}}
-    if message:
-        payload["event"]["message"] = message
-    print(json.dumps(payload, separators=(",", ":")), flush=True)
 
 
 def _client():
@@ -124,12 +87,6 @@ def _health() -> dict[str, Any]:
     }
 
 
-def _json_content(content: str) -> str:
-    value = content.strip()
-    fenced = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", value, re.DOTALL)
-    return fenced.group(1) if fenced else value
-
-
 def _infer(prompt: dict[str, Any], evidence: list[dict[str, Any]]) -> ResearchDraft:
     schema = ResearchDraft.model_json_schema()
     system = (
@@ -159,7 +116,7 @@ def _infer(prompt: dict[str, Any], evidence: list[dict[str, Any]]) -> ResearchDr
     content = completion.choices[0].message.content
     if not isinstance(content, str) or not content.strip():
         raise RuntimeError("Featherless returned no message content")
-    return ResearchDraft.model_validate_json(_json_content(content))
+    return ResearchDraft.model_validate_json(extract_json_content(content))
 
 
 async def research(payload: dict[str, Any], req_id: int | None) -> dict[str, Any]:
@@ -190,32 +147,16 @@ async def research(payload: dict[str, Any], req_id: int | None) -> dict[str, Any
     return draft.model_dump()
 
 
-async def dispatch(message: dict[str, Any]):
+def dispatch(message: dict[str, Any]):
     if message.get("op") == "research":
-        return await research(message["payload"], message.get("id"))
+        return asyncio.run(research(message["payload"], message.get("id")))
     if message.get("op") == "health":
         return _health()
     raise ValueError(f"unknown op {message.get('op')}")
 
 
-async def main():
-    loop = asyncio.get_running_loop()
-    while True:
-        line = await loop.run_in_executor(None, sys.stdin.readline)
-        if not line:
-            break
-        try:
-            message = json.loads(line)
-            result = await dispatch(message)
-            output = {"id": message.get("id"), "ok": True, "result": result}
-        except Exception as error:
-            output = {
-                "id": message.get("id"),
-                "ok": False,
-                "error": f"{type(error).__name__}: {error}",
-            }
-        print(json.dumps(output, separators=(",", ":")), flush=True)
-
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    set_emit_enabled(
+        os.getenv("ONESHOT_FEATHERLESS_EMIT_EVENTS", "false").lower() == "true"
+    )
+    serve(dispatch)

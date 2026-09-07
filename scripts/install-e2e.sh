@@ -68,7 +68,7 @@ if [ "${DOCKER_MODE}" = true ]; then
   echo "      Docker daemon is running."
 
   echo "[2/4] Building Docker container image (oneshot:local)..."
-  if ! docker build -t oneshot:local .; then
+  if ! docker build -f docker/Dockerfile -t oneshot:local .; then
     fail "Docker build failed."
   fi
   echo "      Docker image built successfully."

@@ -29,7 +29,7 @@ if ! docker image inspect "${IMAGE_TAG}" >/dev/null 2>&1; then
         docker load -i "${TAR_PATH}"
     else
         echo "Building judge image from source..."
-        docker build -t "${IMAGE_TAG}" -t oneshot:1.3.0 .
+        docker build -f docker/Dockerfile -t "${IMAGE_TAG}" -t oneshot:1.3.0 .
     fi
 else
     echo "Found existing judge image: ${IMAGE_TAG}"

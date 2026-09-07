@@ -1,0 +1,108 @@
+name: oneshot_e2e
+
+services:
+  oneshot:
+    image: oneshot:gemma-latest
+    container_name: oneshot-gemma
+    
+    # Ports
+    ports:
+      - "8787:8787"      # OneShot Web UI + API
+    
+    # Environment Configuration
+    environment:
+      # OneShot Core
+      PORT: 8787
+      # 0.0.0.0 is REQUIRED so the published port works from the host.
+      ONESHOT_BIND_HOST: 0.0.0.0
+      NODE_ENV: production
+      ONESHOT_MODE: production
+      REDIS_URL: ${REDIS_URL:?Set REDIS_URL to the external Render connection URL}
+      ONESHOT_START_WORKER: "true"
+
+      # REQUIRED: the HTTP server refuses to bind 0.0.0.0 without an API token
+      # (backend/server/http-server.ts auth gate; unauthenticated requests get
+      # 401). Enter this token in the Web UI auth overlay on first visit.
+      # Override with your own value via the ONESHOT_API_TOKEN env var.
+      ONESHOT_API_TOKEN: ${ONESHOT_API_TOKEN:-43da785bb20cf57d5b205274f12b620a}
+
+      # Research Provider (default: local Gemma via Ollama; alternatives:
+      # gemini, featherless, sample)
+      ONESHOT_RESEARCH_PROVIDER: ${ONESHOT_RESEARCH_PROVIDER:-ollama}
+
+      # Local LLM (Ollama) configuration
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma2:2b}
+      OLLAMA_HOST: 0.0.0.0:11434
+
+      # Local Gemma transport uses the OpenAI-compatible adapter pointed at
+      # Ollama. The native provider transport requires a non-empty key;
+      # Ollama ignores it. Override with a real key only for cloud providers.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-ollama-local}
+
+      # Deterministic drafts for small local models + feedback retries when a
+      # draft fails the strict schema validation (see native_worker.py).
+      OPENAI_TEMPERATURE: 0
+      ONESHOT_PROVIDER_DRAFT_RETRIES: 2
+
+      # Cloud API Keys (optional - set via environment variable if using cloud provider)
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      FEATHERLESS_API_KEY: ${FEATHERLESS_API_KEY:-}
+    
+    # Startup & Restart
+    restart: unless-stopped
+    
+    # Health Check
+    # The auth gate returns 401 for unauthenticated /api/health (see
+    # ONESHOT_API_TOKEN above), so the check must send the token.
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'curl -sf -H "Authorization: Bearer $$ONESHOT_API_TOKEN" http://localhost:8787/api/health > /dev/null || exit 1'
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+    
+    # Resource Limits
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+    
+    # Volumes (persistent data)
+    volumes:
+      # OneShot runtime (conversations, runs, checkpoints)
+      - oneshot_runtime:/app/.runtime
+
+      # Ollama runtime install (~4GB, installed by the entrypoint on first
+      # run because the build-time install OOM-crashed the Docker daemon on
+      # Windows/WSL2). Named volume — not a Windows bind mount — because
+      # executables cannot reliably run from a virtiofs mount.
+      - ollama_runtime:/opt/ollama
+
+      # Local Ollama model cache (bind-mounted from the host so the container
+      # runs fully offline; contains gemma2:2b on this machine). The
+      # entrypoint pulls the model only if the cache doesn't have it.
+      - ../.ollama/models:/root/.ollama/models
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  oneshot_runtime:
+    driver: local
+  ollama_runtime:
+    driver: local
+
+networks:
+  default:
+    name: oneshot-network
+    driver: bridge

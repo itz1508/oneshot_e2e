@@ -1,16 +1,16 @@
-# BUILD & RUN: OneShot with Gemma 7B
+# BUILD & RUN: OneShot with Gemma (Ollama)
 
 ## For You (Developer)
 
 ### Build Image (8-12 min)
 ```bash
 cd D:\oneshot_e2e
-docker build --no-cache --pull -f Dockerfile.gemma -t oneshot:gemma-latest .
+docker build --no-cache --pull -f docker/Dockerfile.gemma -t oneshot:gemma-latest .
 ```
 
 ### Test Image
 ```bash
-docker-compose -f docker-compose.gemma.yml up -d
+docker compose --env-file app/env/.env -f docker/docker-compose.gemma.yml up -d
 # Wait for: "[SUCCESS] OneShot Ready!"
 # Open: http://localhost:8787
 # Token: oneshot-default-token-please-change-me
@@ -18,7 +18,7 @@ docker-compose -f docker-compose.gemma.yml up -d
 
 ### Stop & Clean
 ```bash
-docker-compose -f docker-compose.gemma.yml down
+docker compose --env-file app/env/.env -f docker/docker-compose.gemma.yml down
 ```
 
 ---
@@ -36,14 +36,14 @@ docker pull your-registry/oneshot:gemma-latest
 
 ### Run
 ```bash
-docker-compose -f docker-compose.gemma.yml up -d
+docker compose --env-file app/env/.env -f docker/docker-compose.gemma.yml up -d
 ```
 
 ### Use
 1. Open http://localhost:8787
 2. Login with token
 3. Submit research workflow
-4. Gemma 7B runs locally, no API needed
+4. Gemma runs locally via Ollama, no API needed
 
 ### Optional: Use Cloud Instead
 Edit `.env`:
@@ -54,14 +54,14 @@ FEATHERLESS_API_KEY=your_key
 
 Restart:
 ```bash
-docker-compose -f docker-compose.gemma.yml restart
+docker compose --env-file app/env/.env -f docker/docker-compose.gemma.yml restart
 ```
 
 ---
 
 ## What Users Get
 
-✅ Local Gemma 7B chat/research (ready to use)  
+✅ Local Gemma chat/research (ready to use)  
 ✅ Web UI for conversations  
 ✅ Can switch to cloud API anytime  
 ✅ Deterministic testing mode  
@@ -75,18 +75,17 @@ docker-compose -f docker-compose.gemma.yml restart
 - Node.js + OneShot backend
 - React Web IDE
 - Python 3.12 + validation
-- Ollama runtime
-- Gemma 7B model (pre-loaded)
-- Smart startup script
+- Smart startup script (streams Ollama runtime into a volume on first start)
+- Gemma models via host cache `.ollama/models` (gemma2:2b default, pulled if missing)
 
 ---
 
 ## System Requirements
 
 **Minimum:**
-- 4GB RAM for Gemma 7B
+- 4GB RAM for Gemma 2 (2.5GB typical for 2B)
 - 2 CPU cores
-- 10GB disk (5GB model + runtime)
+- 10GB disk (Ollama runtime volume + model cache)
 - Docker with 6GB allocation
 
 **Recommended:**
@@ -116,9 +115,9 @@ docker-compose -f docker-compose.gemma.yml restart
 
 | File | Purpose |
 |------|---------|
-| Dockerfile.gemma | Build image with Ollama + Gemma |
-| docker-compose.gemma.yml | One-command deployment |
-| app/env/.env.gemma.example | Config template for users |
+| docker/Dockerfile.gemma | Build image with Ollama + Gemma |
+| docker/docker-compose.gemma.yml | One-command deployment |
+| app/env/.env.example | Config template for users |
 | scripts/docker-entrypoint-gemma.sh | Startup logic |
 | GEMMA_IMAGE_GUIDE.md | Full documentation |
 

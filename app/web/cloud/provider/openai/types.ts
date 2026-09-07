@@ -1,21 +1,24 @@
 import type { StructuredResearchDraft } from "../structured-draft.js";
+import type { ProviderWorkerEvent, WorkerPoolConfig } from "../shared/types.js";
 
 export type OpenAIResearchDraft = StructuredResearchDraft;
 
-export interface OpenAIConfig {
+export type OpenAIWorkerEvent = ProviderWorkerEvent;
+
+export interface OpenAIConfig extends WorkerPoolConfig {
   apiKey?: string;
   temperature?: number;
   model: string;
   baseUrl: string;
-  workerPoolSize: number;
-  timeoutSeconds: number;
   maxTokens: number;
   appUrl?: string;
   testDraftFile?: string;
 }
 
-export interface OpenAIWorkerEvent {
-  node: string;
-  state: "Running" | "Completed";
-  message?: string;
+export interface OpenAIHealth {
+  ready: boolean;
+  provider: "openai";
+  model: string;
+  api_base: string;
+  detail?: string;
 }

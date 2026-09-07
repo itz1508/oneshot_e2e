@@ -1,12 +1,12 @@
-# OneShot Ready-to-Use Image with Gemma 7B
+# OneShot Ready-to-Use Image with Gemma
 
 ## What's Prepared
 
-✅ **Dockerfile.gemma** - Multi-stage build with Ollama + Gemma 7B  
-✅ **docker-compose.gemma.yml** - One-command deployment  
-✅ **app/env/.env.gemma.example** - Configuration template  
-✅ **scripts/docker-entrypoint-gemma.sh** - Smart startup script  
-✅ **GEMMA_IMAGE_GUIDE.md** - Complete documentation  
+✅ **docker/Dockerfile.gemma** - Multi-stage build (app only; Ollama runtime + models load at first startup)
+✅ **docker/docker-compose.gemma.yml** - One-command deployment
+✅ **app/env/.env.example** - Configuration template
+✅ **scripts/docker-entrypoint-gemma.sh** - Smart startup script
+✅ **GEMMA_IMAGE_GUIDE.md** - Complete documentation
 
 ---
 
@@ -15,12 +15,12 @@
 ```bash
 cd D:\oneshot_e2e
 
-# Build with Gemma support (includes Ollama + Gemma 7B model)
-docker build --no-cache --pull -f Dockerfile.gemma -t oneshot:gemma-latest .
+# Build with Gemma support (Ollama runtime + model load at first startup)
+docker build --no-cache --pull -f docker/Dockerfile.gemma -t oneshot:gemma-latest .
 ```
 
-**Build time:** 8-12 minutes (includes downloading Gemma 7B)  
-**Final size:** ~1.2GB compressed, ~8GB extracted
+**Build time:** a few minutes (no LLM data downloaded during the build)
+**Final size:** ~1.0GB
 
 ---
 
@@ -29,7 +29,7 @@ docker build --no-cache --pull -f Dockerfile.gemma -t oneshot:gemma-latest .
 ### Option 1: Docker Compose (Easiest)
 
 ```bash
-docker-compose -f docker-compose.gemma.yml up -d
+docker compose --env-file app/env/.env -f docker/docker-compose.gemma.yml up -d
 ```
 
 Browser: `http://localhost:8787`
@@ -40,7 +40,6 @@ Browser: `http://localhost:8787`
 docker run -d \
   --name oneshot \
   -p 8787:8787 \
-  -p 11434:11434 \
   -e ONESHOT_API_TOKEN=your-token \
   oneshot:gemma-latest
 ```
@@ -66,9 +65,11 @@ oneshot:gemma-latest
 ├── OneShot backend (compiled)
 ├── React Web IDE (built)
 ├── Python 3.12 + validation tools
-├── Ollama runtime
-├── Gemma 7B model (pre-downloaded, 5GB)
-└── Start script (handles both local & cloud)
+└── Start script (installs/starts Ollama, loads the model, seeds providers)
+
+Loaded at first startup (NOT baked into the image):
+├── Ollama runtime → streamed into the ollama_runtime volume (~1.2GB download, once per host)
+└── Gemma model    → pulled into ./.ollama/models unless already cached (gemma2:2b = 1.6GB)
 ```
 
 ---
@@ -76,7 +77,7 @@ oneshot:gemma-latest
 ## Features for End Users
 
 **Local Chat:**
-- Run Gemma 7B locally (no internet needed)
+- Run Gemma locally (gemma2:2b default; no internet needed)
 - Works offline after first startup
 - Private: data never leaves container
 
@@ -95,12 +96,12 @@ oneshot:gemma-latest
 
 | Feature | Local Gemma | Cloud API | Fixtures |
 |---------|-------------|-----------|----------|
-| **Setup Time** | 12 min (image build) | Instant | Instant |
-| **Runtime** | 4-6 GB RAM | 512 MB | 512 MB |
+| **Setup Time** | Minutes (build) + first-run model pull | Instant | Instant |
+| **Runtime** | ~2.5 GB RAM (2B) | 512 MB | 512 MB |
 | **Cost** | Free | Pay-per-call | Free |
 | **Privacy** | Full (local) | Shared (API) | Full (local) |
 | **Speed** | Medium | Fast | Instant |
-| **Model** | Gemma 7B | Proprietary | Fixture |
+| **Model** | Gemma 2 (2B/9B) | Proprietary | Fixture |
 
 ---
 
@@ -113,7 +114,7 @@ docker save oneshot:gemma-latest | gzip > oneshot-gemma-latest.tar.gz
 
 # On user machine
 gunzip -c oneshot-gemma-latest.tar.gz | docker load
-docker-compose -f docker-compose.gemma.yml up -d
+docker compose --env-file app/env/.env -f docker/docker-compose.gemma.yml up -d
 ```
 
 **Or push to registry:**
@@ -129,24 +130,19 @@ docker push your-registry/oneshot:gemma-latest
 ### 1. Build the Image
 ```powershell
 cd D:\oneshot_e2e
-docker build --no-cache --pull -f Dockerfile.gemma -t oneshot:gemma-latest .
-```
-
-**Monitor build:**
-```bash
-docker logs -f
+docker build -f docker/Dockerfile.gemma -t oneshot:gemma-latest .
 ```
 
 ### 2. Test Locally
 ```bash
-docker-compose -f docker-compose.gemma.yml up -d
+docker compose --env-file app/env/.env -f docker/docker-compose.gemma.yml up -d
 docker logs -f oneshot-gemma
 ```
 
 Wait for:
 ```
 ✓ Ollama is ready
-✓ gemma:7b is already loaded
+✓ gemma2:2b is already loaded
 [SUCCESS] OneShot Ready!
 ```
 
@@ -154,7 +150,7 @@ Wait for:
 - Open http://localhost:8787
 - Authenticate with default token (change it!)
 - Submit a research workflow
-- Verify Gemma 7B processes it
+- Verify Gemma processes it
 
 ### 4. Share
 ```bash
@@ -166,8 +162,8 @@ docker save oneshot:gemma-latest -o oneshot-gemma.tar
 
 ## Key Design Decisions
 
-**Gemma 7B chosen because:**
-- ✅ Balanced size (5GB model, runs in 4GB RAM)
+**Gemma 2 (2B default, 9B optional) chosen because:**
+- ✅ Balanced size (1.6GB model, fits the 8GB container cap)
 - ✅ Good quality reasoning
 - ✅ Ollama has native support
 - ✅ Reasonable inference speed
@@ -192,9 +188,9 @@ docker save oneshot:gemma-latest -o oneshot-gemma.tar
 
 ```
 D:\oneshot_e2e\
-├── Dockerfile.gemma                 # Build with Gemma
-├── docker-compose.gemma.yml         # Run with one command
-├── app/env/.env.gemma.example               # Configuration template
+├── docker/Dockerfile.gemma                 # Build with Gemma
+├── docker/docker-compose.gemma.yml         # Run with one command
+├── app/env/.env.example               # Configuration template
 ├── scripts/docker-entrypoint-gemma.sh  # Startup logic
 └── GEMMA_IMAGE_GUIDE.md             # Full user documentation
 ```
@@ -203,8 +199,6 @@ D:\oneshot_e2e\
 
 ## Status
 
-**Ready to build:** YES ✅  
-**Ready to share:** YES ✅  
-**Ready for production:** YES ✅  
-
-**Next action:** Build the image using the command above.
+**Built:** YES ✅ — `oneshot:gemma-latest` rebuilt from the current tree (includes the provider registry refactor)
+**Verified live:** YES ✅ — container healthy, `/api/health` fully green, provider test `{"ok":true}` via Ollama `gemma2:2b`
+**Ready to share:** YES ✅

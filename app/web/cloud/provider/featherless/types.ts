@@ -1,19 +1,22 @@
 import type { StructuredResearchDraft } from "../structured-draft.js";
+import type { ProviderWorkerEvent, WorkerPoolConfig } from "../shared/types.js";
 
 export type FeatherlessResearchDraft = StructuredResearchDraft;
 
-export interface FeatherlessConfig {
+export type FeatherlessWorkerEvent = ProviderWorkerEvent;
+
+export interface FeatherlessConfig extends WorkerPoolConfig {
   model: string;
   baseUrl: string;
-  workerPoolSize: number;
-  timeoutSeconds: number;
   maxTokens: number;
   appUrl?: string;
   testDraftFile?: string;
 }
 
-export interface FeatherlessWorkerEvent {
-  node: string;
-  state: "Running" | "Completed";
-  message?: string;
+export interface FeatherlessHealth {
+  ready: boolean;
+  provider: "featherless";
+  model: string;
+  api_base: string;
+  detail?: string;
 }

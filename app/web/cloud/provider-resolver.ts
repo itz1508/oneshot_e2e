@@ -1,27 +1,18 @@
-import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type {
   ResearchProvider,
   ResearchProviderReadiness,
 } from "./provider.js";
-import { FixtureResearchProvider } from "./provider/fixture-provider.js";
 import { WorkflowRootCauseError } from "../../../backend/core/root-cause-error.js";
-import { GeminiModelProvider } from "./provider/gemini/provider.js";
-import { OpenAIModelProvider } from "./provider/openai/provider.js";
-import { AnthropicModelProvider } from "./provider/anthropic/provider.js";
 import type { ProcessingEventBus } from "../../../backend/runtime/event-bus.js";
 import { ProviderManager } from "./provider-manager.js";
 import { getRuntimePaths } from "../../../backend/runtime/runtime-config.js";
 import { FeatherlessResearchProvider } from "./provider/featherless/provider.js";
-
-function resolveSeedFixture(projectRoot: string): string {
-  const p1 = resolve(projectRoot, "app/fixtures/product/complete-success-seed.json");
-  if (existsSync(p1)) return p1;
-  const p2 = resolve(projectRoot, "fixtures/product/complete-success-seed.json");
-  if (existsSync(p2)) return p2;
-  return p1;
-}
+import {
+  fixtureProviderFor,
+  PROVIDER_ADAPTERS,
+} from "./provider/shared/registry.js";
 
 class MissingProductionResearchProvider implements ResearchProvider {
   async ready(_runId: string): Promise<ResearchProviderReadiness> {
@@ -50,6 +41,15 @@ class MissingProductionResearchProvider implements ResearchProvider {
   }
 }
 
+/** Attach the event bus when the resolved provider supports it. */
+function withEvents(
+  provider: ResearchProvider,
+  events?: ProcessingEventBus,
+): ResearchProvider {
+  if (events) provider.attachEvents?.(events);
+  return provider;
+}
+
 /** Resolve the provider requested by the Researcher Agent activation pipeline. */
 export async function resolveResearchProvider(
   projectRoot: string,
@@ -58,9 +58,7 @@ export async function resolveResearchProvider(
   const mode = (process.env.ONESHOT_MODE || "production").toLowerCase();
 
   if (mode === "sample") {
-    return new FixtureResearchProvider(
-      resolveSeedFixture(projectRoot),
-    );
+    return fixtureProviderFor(projectRoot);
   }
 
   if (mode !== "production" && mode !== "test") {
@@ -82,26 +80,12 @@ export async function resolveResearchProvider(
   if (!selected) return new MissingProductionResearchProvider();
 
   if (selected === "featherless" || selected === "featherless_gemma4") {
-    const provider = new FeatherlessResearchProvider(projectRoot);
-    if (events) provider.attachEvents(events);
-    return provider;
-  }
-  if (selected === "gemini" || selected === "google") {
-    const provider = new GeminiModelProvider(projectRoot);
-    if (events) provider.attachEvents(events);
-    return provider;
+    return withEvents(new FeatherlessResearchProvider(projectRoot), events);
   }
 
-  if (selected === "openai") {
-    const provider = new OpenAIModelProvider(projectRoot);
-    if (events) provider.attachEvents(events);
-    return provider;
-  }
-
-  if (selected === "anthropic") {
-    const provider = new AnthropicModelProvider(projectRoot);
-    if (events) provider.attachEvents(events);
-    return provider;
+  const adapter = PROVIDER_ADAPTERS[selected === "google" ? "gemini" : selected];
+  if (adapter) {
+    return withEvents(adapter.createDefault(projectRoot), events);
   }
 
   if (!modulePath) return new MissingProductionResearchProvider();
@@ -124,9 +108,5 @@ export async function resolveResearchProvider(
     );
   }
 
-  if (events && (provider as ResearchProvider).attachEvents) {
-    (provider as ResearchProvider).attachEvents!(events);
-  }
-
-  return provider as ResearchProvider;
+  return withEvents(provider as ResearchProvider, events);
 }

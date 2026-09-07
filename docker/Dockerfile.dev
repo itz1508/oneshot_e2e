@@ -1,7 +1,7 @@
 # Development image for the OneShot TypeScript backend.
 #
 # Usage:
-#   docker compose -f docker-compose.dev.yml up --build -d
+#   docker compose -f docker/docker-compose.dev.yml up --build -d
 #
 # The image installs dependencies and builds the backend once. The compose
 # file then runs two containers from it: the HTTP API server and the BullMQ

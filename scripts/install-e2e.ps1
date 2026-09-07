@@ -47,7 +47,7 @@ if ($Docker) {
     }
 
     Write-Host "[2/4] Building Docker container image (oneshot:local)..." -ForegroundColor Yellow
-    docker build -t oneshot:local .
+    docker build -f docker/Dockerfile -t oneshot:local .
     if ($LASTEXITCODE -ne 0) {
         Fail "Docker build failed."
     }

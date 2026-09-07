@@ -1,20 +1,23 @@
 import type { StructuredResearchDraft } from "../structured-draft.js";
+import type { ProviderWorkerEvent, WorkerPoolConfig } from "../shared/types.js";
 
 export type AnthropicResearchDraft = StructuredResearchDraft;
 
-export interface AnthropicConfig {
+export type AnthropicWorkerEvent = ProviderWorkerEvent;
+
+export interface AnthropicConfig extends WorkerPoolConfig {
   apiKey?: string;
   temperature?: number;
   model: string;
   baseUrl: string;
-  workerPoolSize: number;
-  timeoutSeconds: number;
   maxTokens: number;
   testDraftFile?: string;
 }
 
-export interface AnthropicWorkerEvent {
-  node: string;
-  state: "Running" | "Completed";
-  message?: string;
+export interface AnthropicHealth {
+  ready: boolean;
+  provider: "anthropic";
+  model: string;
+  api_base: string;
+  detail?: string;
 }

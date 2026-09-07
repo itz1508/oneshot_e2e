@@ -1,3 +1,4 @@
+name: oneshot_e2e
 services:
   redis:
     image: redis:7-alpine
@@ -29,8 +30,8 @@ services:
 
   server:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: docker/Dockerfile.dev
     container_name: oneshot-server
     command:
       - node
@@ -53,8 +54,8 @@ services:
 
   worker:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: docker/Dockerfile.dev
     container_name: oneshot-worker
     command:
       - node
@@ -73,7 +74,7 @@ services:
 
   reasoner:
     build:
-      context: .
+      context: ..
       dockerfile: backend/python/Dockerfile
     container_name: oneshot-python-reasoner
     ports:
