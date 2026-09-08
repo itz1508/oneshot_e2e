@@ -1,4 +1,7 @@
-import type { Prompt, ResearchBundle } from "../../../../../backend/contracts/schema/types.js";
+import type {
+  Prompt,
+  ResearchBundle,
+} from "../../../../../backend/contracts/schema/types.js";
 import { WorkflowRootCauseError } from "../../../../../backend/core/root-cause-error.js";
 import type { ProcessingEventBus } from "../../../../../backend/runtime/event-bus.js";
 import type {
@@ -69,7 +72,8 @@ export class WorkerPoolResearchProvider<
   TConfig extends WorkerPoolConfig,
   THealth extends ProviderHealth,
   TDraft extends StructuredResearchDraft = StructuredResearchDraft,
-> implements ResearchProvider {
+> implements ResearchProvider
+{
   private workers: ProviderWorker<TDraft, THealth>[];
   private cursor = 0;
   private events?: ProcessingEventBus;
@@ -87,17 +91,15 @@ export class WorkerPoolResearchProvider<
   ) {
     this.evidence = new ResearchEvidenceCollector(projectRoot);
     const { eventPrefix, normalizeState } = descriptor;
-    this.workers = Array.from(
-      { length: config.workerPoolSize },
-      () =>
-        createWorker(projectRoot, config, (runId, event) =>
-          this.events?.emit(
-            runId,
-            `${eventPrefix}:${event.node}`,
-            normalizeState ? normalizeState(event.state) : event.state,
-            { scope: "SUPPORT", message: event.message },
-          ),
+    this.workers = Array.from({ length: config.workerPoolSize }, () =>
+      createWorker(projectRoot, config, (runId, event) =>
+        this.events?.emit(
+          runId,
+          `${eventPrefix}:${event.node}`,
+          normalizeState ? normalizeState(event.state) : event.state,
+          { scope: "SUPPORT", message: event.message },
         ),
+      ),
     );
   }
 

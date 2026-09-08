@@ -37,7 +37,7 @@ export interface ProviderRuntimeConfigStore {
   touchRevision(): void;
 }
 
-const DEFAULTS: Record<string, Partial<ProviderRuntimeSettings>> = {
+const DEFAULTS: Record<string, ProviderRuntimeSettings> = {
   sample: { enabled: true, model: "fixture" },
   openai: {
     enabled: true,
@@ -67,26 +67,9 @@ function seedConfig(): ProviderRuntimeConfig {
     version: 1,
     activeProvider: "<default>",
     providers: {
-      openai: {
-        enabled: true,
-        model: "gpt-4o-mini",
-        apiBase: "https://api.openai.com/v1",
-        timeoutSeconds: 300,
-        parallelism: 2,
-      },
-      anthropic: {
-        enabled: true,
-        model: "claude-sonnet-4-20250514",
-        apiBase: "https://api.anthropic.com/v1",
-        timeoutSeconds: 300,
-        parallelism: 2,
-      },
-      gemini: {
-        enabled: true,
-        model: "gemini-3.6-flash",
-        timeoutSeconds: 300,
-        parallelism: 2,
-      },
+      openai: { ...DEFAULTS.openai },
+      anthropic: { ...DEFAULTS.anthropic },
+      gemini: { ...DEFAULTS.gemini },
     },
     revision: 0,
   };
@@ -129,9 +112,7 @@ export function assertNoForbiddenFields(
 }
 
 /** Validate the structural shape of a loaded runtime config (no secrets). */
-function validateStructural(
-  raw: unknown,
-): ProviderRuntimeConfig | undefined {
+function validateStructural(raw: unknown): ProviderRuntimeConfig | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const r = raw as Record<string, unknown>;
   if (r.version !== 1) return undefined;
@@ -140,7 +121,9 @@ function validateStructural(
       ? r.activeProvider
       : undefined;
   const providers =
-    r.providers && typeof r.providers === "object" && !Array.isArray(r.providers)
+    r.providers &&
+    typeof r.providers === "object" &&
+    !Array.isArray(r.providers)
       ? (r.providers as Record<string, unknown>)
       : {};
   if (!activeProvider) return undefined;
@@ -164,7 +147,8 @@ function validateStructural(
         typeof o.timeoutSeconds === "number" ? o.timeoutSeconds : undefined,
       parallelism:
         typeof o.parallelism === "number" ? o.parallelism : undefined,
-      temperature: typeof o.temperature === "number" ? o.temperature : undefined,
+      temperature:
+        typeof o.temperature === "number" ? o.temperature : undefined,
     };
     out.providers[id] = entry;
   }
@@ -180,7 +164,7 @@ function validateStructural(
       parallelism: d.parallelism as number | undefined,
     };
   }
-    return out;
+  return out;
 }
 
 export class FileProviderRuntimeConfigStore
@@ -217,9 +201,7 @@ export class FileProviderRuntimeConfigStore
     const dir = dirname(this.path);
     mkdirSync(dir, { recursive: true });
     // Defensive: strip any credential-shaped fields before persistence.
-    const cleaned = JSON.parse(
-      JSON.stringify(config),
-    ) as ProviderRuntimeConfig;
+    const cleaned = JSON.parse(JSON.stringify(config)) as ProviderRuntimeConfig;
     for (const v of Object.values(cleaned.providers)) {
       const o = v as unknown as Record<string, unknown>;
       stripForbidden(o);

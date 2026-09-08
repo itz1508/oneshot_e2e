@@ -56,7 +56,8 @@ const CATALOG: Record<
   GapAnalysis: {
     authority: GapAnalysisAgent.id,
     owns: GapAnalysisAgent.owns,
-    responsibility: "identify/correct remaining plan gaps through ADK LoopAgent",
+    responsibility:
+      "identify/correct remaining plan gaps through ADK LoopAgent",
     skill: "gap-analysis",
     tool: "coverage",
     capability: "Google ADK LoopAgent",
@@ -125,7 +126,8 @@ const CATALOG: Record<
   Builder: {
     authority: BuilderAgent.id,
     owns: BuilderAgent.owns,
-    responsibility: "execute the exact confirmed package through the governed sandbox",
+    responsibility:
+      "execute the exact confirmed package through the governed sandbox",
     skill: "sandbox-runtime",
     tool: "execute_sandbox",
     input: "confirmed_package + HASH + execution_authorization",
@@ -133,7 +135,8 @@ const CATALOG: Record<
   },
   Hash: {
     authority: "CanonicalWorkflow",
-    responsibility: "compare confirmation H1 with sandbox-side confirmed-core H2",
+    responsibility:
+      "compare confirmation H1 with sandbox-side confirmed-core H2",
     skill: "canonical-contracts",
     tool: "verify_hash",
     input: "HASH + hash_sandbox",
@@ -210,7 +213,8 @@ const CATALOG: Record<
   },
   "ExternalSandbox:runner": {
     authority: "SandboxWorker",
-    responsibility: "isolated execution within hardened container/process boundary",
+    responsibility:
+      "isolated execution within hardened container/process boundary",
     skill: "sandbox-runtime",
     tool: "execute_sandbox",
     input: "plan + execution_authorization",

@@ -1,10 +1,5 @@
-import type {
-  StageOutcome,
-} from "./stage-outcome.js";
-import type {
-  PipelineCheckpoints,
-  StageIdentity,
-} from "./checkpoints.js";
+import type { StageOutcome } from "./stage-outcome.js";
+import type { PipelineCheckpoints, StageIdentity } from "./checkpoints.js";
 
 export interface RunStageResult<T> {
   skipped: boolean;
@@ -31,35 +26,22 @@ export interface StageHistoryEvent {
  * Minimal history surface runStage needs. PipelineHistory satisfies this.
  */
 export interface StageHistoryLogger {
-  append(
-    event: StageHistoryEvent,
-  ): Promise<unknown>;
+  append(event: StageHistoryEvent): Promise<unknown>;
 }
 
 /**
  * Token-based execution lock. PipelineIdempotency satisfies this.
  */
 export interface StageExecutionLock {
-  acquire(
-    runId: string,
-    stage: string,
-  ): Promise<string | null>;
+  acquire(runId: string, stage: string): Promise<string | null>;
 
-  release(
-    runId: string,
-    stage: string,
-    token: string,
-  ): Promise<boolean>;
+  release(runId: string, stage: string, token: string): Promise<boolean>;
   renew(runId: string, stage: string, token: string): Promise<boolean>;
   lockKey(runId: string, stage: string): string;
 }
 
 export interface StageFaultInjector {
-  apply(
-    runId: string,
-    stage: string,
-    iteration: number,
-  ): Promise<void>;
+  apply(runId: string, stage: string, iteration: number): Promise<void>;
 
   /**
    * Optional post-checkpoint crash hook (fault injection only). Fires after
@@ -125,56 +107,41 @@ export async function runStage<T>(
 
   const { runId, stage, iteration } = identity;
 
-  const jobId =
-    job?.id === undefined
-      ? undefined
-      : String(job.id);
+  const jobId = job?.id === undefined ? undefined : String(job.id);
 
-  const attempt =
-    (job?.attemptsMade ?? 0) + 1;
+  const attempt = (job?.attemptsMade ?? 0) + 1;
 
-  const loadPersistedOutcome =
-    async (): Promise<
-      RunStageResult<T> | null
-    > => {
-      if (
-        !(await checkpoints.isExecuted(
-          identity,
-        ))
-      ) {
-        return null;
-      }
+  const loadPersistedOutcome = async (): Promise<RunStageResult<T> | null> => {
+    if (!(await checkpoints.isExecuted(identity))) {
+      return null;
+    }
 
-      const outcome =
-        await checkpoints.loadOutcome<T>(
-          identity,
-        );
+    const outcome = await checkpoints.loadOutcome<T>(identity);
 
-      if (!outcome) {
-        throw new Error(
-          `Stage ${stage} is marked executed but has no persisted outcome.`,
-        );
-      }
+    if (!outcome) {
+      throw new Error(
+        `Stage ${stage} is marked executed but has no persisted outcome.`,
+      );
+    }
 
-      await history.append({
-        runId,
-        stage,
-        type: "skipped",
-        iteration,
-        message:
-          "Stage already executed; persisted outcome loaded; agent not rerun.",
-        jobId,
-        attempt,
-      });
+    await history.append({
+      runId,
+      stage,
+      type: "skipped",
+      iteration,
+      message:
+        "Stage already executed; persisted outcome loaded; agent not rerun.",
+      jobId,
+      attempt,
+    });
 
-      return {
-        skipped: true,
-        outcome,
-      };
+    return {
+      skipped: true,
+      outcome,
     };
+  };
 
-  const recovered =
-    await loadPersistedOutcome();
+  const recovered = await loadPersistedOutcome();
 
   if (recovered) {
     return recovered;
@@ -186,10 +153,7 @@ export async function runStage<T>(
   let leaseLost = false;
 
   if (lock) {
-    lockToken = await lock.acquire(
-      runId,
-      leaseStage,
-    );
+    lockToken = await lock.acquire(runId, leaseStage);
 
     if (!lockToken) {
       /*
@@ -197,8 +161,7 @@ export async function runStage<T>(
        * the execution already, so look for the durable outcome before
        * treating this as an error.
        */
-      const raced =
-        await loadPersistedOutcome();
+      const raced = await loadPersistedOutcome();
 
       if (raced) {
         return raced;
@@ -209,9 +172,14 @@ export async function runStage<T>(
       );
     }
     renewalTimer = setInterval(() => {
-      void lock.renew(runId, leaseStage, lockToken as string).then((owned) => {
-        if (!owned) leaseLost = true;
-      }).catch(() => { leaseLost = true; });
+      void lock
+        .renew(runId, leaseStage, lockToken as string)
+        .then((owned) => {
+          if (!owned) leaseLost = true;
+        })
+        .catch(() => {
+          leaseLost = true;
+        });
     }, 20_000);
   }
 
@@ -230,7 +198,8 @@ export async function runStage<T>(
     }
 
     const outcome = await execute();
-    if (leaseLost) throw new Error(`Lease ownership lost while executing ${stage}`);
+    if (leaseLost)
+      throw new Error(`Lease ownership lost while executing ${stage}`);
 
     /*
      * IMPORTANT:
@@ -241,7 +210,9 @@ export async function runStage<T>(
     await checkpoints.saveExecution(
       identity,
       outcome,
-      lock && lockToken ? { key: lock.lockKey(runId, leaseStage), token: lockToken } : undefined,
+      lock && lockToken
+        ? { key: lock.lockKey(runId, leaseStage), token: lockToken }
+        : undefined,
     );
 
     if (markCompleted) {
@@ -264,11 +235,7 @@ export async function runStage<T>(
      * load the persisted outcome, never rerun the agent.
      */
     if (faults?.applyAfterCheckpoint) {
-      await faults.applyAfterCheckpoint(
-        runId,
-        stage,
-        iteration,
-      );
+      await faults.applyAfterCheckpoint(runId, stage, iteration);
     }
 
     return {
@@ -281,10 +248,7 @@ export async function runStage<T>(
       stage,
       type: "failed",
       iteration,
-      message:
-        error instanceof Error
-          ? error.message
-          : String(error),
+      message: error instanceof Error ? error.message : String(error),
       jobId,
       attempt,
     });
@@ -297,11 +261,7 @@ export async function runStage<T>(
      */
     if (lock && lockToken) {
       if (renewalTimer) clearInterval(renewalTimer);
-      await lock.release(
-        runId,
-        leaseStage,
-        lockToken,
-      );
+      await lock.release(runId, leaseStage, lockToken);
     }
   }
 }

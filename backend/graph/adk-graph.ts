@@ -46,7 +46,12 @@ const workflowDefs: NodeDefinition[] = [
     kind: "workflow",
     processor: "Done",
   },
-  { id: "Researcher", label: "Researcher", kind: "stage", processor: "Researcher" },
+  {
+    id: "Researcher",
+    label: "Researcher",
+    kind: "stage",
+    processor: "Researcher",
+  },
   { id: "Planner", label: "Planner", kind: "stage", processor: "Planner" },
   { id: "Refactor", label: "Refactor", kind: "stage", processor: "Refactor" },
   {
@@ -55,10 +60,30 @@ const workflowDefs: NodeDefinition[] = [
     kind: "workflow",
     processor: "GapAnalysis",
   },
-  { id: "GapAnalysisCheck", label: "Gap Check", kind: "stage", inherit: "GapAnalysis" },
-  { id: "GapAnalysisFix", label: "Gap Improve", kind: "stage", inherit: "GapAnalysis" },
-  { id: "GapAnalysisFinalize", label: "Gap Finalize", kind: "gate", inherit: "GapAnalysis" },
-  { id: "Evaluation", label: "Evaluation", kind: "stage", processor: "Evaluation" },
+  {
+    id: "GapAnalysisCheck",
+    label: "Gap Check",
+    kind: "stage",
+    inherit: "GapAnalysis",
+  },
+  {
+    id: "GapAnalysisFix",
+    label: "Gap Improve",
+    kind: "stage",
+    inherit: "GapAnalysis",
+  },
+  {
+    id: "GapAnalysisFinalize",
+    label: "Gap Finalize",
+    kind: "gate",
+    inherit: "GapAnalysis",
+  },
+  {
+    id: "Evaluation",
+    label: "Evaluation",
+    kind: "stage",
+    processor: "Evaluation",
+  },
   {
     id: "TripleValidation",
     label: "Triple Validation / dynamic parallel fan-out",
@@ -84,8 +109,18 @@ const workflowDefs: NodeDefinition[] = [
     processor: "GoalValidation",
   },
   { id: "Confirmed", label: "Confirmed", kind: "gate", processor: "Confirmed" },
-  { id: "CreateHash", label: "Create H1", kind: "stage", processor: "CreateHash" },
-  { id: "Builder", label: "Builder / Sandbox Execution", kind: "stage", processor: "Builder" },
+  {
+    id: "CreateHash",
+    label: "Create H1",
+    kind: "stage",
+    processor: "CreateHash",
+  },
+  {
+    id: "Builder",
+    label: "Builder / Sandbox Execution",
+    kind: "stage",
+    processor: "Builder",
+  },
   { id: "Hash", label: "H1 = Sandbox H2", kind: "gate", processor: "Hash" },
   { id: "Done", label: "Done", kind: "gate", processor: "Done" },
 ];
@@ -97,12 +132,42 @@ const providerDefs: NodeDefinition[] = [
     kind: "boundary",
     processor: "ProviderBinding:Researcher",
   },
-  { id: "Provider:cache", label: "Research Draft Cache", kind: "cache", processor: "ADK:cache" },
-  { id: "Provider:runner", label: "Google ADK Researcher Pipeline", kind: "agent", processor: "ADK:researcher-pipeline" },
-  { id: "Provider:distribution", label: "Distribution Model", kind: "model", processor: "ADK:distribution-model" },
-  { id: "Provider:research", label: "Research Model", kind: "model", processor: "ADK:research-model" },
-  { id: "Provider:synthesis", label: "Synthesis Model", kind: "model", processor: "ADK:synthesis-model" },
-  { id: "Provider:research-draft", label: "Structured Research Draft", kind: "artifact", processor: "ADK:research-draft" },
+  {
+    id: "Provider:cache",
+    label: "Research Draft Cache",
+    kind: "cache",
+    processor: "ADK:cache",
+  },
+  {
+    id: "Provider:runner",
+    label: "Google ADK Researcher Pipeline",
+    kind: "agent",
+    processor: "ADK:researcher-pipeline",
+  },
+  {
+    id: "Provider:distribution",
+    label: "Distribution Model",
+    kind: "model",
+    processor: "ADK:distribution-model",
+  },
+  {
+    id: "Provider:research",
+    label: "Research Model",
+    kind: "model",
+    processor: "ADK:research-model",
+  },
+  {
+    id: "Provider:synthesis",
+    label: "Synthesis Model",
+    kind: "model",
+    processor: "ADK:synthesis-model",
+  },
+  {
+    id: "Provider:research-draft",
+    label: "Structured Research Draft",
+    kind: "artifact",
+    processor: "ADK:research-draft",
+  },
 ];
 
 export const ADK_GRAPH_EDGES: AdkGraphEdge[] = [
@@ -113,26 +178,66 @@ export const ADK_GRAPH_EDGES: AdkGraphEdge[] = [
   { from: "Refactor", to: "GapAnalysis" },
   { from: "GapAnalysis", to: "GapAnalysisCheck", condition: "ctx.runNode" },
   { from: "GapAnalysisCheck", to: "GapAnalysisFix", condition: "gap found" },
-  { from: "GapAnalysisFix", to: "GapAnalysisCheck", condition: "fresh recheck" },
+  {
+    from: "GapAnalysisFix",
+    to: "GapAnalysisCheck",
+    condition: "fresh recheck",
+  },
   { from: "GapAnalysisCheck", to: "GapAnalysisFinalize", condition: "gap_0" },
   { from: "GapAnalysisFinalize", to: "Evaluation" },
   { from: "Evaluation", to: "TripleValidation", condition: "Passed" },
-  { from: "TripleValidation", to: "SchemaValidation", condition: "parallel ctx.runNode" },
-  { from: "TripleValidation", to: "FixtureValidation", condition: "parallel ctx.runNode" },
-  { from: "TripleValidation", to: "GoalValidation", condition: "parallel ctx.runNode" },
-  { from: "SchemaValidation", to: "Confirmed", condition: "VALID with all lanes" },
-  { from: "FixtureValidation", to: "Confirmed", condition: "VALID with all lanes" },
-  { from: "GoalValidation", to: "Confirmed", condition: "VALID with all lanes" },
-  { from: "TripleValidation", to: "GapAnalysis", condition: "NOT_VALID feedback" },
+  {
+    from: "TripleValidation",
+    to: "SchemaValidation",
+    condition: "parallel ctx.runNode",
+  },
+  {
+    from: "TripleValidation",
+    to: "FixtureValidation",
+    condition: "parallel ctx.runNode",
+  },
+  {
+    from: "TripleValidation",
+    to: "GoalValidation",
+    condition: "parallel ctx.runNode",
+  },
+  {
+    from: "SchemaValidation",
+    to: "Confirmed",
+    condition: "VALID with all lanes",
+  },
+  {
+    from: "FixtureValidation",
+    to: "Confirmed",
+    condition: "VALID with all lanes",
+  },
+  {
+    from: "GoalValidation",
+    to: "Confirmed",
+    condition: "VALID with all lanes",
+  },
+  {
+    from: "TripleValidation",
+    to: "GapAnalysis",
+    condition: "NOT_VALID feedback",
+  },
   { from: "Confirmed", to: "CreateHash" },
   { from: "CreateHash", to: "Builder" },
   { from: "Builder", to: "Hash" },
   { from: "Hash", to: "Done", condition: "MATCH" },
 
   // Researcher provider/model subgraph attached beneath the real Researcher node.
-  { from: "Researcher", to: "Provider:researcher", condition: "provider binding" },
+  {
+    from: "Researcher",
+    to: "Provider:researcher",
+    condition: "provider binding",
+  },
   { from: "Provider:researcher", to: "Provider:cache" },
-  { from: "Provider:cache", to: "Provider:research-draft", condition: "cache hit" },
+  {
+    from: "Provider:cache",
+    to: "Provider:research-draft",
+    condition: "cache hit",
+  },
   { from: "Provider:cache", to: "Provider:runner", condition: "cache miss" },
   { from: "Provider:runner", to: "Provider:distribution" },
   { from: "Provider:distribution", to: "Provider:research" },
@@ -142,9 +247,16 @@ export const ADK_GRAPH_EDGES: AdkGraphEdge[] = [
 
 function rootState(latest: Map<string, ProcessingEvent>): GraphNodeState {
   if (latest.get("Done")?.execution_status === "Completed") return "Completed";
-  if ([...latest.values()].some((event) => event.execution_status === "Failed")) return "Failed";
-  if ([...latest.values()].some((event) => event.execution_status === "Running")) return "Running";
-  if ([...latest.values()].some((event) => event.execution_status === "Completed")) return "Running";
+  if ([...latest.values()].some((event) => event.execution_status === "Failed"))
+    return "Failed";
+  if (
+    [...latest.values()].some((event) => event.execution_status === "Running")
+  )
+    return "Running";
+  if (
+    [...latest.values()].some((event) => event.execution_status === "Completed")
+  )
+    return "Running";
   return "Pending";
 }
 
@@ -159,7 +271,10 @@ export function projectAdkGraph(events: ProcessingEvent[] = []) {
 
   const defs = [...workflowDefs, ...providerDefs];
   const nodes = defs.map((definition) => {
-    if (definition.id === "OneShotWorkflow" || definition.id === "OneShotPipeline") {
+    if (
+      definition.id === "OneShotWorkflow" ||
+      definition.id === "OneShotPipeline"
+    ) {
       return {
         id: definition.id,
         label: definition.label,

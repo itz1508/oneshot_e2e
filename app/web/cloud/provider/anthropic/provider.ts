@@ -1,8 +1,8 @@
-import type { Prompt, ResearchBundle } from "../../../../../backend/contracts/schema/types.js";
-import {
-  positiveInt,
-  resolveTestDraftFile,
-} from "../shared/env.js";
+import type {
+  Prompt,
+  ResearchBundle,
+} from "../../../../../backend/contracts/schema/types.js";
+import { positiveInt, resolveTestDraftFile } from "../shared/env.js";
 import {
   WorkerPoolResearchProvider,
   type ProviderDescriptor,
@@ -13,8 +13,7 @@ import { AnthropicWorker } from "./worker-bridge.js";
 export function loadAnthropicConfig(projectRoot: string): AnthropicConfig {
   return {
     model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
-    baseUrl:
-      process.env.ANTHROPIC_API_BASE || "https://api.anthropic.com/v1",
+    baseUrl: process.env.ANTHROPIC_API_BASE || "https://api.anthropic.com/v1",
     workerPoolSize: positiveInt(process.env.ANTHROPIC_NUM_PARALLEL, 2),
     timeoutSeconds: positiveInt(process.env.ANTHROPIC_TIMEOUT_SECONDS, 300),
     maxTokens: positiveInt(process.env.ANTHROPIC_MAX_TOKENS, 4096),
@@ -25,7 +24,10 @@ export function loadAnthropicConfig(projectRoot: string): AnthropicConfig {
   };
 }
 
-const anthropicDescriptor: ProviderDescriptor<AnthropicConfig, AnthropicHealth> = {
+const anthropicDescriptor: ProviderDescriptor<
+  AnthropicConfig,
+  AnthropicHealth
+> = {
   provider: "anthropic",
   label: "Anthropic",
   eventPrefix: "Provider:anthropic",

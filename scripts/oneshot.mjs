@@ -34,16 +34,7 @@ const skipBrowser =
 let runtimeChild = null;
 let shuttingDown = false;
 
-const C = {
-  reset: "\x1b[0m",
-  bold: "\x1b[1m",
-  dim: "\x1b[2m",
-  cyan: "\x1b[36m",
-  green: "\x1b[32m",
-  yellow: "\x1b[33m",
-  red: "\x1b[31m",
-  magenta: "\x1b[35m",
-};
+import { colors as C } from "./lib/terminal-colors.mjs";
 
 function header(title) {
   console.log(
@@ -184,11 +175,9 @@ function ensurePythonProfile(python, profile, requirementsFile) {
   }
 
   info(`Installing pinned Python dependency profile '${profile}'...`);
-  run(
-    python,
-    ["-m", "pip", "install", "--requirement", requirementsFile],
-    { label: `Failed to install ${requirementsFile}` },
-  );
+  run(python, ["-m", "pip", "install", "--requirement", requirementsFile], {
+    label: `Failed to install ${requirementsFile}`,
+  });
   const verified = verifyProfile(python, profile);
   if (verified.status !== 0) {
     fail(
@@ -285,9 +274,7 @@ pass(
 );
 
 const mode = (process.env.ONESHOT_MODE || "sample").toLowerCase();
-const providerKey = (
-  process.env.ONESHOT_RESEARCH_PROVIDER || ""
-).toLowerCase();
+const providerKey = (process.env.ONESHOT_RESEARCH_PROVIDER || "").toLowerCase();
 const profiles = [
   ["base", "app/requirements/base.txt"],
   ["workspace", "app/requirements/workspace-api.txt"],
@@ -303,12 +290,7 @@ header("3. Node dependency installation");
 
 ensureNodeDependencies(
   [],
-  join(
-    ROOT,
-    "node_modules",
-    ".bin",
-    isWindows ? "tsc.cmd" : "tsc",
-  ),
+  join(ROOT, "node_modules", ".bin", isWindows ? "tsc.cmd" : "tsc"),
   "root",
   true,
 );
@@ -350,7 +332,10 @@ if (contracts.status !== 0) {
 try {
   const result = JSON.parse(contracts.stdout.trim());
   if (result.valid !== true) {
-    fail("Canonical contract verification returned NOT_VALID", contracts.stdout);
+    fail(
+      "Canonical contract verification returned NOT_VALID",
+      contracts.stdout,
+    );
   }
 } catch (error) {
   fail("Canonical contract verifier returned invalid output", error);
@@ -399,8 +384,10 @@ if (skipTests) {
 header("7. Runtime service startup");
 
 const port = process.env.PORT || "8787";
-const bindHost = (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
-const probeHost = bindHost === "0.0.0.0" ? "127.0.0.1" : bindHost === "::" ? "::1" : bindHost;
+const bindHost =
+  (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
+const probeHost =
+  bindHost === "0.0.0.0" ? "127.0.0.1" : bindHost === "::" ? "::1" : bindHost;
 const apiToken = (process.env.ONESHOT_API_TOKEN || "").trim();
 const providerDisplay =
   mode === "sample" ? "deterministic sample provider" : providerKey;
@@ -523,7 +510,11 @@ ${C.dim}Press Ctrl+C to stop the services.${C.reset}
 
 if (!skipBrowser) {
   info("Opening OneShot in your default browser...");
-  const opener = isWindows ? "start" : process.platform === "darwin" ? "open" : "xdg-open";
+  const opener = isWindows
+    ? "start"
+    : process.platform === "darwin"
+      ? "open"
+      : "xdg-open";
   spawn(opener, [`http://localhost:${port}`], {
     shell: true,
     detached: true,

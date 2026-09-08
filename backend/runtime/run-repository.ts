@@ -150,8 +150,14 @@ export class RunRepository {
         if (name.endsWith(".json")) ids.add(name.slice(0, -5));
       }
     }
-    return [...ids].map(id => this.get(id)).filter((run): run is RunSnapshot => Boolean(run))
-      .sort((a, b) => (b.events.at(-1)?.created_at ?? "").localeCompare(a.events.at(-1)?.created_at ?? ""));
+    return [...ids]
+      .map((id) => this.get(id))
+      .filter((run): run is RunSnapshot => Boolean(run))
+      .sort((a, b) =>
+        (b.events.at(-1)?.created_at ?? "").localeCompare(
+          a.events.at(-1)?.created_at ?? "",
+        ),
+      );
   }
 
   event(runId: string, event: ProcessingEvent): void {

@@ -26,13 +26,17 @@ export interface GapAnalysisNodeOutput {
 
 function assertJobId(jobId: string): void {
   if (!/[A-Za-z]/.test(jobId)) {
-    throw new Error("ADK job_id must contain at least one non-numeric character");
+    throw new Error(
+      "ADK job_id must contain at least one non-numeric character",
+    );
   }
 }
 
 function refsFor(plan: Plan, finding: GapFinding): string[] | undefined {
   const step = finding.target_step_id
-    ? plan.steps.find((candidate) => candidate.step_id === finding.target_step_id)
+    ? plan.steps.find(
+        (candidate) => candidate.step_id === finding.target_step_id,
+      )
     : undefined;
   if (!step) return undefined;
   if (finding.affected_branch === "requirement") return step.requirement_refs;
@@ -55,8 +59,14 @@ function assertNoRegression(before: Plan, after: Plan): void {
   const afterSteps = new Map(after.steps.map((step) => [step.step_id, step]));
   for (const previous of before.steps) {
     const current = afterSteps.get(previous.step_id);
-    if (!current) throw new Error(`Gap improvement removed step ${previous.step_id}`);
-    for (const field of ["requirement_refs", "goal_refs", "fixture_refs", "schema_refs"] as const) {
+    if (!current)
+      throw new Error(`Gap improvement removed step ${previous.step_id}`);
+    for (const field of [
+      "requirement_refs",
+      "goal_refs",
+      "fixture_refs",
+      "schema_refs",
+    ] as const) {
       const currentRefs = new Set(current[field]);
       for (const ref of previous[field]) {
         if (!currentRefs.has(ref)) {
@@ -67,7 +77,10 @@ function assertNoRegression(before: Plan, after: Plan): void {
   }
 }
 
-function mergeFindings(seed: GapFinding[], detected: GapFinding[]): GapFinding[] {
+function mergeFindings(
+  seed: GapFinding[],
+  detected: GapFinding[],
+): GapFinding[] {
   const merged = new Map<string, GapFinding>();
   for (const finding of [...seed, ...detected]) {
     if (!merged.has(finding.key)) merged.set(finding.key, finding);
@@ -78,8 +91,10 @@ function mergeFindings(seed: GapFinding[], detected: GapFinding[]): GapFinding[]
 /** Connect the existing OneShot GapAnalysisWorkflow to ADK dynamic nodes. */
 export function createGapAnalysisNode(gapper: GapAnalysisWorkflow) {
   const checkNode = node(
-    (_ctx: NodeContext, input: { research: ResearchBundle; plan: Plan }): GapFinding[] =>
-      gapper.inspect(input.research, input.plan),
+    (
+      _ctx: NodeContext,
+      input: { research: ResearchBundle; plan: Plan },
+    ): GapFinding[] => gapper.inspect(input.research, input.plan),
     { name: `${GapAnalysisAgent.id}Check` },
   );
 
@@ -87,24 +102,35 @@ export function createGapAnalysisNode(gapper: GapAnalysisWorkflow) {
     (
       _ctx: NodeContext,
       input: { research: ResearchBundle; plan: Plan; finding: GapFinding },
-    ): GapFixResult => gapper.resolveOne(input.research, input.plan, input.finding),
+    ): GapFixResult =>
+      gapper.resolveOne(input.research, input.plan, input.finding),
     { name: `${GapAnalysisAgent.id}Fix` },
   );
 
   const finalizeNode = node(
     async (
       _ctx: NodeContext,
-      input: { plan: Plan; resolved: ResolvedGap[]; rootCause?: GapFixResult["rootCause"] },
-    ): Promise<GapAnalysis> => gapper.finalize(input.plan, input.resolved, input.rootCause),
+      input: {
+        plan: Plan;
+        resolved: ResolvedGap[];
+        rootCause?: GapFixResult["rootCause"];
+      },
+    ): Promise<GapAnalysis> =>
+      gapper.finalize(input.plan, input.resolved, input.rootCause),
     { name: `${GapAnalysisAgent.id}Finalize` },
   );
 
   return node(
-    async (ctx: NodeContext, input: GapAnalysisNodeInput): Promise<GapAnalysisNodeOutput> => {
+    async (
+      ctx: NodeContext,
+      input: GapAnalysisNodeInput,
+    ): Promise<GapAnalysisNodeOutput> => {
       assertJobId(input.job_id);
       let plan = input.plan;
       const resolved: ResolvedGap[] = [];
-      let pending = (input.seed_findings ?? []).filter((finding) => !alreadySatisfied(plan, finding));
+      let pending = (input.seed_findings ?? []).filter(
+        (finding) => !alreadySatisfied(plan, finding),
+      );
       let iteration = 0;
 
       for (;;) {
@@ -145,13 +171,17 @@ export function createGapAnalysisNode(gapper: GapAnalysisWorkflow) {
           return { plan, gap: finalized.output as GapAnalysis };
         }
         if (!fix.resolved) {
-          throw new Error(`Gap Analysis produced no improvement for ${finding.key}`);
+          throw new Error(
+            `Gap Analysis produced no improvement for ${finding.key}`,
+          );
         }
         resolved.push(fix.resolved);
         pending = pending.filter((candidate) => candidate.key !== finding.key);
         iteration += 1;
         if (iteration > 256) {
-          throw new Error("Gap Analysis exceeded deterministic refinement bound");
+          throw new Error(
+            "Gap Analysis exceeded deterministic refinement bound",
+          );
         }
       }
     },

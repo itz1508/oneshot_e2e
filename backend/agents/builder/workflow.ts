@@ -24,14 +24,30 @@ export class BuilderWorkflow {
       confirmed_package: confirmedPackage,
       hash,
     });
-    const index = confirmedPackage.core.plan.steps.findIndex(step => step.responsibility === "BuilderOutput");
+    const index = confirmedPackage.core.plan.steps.findIndex(
+      (step) => step.responsibility === "BuilderOutput",
+    );
     const step = confirmedPackage.core.plan.steps[index];
     let output: string | null = null;
-    if (result.result === "Passed" && result.hash_matched && step && result.evidence.exit_codes[index] === 0 && step.description.startsWith(BUILDER_OUTPUT_PREFIX)) {
+    if (
+      result.result === "Passed" &&
+      result.hash_matched &&
+      step &&
+      result.evidence.exit_codes[index] === 0 &&
+      step.description.startsWith(BUILDER_OUTPUT_PREFIX)
+    ) {
       const encoded = step.description.slice(BUILDER_OUTPUT_PREFIX.length);
       const decoded = Buffer.from(encoded, "base64").toString("utf8");
-      if (encoded && Buffer.from(decoded, "utf8").toString("base64") === encoded) output = decoded;
+      if (
+        encoded &&
+        Buffer.from(decoded, "utf8").toString("base64") === encoded
+      )
+        output = decoded;
     }
-    return { ...result, final_output: output, output_step_id: output ? step.step_id : null };
+    return {
+      ...result,
+      final_output: output,
+      output_step_id: output ? step.step_id : null,
+    };
   }
 }

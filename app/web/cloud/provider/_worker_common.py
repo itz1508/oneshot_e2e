@@ -3,6 +3,7 @@
 Workers only surface safe, static failure text to the Node bridge: no
 response or error bodies enter diagnostics.
 """
+
 from __future__ import annotations
 
 import json

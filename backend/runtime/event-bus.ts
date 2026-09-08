@@ -91,8 +91,7 @@ export class ProcessingEventBus {
     this.sequence.set(runId, seq);
 
     // W3C Trace Context — one trace per run, unique span per event
-    const traceId =
-      this.traceIds.get(runId) ?? randomBytes(16).toString("hex");
+    const traceId = this.traceIds.get(runId) ?? randomBytes(16).toString("hex");
     this.traceIds.set(runId, traceId);
     const spanId = randomBytes(8).toString("hex");
 
@@ -102,18 +101,27 @@ export class ProcessingEventBus {
       throw new Error("Passed processing events cannot carry issue fields");
     }
     if (executionStatus === "Failed" && data.test_result) {
-      throw new Error("Failed stage execution cannot claim a completed test result");
+      throw new Error(
+        "Failed stage execution cannot claim a completed test result",
+      );
     }
-    const issueType = data.issue_type ??
-      ((data.test_result === "Failed" || executionStatus === "Failed") ? "Root Cause" : undefined);
-    const issue = data.issue ?? (issueType ? {
-      issue: data.message ?? `${processor} failed`,
-      expected: `${processor} completes successfully`,
-      actual: data.message ?? `${processor} reported ${issueType}`,
-      evidence_ids: [],
-      required_correction: `Correct the ${processor} failure`,
-      recheck_target: processor,
-    } : undefined);
+    const issueType =
+      data.issue_type ??
+      (data.test_result === "Failed" || executionStatus === "Failed"
+        ? "Root Cause"
+        : undefined);
+    const issue =
+      data.issue ??
+      (issueType
+        ? {
+            issue: data.message ?? `${processor} failed`,
+            expected: `${processor} completes successfully`,
+            actual: data.message ?? `${processor} reported ${issueType}`,
+            evidence_ids: [],
+            required_correction: `Correct the ${processor} failure`,
+            recheck_target: processor,
+          }
+        : undefined);
 
     const normalizedStatus: ExecutionStatus = executionStatus;
     const event: ProcessingEvent = {

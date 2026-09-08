@@ -64,17 +64,17 @@ Continue through the full workflow and return the complete final report when fin
 `;
 
 function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function main(): Promise<void> {
-  process.stdout.write(REVIEW_INSTRUCTION.trimStart());
-  process.stdout.write("\n\nContinuing to Prompt 2 in 3 seconds...\n");
-  await wait(3000);
-  process.stdout.write("\n" + START_PROMPT.trimStart());
+    process.stdout.write(REVIEW_INSTRUCTION.trimStart());
+    process.stdout.write("\n\nContinuing to Prompt 2 in 3 seconds...\n");
+    await wait(3000);
+    process.stdout.write("\n" + START_PROMPT.trimStart());
 }
 
 main().catch((error: unknown) => {
-  console.error("Unable to display OneShot review prompts:", error);
-  process.exitCode = 1;
+    console.error("Unable to display OneShot review prompts:", error);
+    process.exitCode = 1;
 });

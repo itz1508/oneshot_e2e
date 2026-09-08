@@ -11,12 +11,7 @@ import { resolve, join } from "node:path";
 
 const ROOT = resolve(import.meta.dirname || ".", "..", "..");
 
-const C = {
-  reset: "\x1b[0m",
-  green: "\x1b[32m",
-  red: "\x1b[31m",
-  cyan: "\x1b[36m",
-};
+import { colors as C } from "../lib/terminal-colors.mjs";
 
 function log(msg) {
   console.log(`${C.cyan}[install]${C.reset} ${msg}`);
@@ -60,12 +55,20 @@ export function installPythonDeps() {
   log("Installing Python dependencies...");
 
   try {
-    execSync("pip install -q -r app/requirements/base.txt", { cwd: ROOT, stdio: "inherit" });
-    execSync("pip install -q -r app/requirements/workspace-api.txt", { cwd: ROOT, stdio: "inherit" });
+    execSync("pip install -q -r app/requirements/base.txt", {
+      cwd: ROOT,
+      stdio: "inherit",
+    });
+    execSync("pip install -q -r app/requirements/workspace-api.txt", {
+      cwd: ROOT,
+      stdio: "inherit",
+    });
     pass("Python dependencies installed");
     return true;
   } catch (err) {
-    console.log(`${C.cyan}[install]${C.reset} Python dependencies skipped (Python may not be available)`);
+    console.log(
+      `${C.cyan}[install]${C.reset} Python dependencies skipped (Python may not be available)`,
+    );
     return false;
   }
 }

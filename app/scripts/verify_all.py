@@ -3,7 +3,6 @@ import os, shutil, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-os.environ["NODE_OPTIONS"] = os.environ.get("NODE_OPTIONS", "--max-old-space-size=2048")
 
 
 def run(cmd):
@@ -23,18 +22,34 @@ def find_python() -> str:
     return sys.executable
 
 
-py = find_python()
+def main() -> None:
+    os.environ["NODE_OPTIONS"] = os.environ.get(
+        "NODE_OPTIONS", "--max-old-space-size=2048"
+    )
+    py = find_python()
 
-if not (ROOT / "node_modules/.bin/tsc").exists() and not (
-    ROOT / "node_modules/typescript/bin/tsc"
-):
-    run(["npm", "ci", "--offline"])
-run([py, "app/scripts/verify_dependencies.py", "--profile", "base"])
-run([py, "-m", "unittest", "discover", "-s", "backend/tests/python", "-v"])
-run([py, "app/workspace_api/scripts/verify.py"])
-run(["npm", "run", "build"])
-compiled = sorted((ROOT / "dist/backend/tests/ts").glob("*.test.js"))
-if not compiled:
-    raise SystemExit("compiled TypeScript tests missing")
-run(["node", "--test", "--test-concurrency=1", "--test-force-exit", *map(str, compiled)])
-print("ONESHOT_PRODUCTION_E2E_VERIFIED")
+    if not (ROOT / "node_modules/.bin/tsc").exists() and not (
+        ROOT / "node_modules/typescript/bin/tsc"
+    ):
+        run(["npm", "ci", "--offline"])
+    run([py, "app/scripts/verify_dependencies.py", "--profile", "base"])
+    run([py, "-m", "unittest", "discover", "-s", "backend/tests/python", "-v"])
+    run([py, "app/workspace_api/scripts/verify.py"])
+    run(["npm", "run", "build"])
+    compiled = sorted((ROOT / "dist/backend/tests/ts").glob("*.test.js"))
+    if not compiled:
+        raise SystemExit("compiled TypeScript tests missing")
+    run(
+        [
+            "node",
+            "--test",
+            "--test-concurrency=1",
+            "--test-force-exit",
+            *map(str, compiled),
+        ]
+    )
+    print("ONESHOT_PRODUCTION_E2E_VERIFIED")
+
+
+if __name__ == "__main__":
+    main()

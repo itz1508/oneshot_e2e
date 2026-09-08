@@ -85,9 +85,7 @@ def _provider_failure(provider: ModelProvider, error: Exception) -> ProviderErro
     )
 
 
-def _client_kwargs(
-    settings: WorkspaceSettings, base_url: str | None
-) -> dict[str, Any]:
+def _client_kwargs(settings: WorkspaceSettings, base_url: str | None) -> dict[str, Any]:
     """Shared SDK client options: timeout, retry budget, and optional base URL."""
 
     kwargs: dict[str, Any] = {
@@ -124,9 +122,7 @@ class OpenAICompatibleClient:
     ) -> ModelResult:
         from openai import AsyncOpenAI
 
-        api_key = credential or (
-            "ollama" if provider.kind.value == "ollama" else None
-        )
+        api_key = credential or ("ollama" if provider.kind.value == "ollama" else None)
         if not api_key:
             raise ProviderError(
                 provider.slug,
@@ -182,10 +178,7 @@ class OpenAICompatibleClient:
                         else {}
                     ),
                     **(
-                        {
-                            "max_tokens": request.max_tokens
-                            or model.max_output_tokens
-                        }
+                        {"max_tokens": request.max_tokens or model.max_output_tokens}
                         if request.max_tokens or model.max_output_tokens
                         else {}
                     ),
@@ -262,11 +255,7 @@ class GeminiClient:
             )
             contents = [
                 types.Content(
-                    role=(
-                        "model"
-                        if message.role == MessageRole.ASSISTANT
-                        else "user"
-                    ),
+                    role=("model" if message.role == MessageRole.ASSISTANT else "user"),
                     parts=[types.Part.from_text(text=message.content)],
                 )
                 for message in request.messages
@@ -279,8 +268,7 @@ class GeminiClient:
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction or None,
                     temperature=request.temperature,
-                    max_output_tokens=request.max_tokens
-                    or model.max_output_tokens,
+                    max_output_tokens=request.max_tokens or model.max_output_tokens,
                 ),
             )
             if not response.text:
@@ -290,12 +278,8 @@ class GeminiClient:
                 content=response.text,
                 provider_request_id=getattr(response, "response_id", None),
                 usage=ModelUsage(
-                    input_tokens=int(
-                        getattr(usage, "prompt_token_count", 0) or 0
-                    ),
-                    output_tokens=int(
-                        getattr(usage, "candidates_token_count", 0) or 0
-                    ),
+                    input_tokens=int(getattr(usage, "prompt_token_count", 0) or 0),
+                    output_tokens=int(getattr(usage, "candidates_token_count", 0) or 0),
                     cached_tokens=int(
                         getattr(usage, "cached_content_token_count", 0) or 0
                     ),
@@ -336,9 +320,7 @@ class AnthropicClient:
         messages = [
             {
                 "role": (
-                    "assistant"
-                    if message.role == MessageRole.ASSISTANT
-                    else "user"
+                    "assistant" if message.role == MessageRole.ASSISTANT else "user"
                 ),
                 "content": message.content,
             }
@@ -363,9 +345,7 @@ class AnthropicClient:
                 response = await client.messages.create(
                     model=model.provider_model_id,
                     messages=messages,
-                    max_tokens=request.max_tokens
-                    or model.max_output_tokens
-                    or 4096,
+                    max_tokens=request.max_tokens or model.max_output_tokens or 4096,
                     **({"system": system} if system else {}),
                     **optional,
                 )

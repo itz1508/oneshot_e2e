@@ -81,8 +81,7 @@ export function createGapAnalysisAgent(
       const introducedNewGap = [...afterKeys].some(
         (key) => !beforeKeys.has(key),
       );
-      const progressed =
-        afterKeys.size < beforeKeys.size && !introducedNewGap;
+      const progressed = afterKeys.size < beforeKeys.size && !introducedNewGap;
 
       if (!progressed) {
         return {
@@ -95,9 +94,9 @@ export function createGapAnalysisAgent(
               actual: `before=${[...beforeKeys].join(",")}; after=${[
                 ...afterKeys,
               ].join(",")}`,
-              evidence_ids: state.bundle(ctx).researcher.evidence.map(
-                (e) => e.evidence_id,
-              ),
+              evidence_ids: state
+                .bundle(ctx)
+                .researcher.evidence.map((e) => e.evidence_id),
               required_correction:
                 "Correct the deterministic gap target or fix rule",
               recheck_target: fixed.plan.plan_id,

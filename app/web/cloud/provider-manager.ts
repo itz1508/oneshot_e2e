@@ -119,7 +119,8 @@ export class ProviderManager {
   constructor(options: ProviderManagerOptions) {
     this.options = options;
     const mode = options.mode ?? process.env.ONESHOT_MODE ?? "production";
-    if (!["production", "sample", "test"].includes(mode)) throw new Error("Invalid runtime mode");
+    if (!["production", "sample", "test"].includes(mode))
+      throw new Error("Invalid runtime mode");
     this.mode = mode as typeof this.mode;
     this.runtimePaths = options.runtimePaths;
     this.secretStore = options.secretStore ?? new LocalFileSecretStore();
@@ -134,15 +135,20 @@ export class ProviderManager {
     const active = this.runtimeState.activeProvider;
     this.runtimeState.activeProvider = defaultProviderIdFor(active);
     if (!this.catalog.providers[this.runtimeState.activeProvider]) {
-      this.runtimeState.activeProvider = this.mode === "sample" ? "sample" : "<default>";
+      this.runtimeState.activeProvider =
+        this.mode === "sample" ? "sample" : "<default>";
     }
     if (this.mode === "sample") {
       this.runtimeState.activeProvider = "sample";
       this.runtimeState.providers.sample = { enabled: true, model: "fixture" };
     }
-    this.runtimeState.providers = Object.fromEntries(Object.entries(this.runtimeState.providers)
-      .filter(([id]) => Boolean(this.catalog.providers[id])));
-    if (active !== this.runtimeState.activeProvider) this.bumpRevisionAndPersist();
+    this.runtimeState.providers = Object.fromEntries(
+      Object.entries(this.runtimeState.providers).filter(([id]) =>
+        Boolean(this.catalog.providers[id]),
+      ),
+    );
+    if (active !== this.runtimeState.activeProvider)
+      this.bumpRevisionAndPersist();
   }
 
   private defaultRuntimeConfigStore(): ProviderRuntimeConfigStore | undefined {
@@ -196,12 +202,16 @@ export class ProviderManager {
     const providers = raw?.providers ?? {};
     for (const [id, def] of Object.entries(providers)) {
       if (!def || typeof def !== "object" || !id) continue;
-      if (!["openai", "anthropic", "gemini"].includes(id) &&
-          !(id === "sample" && this.mode !== "production")) continue;
+      if (
+        !["openai", "anthropic", "gemini"].includes(id) &&
+        !(id === "sample" && this.mode !== "production")
+      )
+        continue;
       const defaults = this.runtimeDefaults(id);
       const adapter = def.type ?? "fixture";
       const credentialType = def.credentialType ?? "none";
-      this.catalogEnv[id] = def.credentialEnv ?? PROVIDER_ADAPTERS[id]?.envVar ?? "";
+      this.catalogEnv[id] =
+        def.credentialEnv ?? PROVIDER_ADAPTERS[id]?.envVar ?? "";
       this.catalog.providers[id] = {
         id,
         providerId: id,
@@ -257,7 +267,8 @@ export class ProviderManager {
         (adapter?.fallbackEnvVar && process.env[adapter.fallbackEnvVar]),
     );
     if (envConfigured) return "env-var";
-    if ((await this.secretStore.get(entry.id))?.value.trim()) return "local-secret-store";
+    if ((await this.secretStore.get(entry.id))?.value.trim())
+      return "local-secret-store";
     return "none";
   }
 
@@ -332,36 +343,74 @@ export class ProviderManager {
     assertNoForbiddenFields(patch);
     const next = structuredClone(this.runtimeState);
     if (patch.activeProvider !== undefined) {
-      if (patch.activeProvider !== "<default>" && !this.catalog.providers[patch.activeProvider])
+      if (
+        patch.activeProvider !== "<default>" &&
+        !this.catalog.providers[patch.activeProvider]
+      )
         throw new Error("Unknown provider");
       next.activeProvider = patch.activeProvider;
     }
     for (const [id, changes] of Object.entries(patch.providers ?? {})) {
       if (!this.catalog.providers[id]) throw new Error("Unknown provider");
-      if (!changes || typeof changes !== "object" || Array.isArray(changes)) throw new Error("Invalid provider settings");
-      const allowed = ["enabled", "model", "apiBase", "timeoutSeconds", "parallelism", "temperature"];
-      if (Object.keys(changes).some(k => !allowed.includes(k))) throw new Error("Unknown provider setting");
+      if (!changes || typeof changes !== "object" || Array.isArray(changes))
+        throw new Error("Invalid provider settings");
+      const allowed = [
+        "enabled",
+        "model",
+        "apiBase",
+        "timeoutSeconds",
+        "parallelism",
+        "temperature",
+      ];
+      if (Object.keys(changes).some((k) => !allowed.includes(k)))
+        throw new Error("Unknown provider setting");
       const settings = { ...this.runtimeSettings(id), ...changes };
-      if (typeof settings.enabled !== "boolean" || typeof settings.model !== "string" ||
-          !/^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}$/.test(settings.model))
+      if (
+        typeof settings.enabled !== "boolean" ||
+        typeof settings.model !== "string" ||
+        !/^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}$/.test(settings.model)
+      )
         throw new Error("Invalid provider model or enabled setting");
       for (const key of ["timeoutSeconds", "parallelism"] as const) {
         const n = settings[key];
-        if (n !== undefined && (!Number.isInteger(n) || n < 1 || n > (key === "parallelism" ? 16 : 900)))
+        if (
+          n !== undefined &&
+          (!Number.isInteger(n) ||
+            n < 1 ||
+            n > (key === "parallelism" ? 16 : 900))
+        )
           throw new Error("Invalid provider limits");
       }
-      if (settings.temperature !== undefined && (!Number.isFinite(settings.temperature) ||
-          settings.temperature < 0 || settings.temperature > (id === "anthropic" ? 1 : 2)))
+      if (
+        settings.temperature !== undefined &&
+        (!Number.isFinite(settings.temperature) ||
+          settings.temperature < 0 ||
+          settings.temperature > (id === "anthropic" ? 1 : 2))
+      )
         throw new Error("Invalid temperature");
       if (settings.apiBase) {
         const url = new URL(settings.apiBase);
-        if (url.username || url.password || url.search || url.hash ||
-            !(url.protocol === "https:" || (url.protocol === "http:" && ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname))))
-          throw new Error("Provider URL must use HTTPS without credentials or query parameters");
+        if (
+          url.username ||
+          url.password ||
+          url.search ||
+          url.hash ||
+          !(
+            url.protocol === "https:" ||
+            (url.protocol === "http:" &&
+              ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname))
+          )
+        )
+          throw new Error(
+            "Provider URL must use HTTPS without credentials or query parameters",
+          );
       }
       next.providers[id] = settings;
     }
-    if (next.activeProvider !== "<default>" && !next.providers[next.activeProvider]?.enabled)
+    if (
+      next.activeProvider !== "<default>" &&
+      !next.providers[next.activeProvider]?.enabled
+    )
       next.activeProvider = "<default>";
     this.runtimeState = next;
     this.bumpRevisionAndPersist();
@@ -397,7 +446,10 @@ export class ProviderManager {
       throw new Error(`Provider ${providerId} not found`);
     }
     const status = await this.buildStatus(providerId);
-    if (!status.enabled || !status.credential.configured) throw new Error("Provider requires an enabled configuration and credential");
+    if (!status.enabled || !status.credential.configured)
+      throw new Error(
+        "Provider requires an enabled configuration and credential",
+      );
     this.saveRuntimeConfigPatch({ activeProvider: providerId });
     return this.buildStatus(providerId);
   }
@@ -413,14 +465,32 @@ export class ProviderManager {
     let provider: ResearchProvider | undefined;
     try {
       const settings = { ...this.runtimeSettings(providerId), ...overrides };
-      if (!/^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}$/.test(settings.model)) throw new Error("Invalid model");
-      provider = await this.constructProvider(providerId, this.options.projectRoot, settings, _transient ?? undefined);
+      if (!/^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}$/.test(settings.model))
+        throw new Error("Invalid model");
+      provider = await this.constructProvider(
+        providerId,
+        this.options.projectRoot,
+        settings,
+        _transient ?? undefined,
+      );
       const status = await provider.ready("connection-test");
-      return { ok: status.ready, provider: this.publicNameFor(providerId),
-        ...(status.ready ? {} : { error: status.detail || "Connection failed" }) };
+      return {
+        ok: status.ready,
+        provider: this.publicNameFor(providerId),
+        ...(status.ready
+          ? {}
+          : { error: status.detail || "Connection failed" }),
+      };
     } catch {
-      return { ok: false, provider: this.publicNameFor(providerId), error: "Provider connection failed; check credential, model, and endpoint" };
-    } finally { provider?.close?.(); }
+      return {
+        ok: false,
+        provider: this.publicNameFor(providerId),
+        error:
+          "Provider connection failed; check credential, model, and endpoint",
+      };
+    } finally {
+      provider?.close?.();
+    }
   }
 
   async setCredential(
@@ -431,12 +501,19 @@ export class ProviderManager {
       throw new Error(`Provider ${providerId} not found`);
     }
     if (credential) {
-      if (credential.providerId !== providerId || credential.credentialType !== "api_key" || !credential.value.trim())
+      if (
+        credential.providerId !== providerId ||
+        credential.credentialType !== "api_key" ||
+        !credential.value.trim()
+      )
         throw new Error("Invalid credential");
       await this.secretStore.set(providerId, credential);
     } else {
       await this.secretStore.delete(providerId);
-      if (this.runtimeState.activeProvider === providerId && !(await this.credentialValue(providerId)))
+      if (
+        this.runtimeState.activeProvider === providerId &&
+        !(await this.credentialValue(providerId))
+      )
         this.runtimeState.activeProvider = "<default>";
     }
     this.bumpRevisionAndPersist();
@@ -457,33 +534,67 @@ export class ProviderManager {
 
   captureForRun() {
     const id = this.resolveActiveProviderId();
-    if (id === "<default>") throw new Error("Configure and activate a provider before starting a run");
+    if (id === "<default>")
+      throw new Error(
+        "Configure and activate a provider before starting a run",
+      );
     const settings = this.runtimeSettings(id);
     if (!settings.enabled) throw new Error("Provider is disabled");
-    return { id, model: settings.model, configRevision: this.runtimeState.revision, settings: structuredClone(settings) };
+    return {
+      id,
+      model: settings.model,
+      configRevision: this.runtimeState.revision,
+      settings: structuredClone(settings),
+    };
   }
 
-  async resolveForRun(providerId?: string, captured?: { model?: string; configRevision?: number; settings?: ProviderRuntimeSettings }): Promise<ResearchProvider> {
+  async resolveForRun(
+    providerId?: string,
+    captured?: {
+      model?: string;
+      configRevision?: number;
+      settings?: ProviderRuntimeSettings;
+    },
+  ): Promise<ResearchProvider> {
     const id = providerId || this.resolveActiveProviderId();
     // Old envelopes lack full settings. Refuse changed revisions rather than silently rebinding.
-    if (captured?.configRevision !== undefined && !captured.settings &&
-        captured.configRevision !== this.runtimeState.revision)
-      throw new Error("Captured provider configuration is unavailable; resubmit the run");
-    return this.constructProvider(id, this.options.projectRoot,
-      captured?.settings ?? (captured?.model ? { ...this.runtimeSettings(id), model: captured.model } : undefined));
+    if (
+      captured?.configRevision !== undefined &&
+      !captured.settings &&
+      captured.configRevision !== this.runtimeState.revision
+    )
+      throw new Error(
+        "Captured provider configuration is unavailable; resubmit the run",
+      );
+    return this.constructProvider(
+      id,
+      this.options.projectRoot,
+      captured?.settings ??
+        (captured?.model
+          ? { ...this.runtimeSettings(id), model: captured.model }
+          : undefined),
+    );
   }
 
   private resolveActiveProviderId(): string {
-    return this.catalog.providers[this.runtimeState.activeProvider] ? this.runtimeState.activeProvider : "<default>";
+    return this.catalog.providers[this.runtimeState.activeProvider]
+      ? this.runtimeState.activeProvider
+      : "<default>";
   }
 
-  private async credentialValue(id: string, transient?: ProviderCredential): Promise<string> {
+  private async credentialValue(
+    id: string,
+    transient?: ProviderCredential,
+  ): Promise<string> {
     if (transient) return transient.value;
     const env = this.catalogEnv[id];
     const fallbackEnv = PROVIDER_ADAPTERS[id]?.fallbackEnvVar;
-    return (env && process.env[env]?.trim()) ||
+    return (
+      (env && process.env[env]?.trim()) ||
       (fallbackEnv && process.env[fallbackEnv]?.trim()) ||
-      (await this.secretStore.get(id))?.value || "";
+      (await this.secretStore.get(id))?.value ||
+      ""
+    );
   }
 
   private async constructProvider(

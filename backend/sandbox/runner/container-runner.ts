@@ -18,7 +18,8 @@ import type { RunnerExecutionResult, SandboxRunner } from "./runner.js";
  */
 export class ContainerSandboxRunner implements SandboxRunner {
   constructor(
-    private image = process.env.ONESHOT_SANDBOX_IMAGE || "oneshot-sandbox-worker:latest",
+    private image = process.env.ONESHOT_SANDBOX_IMAGE ||
+      "oneshot-sandbox-worker:latest",
     private dockerBin = process.env.DOCKER_BIN || "docker",
   ) {}
 
@@ -82,7 +83,11 @@ export class ContainerSandboxRunner implements SandboxRunner {
     }
 
     dockerArgs.push(this.image);
-    dockerArgs.push("sh", "-c", `echo '[Sandbox Container ${sandboxId}] Executing plan ${plan.plan_id}'`);
+    dockerArgs.push(
+      "sh",
+      "-c",
+      `echo '[Sandbox Container ${sandboxId}] Executing plan ${plan.plan_id}'`,
+    );
 
     const stdoutLines: string[] = [];
     const stderrLines: string[] = [];

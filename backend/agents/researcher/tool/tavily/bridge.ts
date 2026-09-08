@@ -88,14 +88,19 @@ export class TavilyPythonRunner implements TavilyRunner {
           .filter(Boolean);
         let envelope: any;
         try {
-          envelope = lines.length ? JSON.parse(lines[lines.length - 1]) : undefined;
+          envelope = lines.length
+            ? JSON.parse(lines[lines.length - 1])
+            : undefined;
         } catch {
           envelope = undefined;
         }
 
         if (code !== 0 || !envelope?.ok) {
-          const detail = envelope?.error || stderr || stdout || `exit code ${code}`;
-          finish(new Error(redactSecret(`Tavily ${request.op} failed: ${detail}`)));
+          const detail =
+            envelope?.error || stderr || stdout || `exit code ${code}`;
+          finish(
+            new Error(redactSecret(`Tavily ${request.op} failed: ${detail}`)),
+          );
           return;
         }
         finish(undefined, envelope.result as T);

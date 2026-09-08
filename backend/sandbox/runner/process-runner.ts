@@ -37,7 +37,11 @@ function terminateProcessTree(child: ChildProcess): void {
   }
 }
 
-async function rmWithRetry(dir: string, retries = 10, delayMs = 50): Promise<boolean> {
+async function rmWithRetry(
+  dir: string,
+  retries = 10,
+  delayMs = 50,
+): Promise<boolean> {
   for (let i = 0; i < retries; i++) {
     try {
       if (existsSync(dir)) {
@@ -103,10 +107,7 @@ export class HardenedProcessRunner implements SandboxRunner {
   private snapshotDir(
     dir: string,
     baseLabel: string,
-  ): Map<
-    string,
-    { size: number; sha256: string }
-  > {
+  ): Map<string, { size: number; sha256: string }> {
     const files = new Map<string, { size: number; sha256: string }>();
 
     const scan = (currentDir: string, label: string) => {
@@ -119,9 +120,7 @@ export class HardenedProcessRunner implements SandboxRunner {
           try {
             const st = statSync(fullPath);
             const buffer = readFileSync(fullPath);
-            const sha256 = createHash("sha256")
-              .update(buffer)
-              .digest("hex");
+            const sha256 = createHash("sha256").update(buffer).digest("hex");
             files.set(`${label}/${entry.name}`, {
               size: st.size,
               sha256,
@@ -158,7 +157,8 @@ export class HardenedProcessRunner implements SandboxRunner {
       }
     }
 
-    const baseline = before ?? new Map<string, { size: number; sha256: string }>();
+    const baseline =
+      before ?? new Map<string, { size: number; sha256: string }>();
     const changes: FileChangeEvidence[] = [];
     let bytesWritten = 0;
 
@@ -280,65 +280,68 @@ export class HardenedProcessRunner implements SandboxRunner {
       }
 
       let child: ChildProcess | undefined;
-      const stepResult = await new Promise<{ exitCode: number; timedOut: boolean }>(
-        (resolvePromise) => {
-          let timer: NodeJS.Timeout | undefined;
-          let settled = false;
+      const stepResult = await new Promise<{
+        exitCode: number;
+        timedOut: boolean;
+      }>((resolvePromise) => {
+        let timer: NodeJS.Timeout | undefined;
+        let settled = false;
 
-          const isWin = process.platform === "win32";
-          const shell = isWin ? (process.env.COMSPEC || "cmd.exe") : "/bin/sh";
-          const shellArgs = isWin ? ["/d", "/s", "/c", task.cmd] : ["-c", task.cmd];
+        const isWin = process.platform === "win32";
+        const shell = isWin ? process.env.COMSPEC || "cmd.exe" : "/bin/sh";
+        const shellArgs = isWin
+          ? ["/d", "/s", "/c", task.cmd]
+          : ["-c", task.cmd];
 
-          try {
-            child = spawn(shell, shellArgs, {
-              cwd: workDir,
-              env,
-              stdio: ["pipe", "pipe", "pipe"],
-              windowsHide: true,
-            });
+        try {
+          child = spawn(shell, shellArgs, {
+            cwd: workDir,
+            env,
+            stdio: ["pipe", "pipe", "pipe"],
+            windowsHide: true,
+          });
 
-            processSet.add(child);
+          processSet.add(child);
 
-            timer = setTimeout(() => {
-              if (settled) return;
-              settled = true;
-              if (child) terminateProcessTree(child);
-              resolvePromise({ exitCode: 124, timedOut: true });
-            }, remainingMs);
+          timer = setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            if (child) terminateProcessTree(child);
+            resolvePromise({ exitCode: 124, timedOut: true });
+          }, remainingMs);
 
-            child.stdout?.on("data", (data: Buffer) => {
-              const text = data.toString("utf8");
-              stdoutLines.push(text);
-              onLog?.("stdout", text);
-            });
+          child.stdout?.on("data", (data: Buffer) => {
+            const text = data.toString("utf8");
+            stdoutLines.push(text);
+            onLog?.("stdout", text);
+          });
 
-            child.stderr?.on("data", (data: Buffer) => {
-              const text = data.toString("utf8");
-              stderrLines.push(text);
-              onLog?.("stderr", text);
-            });
+          child.stderr?.on("data", (data: Buffer) => {
+            const text = data.toString("utf8");
+            stderrLines.push(text);
+            onLog?.("stderr", text);
+          });
 
-            child.on("close", (code) => {
-              if (settled) return;
-              settled = true;
-              if (timer) clearTimeout(timer);
-              resolvePromise({ exitCode: code ?? 0, timedOut: false });
-            });
+          child.on("close", (code) => {
+            if (settled) return;
+            settled = true;
+            if (timer) clearTimeout(timer);
+            resolvePromise({ exitCode: code ?? 0, timedOut: false });
+          });
 
-            child.on("error", (err) => {
-              if (settled) return;
-              settled = true;
-              if (timer) clearTimeout(timer);
-              stderrLines.push(String(err));
-              resolvePromise({ exitCode: 1, timedOut: false });
-            });
-          } catch (err) {
+          child.on("error", (err) => {
+            if (settled) return;
+            settled = true;
             if (timer) clearTimeout(timer);
             stderrLines.push(String(err));
             resolvePromise({ exitCode: 1, timedOut: false });
-          }
-        },
-      );
+          });
+        } catch (err) {
+          if (timer) clearTimeout(timer);
+          stderrLines.push(String(err));
+          resolvePromise({ exitCode: 1, timedOut: false });
+        }
+      });
 
       if (child) processSet.delete(child);
 
@@ -361,10 +364,17 @@ export class HardenedProcessRunner implements SandboxRunner {
     }
 
     const durationMs = Date.now() - startTime;
-    const { changes, bytesWritten } = this.scanWorkspace(workDir, outDir, baseline);
+    const { changes, bytesWritten } = this.scanWorkspace(
+      workDir,
+      outDir,
+      baseline,
+    );
 
     // Limit check
-    if (bytesWritten > auth.max_total_bytes_written || changes.length > auth.max_files_changed) {
+    if (
+      bytesWritten > auth.max_total_bytes_written ||
+      changes.length > auth.max_files_changed
+    ) {
       condition = "resource_exhausted";
     }
 

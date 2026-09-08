@@ -3,9 +3,20 @@ import type { PipelineCheckpoints, StageIdentity } from "./checkpoints.js";
 import type { PipelineIssue, PipelineStage } from "./stage-outcome.js";
 
 export interface TransitionQueue {
-  add(name: string, data: { version: 2; runId: string; stage: PipelineStage; iteration: number }, options: {
-    jobId: string; attempts: number; backoff: { type: "exponential"; delay: number };
-  }): Promise<unknown>;
+  add(
+    name: string,
+    data: {
+      version: 2;
+      runId: string;
+      stage: PipelineStage;
+      iteration: number;
+    },
+    options: {
+      jobId: string;
+      attempts: number;
+      backoff: { type: "exponential"; delay: number };
+    },
+  ): Promise<unknown>;
 }
 
 export interface TransitionServices {
@@ -13,37 +24,60 @@ export interface TransitionServices {
   checkpoints: PipelineCheckpoints;
   waitForHuman(runId: string): Promise<void>;
   waitForBuild?(runId: string): Promise<void>;
-  finish(runId: string, testResult: "Passed" | "Failed", issue?: PipelineIssue): Promise<void>;
+  finish(
+    runId: string,
+    testResult: "Passed" | "Failed",
+    issue?: PipelineIssue,
+  ): Promise<void>;
 }
 
-export async function applyTransition(identity: StageIdentity, transition: PipelineTransition, services: TransitionServices): Promise<void> {
+export async function applyTransition(
+  identity: StageIdentity,
+  transition: PipelineTransition,
+  services: TransitionServices,
+): Promise<void> {
   const state = await services.checkpoints.getTransitionState(identity);
   if (state === "committed") return;
-  if (state === "none") await services.checkpoints.markTransitionPending(identity);
+  if (state === "none")
+    await services.checkpoints.markTransitionPending(identity);
 
   switch (transition.type) {
     case "next": {
       if (transition.finalization) {
-        await services.checkpoints.saveFinalizationIntent(identity.runId, transition.finalization);
+        await services.checkpoints.saveFinalizationIntent(
+          identity.runId,
+          transition.finalization,
+        );
       }
       const jobId = `v2-${identity.runId}-${transition.stage}-${transition.iteration}`;
-      await services.queue.add(transition.stage, {
-        version: 2,
-        runId: identity.runId,
-        stage: transition.stage,
-        iteration: transition.iteration,
-      }, { jobId, attempts: 3, backoff: { type: "exponential", delay: 2_000 } });
+      await services.queue.add(
+        transition.stage,
+        {
+          version: 2,
+          runId: identity.runId,
+          stage: transition.stage,
+          iteration: transition.iteration,
+        },
+        { jobId, attempts: 3, backoff: { type: "exponential", delay: 2_000 } },
+      );
       break;
     }
     case "wait-human":
       await services.waitForHuman(identity.runId);
       break;
     case "wait-build":
-      if (!services.waitForBuild) throw new Error("Build authorization transition service is unavailable");
+      if (!services.waitForBuild)
+        throw new Error(
+          "Build authorization transition service is unavailable",
+        );
       await services.waitForBuild(identity.runId);
       break;
     case "done":
-      await services.finish(identity.runId, transition.test_result, transition.issue);
+      await services.finish(
+        identity.runId,
+        transition.test_result,
+        transition.issue,
+      );
       break;
     default:
       return assertNever(transition);

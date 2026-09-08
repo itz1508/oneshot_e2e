@@ -91,7 +91,8 @@ export function createOneShotRootAgent(
 
   const refactor = new OneShotStageAgent({
     name: "RefactorStage",
-    description: "Activates canonical Refactor while preserving logical plan_id.",
+    description:
+      "Activates canonical Refactor while preserving logical plan_id.",
     handler: async (ctx) => {
       const runId = state.runId(ctx);
       const agent = await pipeline.activate(runId, "Refactor");
@@ -122,10 +123,7 @@ export function createOneShotRootAgent(
       const runId = state.runId(ctx);
       const agent = await pipeline.activate(runId, "Evaluation");
       effects.event(runId, "Evaluation", "Running");
-      const result = await agent.run(
-        state.bundle(ctx),
-        state.plan(ctx),
-      );
+      const result = await agent.run(state.bundle(ctx), state.plan(ctx));
       await effects.save(runId, "evaluation", result);
       effects.event(runId, "Evaluation", "Completed", {
         result: result.result,

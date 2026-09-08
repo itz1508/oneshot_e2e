@@ -44,7 +44,10 @@ export class NativeWorkerBridge<TConfig extends WorkerConfig, THealth, TDraft> {
     private readonly projectRoot: string,
     protected readonly config: TConfig,
     private readonly options: NativeWorkerOptions<TConfig>,
-    private readonly onEvent?: (runId: string, event: ProviderWorkerEvent) => void,
+    private readonly onEvent?: (
+      runId: string,
+      event: ProviderWorkerEvent,
+    ) => void,
     private readonly python: string = resolvePythonExecutable(projectRoot),
   ) {}
 

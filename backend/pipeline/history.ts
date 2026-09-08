@@ -58,11 +58,7 @@ export class PipelineHistory {
   }
 
   async list(runId: string): Promise<PipelineHistoryEvent[]> {
-    const records = await this.redis.xrange(
-      this.key(runId),
-      "-",
-      "+",
-    );
+    const records = await this.redis.xrange(this.key(runId), "-", "+");
 
     return records.map(([, values]) => {
       const object: Record<string, string> = {};

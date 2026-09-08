@@ -1,8 +1,8 @@
-import type { Prompt, ResearchBundle } from "../../../../../backend/contracts/schema/types.js";
-import {
-  positiveInt,
-  resolveTestDraftFile,
-} from "../shared/env.js";
+import type {
+  Prompt,
+  ResearchBundle,
+} from "../../../../../backend/contracts/schema/types.js";
+import { positiveInt, resolveTestDraftFile } from "../shared/env.js";
 import {
   WorkerPoolResearchProvider,
   type ProviderDescriptor,
@@ -30,13 +30,16 @@ export function loadGeminiConfig(
   const dynamicModel = (model || configuredModel("GEMINI_MODEL") || "").trim();
 
   const distributionModel =
-    dynamicModel || configuredModel("GEMINI_DISTRIBUTION_MODEL") ||
+    dynamicModel ||
+    configuredModel("GEMINI_DISTRIBUTION_MODEL") ||
     (testDraftFile ? "test-distribution" : "");
   const researchModel =
-    dynamicModel || configuredModel("GEMINI_RESEARCH_MODEL") ||
+    dynamicModel ||
+    configuredModel("GEMINI_RESEARCH_MODEL") ||
     (testDraftFile ? "test-research" : "");
   const synthesisModel =
-    dynamicModel || configuredModel("GEMINI_SYNTHESIS_MODEL") ||
+    dynamicModel ||
+    configuredModel("GEMINI_SYNTHESIS_MODEL") ||
     (testDraftFile ? "test-synthesis" : "");
 
   if (!testDraftFile && !dynamicModel) {
@@ -52,7 +55,9 @@ export function loadGeminiConfig(
         `Gemini Researcher pipeline is not bound: missing ${missing.join(", ")} or GEMINI_MODEL`,
       );
     }
-    if (new Set([distributionModel, researchModel, synthesisModel]).size !== 3) {
+    if (
+      new Set([distributionModel, researchModel, synthesisModel]).size !== 3
+    ) {
       throw new Error(
         "Gemini Researcher pipeline requires three distinct model bindings: distribution, research, synthesis",
       );
@@ -64,7 +69,8 @@ export function loadGeminiConfig(
     distributionModel,
     researchModel,
     synthesisModel,
-    googleCloudProject: (process.env.GOOGLE_CLOUD_PROJECT || "").trim() || undefined,
+    googleCloudProject:
+      (process.env.GOOGLE_CLOUD_PROJECT || "").trim() || undefined,
     googleCloudLocation:
       (process.env.GOOGLE_CLOUD_LOCATION || "global").trim() || "global",
     useVertexAi: envTrue("GOOGLE_GENAI_USE_VERTEXAI"),
@@ -84,32 +90,35 @@ function pipelineModels(config: GeminiConfig): string[] {
   ];
 }
 
-const geminiDescriptor: ProviderDescriptor<GeminiConfig, GeminiProviderHealth> = {
-  provider: "gemini",
-  label: "Gemini",
-  eventPrefix: "Provider:gemini",
-  fallbackModels: pipelineModels,
-  emptyPoolModels: () => [],
-  healthModels: (health) => health.models,
-  healthDetail: (health) =>
-    health.detail || `${health.backend}:${health.google_cloud_location || ""}`,
-  issue: "Gemini Researcher model pipeline failed",
-  expected: () =>
-    "Gemini distribution -> research -> synthesis pipeline returns one structured research draft",
-  requiredCorrection:
-    "Correct the three GEMINI_* model bindings, Google authentication/Vertex configuration, or structured model response",
-  providerSource: (config) => {
-    const models = pipelineModels(config);
-    const uniqueModels = Array.from(new Set(models.filter(Boolean)));
-    const modelTag = uniqueModels.length === 1 ? uniqueModels[0] : models.join("->");
-    return `gemini-pipeline:${modelTag}`;
-  },
-  providerProvenance: (config) =>
-    config.useVertexAi ? "vertex-ai-native-gemini" : "gemini-api-native",
-  incompleteIssue: "Gemini research draft incomplete",
-  incompleteCorrection:
-    "Correct Researcher Gemini pipeline instructions or model response",
-};
+const geminiDescriptor: ProviderDescriptor<GeminiConfig, GeminiProviderHealth> =
+  {
+    provider: "gemini",
+    label: "Gemini",
+    eventPrefix: "Provider:gemini",
+    fallbackModels: pipelineModels,
+    emptyPoolModels: () => [],
+    healthModels: (health) => health.models,
+    healthDetail: (health) =>
+      health.detail ||
+      `${health.backend}:${health.google_cloud_location || ""}`,
+    issue: "Gemini Researcher model pipeline failed",
+    expected: () =>
+      "Gemini distribution -> research -> synthesis pipeline returns one structured research draft",
+    requiredCorrection:
+      "Correct the three GEMINI_* model bindings, Google authentication/Vertex configuration, or structured model response",
+    providerSource: (config) => {
+      const models = pipelineModels(config);
+      const uniqueModels = Array.from(new Set(models.filter(Boolean)));
+      const modelTag =
+        uniqueModels.length === 1 ? uniqueModels[0] : models.join("->");
+      return `gemini-pipeline:${modelTag}`;
+    },
+    providerProvenance: (config) =>
+      config.useVertexAi ? "vertex-ai-native-gemini" : "gemini-api-native",
+    incompleteIssue: "Gemini research draft incomplete",
+    incompleteCorrection:
+      "Correct Researcher Gemini pipeline instructions or model response",
+  };
 
 export class GeminiModelProvider extends WorkerPoolResearchProvider<
   GeminiConfig,

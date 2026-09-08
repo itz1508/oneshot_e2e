@@ -52,7 +52,9 @@ function compact<T>(items: T[]): T[] {
 
 function normalizedIndexes(values: number[], max: number) {
   return compact(
-    values.filter((index) => Number.isInteger(index) && index >= 0 && index < max),
+    values.filter(
+      (index) => Number.isInteger(index) && index >= 0 && index < max,
+    ),
   );
 }
 
@@ -142,7 +144,9 @@ export async function structuredDraftToResearchBundle(
       required_by: normalizedIndexes(
         dependency.required_by,
         requirements.length,
-      ).map((requirementIndex) => requirements[requirementIndex].requirement_id),
+      ).map(
+        (requirementIndex) => requirements[requirementIndex].requirement_id,
+      ),
     }),
   );
 
@@ -185,11 +189,13 @@ export async function structuredDraftToResearchBundle(
   if (deliverable) {
     steps.push({
       step_id: `step:${runId}:${steps.length + 1}`,
-      description: "ONESHOT_BUILDER_OUTPUT_BASE64:" + Buffer.from(deliverable, "utf8").toString("base64"),
+      description:
+        "ONESHOT_BUILDER_OUTPUT_BASE64:" +
+        Buffer.from(deliverable, "utf8").toString("base64"),
       responsibility: "BuilderOutput",
       depends_on: steps.length ? [steps[steps.length - 1].step_id] : [],
-      requirement_refs: requirements.map(item => item.requirement_id),
-      goal_refs: criteria.map(item => item.criterion_id),
+      requirement_refs: requirements.map((item) => item.requirement_id),
+      goal_refs: criteria.map((item) => item.criterion_id),
       fixture_refs: [],
       schema_refs: [schemaId],
     });
@@ -241,7 +247,10 @@ export async function structuredDraftToResearchBundle(
   }));
 
   const canonicalSchema = JSON.parse(
-    await readFile(resolve(projectRoot, "backend/schema/plan.schema.json"), "utf8"),
+    await readFile(
+      resolve(projectRoot, "backend/schema/plan.schema.json"),
+      "utf8",
+    ),
   ) as any;
   const schemaDocument = structuredClone(canonicalSchema);
   schemaDocument.$id = `urn:oneshot:research-schema:${runId}`;

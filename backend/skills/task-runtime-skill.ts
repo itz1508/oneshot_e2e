@@ -25,7 +25,10 @@ export class TaskRuntimeSkill {
     this.descriptor = catalog.get("oneshot-task-runtime");
 
     this.registry.register(
-      { name: "project_run", description: "Read replayed Task processing state" },
+      {
+        name: "project_run",
+        description: "Read replayed Task processing state",
+      },
       ({ run_id }: { run_id: string }) =>
         this.task.projection(run_id, this.runs.get(run_id)),
     );

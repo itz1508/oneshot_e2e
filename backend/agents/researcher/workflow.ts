@@ -7,12 +7,18 @@ import { ResearcherAgent } from "./agent.js";
 export class ResearcherWorkflow {
   readonly agent = ResearcherAgent;
   private tools: ReturnType<typeof researcherTools>;
-  constructor(provider: ResearchProvider, private contracts: CanonicalContractSkill) {
+  constructor(
+    provider: ResearchProvider,
+    private contracts: CanonicalContractSkill,
+  ) {
     this.tools = researcherTools(provider);
   }
   async run(prompt: Prompt, runId: string): Promise<ResearchBundle> {
     await this.contracts.validate("urn:oneshot:schema:prompt:2", prompt);
-    const b = await this.tools.invoke<{ prompt: Prompt; runId: string }, ResearchBundle>("research", { prompt, runId });
+    const b = await this.tools.invoke<
+      { prompt: Prompt; runId: string },
+      ResearchBundle
+    >("research", { prompt, runId });
     const checks: [string, unknown][] = [
       ["urn:oneshot:schema:researcher:2", b.researcher],
       ["urn:oneshot:schema:plan:2", b.plan],

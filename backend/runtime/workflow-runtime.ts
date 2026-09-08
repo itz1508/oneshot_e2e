@@ -21,7 +21,9 @@ import { PlanReviewService } from "./plan-review.js";
 import { BuildReviewService } from "./build-review.js";
 
 const APP_NAME = "oneshot-dynamic-workflow";
-export type DynamicDependencyFactory = (runId: string) => Promise<BoundDynamicDependencies>;
+export type DynamicDependencyFactory = (
+  runId: string,
+) => Promise<BoundDynamicDependencies>;
 
 const VALIDATOR_PROCESSORS = new Set([
   "SchemaValidation",
@@ -71,7 +73,10 @@ export class WorkflowRuntime {
     private runs: RunRepository,
     readonly store: ArtifactStore,
     private bindDependencies: DynamicDependencyFactory,
-  ) { this.review = new PlanReviewService(store); this.buildReview = new BuildReviewService(store); }
+  ) {
+    this.review = new PlanReviewService(store);
+    this.buildReview = new BuildReviewService(store);
+  }
 
   private ev(
     runId: string,
@@ -120,13 +125,7 @@ export class WorkflowRuntime {
       issue: rootCause,
       message: rootCause.actual,
     });
-    return this.runs.finish(
-      runId,
-      "Failed",
-      proof,
-      rootCause,
-      helpRequest,
-    );
+    return this.runs.finish(runId, "Failed", proof, rootCause, helpRequest);
   }
 
   private finishPassed(runId: string, proof: HashProof): RunSnapshot {
@@ -166,20 +165,39 @@ export class WorkflowRuntime {
       bound = await this.bindDependencies(runId);
       const rootAgent = createOneShotDynamicWorkflow(bound, {
         buildReview: async (jobId, confirmed, hash) => {
-          if (!await this.buildReview.enabled(jobId)) return;
+          if (!(await this.buildReview.enabled(jobId))) return;
           await this.buildReview.open(jobId, confirmed, hash);
-          this.ev(jobId, "BuildReady", "Running", { scope: "SUPPORT", message: "Confirmed package ready. Confirm Build to continue." });
-          await this.buildReview.wait(jobId, () => this.runs.get(jobId)?.pipeline_status === "Done");
+          this.ev(jobId, "BuildReady", "Running", {
+            scope: "SUPPORT",
+            message: "Confirmed package ready. Confirm Build to continue.",
+          });
+          await this.buildReview.wait(
+            jobId,
+            () => this.runs.get(jobId)?.pipeline_status === "Done",
+          );
           await this.buildReview.requireApproved(jobId, confirmed, hash);
-          this.ev(jobId, "BuildReady", "Completed", { scope: "SUPPORT", message: "Build authorized for the confirmed package." });
+          this.ev(jobId, "BuildReady", "Completed", {
+            scope: "SUPPORT",
+            message: "Build authorized for the confirmed package.",
+          });
         },
         review: async (jobId, research) => {
-          if (!await this.review.open(jobId, research)) return research;
-          this.ev(jobId, "PlanReview", "Running", { scope: "SUPPORT", message: "Draft ready. Review and confirm before Planner continues." });
-          const reviewed = await this.review.wait(jobId, () => this.runs.get(jobId)?.pipeline_status === "Done");
+          if (!(await this.review.open(jobId, research))) return research;
+          this.ev(jobId, "PlanReview", "Running", {
+            scope: "SUPPORT",
+            message:
+              "Draft ready. Review and confirm before Planner continues.",
+          });
+          const reviewed = await this.review.wait(
+            jobId,
+            () => this.runs.get(jobId)?.pipeline_status === "Done",
+          );
           await this.save(jobId, "plan.reviewed", reviewed.plan);
           await this.save(jobId, "research.reviewed", reviewed);
-          this.ev(jobId, "PlanReview", "Completed", { scope: "SUPPORT", message: "Draft confirmed by the user." });
+          this.ev(jobId, "PlanReview", "Completed", {
+            scope: "SUPPORT",
+            message: "Draft confirmed by the user.",
+          });
           return reviewed;
         },
         event: (jobId, processor, state, data = {}) => {
@@ -231,10 +249,7 @@ export class WorkflowRuntime {
             plan_id?: string;
           };
           const projectionKey = `${adkEvent.nodeInfo?.path ?? adkEvent.author}:${adkEvent.invocationId ?? ""}`;
-          if (
-            validation.result &&
-            !projectedValidatorRuns.has(projectionKey)
-          ) {
+          if (validation.result && !projectedValidatorRuns.has(projectionKey)) {
             projectedValidatorRuns.add(projectionKey);
             this.ev(runId, adkEvent.author, "Running", {
               message: "ADK validator node response received",
@@ -252,16 +267,14 @@ export class WorkflowRuntime {
       }
 
       if (!terminal) {
-        throw new Error("ADK dynamic Workflow completed without terminal output");
+        throw new Error(
+          "ADK dynamic Workflow completed without terminal output",
+        );
       }
       if (terminal.result === "Passed") {
         return this.finishPassed(runId, terminal.hash_proof);
       }
-      return this.finishRoot(
-        runId,
-        terminal.root_cause,
-        terminal.hash_proof,
-      );
+      return this.finishRoot(runId, terminal.root_cause, terminal.hash_proof);
     } catch (error) {
       const current = this.runs.require(runId);
       if (current.pipeline_status === "Done") return current;

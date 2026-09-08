@@ -6,7 +6,7 @@ documentation reconciliation, not a full feature audit or live verification.
 
 ## Reading order and authority
 
-1. [Web application source of truth v2](ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v2.md)
+1. [Web application source of truth v3](ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v3.md)
    defines required product behavior and preservation constraints.
 2. [LLM workflow call diagram](LLM%20WorkFlow%20CALL.txt) gives the supplied
    six-phase target sequence and its two human gates.

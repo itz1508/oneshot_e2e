@@ -28,7 +28,11 @@
  */
 
 import { Queue, Worker, QueueEvents, type Job } from "bullmq";
-import type { Prompt, ProcessingEvent, RootCause } from "../contracts/schema/types.js";
+import type {
+  Prompt,
+  ProcessingEvent,
+  RootCause,
+} from "../contracts/schema/types.js";
 import type { RunRepository } from "./run-repository.js";
 import type { ProcessingEventBus } from "./event-bus.js";
 import type { WorkflowRuntime } from "./workflow-runtime.js";
@@ -97,7 +101,8 @@ export interface RunJobData {
   submittedAt?: string;
 }
 
-const SECRET_FIELD_RE = /(?:api[_-]?key|authorization|bearer|password|token|secret|credential|value)/i;
+const SECRET_FIELD_RE =
+  /(?:api[_-]?key|authorization|bearer|password|token|secret|credential|value)/i;
 
 /**
  * Validate a run-job payload at the worker boundary. Accepts the v1 versioned
@@ -106,7 +111,10 @@ const SECRET_FIELD_RE = /(?:api[_-]?key|authorization|bearer|password|token|secr
  * version, incomplete v1 fields). Returns human-readable errors for a clear
  * root-cause event on rejection.
  */
-export function validateRunJobV1(data: unknown): { ok: boolean; errors: string[] } {
+export function validateRunJobV1(data: unknown): {
+  ok: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
   if (!data || typeof data !== "object") {
     return { ok: false, errors: ["payload is not an object"] };
@@ -115,7 +123,10 @@ export function validateRunJobV1(data: unknown): { ok: boolean; errors: string[]
   const scan = (value: unknown): void => {
     if (!value || typeof value !== "object") return;
     for (const [k, v] of Object.entries(value)) {
-      if (SECRET_FIELD_RE.test(k)) errors.push("secret-shaped field must not be present in the job payload");
+      if (SECRET_FIELD_RE.test(k))
+        errors.push(
+          "secret-shaped field must not be present in the job payload",
+        );
       scan(v);
     }
   };
@@ -129,7 +140,9 @@ export function validateRunJobV1(data: unknown): { ok: boolean; errors: string[]
   // v1 strict fields apply only when the version marker is present.
   if (d.version !== undefined) {
     if (d.version !== 1) {
-      errors.push(`unsupported payload version ${String(d.version)} (expected 1)`);
+      errors.push(
+        `unsupported payload version ${String(d.version)} (expected 1)`,
+      );
     }
     if (!d.provider || typeof d.provider !== "object") {
       errors.push("v1 payload requires a provider object");
@@ -141,7 +154,10 @@ export function validateRunJobV1(data: unknown): { ok: boolean; errors: string[]
       if (p.model !== undefined && typeof p.model !== "string") {
         errors.push("provider.model must be a string");
       }
-      if (p.configRevision !== undefined && typeof p.configRevision !== "number") {
+      if (
+        p.configRevision !== undefined &&
+        typeof p.configRevision !== "number"
+      ) {
         errors.push("provider.configRevision must be a number");
       }
     }
@@ -286,7 +302,10 @@ export class BullMQRunQueue implements RunQueue {
       connection: producerConnection,
       prefix: QUEUE_PREFIX,
     });
-    this.queueEvents = new QueueEvents(name, { connection, prefix: QUEUE_PREFIX });
+    this.queueEvents = new QueueEvents(name, {
+      connection,
+      prefix: QUEUE_PREFIX,
+    });
     this.worker = new Worker<RunJobData>(
       name,
       async (job) => this.processRun(job),
@@ -343,7 +362,8 @@ export class BullMQRunQueue implements RunQueue {
     // reasons stay in server logs; only the safe one-line issue reaches the UI.
     this.queueEvents.on("failed", (arg) => {
       const jobId = (arg as unknown as { jobId?: string }).jobId;
-      const reason = (arg as unknown as { failedReason?: unknown }).failedReason;
+      const reason = (arg as unknown as { failedReason?: unknown })
+        .failedReason;
       if (!jobId) return;
       const snap = deps.runs.get(jobId);
       if (snap && snap.pipeline_status !== "Done") {
@@ -402,7 +422,8 @@ export class BullMQRunQueue implements RunQueue {
       },
       submittedAt: new Date().toISOString(),
     };
-    if (!validateRunJobV1(payload).ok) throw new Error("Invalid run job payload");
+    if (!validateRunJobV1(payload).ok)
+      throw new Error("Invalid run job payload");
     // Fail fast when Redis is unreachable instead of parking the HTTP request
     // in ioredis's offline queue. The HTTP layer decides 503 vs inline fallback.
     const add = this.queue.add("oneshot-run", payload, {
@@ -535,7 +556,7 @@ export async function executeRunJob(
       recheck_target: runId,
     };
     const snapshot = deps.runs.get(runId);
-  if (snapshot && snapshot.pipeline_status !== "Done") {
+    if (snapshot && snapshot.pipeline_status !== "Done") {
       deps.runs.finish(runId, "Failed", undefined, rootCause);
     }
     deps.events.emit(runId, "RunWorker", "Completed", {
@@ -606,15 +627,19 @@ export async function executeRunJob(
     //   bound ONCE here; an already-active run is never re-bound mid-workflow.
     let provider: ResearchProvider;
     try {
-      provider = await deps.resolveProvider(providerId, deps.events, runId,
-        data.provider ?? { id: providerId, configRevision: data.revision });
+      provider = await deps.resolveProvider(
+        providerId,
+        deps.events,
+        runId,
+        data.provider ?? { id: providerId, configRevision: data.revision },
+      );
     } catch (err) {
-      const wrc = err instanceof WorkflowRootCauseError
-        ? err.rootCause
-        : undefined;
-      const actual = wrc?.actual ??
-        (err instanceof Error ? err.message : String(err));
-      const issue = wrc?.issue ??
+      const wrc =
+        err instanceof WorkflowRootCauseError ? err.rootCause : undefined;
+      const actual =
+        wrc?.actual ?? (err instanceof Error ? err.message : String(err));
+      const issue =
+        wrc?.issue ??
         "Provider binding failed before the workflow could execute";
       deps.events.emit(runId, "ProviderBinding", "Completed", {
         scope: "SUPPORT",

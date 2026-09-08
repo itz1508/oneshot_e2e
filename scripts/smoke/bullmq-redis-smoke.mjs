@@ -14,7 +14,10 @@
  * Usage: node scripts/smoke/bullmq-redis-smoke.mjs
  * Env:   REDIS_URL (default redis://127.0.0.1:6379)
  */
-import { BullMQRunQueue, RUN_QUEUE_NAME } from "../../dist/backend/runtime/queue.js";
+import {
+  BullMQRunQueue,
+  RUN_QUEUE_NAME,
+} from "../../dist/backend/runtime/queue.js";
 import { whenRedisReady } from "../../dist/backend/runtime/redis-connection.js";
 
 const runId = `smoke_${Date.now()}`;
@@ -25,7 +28,10 @@ const fail = (step, msg) => {
 };
 
 // 1. Shared Redis connection (same options BullMQ consumers use).
-log(1, `connecting to Redis (${process.env.REDIS_URL || "redis://127.0.0.1:6379"})`);
+log(
+  1,
+  `connecting to Redis (${process.env.REDIS_URL || "redis://127.0.0.1:6379"})`,
+);
 try {
   await whenRedisReady(5_000);
   log(1, "Redis connection ready");
@@ -88,7 +94,8 @@ try {
     await new Promise((r) => setTimeout(r, 250));
     state = await queue.getJobState(runId);
   }
-  if (state !== "completed") fail(4, `job state is '${state}' (expected 'completed')`);
+  if (state !== "completed")
+    fail(4, `job state is '${state}' (expected 'completed')`);
   log(4, "worker executed job via executeRunJob — state=completed");
 
   // 5. Operational counts read back from Redis.

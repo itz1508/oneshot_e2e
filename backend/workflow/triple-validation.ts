@@ -49,10 +49,7 @@ export class TripleValidationWorkflow {
     plan: Plan,
   ): Promise<GoalValidationResult> {
     const out = await this.validation.goal(bundle, plan);
-    await this.contracts.validate(
-      "urn:oneshot:schema:goal-validation:2",
-      out,
-    );
+    await this.contracts.validate("urn:oneshot:schema:goal-validation:2", out);
     return out;
   }
 
@@ -96,7 +93,9 @@ export class TripleValidationWorkflow {
       );
     }
     if (mismatches.length > 0) {
-      throw new Error(`Triple Validation join mismatch: ${mismatches.join("; ")}`);
+      throw new Error(
+        `Triple Validation join mismatch: ${mismatches.join("; ")}`,
+      );
     }
 
     const triple: TripleValidation = {

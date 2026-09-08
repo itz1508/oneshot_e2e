@@ -1,4 +1,7 @@
-import type { Prompt, ResearchBundle } from "../../../backend/contracts/schema/types.js";
+import type {
+  Prompt,
+  ResearchBundle,
+} from "../../../backend/contracts/schema/types.js";
 import type { ProcessingEventBus } from "../../../backend/runtime/event-bus.js";
 
 export interface ResearchProviderReadiness {

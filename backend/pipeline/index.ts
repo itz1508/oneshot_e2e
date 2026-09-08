@@ -49,9 +49,15 @@ export {
 
 export { createPipelineWorker } from "./worker.js";
 export { confirmPlan } from "./confirm-plan.js";
-export { createPipelineQueueEvents, closePipelineQueueEvents } from "./events.js";
+export {
+  createPipelineQueueEvents,
+  closePipelineQueueEvents,
+} from "./events.js";
 export { PipelineHistory } from "./history.js";
-export type { PipelineHistoryEvent, PipelineHistoryEventType } from "./history.js";
+export type {
+  PipelineHistoryEvent,
+  PipelineHistoryEventType,
+} from "./history.js";
 export { PipelineIdempotency } from "./idempotency.js";
 export { PipelineFaultController } from "./fault-controller.js";
 export { runStage } from "./run-stage.js";
@@ -67,16 +73,8 @@ export { faultsEnabled, getFaultConfig } from "./faults.js";
 export type { FaultStage, FaultMode, FaultConfig } from "./faults.js";
 
 // Durable execution model
-export {
-  advance,
-  refine,
-  terminal,
-  isStageOutcome,
-} from "./stage-outcome.js";
-export type {
-  StageOutcome,
-  PipelineIssue,
-} from "./stage-outcome.js";
+export { advance, refine, terminal, isStageOutcome } from "./stage-outcome.js";
+export type { StageOutcome, PipelineIssue } from "./stage-outcome.js";
 export { PipelineCheckpoints } from "./checkpoints.js";
 export type {
   RedisCheckpointClient,
@@ -98,10 +96,7 @@ export type {
   TransitionServices,
 } from "./apply-transition.js";
 export { reconcileStage } from "./reconcile.js";
-export type {
-  ReconcileInput,
-  ReconcileResult,
-} from "./reconcile.js";
+export type { ReconcileInput, ReconcileResult } from "./reconcile.js";
 export { createTransitionServices } from "./transition-services.js";
 export type {
   TransitionServicesInput,

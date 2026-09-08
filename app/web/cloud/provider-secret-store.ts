@@ -60,7 +60,7 @@ export interface ProviderSecretStore {
   get(providerId: string): Promise<ProviderCredential | undefined>;
   /** Persist/replace a credential. */
   set(providerId: string, credential: ProviderCredential): Promise<void>;
-    /** Delete a credential if present. */
+  /** Delete a credential if present. */
   delete(providerId: string): Promise<void>;
 }
 
@@ -121,7 +121,8 @@ export class LocalFileSecretStore implements ProviderSecretStore {
   }
 
   private pathFor(providerId: string): string {
-    if (!/^[a-z][a-z0-9_-]*$/.test(providerId)) throw new Error("Invalid provider identifier");
+    if (!/^[a-z][a-z0-9_-]*$/.test(providerId))
+      throw new Error("Invalid provider identifier");
     return join(this.secretsDir, `${providerId}.json`);
   }
 
@@ -138,7 +139,8 @@ export class LocalFileSecretStore implements ProviderSecretStore {
       // Structural validation only — we never log `value`.
       if (
         parsed?.providerId === providerId &&
-        typeof parsed?.value === "string" && parsed.value.trim().length > 0 &&
+        typeof parsed?.value === "string" &&
+        parsed.value.trim().length > 0 &&
         typeof parsed?.credentialType === "string"
       ) {
         return parsed;

@@ -58,9 +58,7 @@ class UsageTracker:
         row = session.execute(
             select(
                 func.count(UsageEvent.id),
-                func.sum(
-                    case((UsageEvent.status == UsageStatus.SUCCESS, 1), else_=0)
-                ),
+                func.sum(case((UsageEvent.status == UsageStatus.SUCCESS, 1), else_=0)),
                 func.coalesce(func.sum(UsageEvent.input_tokens), 0),
                 func.coalesce(func.sum(UsageEvent.output_tokens), 0),
                 func.coalesce(func.sum(UsageEvent.total_tokens), 0),

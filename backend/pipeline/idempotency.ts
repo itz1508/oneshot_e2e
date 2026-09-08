@@ -25,18 +25,11 @@ return 0
 export class PipelineIdempotency {
   constructor(private readonly redis: Redis) {}
 
-  private completedKey(
-    runId: string,
-    stage: string,
-    iteration = 0,
-  ): string {
+  private completedKey(runId: string, stage: string, iteration = 0): string {
     return `oneshot:run:${runId}:stage:${stage}:${iteration}:completed`;
   }
 
-  lockKey(
-    runId: string,
-    stage: string,
-  ): string {
+  lockKey(runId: string, stage: string): string {
     return `oneshot:run:${runId}:stage:${stage}:lock`;
   }
 
@@ -46,9 +39,8 @@ export class PipelineIdempotency {
     iteration = 0,
   ): Promise<boolean> {
     return (
-      (await this.redis.exists(
-        this.completedKey(runId, stage, iteration),
-      )) === 1
+      (await this.redis.exists(this.completedKey(runId, stage, iteration))) ===
+      1
     );
   }
 
@@ -94,8 +86,19 @@ export class PipelineIdempotency {
     return result === "OK" ? token : null;
   }
 
-  async renew(runId: string, stage: string, token: string, ttlSeconds = 60): Promise<boolean> {
-    const result = await this.redis.eval(RENEW_LOCK_SCRIPT, 1, this.lockKey(runId, stage), token, String(ttlSeconds));
+  async renew(
+    runId: string,
+    stage: string,
+    token: string,
+    ttlSeconds = 60,
+  ): Promise<boolean> {
+    const result = await this.redis.eval(
+      RENEW_LOCK_SCRIPT,
+      1,
+      this.lockKey(runId, stage),
+      token,
+      String(ttlSeconds),
+    );
     return Number(result) === 1;
   }
 
@@ -103,11 +106,7 @@ export class PipelineIdempotency {
    * Release the lock only if `token` still owns it.
    * Returns true when the lock was deleted by this call.
    */
-  async release(
-    runId: string,
-    stage: string,
-    token: string,
-  ): Promise<boolean> {
+  async release(runId: string, stage: string, token: string): Promise<boolean> {
     const result = await this.redis.eval(
       RELEASE_LOCK_SCRIPT,
       1,

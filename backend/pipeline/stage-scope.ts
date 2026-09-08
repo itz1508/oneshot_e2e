@@ -1,23 +1,16 @@
-import type {
-  PipelineStage,
-} from "./stage-outcome.js";
+import type { PipelineStage } from "./stage-outcome.js";
 
 const RESEARCHER: PipelineStage = "researcher";
 
-const ITERATIVE_STAGES =
-  new Set<PipelineStage>([
-    "refactor",
-    "gap-analysis",
-    "evaluation",
-    "triple-validation",
-  ]);
+const ITERATIVE_STAGES = new Set<PipelineStage>([
+  "refactor",
+  "gap-analysis",
+  "evaluation",
+  "triple-validation",
+]);
 
-export function isIterativeStage(
-  stage: PipelineStage,
-): boolean {
-  return ITERATIVE_STAGES.has(
-    stage,
-  );
+export function isIterativeStage(stage: PipelineStage): boolean {
+  return ITERATIVE_STAGES.has(stage);
 }
 
 /** Redis key tracking the current research revision for a run. */
@@ -66,7 +59,5 @@ export function stageIteration(
   if (stage === RESEARCHER) {
     return iteration;
   }
-  return isIterativeStage(stage)
-    ? iteration
-    : 0;
+  return isIterativeStage(stage) ? iteration : 0;
 }

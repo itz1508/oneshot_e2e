@@ -1,12 +1,6 @@
 import type { Redis } from "ioredis";
-import {
-  pipelineQueue,
-  stageJobId,
-} from "./queue.js";
-import type {
-  ConfirmPlanInput,
-  ConfirmPlanResult,
-} from "./types.js";
+import { pipelineQueue, stageJobId } from "./queue.js";
+import type { ConfirmPlanInput, ConfirmPlanResult } from "./types.js";
 import { PipelineIdempotency } from "./idempotency.js";
 import { loadResearchBundle, saveArtifact } from "./context.js";
 import {
@@ -14,9 +8,7 @@ import {
   validatePlanReviewEdits,
   type PlanReview,
 } from "../runtime/plan-review.js";
-import {
-  getCurrentResearchRevision,
-} from "./stage-scope.js";
+import { getCurrentResearchRevision } from "./stage-scope.js";
 
 export async function confirmPlan({
   runId,
@@ -56,8 +48,14 @@ export async function confirmPlan({
       research,
       edits: {
         objective: research.goal.objective,
-        requirements: research.plan.requirements.map(r => ({ id: r.requirement_id, statement: r.statement })),
-        steps: research.plan.steps.map(s => ({ id: s.step_id, description: s.description })),
+        requirements: research.plan.requirements.map((r) => ({
+          id: r.requirement_id,
+          statement: r.statement,
+        })),
+        steps: research.plan.steps.map((s) => ({
+          id: s.step_id,
+          description: s.description,
+        })),
         notes: [],
       },
     };

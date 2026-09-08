@@ -1,7 +1,7 @@
 # OneShot Canonical Workflow
 
 Required product behavior includes the two human gates in the supplied
-[web application requirements](ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v2.md) and
+[web application requirements](ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v3.md) and
 [LLM call diagram](LLM%20WorkFlow%20CALL.txt). The sequence below preserves
 artifact ownership while showing those control boundaries. See the
 [reconciliation](WEB_APP_REQUIREMENTS_RECONCILIATION.md) for implementation

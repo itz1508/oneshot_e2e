@@ -16,7 +16,10 @@ export class IntentCollectionSkill {
 
   constructor(private intent: IntentCollectionService) {
     this.registry.register(
-      { name: "get_intent", description: "Read current multi-turn intent state" },
+      {
+        name: "get_intent",
+        description: "Read current multi-turn intent state",
+      },
       ({ conversation_id }: { conversation_id: string }) =>
         this.intent.get(conversation_id),
     );

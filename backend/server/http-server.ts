@@ -1,19 +1,12 @@
+import { body, json, mime } from "./http-response.js";
+import { buildFileTree, computeWorkspaceInfo } from "./workspace-inspection.js";
 import {
   createServer,
   type IncomingMessage,
   type ServerResponse,
 } from "node:http";
 import { readFile, writeFile, readdir, mkdir, stat } from "node:fs/promises";
-import { createHash } from "node:crypto";
-import {
-  basename,
-  extname,
-  join,
-  normalize,
-  resolve,
-  relative,
-  sep,
-} from "node:path";
+import { basename, join, normalize, resolve, sep } from "node:path";
 import type { Prompt, RootCause } from "../contracts/schema/types.js";
 import { id, newRunId } from "../core/id.js";
 import { RunRepository } from "../runtime/run-repository.js";
@@ -23,7 +16,12 @@ import { PlanReviewError } from "../runtime/plan-review.js";
 import { BuildReviewError } from "../runtime/build-review.js";
 import { TargetWorkspaceError } from "../runtime/target-workspace.js";
 import type { TaskManagement } from "../task/task-management.js";
-import { QUEUE_PREFIX, RUN_QUEUE_NAME, type RunQueue, type RunJobV1 } from "../runtime/queue.js";
+import {
+  QUEUE_PREFIX,
+  RUN_QUEUE_NAME,
+  type RunQueue,
+  type RunJobV1,
+} from "../runtime/queue.js";
 import type { ProviderManager } from "../../app/web/cloud/provider-manager.js";
 import type { ProviderRuntimeSettings } from "../../app/web/cloud/provider-runtime-config.js";
 import type { ProviderCredential } from "../../app/web/cloud/provider-secret-store.js";
@@ -59,24 +57,6 @@ import {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-async function body(req: IncomingMessage): Promise<Record<string, unknown>> {
-  let s = "";
-  for await (const c of req) s += c;
-  return s ? JSON.parse(s) : {};
-}
-
-function json(
-  res: ServerResponse,
-  status: number,
-  value: unknown,
-): void {
-  res.writeHead(status, {
-    "content-type": "application/json; charset=utf-8",
-    "cache-control": "no-store",
-  });
-  res.end(JSON.stringify(value));
-}
 
 /**
  * Mark a run as failed/queue-unavailable when ONESHOT_QUEUE_REQUIRED is active
@@ -125,23 +105,7 @@ const PIPELINE_STAGE_NAMES = new Set<string>([
   "finalize",
 ]);
 
-const MIME: Record<string, string> = {
-  ".html": "text/html; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".webp": "image/webp",
-};
-const mime = (p: string) => MIME[extname(p)] || "application/octet-stream";
-
-function workspacePolicyError(
-  res: ServerResponse,
-  error: unknown,
-): boolean {
+function workspacePolicyError(res: ServerResponse, error: unknown): boolean {
   if (error instanceof WorkspacePathTraversalError) {
     json(res, 400, { error: error.message });
     return true;
@@ -151,171 +115,6 @@ function workspacePolicyError(
     return true;
   }
   return false;
-}
-
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Workspace Filesystem Inspection Helpers
-// ---------------------------------------------------------------------------
-
-interface TreeNode {
-  name: string;
-  path: string;
-  type: "file" | "folder";
-  size?: number;
-  children?: TreeNode[];
-}
-
-async function buildFileTree(
-  policy: WorkspacePathPolicy,
-  requestedDir: string,
-  basePath = "",
-  currentDepth = 0,
-  maxDepth?: number,
-): Promise<TreeNode[]> {
-  if (maxDepth !== undefined && currentDepth >= maxDepth) return [];
-  try {
-    const dir = await policy.authorizeExisting(requestedDir);
-    const entries = await readdir(dir, { withFileTypes: true });
-    const nodes: TreeNode[] = [];
-
-    for (const entry of entries) {
-      const relPath = basePath ? `${basePath}/${entry.name}` : entry.name;
-      const policyPath =
-        requestedDir === "."
-          ? entry.name
-          : `${requestedDir}/${entry.name}`;
-
-      try {
-        await policy.authorizeExisting(policyPath);
-      } catch (error) {
-        if (
-          error instanceof WorkspacePathDeniedError ||
-          error instanceof WorkspacePathTraversalError
-        ) {
-          continue;
-        }
-        throw error;
-      }
-
-      if (entry.isDirectory()) {
-        const children = await buildFileTree(
-          policy,
-          policyPath,
-          relPath,
-          currentDepth + 1,
-          maxDepth,
-        );
-        nodes.push({
-          name: entry.name,
-          path: relPath,
-          type: "folder",
-          children,
-        });
-      } else if (entry.isFile()) {
-        const filePath = join(dir, entry.name);
-        let size = 0;
-        try {
-          size = (await stat(filePath)).size;
-        } catch {
-          // If stat fails, leave size as 0 (file may have been deleted between readdir and stat)
-        }
-        nodes.push({
-          name: entry.name,
-          path: relPath,
-          type: "file",
-          size,
-        });
-      }
-    }
-    return nodes.sort((a, b) => {
-      if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    });
-  } catch (error) {
-    if (
-      error instanceof WorkspacePathDeniedError ||
-      error instanceof WorkspacePathTraversalError
-    ) {
-      throw error;
-    }
-    return [];
-  }
-}
-
-interface WorkspaceInfo {
-  root: string;
-  source: "upload" | "workspace-root" | "project-root-fallback";
-  explicit: boolean;
-  file_count: number;
-  total_bytes: number;
-  digest: string;
-  upload_name?: string;
-  created_at: string;
-}
-
-async function computeWorkspaceInfo(
-  policy: WorkspacePathPolicy,
-  workspaceRoot: string,
-): Promise<WorkspaceInfo> {
-  // Walk the workspace, respecting the same deny-list policy as buildFileTree.
-  const files: string[] = [];
-  let totalBytes = 0;
-
-  async function walk(dir: string, relBase: string): Promise<void> {
-    const entries = await readdir(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      const relPath = relBase ? `${relBase}/${entry.name}` : entry.name;
-      const policyPath = relPath;
-      try {
-        await policy.authorizeExisting(policyPath);
-      } catch (error) {
-        if (
-          error instanceof WorkspacePathDeniedError ||
-          error instanceof WorkspacePathTraversalError
-        ) {
-          continue;
-        }
-        throw error;
-      }
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        await walk(full, relPath);
-      } else if (entry.isFile()) {
-        files.push(full);
-        try {
-          totalBytes += (await stat(full)).size;
-        } catch {
-          // file vanished between readdir and stat
-        }
-      }
-    }
-  }
-
-  await walk(workspaceRoot, "");
-
-  const hash = createHash("sha256");
-  for (const file of [...files].sort()) {
-    hash.update(relative(workspaceRoot, file).replaceAll("\\", "/"));
-    hash.update("\0");
-    try {
-      hash.update(await readFile(file));
-    } catch {
-      // file vanished; contribute empty content
-    }
-    hash.update("\0");
-  }
-
-  return {
-    root: workspaceRoot,
-    source: "project-root-fallback",
-    explicit: true,
-    file_count: files.length,
-    total_bytes: totalBytes,
-    digest: hash.digest("hex"),
-    created_at: new Date().toISOString(),
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -343,7 +142,11 @@ export interface PipelineApi {
   ) => Promise<ConfirmPlanResult>;
   store: ArtifactStore;
   history: PipelineHistory;
-  getQueueCounts?: () => Promise<{ waiting: number; active: number; failed: number }>;
+  getQueueCounts?: () => Promise<{
+    waiting: number;
+    active: number;
+    failed: number;
+  }>;
   /**
    * Diagnostic recovery for an executed stage whose transition did not
    * commit (crash window). Exposed via POST /api/runs/:id/reconcile.
@@ -384,7 +187,8 @@ export async function startHttpServer(
   providerManager?: ProviderManager,
   queueReady?: boolean,
 ): Promise<ReturnType<typeof createServer>> {
-  const bindHost = (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
+  const bindHost =
+    (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
   const apiToken = (process.env.ONESHOT_API_TOKEN || "").trim();
   if (bindHost !== "127.0.0.1" && bindHost !== "::1" && !apiToken) {
     throw new Error(
@@ -393,11 +197,19 @@ export async function startHttpServer(
   }
   const security = new HttpSecurity();
   const workspaceRoot = resolve(
-    options.workspaceRoot || process.env.ONESHOT_WORKSPACE_ROOT || process.cwd(),
+    options.workspaceRoot ||
+      process.env.ONESHOT_WORKSPACE_ROOT ||
+      process.cwd(),
   );
   const workspacePolicy = await WorkspacePathPolicy.create(workspaceRoot);
 
-  async function submitRun(runId: string, prompt: Prompt, res: ServerResponse, extra: Record<string, unknown> = {}, reviewPlan = false) {
+  async function submitRun(
+    runId: string,
+    prompt: Prompt,
+    res: ServerResponse,
+    extra: Record<string, unknown> = {},
+    reviewPlan = false,
+  ) {
     const pipeline = options.pipeline;
     const legacyQueueReady = runQueue && queueReady;
     const queueRequired = process.env.ONESHOT_QUEUE_REQUIRED === "true";
@@ -405,14 +217,23 @@ export async function startHttpServer(
     if (queueRequired && !pipeline?.queueReady && !legacyQueueReady) {
       runs.create(runId);
       markRunQueueUnavailable(runId, runs, events);
-      return json(res, 503, { error: "runtime queue unavailable", run_id: runId });
+      return json(res, 503, {
+        error: "runtime queue unavailable",
+        run_id: runId,
+      });
     }
 
     let selector;
     try {
-      selector = providerManager?.captureForRun() ?? { id: "sample", configRevision: 0, model: "fixture" };
+      selector = providerManager?.captureForRun() ?? {
+        id: "sample",
+        configRevision: 0,
+        model: "fixture",
+      };
     } catch {
-      return json(res, 409, { error: "Configure and activate a provider before starting a run" });
+      return json(res, 409, {
+        error: "Configure and activate a provider before starting a run",
+      });
     }
 
     runs.create(runId);
@@ -428,13 +249,23 @@ export async function startHttpServer(
         const ctx = { runId, runs, store: pipeline.store };
         await saveArtifact(ctx, "prompt", prompt);
         await saveArtifact(ctx, "provider", selector);
-        await runtime?.store?.save?.(runId, "execution-mode", { mode: "pipeline" });
+        await runtime?.store?.save?.(runId, "execution-mode", {
+          mode: "pipeline",
+        });
         await pipeline.enqueue(runId, "researcher");
-        return json(res, 202, { run_id: runId, queued: true, pipeline: true, ...extra });
+        return json(res, 202, {
+          run_id: runId,
+          queued: true,
+          pipeline: true,
+          ...extra,
+        });
       } catch (e) {
         if (queueRequired) {
           markRunQueueUnavailable(runId, runs, events);
-          return json(res, 503, { error: "pipeline queue unavailable", run_id: runId });
+          return json(res, 503, {
+            error: "pipeline queue unavailable",
+            run_id: runId,
+          });
         }
         // Otherwise fall through to legacy path so local dev without Redis still works.
       }
@@ -442,17 +273,31 @@ export async function startHttpServer(
 
     // Legacy ADK single-queue runtime (kept for tests and gradual migration).
     await runtime?.store?.save?.(runId, "execution-mode", { mode: "inline" });
-    const job: RunJobV1 = { version: 1, runId, prompt, provider: selector, submittedAt: new Date().toISOString() };
+    const job: RunJobV1 = {
+      version: 1,
+      runId,
+      prompt,
+      provider: selector,
+      submittedAt: new Date().toISOString(),
+    };
     if (legacyQueueReady) {
       try {
-        await runQueue.addRun({ runId, prompt, providerId: selector.id,
-          revision: selector.configRevision, model: selector.model,
-          settings: "settings" in selector ? selector.settings : undefined });
+        await runQueue.addRun({
+          runId,
+          prompt,
+          providerId: selector.id,
+          revision: selector.configRevision,
+          model: selector.model,
+          settings: "settings" in selector ? selector.settings : undefined,
+        });
         return json(res, 202, { run_id: runId, queued: true, ...extra });
       } catch {
         if (queueRequired) {
           markRunQueueUnavailable(runId, runs, events);
-          return json(res, 503, { error: "runtime queue unavailable", run_id: runId });
+          return json(res, 503, {
+            error: "runtime queue unavailable",
+            run_id: runId,
+          });
         }
       }
     }
@@ -468,7 +313,6 @@ export async function startHttpServer(
 
       try {
         const url = new URL(req.url || "/", "http://localhost");
-
 
         // ---------------------------------------------------------------
         // Workspace Tree & File Endpoints (for OneShot IDE Explorer & Viewer)
@@ -490,7 +334,13 @@ export async function startHttpServer(
             });
           }
           try {
-            const nodes = await buildFileTree(workspacePolicy, reqPath, "", 0, maxDepth);
+            const nodes = await buildFileTree(
+              workspacePolicy,
+              reqPath,
+              "",
+              0,
+              maxDepth,
+            );
             return json(res, 200, {
               root: reqPath,
               path: reqPath,
@@ -510,7 +360,10 @@ export async function startHttpServer(
             url.pathname === "/api/workspace/info")
         ) {
           try {
-            const info = await computeWorkspaceInfo(workspacePolicy, workspaceRoot);
+            const info = await computeWorkspaceInfo(
+              workspacePolicy,
+              workspaceRoot,
+            );
             return json(res, 200, info);
           } catch (error) {
             if (workspacePolicyError(res, error)) return;
@@ -524,7 +377,8 @@ export async function startHttpServer(
             url.pathname === "/api/workspace/file")
         ) {
           const reqPath = url.searchParams.get("path") || "";
-          if (!reqPath) return json(res, 400, { error: "path parameter required" });
+          if (!reqPath)
+            return json(res, 400, { error: "path parameter required" });
           try {
             const targetFile = await workspacePolicy.authorizeExisting(reqPath);
             const data = await readFile(targetFile, "utf-8");
@@ -543,7 +397,8 @@ export async function startHttpServer(
           const b = await body(req);
           const filePath = String(b.path || "");
           const content = String(b.content ?? "");
-          if (!filePath) return json(res, 400, { error: "path parameter required" });
+          if (!filePath)
+            return json(res, 400, { error: "path parameter required" });
           try {
             const targetFile = await workspacePolicy.authorizeWrite(filePath);
             await writeFile(targetFile, content, "utf-8");
@@ -569,33 +424,46 @@ export async function startHttpServer(
         // ---------------------------------------------------------------
         // Health
         // ---------------------------------------------------------------
-                if (req.method === "GET" && url.pathname === "/api/health") {
-          const activeId = providerManager?.runtimeConfig().activeProvider || "<default>";
-          const mode = providerManager?.mode ?? runtimeInfo?.mode ?? "production";
-          const publicName = providerManager?.publicNameFor(activeId) || "<default>";
+        if (req.method === "GET" && url.pathname === "/api/health") {
+          const activeId =
+            providerManager?.runtimeConfig().activeProvider || "<default>";
+          const mode =
+            providerManager?.mode ?? runtimeInfo?.mode ?? "production";
+          const publicName =
+            providerManager?.publicNameFor(activeId) || "<default>";
           const pipelineReady = options.pipeline?.queueReady ?? false;
           const legacyReady = Boolean(runQueue && queueReady);
           const anyQueueReady = pipelineReady || legacyReady;
-          const redis: "ok" | "unavailable" | "disabled" = !(runQueue || options.pipeline)
+          const redis: "ok" | "unavailable" | "disabled" = !(
+            runQueue || options.pipeline
+          )
             ? "disabled"
             : anyQueueReady
               ? "ok"
               : "unavailable";
-          const queue: "ok" | "unavailable" | "disabled" = !(runQueue || options.pipeline)
+          const queue: "ok" | "unavailable" | "disabled" = !(
+            runQueue || options.pipeline
+          )
             ? "disabled"
             : anyQueueReady
               ? "ok"
               : "unavailable";
           const worker = options.pipeline
-            ? pipelineReady ? await checkWorkerHealth(true) : "degraded"
-            : !runQueue ? "disabled" : legacyReady ? "ok" : "degraded";
+            ? pipelineReady
+              ? await checkWorkerHealth(true)
+              : "degraded"
+            : !runQueue
+              ? "disabled"
+              : legacyReady
+                ? "ok"
+                : "degraded";
           let providerConfiguration:
             | "configured"
             | "unconfigured"
             | "sample"
             | "degraded"
             | "disabled" = "disabled";
-                    if (providerManager) {
+          if (providerManager) {
             try {
               if (activeId === "<default>") {
                 providerConfiguration = "unconfigured";
@@ -745,7 +613,8 @@ export async function startHttpServer(
 
         // POST /api/conversations â€” start a new conversation
         if (req.method === "POST" && url.pathname === "/api/conversations") {
-          if (!intent) return json(res, 503, { error: "intent collection unavailable" });
+          if (!intent)
+            return json(res, 503, { error: "intent collection unavailable" });
           const input = await body(req);
           const c = intent.start(
             String(input.message || input.user_message || ""),
@@ -758,19 +627,24 @@ export async function startHttpServer(
           /^\/api\/conversations\/([^/]+)\/messages$/,
         );
         if (req.method === "POST" && convMsg) {
-          if (!intent) return json(res, 503, { error: "intent collection unavailable" });
+          if (!intent)
+            return json(res, 503, { error: "intent collection unavailable" });
           const input = await body(req);
           const message = String(input.message || input.user_message || "");
           const runId = input.run_id ? String(input.run_id) : undefined;
           const intentKind = String(input.intent_kind || "normal");
 
           if (intentKind !== "normal" && intentKind !== "research-again") {
-            return json(res, 400, { error: `intent_kind "${intentKind}" is not supported yet` });
+            return json(res, 400, {
+              error: `intent_kind "${intentKind}" is not supported yet`,
+            });
           }
 
           if (intentKind === "research-again") {
             if (!runId) {
-              return json(res, 400, { error: "run_id is required for research-again" });
+              return json(res, 400, {
+                error: "run_id is required for research-again",
+              });
             }
             const snapshot = runs.get(runId);
             if (!snapshot) return json(res, 404, { error: "run not found" });
@@ -780,14 +654,27 @@ export async function startHttpServer(
 
             const redis = getProducerRedis();
             const idempotency = new PipelineIdempotency(redis);
-            const currentRevision = await getCurrentResearchRevision(redis, runId);
-            if (!(await idempotency.isCompleted(runId, "researcher", currentRevision))) {
-              return json(res, 409, { error: `Research revision ${currentRevision} is not complete; cannot request Research Again` });
+            const currentRevision = await getCurrentResearchRevision(
+              redis,
+              runId,
+            );
+            if (
+              !(await idempotency.isCompleted(
+                runId,
+                "researcher",
+                currentRevision,
+              ))
+            ) {
+              return json(res, 409, {
+                error: `Research revision ${currentRevision} is not complete; cannot request Research Again`,
+              });
             }
 
             const confirmationKey = `oneshot:run:${runId}:plan-confirmed`;
             if ((await redis.exists(confirmationKey)) === 1) {
-              return json(res, 409, { error: "Plan has already been confirmed for this run" });
+              return json(res, 409, {
+                error: "Plan has already been confirmed for this run",
+              });
             }
 
             try {
@@ -795,7 +682,10 @@ export async function startHttpServer(
                 decodeURIComponent(convMsg[1]),
                 message,
               );
-              const nextRevision = await incrementResearchRevision(redis, runId);
+              const nextRevision = await incrementResearchRevision(
+                redis,
+                runId,
+              );
               await enqueueStage(runId, "researcher", undefined, nextRevision);
               events.emit(runId, "ResearchAgain", "Completed", {
                 scope: "SUPPORT",
@@ -841,7 +731,8 @@ export async function startHttpServer(
           /^\/api\/conversations\/([^/]+)\/prompt$/,
         );
         if (req.method === "POST" && convPrompt) {
-          if (!intent) return json(res, 503, { error: "intent collection unavailable" });
+          if (!intent)
+            return json(res, 503, { error: "intent collection unavailable" });
           const cid = decodeURIComponent(convPrompt[1]);
           try {
             const r = intent.createPrompt(cid, id("prompt", cid));
@@ -859,9 +750,13 @@ export async function startHttpServer(
         );
         if (req.method === "POST" && convRun) {
           const options = await body(req);
-          if (options.review_plan !== undefined && typeof options.review_plan !== "boolean")
+          if (
+            options.review_plan !== undefined &&
+            typeof options.review_plan !== "boolean"
+          )
             return json(res, 400, { error: "review_plan must be boolean" });
-          if (!intent) return json(res, 503, { error: "intent collection unavailable" });
+          if (!intent)
+            return json(res, 503, { error: "intent collection unavailable" });
           const cid = decodeURIComponent(convRun[1]);
           const runId = newRunId();
 
@@ -876,11 +771,17 @@ export async function startHttpServer(
 
           if (made.result !== "Passed") return json(res, 409, made);
 
-          return submitRun(runId, made.prompt, res, {
-            prompt_id: made.prompt.prompt_id,
-            intent_id: made.intent.intent_id,
-            intent_revision: made.intent.revision,
-          }, options.review_plan === true);
+          return submitRun(
+            runId,
+            made.prompt,
+            res,
+            {
+              prompt_id: made.prompt.prompt_id,
+              intent_id: made.intent.intent_id,
+              intent_revision: made.intent.revision,
+            },
+            options.review_plan === true,
+          );
         }
 
         // GET /api/conversations/:id/graph â€” intent graph projection
@@ -888,22 +789,20 @@ export async function startHttpServer(
           /^\/api\/conversations\/([^/]+)\/graph$/,
         );
         if (req.method === "GET" && convGraph) {
-          if (!intent) return json(res, 503, { error: "intent collection unavailable" });
+          if (!intent)
+            return json(res, 503, { error: "intent collection unavailable" });
           return json(
             res,
             200,
-            projectIntentGraph(
-              intent.get(decodeURIComponent(convGraph[1])),
-            ),
+            projectIntentGraph(intent.get(decodeURIComponent(convGraph[1]))),
           );
         }
 
         // GET /api/conversations/:id â€” get conversation snapshot
-        const convGet = url.pathname.match(
-          /^\/api\/conversations\/([^/]+)$/,
-        );
+        const convGet = url.pathname.match(/^\/api\/conversations\/([^/]+)$/);
         if (req.method === "GET" && convGet) {
-          if (!intent) return json(res, 503, { error: "intent collection unavailable" });
+          if (!intent)
+            return json(res, 503, { error: "intent collection unavailable" });
           const c = intent.get(decodeURIComponent(convGet[1]));
           return c
             ? json(res, 200, c)
@@ -920,9 +819,7 @@ export async function startHttpServer(
           const runId = newRunId();
           const prompt: Prompt = {
             prompt_id: id("prompt", runId),
-            intent: String(
-              input.intent || "Run canonical success sample",
-            ),
+            intent: String(input.intent || "Run canonical success sample"),
             requested_outcome: String(
               input.requested_outcome ||
                 "Execute the complete canonical workflow through DONE",
@@ -931,8 +828,7 @@ export async function startHttpServer(
               {
                 context_id: id("ctx", runId),
                 statement: String(
-                  input.context ||
-                    "Fresh OneShot canonical product runtime",
+                  input.context || "Fresh OneShot canonical product runtime",
                 ),
               },
             ],
@@ -969,7 +865,8 @@ export async function startHttpServer(
               return json(res, 200, {
                 run_id: runId,
                 canceled: false,
-                state: snap.pipeline_status === "Done" ? "terminal" : "not-queued",
+                state:
+                  snap.pipeline_status === "Done" ? "terminal" : "not-queued",
               });
             }
             const state = await runQueue.getJobState(runId);
@@ -1008,7 +905,8 @@ export async function startHttpServer(
           const runId = decodeURIComponent(runConfirmPlan[1]);
           const snap = runs.get(runId);
           if (!snap) return json(res, 404, { error: "run not found" });
-          if (snap.pipeline_status === "Done") return json(res, 409, { error: "Run has already finished" });
+          if (snap.pipeline_status === "Done")
+            return json(res, 409, { error: "Run has already finished" });
           if (!options.pipeline?.queueReady) {
             return json(res, 501, {
               error: "plan confirmation requires the per-stage pipeline",
@@ -1032,8 +930,7 @@ export async function startHttpServer(
               e instanceof Error &&
               e.message.includes("Researcher stage has not completed")
                 ? 409
-                : e instanceof Error &&
-                    e.message.includes("Review")
+                : e instanceof Error && e.message.includes("Review")
                   ? 400
                   : 500;
             return json(res, status, {
@@ -1071,12 +968,17 @@ export async function startHttpServer(
             const result = await options.pipeline.reconcile(
               runId,
               stage as PipelineStage,
-              Number.isFinite(iteration) && iteration >= 0 ? Math.floor(iteration) : 0,
+              Number.isFinite(iteration) && iteration >= 0
+                ? Math.floor(iteration)
+                : 0,
             );
             return json(res, 200, {
               run_id: runId,
               stage,
-              iteration: Number.isFinite(iteration) && iteration >= 0 ? Math.floor(iteration) : 0,
+              iteration:
+                Number.isFinite(iteration) && iteration >= 0
+                  ? Math.floor(iteration)
+                  : 0,
               ...result,
             });
           } catch (e) {
@@ -1130,7 +1032,14 @@ export async function startHttpServer(
               version: providerManager.runtimeConfig().version,
               providers: statuses,
               activeProvider: rc.activeProvider,
-              advancedResearch: { tavily: { configured: Boolean(process.env.TAVILY_API_KEY), enabled: Boolean(process.env.TAVILY_API_KEY) && process.env.ONESHOT_TAVILY_MODE !== "off" } },
+              advancedResearch: {
+                tavily: {
+                  configured: Boolean(process.env.TAVILY_API_KEY),
+                  enabled:
+                    Boolean(process.env.TAVILY_API_KEY) &&
+                    process.env.ONESHOT_TAVILY_MODE !== "off",
+                },
+              },
               revision: rc.revision ?? 0,
             });
           } catch (e) {
@@ -1148,7 +1057,8 @@ export async function startHttpServer(
           const pid = decodeURIComponent(providerGet[1]);
           try {
             const status = await providerManager.get(pid);
-            if (!status) return json(res, 404, { error: `Unknown provider: ${pid}` });
+            if (!status)
+              return json(res, 404, { error: `Unknown provider: ${pid}` });
             return json(res, 200, status);
           } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
@@ -1176,13 +1086,17 @@ export async function startHttpServer(
               error: "provider does not require a credential",
             });
           const credBody = await body(req);
-          const value = typeof (credBody.value ?? credBody.apiKey) === "string" ? String(credBody.value ?? credBody.apiKey).trim() : "";
+          const value =
+            typeof (credBody.value ?? credBody.apiKey) === "string"
+              ? String(credBody.value ?? credBody.apiKey).trim()
+              : "";
           if (!value.trim())
             return json(res, 400, { error: "credential value is required" });
           try {
             await providerManager.setCredential(pid, {
               providerId: pid,
-              credentialType: entry.credentialType as ProviderCredential["credentialType"],
+              credentialType:
+                entry.credentialType as ProviderCredential["credentialType"],
               value,
               createdAt: new Date().toISOString(),
             });
@@ -1233,9 +1147,16 @@ export async function startHttpServer(
             return json(res, 503, { error: "provider management unavailable" });
           const rcBody = await body(req);
           try {
-            if (typeof rcBody.activeProvider === "string" && rcBody.activeProvider !== "<default>") {
+            if (
+              typeof rcBody.activeProvider === "string" &&
+              rcBody.activeProvider !== "<default>"
+            ) {
               const target = await providerManager.get(rcBody.activeProvider);
-              if (!target?.configured || !target.enabled) return json(res, 400, { error: "Provider requires an enabled configuration and credential" });
+              if (!target?.configured || !target.enabled)
+                return json(res, 400, {
+                  error:
+                    "Provider requires an enabled configuration and credential",
+                });
             }
             const updated = providerManager.saveRuntimeConfigPatch({
               activeProvider:
@@ -1272,7 +1193,10 @@ export async function startHttpServer(
               model: typeof input.model === "string" ? input.model : undefined,
               apiBase:
                 typeof input.apiBase === "string" ? input.apiBase : undefined,
-              temperature: typeof input.temperature === "number" ? input.temperature : undefined,
+              temperature:
+                typeof input.temperature === "number"
+                  ? input.temperature
+                  : undefined,
             });
             return json(res, 200, summary);
           } catch (e) {
@@ -1305,8 +1229,12 @@ export async function startHttpServer(
               : undefined;
           try {
             const result = await providerManager.test(pid, transient, {
-              ...(typeof testBody.model === "string" ? { model: testBody.model } : {}),
-              ...(typeof testBody.temperature === "number" ? { temperature: testBody.temperature } : {}),
+              ...(typeof testBody.model === "string"
+                ? { model: testBody.model }
+                : {}),
+              ...(typeof testBody.temperature === "number"
+                ? { temperature: testBody.temperature }
+                : {}),
             });
             return json(res, 200, result);
           } catch (e) {
@@ -1338,42 +1266,77 @@ export async function startHttpServer(
         }
 
         if (req.method === "GET" && url.pathname === "/api/workspace-context") {
-          return json(res, 200, { root: workspaceRoot,
-            source: process.env.ONESHOT_WORKSPACE_ROOT ? "configured" : "application-default" });
+          return json(res, 200, {
+            root: workspaceRoot,
+            source: process.env.ONESHOT_WORKSPACE_ROOT
+              ? "configured"
+              : "application-default",
+          });
         }
 
         if (req.method === "GET" && url.pathname === "/api/runs") {
-          return json(res, 200, { runs: runs.list().map(run => ({
-            run_id: run.run_id, pipeline_status: run.pipeline_status,
-            test_result: run.test_result, current_processor: run.current_processor,
-            hash_proof: run.hash_proof, updated_at: run.events.at(-1)?.created_at,
-          })) });
+          return json(res, 200, {
+            runs: runs.list().map((run) => ({
+              run_id: run.run_id,
+              pipeline_status: run.pipeline_status,
+              test_result: run.test_result,
+              current_processor: run.current_processor,
+              hash_proof: run.hash_proof,
+              updated_at: run.events.at(-1)?.created_at,
+            })),
+          });
         }
 
-        const buildReviewMatch = url.pathname.match(/^\/api\/runs\/([A-Za-z0-9:_-]+)\/build-review$/);
-        if (buildReviewMatch && (req.method === "GET" || req.method === "POST")) {
+        const buildReviewMatch = url.pathname.match(
+          /^\/api\/runs\/([A-Za-z0-9:_-]+)\/build-review$/,
+        );
+        if (
+          buildReviewMatch &&
+          (req.method === "GET" || req.method === "POST")
+        ) {
           const runId = buildReviewMatch[1];
           const snapshot = runs.get(runId);
           if (!snapshot) return json(res, 404, { error: "run not found" });
           try {
             if (req.method === "GET") {
               const gate = await runtime.buildReview.get(runId);
-              return gate ? json(res, 200, gate) : json(res, 404, { error: "Build is not ready" });
+              return gate
+                ? json(res, 200, gate)
+                : json(res, 404, { error: "Build is not ready" });
             }
-            if (snapshot.pipeline_status === "Done") return json(res, 409, { error: "Run has already finished" });
+            if (snapshot.pipeline_status === "Done")
+              return json(res, 409, { error: "Run has already finished" });
             const input = await body(req);
             const gate = await runtime.buildReview.decide(runId, input);
-            const mode = await runtime?.store?.load?.<{ mode: string }>(runId, "execution-mode");
+            const mode = await runtime?.store?.load?.<{ mode: string }>(
+              runId,
+              "execution-mode",
+            );
             if (input.action === "approve" && mode?.mode === "pipeline") {
-              if (!options.pipeline?.queueReady) return json(res, 503, { error: "Build authorized; queue unavailable. Retry confirmation when the queue recovers." });
+              if (!options.pipeline?.queueReady)
+                return json(res, 503, {
+                  error:
+                    "Build authorized; queue unavailable. Retry confirmation when the queue recovers.",
+                });
               await options.pipeline.enqueue(runId, "build");
-              events.emit(runId, "BuildReady", "Completed", { scope: "SUPPORT", message: "Build authorized for the confirmed package." });
+              events.emit(runId, "BuildReady", "Completed", {
+                scope: "SUPPORT",
+                message: "Build authorized for the confirmed package.",
+              });
             }
-            if (input.action === "return") events.emit(runId, "BuildReady", "Running", { scope: "SUPPORT", message: "Returned to confirmed summary; build remains waiting for authorization." });
+            if (input.action === "return")
+              events.emit(runId, "BuildReady", "Running", {
+                scope: "SUPPORT",
+                message:
+                  "Returned to confirmed summary; build remains waiting for authorization.",
+              });
             return json(res, 200, gate);
           } catch (error) {
-            if (error instanceof BuildReviewError) return json(res, error.status, { error: error.message });
-            return json(res, 503, { error: "Build continuation unavailable; retry confirmation." });
+            if (error instanceof BuildReviewError)
+              return json(res, error.status, { error: error.message });
+            return json(res, 503, {
+              error: "Build continuation unavailable; retry confirmation.",
+            });
           }
         }
 
@@ -1387,9 +1350,7 @@ export async function startHttpServer(
         }
 
         // GET /api/runs/:id/task â€” task projection
-        const taskMatch = url.pathname.match(
-          /^\/api\/runs\/([^/]+)\/task$/,
-        );
+        const taskMatch = url.pathname.match(/^\/api\/runs\/([^/]+)\/task$/);
         if (req.method === "GET" && taskMatch) {
           const r = runs.get(taskMatch[1]);
           if (!r) return json(res, 404, { error: "run not found" });
@@ -1403,9 +1364,7 @@ export async function startHttpServer(
         }
 
         // GET /api/runs/:id/audit â€” audit projection
-        const auditMatch = url.pathname.match(
-          /^\/api\/runs\/([^/]+)\/audit$/,
-        );
+        const auditMatch = url.pathname.match(/^\/api\/runs\/([^/]+)\/audit$/);
         if (req.method === "GET" && auditMatch) {
           const r = runs.get(auditMatch[1]);
           if (!r) return json(res, 404, { error: "run not found" });
@@ -1442,7 +1401,9 @@ export async function startHttpServer(
           );
         }
 
-        const reviewMatch = url.pathname.match(/^\/api\/runs\/([A-Za-z0-9:_-]+)\/review$/);
+        const reviewMatch = url.pathname.match(
+          /^\/api\/runs\/([A-Za-z0-9:_-]+)\/review$/,
+        );
         if (reviewMatch && (req.method === "GET" || req.method === "POST")) {
           const runId = reviewMatch[1];
           const snapshot = runs.get(runId);
@@ -1450,12 +1411,20 @@ export async function startHttpServer(
           try {
             if (req.method === "GET") {
               const review = await runtime.review.get(runId);
-              return review ? json(res, 200, review) : json(res, 404, { error: "No plan review available" });
+              return review
+                ? json(res, 200, review)
+                : json(res, 404, { error: "No plan review available" });
             }
-            if (snapshot.pipeline_status === "Done") return json(res, 409, { error: "Run has already finished" });
-            return json(res, 200, await runtime.review.decide(runId, await body(req)));
+            if (snapshot.pipeline_status === "Done")
+              return json(res, 409, { error: "Run has already finished" });
+            return json(
+              res,
+              200,
+              await runtime.review.decide(runId, await body(req)),
+            );
           } catch (error) {
-            if (error instanceof PlanReviewError) return json(res, error.status, { error: error.message });
+            if (error instanceof PlanReviewError)
+              return json(res, error.status, { error: error.message });
             throw error;
           }
         }
@@ -1548,9 +1517,7 @@ export async function startHttpServer(
         }
 
         // GET /api/runs/:id/events â€” SSE event stream
-        const eventMatch = url.pathname.match(
-          /^\/api\/runs\/([^/]+)\/events$/,
-        );
+        const eventMatch = url.pathname.match(/^\/api\/runs\/([^/]+)\/events$/);
         if (req.method === "GET" && eventMatch) {
           const runId = eventMatch[1];
           const snapshot = runs.get(runId);
@@ -1605,7 +1572,9 @@ export async function startHttpServer(
         // GET /api/workspace — current explicit target workspace info
         if (req.method === "GET" && url.pathname === "/api/workspace") {
           if (!options.targetWorkspace)
-            return json(res, 503, { error: "target workspace service unavailable" });
+            return json(res, 503, {
+              error: "target workspace service unavailable",
+            });
           const info = await options.targetWorkspace.current();
           return info
             ? json(res, 200, info)
@@ -1615,7 +1584,9 @@ export async function startHttpServer(
         // GET /api/workspace/uploads — list uploaded archive files
         if (req.method === "GET" && url.pathname === "/api/workspace/uploads") {
           if (!options.targetWorkspace)
-            return json(res, 503, { error: "target workspace service unavailable" });
+            return json(res, 503, {
+              error: "target workspace service unavailable",
+            });
           try {
             const uploadsRoot = resolve(process.cwd(), ".runtime", "uploads");
             const entries = await readdir(uploadsRoot, { withFileTypes: true });
@@ -1625,20 +1596,25 @@ export async function startHttpServer(
               .filter((n) => !n.startsWith("."));
             return json(res, 200, { uploads: files });
           } catch (error: any) {
-            if (error.code === "ENOENT")
-              return json(res, 200, { uploads: [] });
+            if (error.code === "ENOENT") return json(res, 200, { uploads: [] });
             return json(res, 500, { error: String(error) });
           }
         }
 
         // POST /api/workspace/materialize — materialize an uploaded archive
-        if (req.method === "POST" && url.pathname === "/api/workspace/materialize") {
+        if (
+          req.method === "POST" &&
+          url.pathname === "/api/workspace/materialize"
+        ) {
           if (!options.targetWorkspace)
-            return json(res, 503, { error: "target workspace service unavailable" });
+            return json(res, 503, {
+              error: "target workspace service unavailable",
+            });
           try {
             const input = await body(req);
             const uploadName = String(input.upload_name || "");
-            const info = await options.targetWorkspace.materializeUpload(uploadName);
+            const info =
+              await options.targetWorkspace.materializeUpload(uploadName);
             return json(res, 200, info);
           } catch (e) {
             const status = e instanceof TargetWorkspaceError ? e.status : 500;
@@ -1649,17 +1625,27 @@ export async function startHttpServer(
         }
 
         // POST /api/workspace/select-existing — select an existing directory
-        if (req.method === "POST" && url.pathname === "/api/workspace/select-existing") {
+        if (
+          req.method === "POST" &&
+          url.pathname === "/api/workspace/select-existing"
+        ) {
           if (!options.targetWorkspace)
-            return json(res, 503, { error: "target workspace service unavailable" });
+            return json(res, 503, {
+              error: "target workspace service unavailable",
+            });
           try {
             const input = await body(req);
-            const source = input.source === "project-root-fallback"
-              ? "project-root-fallback"
-              : "workspace-root";
+            const source =
+              input.source === "project-root-fallback"
+                ? "project-root-fallback"
+                : "workspace-root";
             const root = String(input.root || "");
-            if (!root) return json(res, 400, { error: "root path is required" });
-            const info = await options.targetWorkspace.selectExisting(source, root);
+            if (!root)
+              return json(res, 400, { error: "root path is required" });
+            const info = await options.targetWorkspace.selectExisting(
+              source,
+              root,
+            );
             return json(res, 200, info);
           } catch (e) {
             const status = e instanceof TargetWorkspaceError ? e.status : 500;
@@ -1670,14 +1656,22 @@ export async function startHttpServer(
         }
 
         // POST /api/workspace/auto-select — auto-select based on ONESHOT_WORKSPACE_ROOT
-        if (req.method === "POST" && url.pathname === "/api/workspace/auto-select") {
+        if (
+          req.method === "POST" &&
+          url.pathname === "/api/workspace/auto-select"
+        ) {
           if (!options.targetWorkspace)
-            return json(res, 503, { error: "target workspace service unavailable" });
+            return json(res, 503, {
+              error: "target workspace service unavailable",
+            });
           try {
             const envRoot = process.env.ONESHOT_WORKSPACE_ROOT;
             const root = envRoot ? resolve(envRoot) : process.cwd();
             const source = envRoot ? "workspace-root" : "project-root-fallback";
-            const info = await options.targetWorkspace.selectExisting(source, root);
+            const info = await options.targetWorkspace.selectExisting(
+              source,
+              root,
+            );
             return json(res, 200, info);
           } catch (e) {
             const status = e instanceof TargetWorkspaceError ? e.status : 500;
@@ -1690,7 +1684,9 @@ export async function startHttpServer(
         // POST /api/workspace/upload — receive an archive upload (raw bytes)
         if (req.method === "POST" && url.pathname === "/api/workspace/upload") {
           if (!options.targetWorkspace)
-            return json(res, 503, { error: "target workspace service unavailable" });
+            return json(res, 503, {
+              error: "target workspace service unavailable",
+            });
           try {
             const chunks: Buffer[] = [];
             for await (const chunk of req) chunks.push(chunk as Buffer);
@@ -1720,20 +1716,19 @@ export async function startHttpServer(
         // Static UI files
         // ---------------------------------------------------------------
         if (req.method === "GET") {
-          if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/v1/")) {
-            return json(res, 404, { error: `Endpoint not found: ${url.pathname}` });
+          if (
+            url.pathname.startsWith("/api/") ||
+            url.pathname.startsWith("/v1/")
+          ) {
+            return json(res, 404, {
+              error: `Endpoint not found: ${url.pathname}`,
+            });
           }
           const requested =
             url.pathname === "/" ? "index.html" : url.pathname.slice(1);
-          const safe = normalize(requested).replace(
-            /^(\.\.(\/|\\|$))+/,
-            "",
-          );
+          const safe = normalize(requested).replace(/^(\.\.(\/|\\|$))+/, "");
           const firstSegment = safe.split(/[\\/]/)[0] ?? "";
-          if (
-            firstSegment.startsWith(".") ||
-            isSensitiveWorkspacePath(safe)
-          ) {
+          if (firstSegment.startsWith(".") || isSensitiveWorkspacePath(safe)) {
             // Deny HTTP reads of .env / .env.* / .git / .runtime / credential
             // and secret files. Never reveal whether the path exists.
             return json(res, 404, { error: "not found" });
@@ -1747,8 +1742,15 @@ export async function startHttpServer(
             });
             return res.end(data);
           } catch {
-            const acceptsHtml = (req.headers.accept || "").includes("text/html");
-            if (url.pathname !== "/" && acceptsHtml && !url.pathname.startsWith("/api/") && !url.pathname.startsWith("/v1/")) {
+            const acceptsHtml = (req.headers.accept || "").includes(
+              "text/html",
+            );
+            if (
+              url.pathname !== "/" &&
+              acceptsHtml &&
+              !url.pathname.startsWith("/api/") &&
+              !url.pathname.startsWith("/v1/")
+            ) {
               try {
                 const index = await readFile(join(uiRoot, "index.html"));
                 res.writeHead(200, {
@@ -1790,7 +1792,13 @@ async function checkWorkerHealth(
     let cursor = "0";
     // Bound the health probe's work even in a large shared Redis database.
     for (let page = 0; page < 10; page++) {
-      const [next, keys] = await redis.scan(cursor, "MATCH", "oneshot:worker:*:heartbeat", "COUNT", 100);
+      const [next, keys] = await redis.scan(
+        cursor,
+        "MATCH",
+        "oneshot:worker:*:heartbeat",
+        "COUNT",
+        100,
+      );
       if (keys.length > 0) return "ok";
       cursor = next;
       if (cursor === "0") break;

@@ -64,13 +64,13 @@ export const state = {
   audit: (ctx: InvocationContext) => required<Audit>(ctx, ADK_STATE.audit),
   plan: (ctx: InvocationContext) => required<Plan>(ctx, ADK_STATE.plan),
   gapFindings: (ctx: InvocationContext) =>
-    (ctx.session.state[ADK_STATE.gapFindings] as GapFinding[] | undefined) ?? [],
+    (ctx.session.state[ADK_STATE.gapFindings] as GapFinding[] | undefined) ??
+    [],
   resolvedGaps: (ctx: InvocationContext) =>
     (ctx.session.state[ADK_STATE.resolvedGaps] as
       | GapAnalysis["resolved_gaps"]
       | undefined) ?? [],
-  gap: (ctx: InvocationContext) =>
-    required<GapAnalysis>(ctx, ADK_STATE.gap),
+  gap: (ctx: InvocationContext) => required<GapAnalysis>(ctx, ADK_STATE.gap),
   evaluation: (ctx: InvocationContext) =>
     required<Evaluation>(ctx, ADK_STATE.evaluation),
   schemaValidation: (ctx: InvocationContext) =>

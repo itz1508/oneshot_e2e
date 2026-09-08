@@ -1,20 +1,13 @@
-import type {
-  PipelineCheckpoints,
-  StageIdentity,
-} from "./checkpoints.js";
+import type { PipelineCheckpoints, StageIdentity } from "./checkpoints.js";
 
 import {
   applyTransition,
   type TransitionServices,
 } from "./apply-transition.js";
 
-import {
-  resolveTransition,
-} from "../workflow/canonical-transition.js";
+import { resolveTransition } from "../workflow/canonical-transition.js";
 
-import type {
-  PipelineStage,
-} from "./stage-outcome.js";
+import type { PipelineStage } from "./stage-outcome.js";
 
 export interface ReconcileInput {
   runId: string;
@@ -42,73 +35,43 @@ export async function reconcileStage(
   services: TransitionServices,
 ): Promise<ReconcileResult> {
   const identity: StageIdentity = {
-    runId:
-      input.runId,
+    runId: input.runId,
 
-    stage:
-      input.stage,
+    stage: input.stage,
 
-    iteration:
-      input.iteration,
+    iteration: input.iteration,
   };
 
-  const executed =
-    await checkpoints.isExecuted(
-      identity,
-    );
+  const executed = await checkpoints.isExecuted(identity);
 
   if (!executed) {
     return {
       recovered: false,
-      reason:
-        "Stage has not completed execution.",
+      reason: "Stage has not completed execution.",
     };
   }
 
-  const transitionState =
-    await checkpoints
-      .getTransitionState(
-        identity,
-      );
+  const transitionState = await checkpoints.getTransitionState(identity);
 
-  if (
-    transitionState ===
-    "committed"
-  ) {
+  if (transitionState === "committed") {
     return {
       recovered: false,
-      reason:
-        "Transition is already committed.",
+      reason: "Transition is already committed.",
     };
   }
 
-  const outcome =
-    await checkpoints.loadOutcome(
-      identity,
-    );
+  const outcome = await checkpoints.loadOutcome(identity);
 
   if (!outcome) {
-    throw new Error(
-      `Executed stage ${input.stage} has no persisted outcome.`,
-    );
+    throw new Error(`Executed stage ${input.stage} has no persisted outcome.`);
   }
 
-  const transition =
-    resolveTransition(
-      input.stage,
-      outcome,
-      input.iteration,
-    );
+  const transition = resolveTransition(input.stage, outcome, input.iteration);
 
-  await applyTransition(
-    identity,
-    transition,
-    services,
-  );
+  await applyTransition(identity, transition, services);
 
   return {
     recovered: true,
-    reason:
-      "Uncommitted transition recovered.",
+    reason: "Uncommitted transition recovered.",
   };
 }

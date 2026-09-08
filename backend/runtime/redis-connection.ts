@@ -32,8 +32,7 @@ function redisCtor(): new (opts?: RedisOptions) => Redis {
     default?: new (opts?: RedisOptions) => Redis;
   };
   return (
-    mod.default ??
-    (IORedisNS as unknown as new (opts?: RedisOptions) => Redis)
+    mod.default ?? (IORedisNS as unknown as new (opts?: RedisOptions) => Redis)
   );
 }
 

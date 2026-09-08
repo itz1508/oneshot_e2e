@@ -2,7 +2,7 @@
 
 [![Workflow](https://img.shields.io/badge/WORKFLOW-2563EB?style=for-the-badge)](docs/WORKFLOW_TREE)
 [![Index](https://img.shields.io/badge/INDEX-475569?style=for-the-badge)](app/web/src/index.html)
-[![App review](https://img.shields.io/badge/APP_REVIEW-7C3AED?style=for-the-badge)](designs/oneshot-review/index.html)
+[![App review](https://img.shields.io/badge/APP_REVIEW-7C3AED?style=for-the-badge)](app/web/src/oneshot-v8.html)
 [![Download ZIP](https://img.shields.io/badge/DOWNLOAD_ZIP-059669?style=for-the-badge)](https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip)
 
 **Installation scripts:** [Windows installer](scripts/install-e2e.ps1) · [Linux / macOS installer](scripts/install-e2e.sh)

@@ -12,9 +12,14 @@ export interface BuilderNodeInput {
 
 export function createBuilderNode(builder: BuilderWorkflow) {
   return node(
-    async (_ctx: NodeContext, input: BuilderNodeInput): Promise<SandboxExecutionResult> => {
+    async (
+      _ctx: NodeContext,
+      input: BuilderNodeInput,
+    ): Promise<SandboxExecutionResult> => {
       if (!/[A-Za-z]/.test(input.job_id)) {
-        throw new Error("ADK job_id must contain at least one non-numeric character");
+        throw new Error(
+          "ADK job_id must contain at least one non-numeric character",
+        );
       }
       return await builder.run(input.confirmed, input.hash);
     },

@@ -34,10 +34,7 @@ def verify_manifest(root: Path = ROOT, manifest_path: Path | None = None) -> lis
         if actual_hash != expected:
             errors.append(f"hash mismatch {rel}")
 
-    actual = {
-        path.relative_to(root).as_posix()
-        for path in iter_source_files(root)
-    }
+    actual = {path.relative_to(root).as_posix() for path in iter_source_files(root)}
     for rel in sorted(actual - listed):
         errors.append(f"unlisted {rel}")
     for rel in sorted(listed - actual):

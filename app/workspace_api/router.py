@@ -89,8 +89,7 @@ class ModelRouter:
                 ModelConfiguration.workspace_id == workspace_id,
                 ModelConfiguration.enabled.is_(True),
                 ModelProvider.enabled.is_(True),
-                ModelConfiguration.availability
-                != AvailabilityStatus.UNAVAILABLE,
+                ModelConfiguration.availability != AvailabilityStatus.UNAVAILABLE,
             )
         )
         if requested_model:
@@ -128,9 +127,7 @@ class ModelRouter:
         ordered: list[ModelConfiguration] = []
         for priority in sorted({candidate.priority for candidate in candidates}):
             tier = [
-                candidate
-                for candidate in candidates
-                if candidate.priority == priority
+                candidate for candidate in candidates if candidate.priority == priority
             ]
             key = (workspace_id, f"{alias}:{priority}")
             async with self._lock:
@@ -226,9 +223,7 @@ class ModelRouter:
                 continue
             try:
                 credential = self._credential(model)
-                result = await client.complete(
-                    provider, model, credential, request
-                )
+                result = await client.complete(provider, model, credential, request)
                 self._health(session, model, AvailabilityStatus.AVAILABLE)
                 session.flush()
                 return RouteResult(model=model, provider=provider, result=result)
@@ -237,9 +232,11 @@ class ModelRouter:
                 self._health(
                     session,
                     model,
-                    AvailabilityStatus.DEGRADED
-                    if error.retryable
-                    else AvailabilityStatus.UNAVAILABLE,
+                    (
+                        AvailabilityStatus.DEGRADED
+                        if error.retryable
+                        else AvailabilityStatus.UNAVAILABLE
+                    ),
                     error_code=error.code,
                 )
             except Exception as error:

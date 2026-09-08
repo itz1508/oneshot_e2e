@@ -14,10 +14,7 @@ export class HashWorkflow {
    * Prove the confirmation-side H1 equals the sandbox-side recomputation H2.
    * Both hashes intentionally cover the same immutable confirmed core.
    */
-  async proof(
-    createdHash: string,
-    sandboxHash: string,
-  ): Promise<HashProof> {
+  async proof(createdHash: string, sandboxHash: string): Promise<HashProof> {
     const proof: HashProof = {
       canonicalization_id: "oneshot-jcs-rfc8785-v1",
       algorithm: "sha256",

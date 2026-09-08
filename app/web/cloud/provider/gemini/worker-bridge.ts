@@ -36,8 +36,7 @@ export class GeminiWorker extends NativeWorkerBridge<
           GEMINI_TEMPERATURE:
             c.temperature === undefined ? "" : String(c.temperature),
           GEMINI_API_BASE:
-            c.baseUrl ||
-            "https://generativelanguage.googleapis.com/v1beta",
+            c.baseUrl || "https://generativelanguage.googleapis.com/v1beta",
           GEMINI_DISTRIBUTION_MODEL: c.distributionModel,
           GEMINI_RESEARCH_MODEL: c.researchModel,
           GEMINI_SYNTHESIS_MODEL: c.synthesisModel,

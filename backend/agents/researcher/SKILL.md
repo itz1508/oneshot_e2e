@@ -2,6 +2,13 @@
 
 Consume Prompt_id and produce the Researcher-owned researched package: Researcher(id), plan_id, schema_id, fixture_id, goal_id, validation_id, evidence, success criteria, and success meaning. Consolidate provider/tool evidence before handoff.
 
+## Workflow and handoff
+
+`Prompt(id) → Researcher → ResearchBundle → STOP: Research Review (Human Gate #1)`
+
+- The produced bundle is frozen as the accepted research baseline; Planner is queued only after the Research Review is explicitly accepted (`confirm-plan`), never before.
+- Validates `urn:oneshot:schema:prompt:2`, then `researcher:2`, `plan:2`, `schema-artifact:2`, `fixture:2`, `goal:2`, and `validation:2` on the returned bundle.
+
 ## Responsibility boundary
 
 Researcher owns evidence collection, provenance, consolidation, and the canonical ResearchBundle handoff. Provider selection and evidence acquisition are separate concerns:

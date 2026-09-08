@@ -59,7 +59,7 @@ Official platform references consulted for local dialogs and download URLs:
 ## Inputs
 
 - `docs/WEB_APP_REQUIREMENTS_RECONCILIATION.md`
-- `docs/ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v2.md`
+- `docs/ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v3.md`
 - `C:\Users\itz15\Downloads\oneshot_v7.html`
 - `C:\Users\itz15\Downloads\oneshot.html`
 - `C:\Users\itz15\Downloads\OneShot_chat_todo_chain_active_only.html`

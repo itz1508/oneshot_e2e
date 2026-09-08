@@ -21,15 +21,18 @@ export class SandboxRuntimeSkill {
     this.registry.register(
       {
         name: "verify_admission",
-        description: "Verify confirmed package structure and canonical hash admission",
+        description:
+          "Verify confirmed package structure and canonical hash admission",
       },
-      (input: SandboxExecutionInput) => verifySandboxAdmission(input, this.contracts),
+      (input: SandboxExecutionInput) =>
+        verifySandboxAdmission(input, this.contracts),
     );
 
     this.registry.register(
       {
         name: "execute_sandbox",
-        description: "Execute confirmed package in hardened isolated sandbox boundary",
+        description:
+          "Execute confirmed package in hardened isolated sandbox boundary",
       },
       (input: SandboxExecutionInput) => this.sandbox.execute(input),
     );
@@ -37,7 +40,8 @@ export class SandboxRuntimeSkill {
     this.registry.register(
       {
         name: "audit_sandbox",
-        description: "Read recorded execution evidence and verification hash for a run",
+        description:
+          "Read recorded execution evidence and verification hash for a run",
       },
       ({ run_id }: { run_id: string }) => this.sandbox.getEvidence(run_id),
     );

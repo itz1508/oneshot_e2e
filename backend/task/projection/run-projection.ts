@@ -1,4 +1,7 @@
-import type { ProcessingEvent, RunSnapshot } from "../../contracts/schema/types.js";
+import type {
+  ProcessingEvent,
+  RunSnapshot,
+} from "../../contracts/schema/types.js";
 import type { TaskCheckpoint } from "../checkpoint/checkpoint-store.js";
 
 /**

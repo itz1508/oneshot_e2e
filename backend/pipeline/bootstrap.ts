@@ -23,7 +23,9 @@ export interface AgentPipelineBootstrapInput {
  * Register canonical Agent factories without activating them.
  * Activation is explicit and happens only when the ADK workflow reaches a Agent.
  */
-export function createAgentPipeline(input: AgentPipelineBootstrapInput): AgentPipeline {
+export function createAgentPipeline(
+  input: AgentPipelineBootstrapInput,
+): AgentPipeline {
   const { projectRoot, events, contracts, sandbox } = input;
   const pipeline = new AgentPipeline(events);
 

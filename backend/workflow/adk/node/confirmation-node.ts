@@ -22,9 +22,14 @@ export interface ConfirmationNodeInput {
 
 export function createConfirmationNode(confirmation: ConfirmationWorkflow) {
   return node(
-    async (_ctx: NodeContext, input: ConfirmationNodeInput): Promise<ConfirmedPackage> => {
+    async (
+      _ctx: NodeContext,
+      input: ConfirmationNodeInput,
+    ): Promise<ConfirmedPackage> => {
       if (!/[A-Za-z]/.test(input.job_id)) {
-        throw new Error("ADK job_id must contain at least one non-numeric character");
+        throw new Error(
+          "ADK job_id must contain at least one non-numeric character",
+        );
       }
       return await confirmation.run(
         input.research,

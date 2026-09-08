@@ -1,6 +1,10 @@
 import type { ProcessingEvent } from "../../contracts/schema/types.js";
 
-export type SandboxGraphNodeState = "Pending" | "Running" | "Completed" | "Failed";
+export type SandboxGraphNodeState =
+  | "Pending"
+  | "Running"
+  | "Completed"
+  | "Failed";
 
 export interface SandboxGraphNode {
   id: string;
@@ -17,27 +21,57 @@ export interface SandboxGraphEdge {
   condition?: string;
 }
 
-const STAGES: Array<Omit<SandboxGraphNode, "state" | "message" | "artifact_id">> = [
+const STAGES: Array<
+  Omit<SandboxGraphNode, "state" | "message" | "artifact_id">
+> = [
   { id: "SandboxHandoffReceived", label: "Sandbox Handoff Received", stage: 1 },
-  { id: "SandboxAdmissionVerified", label: "Admission Verified (HASH == recomputed)", stage: 2 },
-  { id: "SandboxCreated", label: "Sandbox Created (Ephemeral Workspace)", stage: 3 },
-  { id: "ExecutionStarted", label: "Execution Started (Isolated Boundary)", stage: 4 },
+  {
+    id: "SandboxAdmissionVerified",
+    label: "Admission Verified (HASH == recomputed)",
+    stage: 2,
+  },
+  {
+    id: "SandboxCreated",
+    label: "Sandbox Created (Ephemeral Workspace)",
+    stage: 3,
+  },
+  {
+    id: "ExecutionStarted",
+    label: "Execution Started (Isolated Boundary)",
+    stage: 4,
+  },
   { id: "ExecutionCompleted", label: "Execution Completed", stage: 5 },
-  { id: "ExecutionEvidenceRecorded", label: "Execution Evidence Recorded", stage: 6 },
+  {
+    id: "ExecutionEvidenceRecorded",
+    label: "Execution Evidence Recorded",
+    stage: 6,
+  },
   { id: "SandboxHashCreated", label: "Sandbox Hash Created", stage: 7 },
-  { id: "SandboxHashVerified", label: "Sandbox Hash Verified (HASH == hash_sandbox)", stage: 8 },
+  {
+    id: "SandboxHashVerified",
+    label: "Sandbox Hash Verified (HASH == hash_sandbox)",
+    stage: 8,
+  },
   { id: "SandboxCleaned", label: "Sandbox Cleaned", stage: 9 },
 ];
 
 export const SANDBOX_GRAPH_EDGES: SandboxGraphEdge[] = [
   { from: "SandboxHandoffReceived", to: "SandboxAdmissionVerified" },
-  { from: "SandboxAdmissionVerified", to: "SandboxCreated", condition: "admission verified" },
+  {
+    from: "SandboxAdmissionVerified",
+    to: "SandboxCreated",
+    condition: "admission verified",
+  },
   { from: "SandboxCreated", to: "ExecutionStarted" },
   { from: "ExecutionStarted", to: "ExecutionCompleted" },
   { from: "ExecutionCompleted", to: "ExecutionEvidenceRecorded" },
   { from: "ExecutionEvidenceRecorded", to: "SandboxHashCreated" },
   { from: "SandboxHashCreated", to: "SandboxHashVerified" },
-  { from: "SandboxHashVerified", to: "SandboxCleaned", condition: "hash matched" },
+  {
+    from: "SandboxHashVerified",
+    to: "SandboxCleaned",
+    condition: "hash matched",
+  },
 ];
 
 /**

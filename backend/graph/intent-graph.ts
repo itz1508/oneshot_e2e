@@ -50,7 +50,11 @@ export function projectIntentGraph(c?: ConversationSnapshot) {
       { from: "chat", to: "intent" },
       { from: "intent", to: "merge" },
       { from: "merge", to: "required-info" },
-      { from: "required-info", to: "clarification", condition: "information missing" },
+      {
+        from: "required-info",
+        to: "clarification",
+        condition: "information missing",
+      },
       { from: "required-info", to: "prompt", condition: "sufficient" },
     ],
   };

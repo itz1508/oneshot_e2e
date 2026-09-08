@@ -1,4 +1,8 @@
-import type { ConfirmedPackage, Plan, RootCause } from "../contracts/schema/types.js";
+import type {
+  ConfirmedPackage,
+  Plan,
+  RootCause,
+} from "../contracts/schema/types.js";
 import type { HelpRequest } from "../intent/types.js";
 export type { HelpRequest } from "../intent/types.js";
 

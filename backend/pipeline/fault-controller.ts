@@ -1,21 +1,18 @@
 import type { Redis } from "ioredis";
-import { getFaultConfigs, type FaultConfig, type FaultStage } from "./faults.js";
+import {
+  getFaultConfigs,
+  type FaultConfig,
+  type FaultStage,
+} from "./faults.js";
 
-function matchesIteration(
-  config: FaultConfig,
-  iteration: number,
-): boolean {
+function matchesIteration(config: FaultConfig, iteration: number): boolean {
   return iteration >= (config.minIteration ?? 0);
 }
 
 export class PipelineFaultController {
   constructor(private readonly redis: Redis) {}
 
-  async apply(
-    runId: string,
-    stage: FaultStage,
-    iteration = 0,
-  ): Promise<void> {
+  async apply(runId: string, stage: FaultStage, iteration = 0): Promise<void> {
     const configs = getFaultConfigs();
 
     for (const config of configs) {
@@ -26,11 +23,11 @@ export class PipelineFaultController {
       switch (config.mode) {
         case "none":
         case "crash-after-checkpoint":
-          /*
-           * crash-after-checkpoint has its own hook (applyAfterCheckpoint)
-           * that fires AFTER the execution checkpoint is durable. It must do
-           * nothing here, before execution.
-           */
+        /*
+         * crash-after-checkpoint has its own hook (applyAfterCheckpoint)
+         * that fires AFTER the execution checkpoint is durable. It must do
+         * nothing here, before execution.
+         */
         case "refine-once":
           /*
            * refine-once is an OUTCOME-level injection handled by
@@ -44,25 +41,15 @@ export class PipelineFaultController {
         }
 
         case "fail-always": {
-          throw new Error(
-            `[FAULT] Forced permanent failure at ${stage}`,
-          );
+          throw new Error(`[FAULT] Forced permanent failure at ${stage}`);
         }
 
         case "fail-once": {
           const key = `oneshot:fault:${runId}:${stage}:consumed`;
-          const first = await this.redis.set(
-            key,
-            "1",
-            "EX",
-            60 * 60,
-            "NX",
-          );
+          const first = await this.redis.set(key, "1", "EX", 60 * 60, "NX");
 
           if (first === "OK") {
-            throw new Error(
-              `[FAULT] Forced one-time failure at ${stage}`,
-            );
+            throw new Error(`[FAULT] Forced one-time failure at ${stage}`);
           }
 
           return;
@@ -70,13 +57,7 @@ export class PipelineFaultController {
 
         case "crash-once": {
           const key = `oneshot:fault:${runId}:${stage}:crash-consumed`;
-          const first = await this.redis.set(
-            key,
-            "1",
-            "EX",
-            60 * 60,
-            "NX",
-          );
+          const first = await this.redis.set(key, "1", "EX", 60 * 60, "NX");
 
           if (first !== "OK") {
             return;
@@ -160,13 +141,7 @@ export class PipelineFaultController {
       "consumed",
     ].join(":");
 
-    const first = await this.redis.set(
-      marker,
-      "1",
-      "EX",
-      60 * 60,
-      "NX",
-    );
+    const first = await this.redis.set(marker, "1", "EX", 60 * 60, "NX");
 
     if (first !== "OK") {
       return;
@@ -219,13 +194,7 @@ export class PipelineFaultController {
       "consumed",
     ].join(":");
 
-    const first = await this.redis.set(
-      marker,
-      "1",
-      "EX",
-      60 * 60,
-      "NX",
-    );
+    const first = await this.redis.set(marker, "1", "EX", 60 * 60, "NX");
 
     return first === "OK";
   }

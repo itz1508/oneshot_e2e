@@ -24,39 +24,63 @@ function fixtureFindings(
 ): ValidationFeedback {
   const findings: GapFinding[] = [];
   const unresolved: string[] = [];
-  if (triple.fixture_validation.result === "Passed") return { findings, unresolved };
+  if (triple.fixture_validation.result === "Passed")
+    return { findings, unresolved };
 
-  const assertions = new Map(bundle.fixture.plan_assertions.map((assertion) => [assertion.assertion_id, assertion]));
-  const evidenceIds = triple.fixture_validation.evidence.map((evidence) => evidence.evidence_id);
+  const assertions = new Map(
+    bundle.fixture.plan_assertions.map((assertion) => [
+      assertion.assertion_id,
+      assertion,
+    ]),
+  );
+  const evidenceIds = triple.fixture_validation.evidence.map(
+    (evidence) => evidence.evidence_id,
+  );
 
   for (const result of triple.fixture_validation.assertion_results) {
     if (result.satisfied) continue;
     const assertion = assertions.get(result.assertion_id);
     if (!assertion) {
-      unresolved.push(`fixture assertion ${result.assertion_id} is routed but missing from Fixture`);
+      unresolved.push(
+        `fixture assertion ${result.assertion_id} is routed but missing from Fixture`,
+      );
       continue;
     }
 
-    const match = /^\$\.steps\.(\d+)\.(requirement_refs|goal_refs|fixture_refs|schema_refs)$/.exec(assertion.target);
-    const additive = assertion.operator === "contains" || assertion.operator === "references" || assertion.operator === "allFilesSpecified";
+    const match =
+      /^\$\.steps\.(\d+)\.(requirement_refs|goal_refs|fixture_refs|schema_refs)$/.exec(
+        assertion.target,
+      );
+    const additive =
+      assertion.operator === "contains" ||
+      assertion.operator === "references" ||
+      assertion.operator === "allFilesSpecified";
     if (!match || !additive) {
-      unresolved.push(`fixture assertion ${assertion.assertion_id} cannot be mapped to a monotonic Plan refinement`);
+      unresolved.push(
+        `fixture assertion ${assertion.assertion_id} cannot be mapped to a monotonic Plan refinement`,
+      );
       continue;
     }
 
     const step = plan.steps[Number(match[1])];
     if (!step) {
-      unresolved.push(`fixture assertion ${assertion.assertion_id} targets missing plan step ${match[1]}`);
+      unresolved.push(
+        `fixture assertion ${assertion.assertion_id} targets missing plan step ${match[1]}`,
+      );
       continue;
     }
 
     const expected = Array.isArray(assertion.expected)
-      ? assertion.expected.filter((value): value is string => typeof value === "string")
+      ? assertion.expected.filter(
+          (value): value is string => typeof value === "string",
+        )
       : typeof assertion.expected === "string"
         ? [assertion.expected]
         : [];
     if (!expected.length) {
-      unresolved.push(`fixture assertion ${assertion.assertion_id} has no additive string expectation`);
+      unresolved.push(
+        `fixture assertion ${assertion.assertion_id} has no additive string expectation`,
+      );
       continue;
     }
 
@@ -84,29 +108,44 @@ function goalFindings(
 ): ValidationFeedback {
   const findings: GapFinding[] = [];
   const unresolved: string[] = [];
-  if (triple.goal_validation.result === "Passed") return { findings, unresolved };
+  if (triple.goal_validation.result === "Passed")
+    return { findings, unresolved };
 
-  const evidenceIds = triple.goal_validation.evidence.map((evidence) => evidence.evidence_id);
+  const evidenceIds = triple.goal_validation.evidence.map(
+    (evidence) => evidence.evidence_id,
+  );
   for (const result of triple.goal_validation.criterion_results) {
     if (result.satisfied) continue;
-    const knownCriterion = bundle.goal.success_criteria.some((criterion) => criterion.criterion_id === result.criterion_id);
+    const knownCriterion = bundle.goal.success_criteria.some(
+      (criterion) => criterion.criterion_id === result.criterion_id,
+    );
     if (!knownCriterion) {
-      unresolved.push(`goal criterion ${result.criterion_id} is routed but missing from Goal`);
+      unresolved.push(
+        `goal criterion ${result.criterion_id} is routed but missing from Goal`,
+      );
       continue;
     }
 
     // Use Researcher's original Plan mapping as evidence for where the missing
     // criterion belongs. Never guess a new target step.
-    const originalTargets = bundle.plan.steps.filter((step) => step.goal_refs.includes(result.criterion_id));
+    const originalTargets = bundle.plan.steps.filter((step) =>
+      step.goal_refs.includes(result.criterion_id),
+    );
     if (!originalTargets.length) {
-      unresolved.push(`goal criterion ${result.criterion_id} has no evidence-backed target step`);
+      unresolved.push(
+        `goal criterion ${result.criterion_id} has no evidence-backed target step`,
+      );
       continue;
     }
 
     for (const original of originalTargets) {
-      const current = plan.steps.find((step) => step.step_id === original.step_id);
+      const current = plan.steps.find(
+        (step) => step.step_id === original.step_id,
+      );
       if (!current) {
-        unresolved.push(`goal criterion ${result.criterion_id} targets removed step ${original.step_id}`);
+        unresolved.push(
+          `goal criterion ${result.criterion_id} targets removed step ${original.step_id}`,
+        );
         continue;
       }
       if (current.goal_refs.includes(result.criterion_id)) continue;
@@ -140,12 +179,14 @@ export function validationFeedback(
   if (triple.schema_validation.result === "Failed") {
     unresolved.push(
       ...triple.schema_validation.evidence.map(
-        (evidence) => `schema validation requires additional information: ${evidence.statement}`,
+        (evidence) =>
+          `schema validation requires additional information: ${evidence.statement}`,
       ),
     );
   }
 
   const deduped = new Map<string, GapFinding>();
-  for (const finding of [...fixture.findings, ...goal.findings]) deduped.set(finding.key, finding);
+  for (const finding of [...fixture.findings, ...goal.findings])
+    deduped.set(finding.key, finding);
   return { findings: [...deduped.values()], unresolved };
 }

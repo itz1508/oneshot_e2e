@@ -7,7 +7,11 @@ import { SkillCatalog } from "./catalog.js";
 import { SkillRegistry } from "./registry.js";
 import { SkillResolver } from "./resolver.js";
 import { SkillActivationEngine } from "./activation.js";
-import type { ActivatedSkill, ActivationContext, SkillDescriptor } from "./types.js";
+import type {
+  ActivatedSkill,
+  ActivationContext,
+  SkillDescriptor,
+} from "./types.js";
 
 /**
  * Bootstrap and configure the standard OneShot Reusable Skill subsystem.
@@ -25,9 +29,14 @@ export function createSkillSystem(catalog = new SkillCatalog()): {
   // 1. oneshot-canonical-contracts factory
   registry.registerFactory(
     "oneshot-canonical-contracts",
-    async (desc: SkillDescriptor, ctx: ActivationContext): Promise<ActivatedSkill> => {
+    async (
+      desc: SkillDescriptor,
+      ctx: ActivationContext,
+    ): Promise<ActivatedSkill> => {
       if (!ctx.bridge) {
-        throw new Error("Canonical contracts skill requires PythonBridge in ActivationContext");
+        throw new Error(
+          "Canonical contracts skill requires PythonBridge in ActivationContext",
+        );
       }
       const skill = new CanonicalContractSkill(ctx.bridge, catalog);
       return {
@@ -50,7 +59,10 @@ export function createSkillSystem(catalog = new SkillCatalog()): {
   // 2. oneshot-task-runtime factory
   registry.registerFactory(
     "oneshot-task-runtime",
-    async (desc: SkillDescriptor, ctx: ActivationContext): Promise<ActivatedSkill> => {
+    async (
+      desc: SkillDescriptor,
+      ctx: ActivationContext,
+    ): Promise<ActivatedSkill> => {
       const task = ctx.services?.task as any;
       const runs = ctx.services?.runs as any;
       const skill = new TaskRuntimeSkill(task, runs, catalog);
@@ -74,7 +86,10 @@ export function createSkillSystem(catalog = new SkillCatalog()): {
   // 3. oneshot-intent-collection factory
   registry.registerFactory(
     "oneshot-intent-collection",
-    async (desc: SkillDescriptor, ctx: ActivationContext): Promise<ActivatedSkill> => {
+    async (
+      desc: SkillDescriptor,
+      ctx: ActivationContext,
+    ): Promise<ActivatedSkill> => {
       const intent = ctx.services?.intent as any;
       const skill = new IntentCollectionSkill(intent);
       return {
@@ -97,7 +112,10 @@ export function createSkillSystem(catalog = new SkillCatalog()): {
   // 4. oneshot-sandbox-runtime factory
   registry.registerFactory(
     "oneshot-sandbox-runtime",
-    async (desc: SkillDescriptor, ctx: ActivationContext): Promise<ActivatedSkill> => {
+    async (
+      desc: SkillDescriptor,
+      ctx: ActivationContext,
+    ): Promise<ActivatedSkill> => {
       const sandbox = ctx.services?.sandbox as any;
       const contracts = ctx.services?.contracts as any;
       const skill = new SandboxRuntimeSkill(sandbox, contracts);
@@ -121,7 +139,10 @@ export function createSkillSystem(catalog = new SkillCatalog()): {
   // 5. oneshot-init factory
   registry.registerFactory(
     "oneshot-init",
-    async (desc: SkillDescriptor, ctx: ActivationContext): Promise<ActivatedSkill> => {
+    async (
+      desc: SkillDescriptor,
+      ctx: ActivationContext,
+    ): Promise<ActivatedSkill> => {
       const skill = new InitSkill();
       return {
         skill_id: desc.skill_id,

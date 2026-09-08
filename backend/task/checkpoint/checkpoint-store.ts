@@ -48,7 +48,8 @@ export class CheckpointStore {
     snapshot: RunSnapshot,
   ): TaskCheckpoint | undefined {
     // Only track canonical workflow completions
-    if (event.scope !== "WORKFLOW" || event.execution_status !== "Completed") return;
+    if (event.scope !== "WORKFLOW" || event.execution_status !== "Completed")
+      return;
 
     const i = CANONICAL_PROCESSORS.indexOf(event.processor);
     const next =

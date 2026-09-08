@@ -24,7 +24,8 @@ export class SkillResolver {
     if (!query || (!query.skill_id && !query.capability && !query.tool)) {
       return {
         resolved: false,
-        reason: "Invalid resolution query: must provide skill_id, capability, or tool",
+        reason:
+          "Invalid resolution query: must provide skill_id, capability, or tool",
       };
     }
 

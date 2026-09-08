@@ -275,9 +275,7 @@ def create_app(
             session, workspace_id, principal.user_id, minimum
         )
 
-    def human_admin(
-        session: Session, principal: Principal, workspace_id: str
-    ) -> str:
+    def human_admin(session: Session, principal: Principal, workspace_id: str) -> str:
         if not principal.user_id:
             from workspace_api.errors import AuthorizationError
 
@@ -429,9 +427,7 @@ def create_app(
         response_model=list[MembershipRead],
         tags=["workspaces"],
     )
-    def list_members(
-        workspace_id: str, principal: PrincipalDep, session: SessionDep
-    ):
+    def list_members(workspace_id: str, principal: PrincipalDep, session: SessionDep):
         authorize(session, principal, workspace_id)
         return session.scalars(
             select(WorkspaceMembership)
@@ -585,9 +581,7 @@ def create_app(
         response_model=list[WorkspaceApiKeyRead],
         tags=["credentials"],
     )
-    def list_api_keys(
-        workspace_id: str, principal: PrincipalDep, session: SessionDep
-    ):
+    def list_api_keys(workspace_id: str, principal: PrincipalDep, session: SessionDep):
         human_admin(session, principal, workspace_id)
         return session.scalars(
             select(WorkspaceApiKey)
@@ -678,9 +672,7 @@ def create_app(
         response_model=list[ModelConfigurationRead],
         tags=["models"],
     )
-    def list_models(
-        workspace_id: str, principal: PrincipalDep, session: SessionDep
-    ):
+    def list_models(workspace_id: str, principal: PrincipalDep, session: SessionDep):
         authorize(session, principal, workspace_id, scope="models:read")
         return session.scalars(
             select(ModelConfiguration)
@@ -908,7 +900,9 @@ def create_app(
         period_end = end or _period_end(now)
         if period_end <= period_start:
             raise ConflictError("Usage end must be after start")
-        return UsageSummary(**usage.summary(session, workspace_id, period_start, period_end))
+        return UsageSummary(
+            **usage.summary(session, workspace_id, period_start, period_end)
+        )
 
     @app.get(
         f"{settings.api_prefix}/workspaces/{{workspace_id}}/usage/events",

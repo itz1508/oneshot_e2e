@@ -59,13 +59,11 @@ for index, model in enumerate(models, start=1):
 
     text = (response.text or "").strip()
     print(
-        f"LIVE_MODEL_PROBE model={model} "
-        f"response={text[:160]!r}",
+        f"LIVE_MODEL_PROBE model={model} " f"response={text[:160]!r}",
         flush=True,
     )
 
 print(
-    "THREE_DISTINCT_VERTEX_GEMINI_CALLS=PASSED "
-    + "->".join(models),
+    "THREE_DISTINCT_VERTEX_GEMINI_CALLS=PASSED " + "->".join(models),
     flush=True,
 )

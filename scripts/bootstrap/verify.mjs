@@ -11,13 +11,7 @@ import { resolve, join } from "node:path";
 
 const ROOT = resolve(import.meta.dirname || ".", "..", "..");
 
-const C = {
-  reset: "\x1b[0m",
-  green: "\x1b[32m",
-  red: "\x1b[31m",
-  cyan: "\x1b[36m",
-  yellow: "\x1b[33m",
-};
+import { colors as C } from "../lib/terminal-colors.mjs";
 
 function log(msg) {
   console.log(`${C.cyan}[verify]${C.reset} ${msg}`);

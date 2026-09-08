@@ -72,7 +72,9 @@ export class ResearchEvidenceCollector {
     } catch (error) {
       if (envTrue("ONESHOT_TAVILY_REQUIRED")) throw error;
       const detail = error instanceof Error ? error.message : String(error);
-      console.warn(`[Researcher:Tavily] optional evidence unavailable: ${detail}`);
+      console.warn(
+        `[Researcher:Tavily] optional evidence unavailable: ${detail}`,
+      );
     }
 
     return out;

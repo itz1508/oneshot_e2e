@@ -26,15 +26,7 @@ const ROOT = resolve(import.meta.dirname || ".", "..");
 const SCRIPTS = resolve(ROOT, "scripts");
 
 // Colors
-const C = {
-  reset: "\x1b[0m",
-  bold: "\x1b[1m",
-  dim: "\x1b[2m",
-  green: "\x1b[32m",
-  cyan: "\x1b[36m",
-  yellow: "\x1b[33m",
-  red: "\x1b[31m",
-};
+import { colors as C } from "./lib/terminal-colors.mjs";
 
 function log(msg) {
   console.log(`${C.cyan}[judge]${C.reset} ${msg}`);
@@ -107,8 +99,8 @@ const openVideo = () => {
         platform() === "win32"
           ? `start "" "${videoUrl}"`
           : platform() === "darwin"
-          ? `open "${videoUrl}"`
-          : `xdg-open "${videoUrl}"`;
+            ? `open "${videoUrl}"`
+            : `xdg-open "${videoUrl}"`;
       execSync(cmd, { stdio: "ignore", detached: true });
       pass("Walkthrough video opened");
     } catch (err) {
@@ -123,13 +115,17 @@ openVideo();
 
 // Step 3: Installation Check
 log("Step 3: Checking installation...");
-const needsInstall = !existsSync(join(ROOT, "node_modules")) || !envChecks.build;
+const needsInstall =
+  !existsSync(join(ROOT, "node_modules")) || !envChecks.build;
 
 if (needsInstall) {
   info("Installation required...");
   try {
     log("Installing Node.js dependencies...");
-    execSync("npm install --no-audit --no-fund", { cwd: ROOT, stdio: "inherit" });
+    execSync("npm install --no-audit --no-fund", {
+      cwd: ROOT,
+      stdio: "inherit",
+    });
     pass("Dependencies installed");
   } catch (err) {
     fail("Installation failed", err.message);
@@ -168,8 +164,10 @@ try {
 // Step 6: Start Server
 log("Step 6: Starting server...");
 const port = process.env.PORT || "8787";
-const bindHost = (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
-const probeHost = bindHost === "0.0.0.0" ? "127.0.0.1" : bindHost === "::" ? "::1" : bindHost;
+const bindHost =
+  (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
+const probeHost =
+  bindHost === "0.0.0.0" ? "127.0.0.1" : bindHost === "::" ? "::1" : bindHost;
 const apiToken = (process.env.ONESHOT_API_TOKEN || "").trim();
 
 const child = spawn("node", [join("dist", "backend", "index.js")], {
@@ -193,7 +191,11 @@ child.stderr.on("data", (data) => {
 
 child.on("error", (error) => fail("Failed to start backend", error.message));
 child.on("exit", (code, signal) => {
-  if (!isReady) fail(`Backend exited (code=${code}, signal=${signal || "none"})`, serverOutput);
+  if (!isReady)
+    fail(
+      `Backend exited (code=${code}, signal=${signal || "none"})`,
+      serverOutput,
+    );
 });
 
 // Step 7: Poll Health
@@ -203,23 +205,39 @@ const pollHealth = (targetPort, timeoutMs = 30000) => {
   const deadline = Date.now() + timeoutMs;
   return new Promise((resolve, reject) => {
     const retry = () => {
-      if (Date.now() >= deadline) { reject(new Error("Health timeout")); return; }
+      if (Date.now() >= deadline) {
+        reject(new Error("Health timeout"));
+        return;
+      }
       setTimeout(attempt, 500);
     };
     const attempt = () => {
-      const req = http.get({
-        host: probeHost, port: targetPort, path: "/api/health",
-        headers: apiToken ? { Authorization: `Bearer ${apiToken}` } : undefined,
-      }, (res) => {
-        let body = "";
-        res.on("data", (c) => body += c);
-        res.on("end", () => {
-          if (res.statusCode === 200) {
-            try { const p = JSON.parse(body); if (p.status === "ok") { resolve(p); return; } } catch {}
-          }
-          retry();
-        });
-      });
+      const req = http.get(
+        {
+          host: probeHost,
+          port: targetPort,
+          path: "/api/health",
+          headers: apiToken
+            ? { Authorization: `Bearer ${apiToken}` }
+            : undefined,
+        },
+        (res) => {
+          let body = "";
+          res.on("data", (c) => (body += c));
+          res.on("end", () => {
+            if (res.statusCode === 200) {
+              try {
+                const p = JSON.parse(body);
+                if (p.status === "ok") {
+                  resolve(p);
+                  return;
+                }
+              } catch {}
+            }
+            retry();
+          });
+        },
+      );
       req.on("error", retry);
       req.setTimeout(1000, () => req.destroy());
     };
@@ -248,9 +266,22 @@ setTimeout(async () => {
     }
 
     // Verify HTTP surface
-    const verify = async (path) => new Promise((resolve) => {
-      http.get({ host: probeHost, port, path, headers: apiToken ? { Authorization: `Bearer ${apiToken}` } : undefined }, (r) => resolve(r.statusCode === 200)).on("error", () => resolve(false));
-    });
+    const verify = async (path) =>
+      new Promise((resolve) => {
+        http
+          .get(
+            {
+              host: probeHost,
+              port,
+              path,
+              headers: apiToken
+                ? { Authorization: `Bearer ${apiToken}` }
+                : undefined,
+            },
+            (r) => resolve(r.statusCode === 200),
+          )
+          .on("error", () => resolve(false));
+      });
 
     if (await verify("/")) pass("UI OK");
     if (await verify("/api/health")) pass("Health OK");
@@ -258,15 +289,24 @@ setTimeout(async () => {
     // Open browser
     const url = `http://localhost:${port}`;
     try {
-      const cmd = platform() === "win32" ? `start "" "${url}"` : platform() === "darwin" ? `open "${url}"` : `xdg-open "${url}"`;
+      const cmd =
+        platform() === "win32"
+          ? `start "" "${url}"`
+          : platform() === "darwin"
+            ? `open "${url}"`
+            : `xdg-open "${url}"`;
       execSync(cmd, { stdio: "ignore" });
       pass("Browser opened");
-    } catch { info("Could not open browser"); }
+    } catch {
+      info("Could not open browser");
+    }
 
     // Final report
     console.log(`\n${C.bold}${C.green}=== JUDGE COMPLETE ===${C.reset}`);
     console.log(`${C.c}URL:${C.reset} ${C.cyan}${url}${C.reset}`);
-    console.log(`${C.c}Mode:${C.reset} ${(process.env.ONESHOT_MODE || "sample").toUpperCase()}`);
+    console.log(
+      `${C.c}Mode:${C.reset} ${(process.env.ONESHOT_MODE || "sample").toUpperCase()}`,
+    );
     console.log(`${C.dim}Press Ctrl+C to stop${C.reset}\n`);
   } catch (err) {
     fail("Judge failed", err.message);

@@ -14,14 +14,14 @@ from .triple_validation import (
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 ROOT = Path(__file__).resolve().parents[4]
-STORE = SchemaStore(ROOT / 'backend/schema')
+STORE = SchemaStore(ROOT / "backend/schema")
 
 
 def _skill_registry():
-    path = ROOT / 'backend/skills/oneshot-canonical-contracts/tool/registry.py'
-    spec = importlib.util.spec_from_file_location('oneshot_skill_registry', path)
+    path = ROOT / "backend/skills/oneshot-canonical-contracts/tool/registry.py"
+    spec = importlib.util.spec_from_file_location("oneshot_skill_registry", path)
     if spec is None or spec.loader is None:
-        raise RuntimeError('cannot load canonical Skill registry')
+        raise RuntimeError("cannot load canonical Skill registry")
     mod = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)
@@ -33,57 +33,57 @@ SKILL = _skill_registry()
 
 def _triple_inputs(payload: dict):
     return (
-        payload['plan'],
-        payload['validation'],
-        payload['schema_artifact'],
-        payload['fixture'],
-        payload['goal'],
+        payload["plan"],
+        payload["validation"],
+        payload["schema_artifact"],
+        payload["fixture"],
+        payload["goal"],
     )
 
 
 def handle(cmd: str, payload: dict):
-    if cmd == 'skill-tools':
-        return {'tools': list(SKILL.names())}
-    if cmd == 'skill-tool':
-        return SKILL.invoke(payload['tool'], payload.get('input') or {})
+    if cmd == "skill-tools":
+        return {"tools": list(SKILL.names())}
+    if cmd == "skill-tool":
+        return SKILL.invoke(payload["tool"], payload.get("input") or {})
 
-    if cmd == 'triple-routing':
+    if cmd == "triple-routing":
         plan, validation, schema_artifact, fixture, goal = _triple_inputs(payload)
         assert_routing(plan, validation, schema_artifact, fixture, goal)
-        return {'valid': True}
+        return {"valid": True}
 
-    if cmd == 'schema-validation':
+    if cmd == "schema-validation":
         plan, validation, schema_artifact, fixture, goal = _triple_inputs(payload)
         out = validate_schema(plan, schema_artifact, STORE)
-        STORE.assert_valid('urn:oneshot:schema:schema-validation:2', out)
+        STORE.assert_valid("urn:oneshot:schema:schema-validation:2", out)
         return out
 
-    if cmd == 'fixture-validation':
+    if cmd == "fixture-validation":
         plan, validation, schema_artifact, fixture, goal = _triple_inputs(payload)
-        graph = json.loads((ROOT / 'backend/workflow/graph.json').read_text())
+        graph = json.loads((ROOT / "backend/workflow/graph.json").read_text())
         out = validate_fixture(
             plan,
             fixture,
-            validation['fixture_validation']['assertion_ids'],
+            validation["fixture_validation"]["assertion_ids"],
             STORE,
             graph,
         )
-        STORE.assert_valid('urn:oneshot:schema:fixture-validation:2', out)
+        STORE.assert_valid("urn:oneshot:schema:fixture-validation:2", out)
         return out
 
-    if cmd == 'goal-validation':
+    if cmd == "goal-validation":
         plan, validation, schema_artifact, fixture, goal = _triple_inputs(payload)
         out = validate_goal(
             plan,
             goal,
-            validation['goal_validation']['criterion_ids'],
+            validation["goal_validation"]["criterion_ids"],
         )
-        STORE.assert_valid('urn:oneshot:schema:goal-validation:2', out)
+        STORE.assert_valid("urn:oneshot:schema:goal-validation:2", out)
         return out
 
-    if cmd == 'triple-validation':
+    if cmd == "triple-validation":
         plan, validation, schema_artifact, fixture, goal = _triple_inputs(payload)
-        graph = json.loads((ROOT / 'backend/workflow/graph.json').read_text())
+        graph = json.loads((ROOT / "backend/workflow/graph.json").read_text())
         out = run_triple(
             plan,
             validation,
@@ -94,39 +94,39 @@ def handle(cmd: str, payload: dict):
             graph,
         )
         for contract_id, key in [
-            ('urn:oneshot:schema:schema-validation:2', 'schema_validation'),
-            ('urn:oneshot:schema:fixture-validation:2', 'fixture_validation'),
-            ('urn:oneshot:schema:goal-validation:2', 'goal_validation'),
+            ("urn:oneshot:schema:schema-validation:2", "schema_validation"),
+            ("urn:oneshot:schema:fixture-validation:2", "fixture_validation"),
+            ("urn:oneshot:schema:goal-validation:2", "goal_validation"),
         ]:
             STORE.assert_valid(contract_id, out[key])
-        STORE.assert_valid('urn:oneshot:schema:triple-validation:2', out)
+        STORE.assert_valid("urn:oneshot:schema:triple-validation:2", out)
         return out
 
     # compatibility aliases for deterministic scripts/tests
     aliases = {
-        'validate-artifact': 'validate_artifact',
-        'validate-references': 'validate_references',
-        'create-hash': 'create_hash',
-        'verify-hash': 'verify_hash',
+        "validate-artifact": "validate_artifact",
+        "validate-references": "validate_references",
+        "create-hash": "create_hash",
+        "verify-hash": "verify_hash",
     }
     if cmd in aliases:
         return SKILL.invoke(aliases[cmd], payload)
-    if cmd == 'verify-static':
-        registry = SKILL.invoke('validate_registry', {})
-        graph = SKILL.invoke('validate_graph', {})
-        errors = [*registry.get('errors', []), *graph.get('errors', [])]
-        return {'valid': not errors, 'errors': errors}
-    if cmd == 'triple':
-        return handle('triple-validation', payload)
-    raise ValueError(f'unknown command: {cmd}')
+    if cmd == "verify-static":
+        registry = SKILL.invoke("validate_registry", {})
+        graph = SKILL.invoke("validate_graph", {})
+        errors = [*registry.get("errors", []), *graph.get("errors", [])]
+        return {"valid": not errors, "errors": errors}
+    if cmd == "triple":
+        return handle("triple-validation", payload)
+    raise ValueError(f"unknown command: {cmd}")
 
 
 def main():
-    cmd = sys.argv[1] if len(sys.argv) > 1 else ''
+    cmd = sys.argv[1] if len(sys.argv) > 1 else ""
     payload = json.load(sys.stdin)
-    json.dump(handle(cmd, payload), sys.stdout, separators=(',', ':'))
-    sys.stdout.write('\n')
+    json.dump(handle(cmd, payload), sys.stdout, separators=(",", ":"))
+    sys.stdout.write("\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

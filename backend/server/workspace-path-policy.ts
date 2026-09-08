@@ -19,12 +19,7 @@ const DENIED_DIRECTORY_NAMES = new Set([
   ".pytest_cache",
   "__pycache__",
 ]);
-const DENIED_PRIVATE_KEY_EXTENSIONS = new Set([
-  ".pem",
-  ".key",
-  ".p12",
-  ".pfx",
-]);
+const DENIED_PRIVATE_KEY_EXTENSIONS = new Set([".pem", ".key", ".p12", ".pfx"]);
 const PUBLIC_ENV_TEMPLATE_DIRECTORY = "app/env";
 const PUBLIC_ENV_TEMPLATE_NAMES = new Set([
   ".env.example",
@@ -91,9 +86,13 @@ export class WorkspacePathPolicy {
     return new WorkspacePathPolicy(await realpath(resolve(workspaceRoot)));
   }
 
-  private lexical(requestedPath: string): { target: string; relativePath: string } {
+  private lexical(requestedPath: string): {
+    target: string;
+    relativePath: string;
+  } {
     const target = resolve(this.root, requestedPath);
-    if (!isContained(this.root, target)) throw new WorkspacePathTraversalError();
+    if (!isContained(this.root, target))
+      throw new WorkspacePathTraversalError();
     const relativePath = relative(this.root, target);
     if (isSensitiveWorkspacePath(relativePath)) {
       throw new WorkspacePathDeniedError();
@@ -120,7 +119,9 @@ export class WorkspacePathPolicy {
 
   private assertCanonical(canonicalPath: string): void {
     if (!isContained(this.root, canonicalPath)) {
-      throw new WorkspacePathDeniedError("workspace path resolves outside the workspace root");
+      throw new WorkspacePathDeniedError(
+        "workspace path resolves outside the workspace root",
+      );
     }
     if (isSensitiveWorkspacePath(relative(this.root, canonicalPath))) {
       throw new WorkspacePathDeniedError();

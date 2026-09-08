@@ -89,15 +89,14 @@ export class AgentPipeline {
 
     try {
       const activated = (await factory(runId)) as ActivatedAgent<K>;
-      if (
-        !activated ||
-        activated.agent_id !== agentId ||
-        !activated.runtime
-      ) {
-        throw new Error(`Activation factory returned an invalid ${agentId} binding`);
+      if (!activated || activated.agent_id !== agentId || !activated.runtime) {
+        throw new Error(
+          `Activation factory returned an invalid ${agentId} binding`,
+        );
       }
 
-      const agents = this.active.get(runId) ?? new Map<AgentId, ActivatedAgent>();
+      const agents =
+        this.active.get(runId) ?? new Map<AgentId, ActivatedAgent>();
       agents.set(agentId, activated as ActivatedAgent);
       this.active.set(runId, agents);
 

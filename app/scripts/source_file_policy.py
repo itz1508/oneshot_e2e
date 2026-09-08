@@ -34,7 +34,9 @@ IGNORED_LOCAL_FILES = frozenset(
 # Local-only scratch/runtime directories at the repository root. Root-anchored
 # on purpose: "runtime" must only exclude /runtime, never legitimate nested
 # source directories such as backend/runtime/.
-ROOT_LEVEL_EXCLUDED_DIRECTORIES = frozenset({"external", "runtime", ".headless_profile"})
+ROOT_LEVEL_EXCLUDED_DIRECTORIES = frozenset(
+    {"external", "runtime", ".headless_profile"}
+)
 
 
 def source_path_is_forbidden(relative_path: str | PurePosixPath) -> bool:
@@ -46,6 +48,14 @@ def source_path_is_forbidden(relative_path: str | PurePosixPath) -> bool:
         return True
 
     lowered = tuple(part.lower() for part in parts)
+    # Next.js build output and incremental compiler state are not source files.
+    if lowered[:2] == ("app", "web") and len(lowered) >= 3:
+        if lowered[2] in {".next", "out"} or lowered == (
+            "app",
+            "web",
+            "tsconfig.tsbuildinfo",
+        ):
+            return True
     if (
         len(lowered) == 3
         and lowered[:2] == PUBLIC_ENV_TEMPLATE_DIRECTORY
@@ -55,13 +65,19 @@ def source_path_is_forbidden(relative_path: str | PurePosixPath) -> bool:
 
     if any(part in EXCLUDED_DIRECTORY_NAMES for part in lowered[:-1]):
         return True
-    if any(part.startswith("credentials") or part.startswith("secrets") for part in lowered):
+    if any(
+        part.startswith("credentials") or part.startswith("secrets") for part in lowered
+    ):
         return True
 
     name = lowered[-1]
     if name == ".env" or name.startswith(".env."):
         return True
-    return PurePosixPath(name).suffix.lower() in PRIVATE_KEY_SUFFIXES | {".log", ".pid", ".tmp"}
+    return PurePosixPath(name).suffix.lower() in PRIVATE_KEY_SUFFIXES | {
+        ".log",
+        ".pid",
+        ".tmp",
+    }
 
 
 def source_file_is_eligible(root: Path, path: Path) -> bool:

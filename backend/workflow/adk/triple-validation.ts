@@ -24,10 +24,7 @@ export function createTripleValidationAgent(
       "Checks Researcher-owned validator routing before parallel proof fan-out.",
     handler: async (ctx) => {
       try {
-        await tripleWorkflow.assertRouting(
-          state.bundle(ctx),
-          state.plan(ctx),
-        );
+        await tripleWorkflow.assertRouting(state.bundle(ctx), state.plan(ctx));
         return;
       } catch (error) {
         return {

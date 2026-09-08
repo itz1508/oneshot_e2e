@@ -42,10 +42,7 @@ export const SANDBOX_RUNTIME_SKILL_TOOLS = [
 ] as const;
 
 /** Init skill tools. */
-export const INIT_SKILL_TOOLS = [
-  "init_workspace",
-  "check_preflight",
-] as const;
+export const INIT_SKILL_TOOLS = ["init_workspace", "check_preflight"] as const;
 
 const BUILTIN_SKILLS: SkillDescriptor[] = [
   {
@@ -128,11 +125,7 @@ const BUILTIN_SKILLS: SkillDescriptor[] = [
     skill_id: "oneshot-init",
     name: "OneShot Workspace Init",
     path: resolve("backend/skills/init/SKILL.md"),
-    capabilities: [
-      "init",
-      "workspace-initialization",
-      "preflight-check",
-    ],
+    capabilities: ["init", "workspace-initialization", "preflight-check"],
     responsibilities: [
       "workspace directory provisioning",
       "environment preflight diagnostics",
@@ -195,7 +188,9 @@ export class SkillCatalog {
   /**
    * Dynamically discover reusable Skill definitions from `skills/` directories on disk.
    */
-  discover(rootDir = process.env.ONESHOT_ROOT || process.cwd()): SkillDescriptor[] {
+  discover(
+    rootDir = process.env.ONESHOT_ROOT || process.cwd(),
+  ): SkillDescriptor[] {
     const skillRoot = resolve(rootDir, "backend/skills");
     if (!existsSync(skillRoot)) return this.list();
 
@@ -203,7 +198,9 @@ export class SkillCatalog {
       if (!entry.isDirectory()) continue;
       const skillPath = join(skillRoot, entry.name, "SKILL.md");
       if (existsSync(skillPath)) {
-        const skillId = entry.name.startsWith("oneshot-") ? entry.name : `oneshot-${entry.name}`;
+        const skillId = entry.name.startsWith("oneshot-")
+          ? entry.name
+          : `oneshot-${entry.name}`;
         if (!this.indexed.has(skillId)) {
           const content = readFileSync(skillPath, "utf8");
           const firstLine = content.split("\n")[0] || "";

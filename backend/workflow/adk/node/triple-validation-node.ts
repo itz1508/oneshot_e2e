@@ -29,7 +29,10 @@ export function createTripleValidationNode(
   effects: TripleValidationNodeEffects = {},
 ) {
   const admissionNode = node(
-    async (_ctx: NodeContext, input: { research: ResearchBundle; plan: Plan }) => {
+    async (
+      _ctx: NodeContext,
+      input: { research: ResearchBundle; plan: Plan },
+    ) => {
       await triple.assertRouting(input.research, input.plan);
       return input;
     },
@@ -37,20 +40,28 @@ export function createTripleValidationNode(
   );
 
   const schemaNode = node(
-    async (_ctx: NodeContext, input: { research: ResearchBundle; plan: Plan }): Promise<SchemaValidationResult> =>
+    async (
+      _ctx: NodeContext,
+      input: { research: ResearchBundle; plan: Plan },
+    ): Promise<SchemaValidationResult> =>
       triple.schema(input.research, input.plan),
     { name: "SchemaValidation" },
   );
 
   const fixtureNode = node(
-    async (_ctx: NodeContext, input: { research: ResearchBundle; plan: Plan }): Promise<FixtureValidationResult> =>
+    async (
+      _ctx: NodeContext,
+      input: { research: ResearchBundle; plan: Plan },
+    ): Promise<FixtureValidationResult> =>
       triple.fixture(input.research, input.plan),
     { name: "FixtureValidation" },
   );
 
   const goalNode = node(
-    async (_ctx: NodeContext, input: { research: ResearchBundle; plan: Plan }): Promise<GoalValidationResult> =>
-      triple.goal(input.research, input.plan),
+    async (
+      _ctx: NodeContext,
+      input: { research: ResearchBundle; plan: Plan },
+    ): Promise<GoalValidationResult> => triple.goal(input.research, input.plan),
     { name: "GoalValidation" },
   );
 
@@ -65,30 +76,49 @@ export function createTripleValidationNode(
         goal: GoalValidationResult;
       },
     ): Promise<TripleValidation> =>
-      triple.join(input.research, input.plan, input.schema, input.fixture, input.goal),
+      triple.join(
+        input.research,
+        input.plan,
+        input.schema,
+        input.fixture,
+        input.goal,
+      ),
     { name: "TripleValidationJoin" },
   );
 
   return node(
-    async (ctx: NodeContext, input: TripleValidationNodeInput): Promise<TripleValidation> => {
+    async (
+      ctx: NodeContext,
+      input: TripleValidationNodeInput,
+    ): Promise<TripleValidation> => {
       if (!/[A-Za-z]/.test(input.job_id)) {
-        throw new Error("ADK job_id must contain at least one non-numeric character");
+        throw new Error(
+          "ADK job_id must contain at least one non-numeric character",
+        );
       }
 
-      const admitted = (await ctx.runNode(
-        admissionNode,
-        { research: input.research, plan: input.plan },
-        { runId: `${input.job_id}-validation-admission` },
-      )).output as { research: ResearchBundle; plan: Plan };
+      const admitted = (
+        await ctx.runNode(
+          admissionNode,
+          { research: input.research, plan: input.plan },
+          { runId: `${input.job_id}-validation-admission` },
+        )
+      ).output as { research: ResearchBundle; plan: Plan };
 
       effects.event?.(input.job_id, "SchemaValidation", "Running");
       effects.event?.(input.job_id, "FixtureValidation", "Running");
       effects.event?.(input.job_id, "GoalValidation", "Running");
 
       // Start all three before awaiting any one: real ADK dynamic parallel fan-out.
-      const schemaTask = ctx.runNode(schemaNode, admitted, { runId: `${input.job_id}-schema` });
-      const fixtureTask = ctx.runNode(fixtureNode, admitted, { runId: `${input.job_id}-fixture` });
-      const goalTask = ctx.runNode(goalNode, admitted, { runId: `${input.job_id}-goal` });
+      const schemaTask = ctx.runNode(schemaNode, admitted, {
+        runId: `${input.job_id}-schema`,
+      });
+      const fixtureTask = ctx.runNode(fixtureNode, admitted, {
+        runId: `${input.job_id}-fixture`,
+      });
+      const goalTask = ctx.runNode(goalNode, admitted, {
+        runId: `${input.job_id}-goal`,
+      });
 
       const [schemaResult, fixtureResult, goalResult] = await Promise.all([
         schemaTask,
@@ -112,17 +142,19 @@ export function createTripleValidationNode(
         artifact_id: goal.goal_id,
       });
 
-      return (await ctx.runNode(
-        joinNode,
-        {
-          research: admitted.research,
-          plan: admitted.plan,
-          schema,
-          fixture,
-          goal,
-        },
-        { runId: `${input.job_id}-validation-join` },
-      )).output as TripleValidation;
+      return (
+        await ctx.runNode(
+          joinNode,
+          {
+            research: admitted.research,
+            plan: admitted.plan,
+            schema,
+            fixture,
+            goal,
+          },
+          { runId: `${input.job_id}-validation-join` },
+        )
+      ).output as TripleValidation;
     },
     { name: "TripleValidation", rerunOnResume: true },
   );

@@ -245,9 +245,7 @@ class ModelProvider(TimestampMixin, Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     slug: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(120))
-    kind: Mapped[ProviderKind] = mapped_column(
-        enum_type(ProviderKind, "provider_kind")
-    )
+    kind: Mapped[ProviderKind] = mapped_column(enum_type(ProviderKind, "provider_kind"))
     base_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     config_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
@@ -259,7 +257,10 @@ class ProviderCredential(TimestampMixin, Base):
     __tablename__ = "provider_credentials"
     __table_args__ = (
         UniqueConstraint(
-            "workspace_id", "provider_id", "name", "version",
+            "workspace_id",
+            "provider_id",
+            "name",
+            "version",
             name="uq_provider_credential_version",
         ),
     )
@@ -448,9 +449,7 @@ class ChatMessage(Base):
     model_config_id: Mapped[str | None] = mapped_column(
         ForeignKey("model_configurations.id", ondelete="SET NULL"), nullable=True
     )
-    provider_message_id: Mapped[str | None] = mapped_column(
-        String(200), nullable=True
-    )
+    provider_message_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
     token_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(
@@ -517,13 +516,9 @@ class UsageEvent(Base):
     output_tokens: Mapped[int] = mapped_column(Integer, default=0)
     cached_tokens: Mapped[int] = mapped_column(Integer, default=0)
     total_tokens: Mapped[int] = mapped_column(Integer, default=0)
-    cost_usd: Mapped[Decimal] = mapped_column(
-        Numeric(18, 8), default=Decimal("0")
-    )
+    cost_usd: Mapped[Decimal] = mapped_column(Numeric(18, 8), default=Decimal("0"))
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    provider_request_id: Mapped[str | None] = mapped_column(
-        String(200), nullable=True
-    )
+    provider_request_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
     error_code: Mapped[str | None] = mapped_column(String(120), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)

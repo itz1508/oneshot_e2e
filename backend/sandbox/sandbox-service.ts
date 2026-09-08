@@ -73,7 +73,11 @@ export class SandboxService {
     private contracts: CanonicalContractSkill,
     private events?: ProcessingEventBus,
     private runner: SandboxRunner = new HardenedProcessRunner(),
-    private root = resolve(process.env.ONESHOT_RUNTIME_DIR || resolve(process.env.ONESHOT_ROOT || process.cwd(), ".runtime"), "sandbox-workspaces"),
+    private root = resolve(
+      process.env.ONESHOT_RUNTIME_DIR ||
+        resolve(process.env.ONESHOT_ROOT || process.cwd(), ".runtime"),
+      "sandbox-workspaces",
+    ),
   ) {
     mkdirSync(this.root, { recursive: true });
   }
@@ -100,12 +104,15 @@ export class SandboxService {
   }
 
   async execute(input: SandboxExecutionInput): Promise<SandboxExecutionResult> {
-    const runId = input.confirmed_package?.core?.plan?.plan_id?.replace(/^plan:/, "") || `sbx-${randomUUID()}`;
+    const runId =
+      input.confirmed_package?.core?.plan?.plan_id?.replace(/^plan:/, "") ||
+      `sbx-${randomUUID()}`;
     const defaultAuth = loadDefaultAuthorization();
     const auth: ExecutionAuthorization = {
       ...defaultAuth,
       ...input.execution_authorization,
-      execution_id: input.execution_authorization?.execution_id || `exec:${runId}`,
+      execution_id:
+        input.execution_authorization?.execution_id || `exec:${runId}`,
     };
 
     // --- 1. SandboxHandoffReceived ---
@@ -129,10 +136,12 @@ export class SandboxService {
           ? err.rootCause
           : {
               issue: "Sandbox admission verification failed",
-              expected: "Valid immutable confirmed package and matching canonical hash",
+              expected:
+                "Valid immutable confirmed package and matching canonical hash",
               actual: err instanceof Error ? err.message : String(err),
               evidence_ids: ["sandbox-admission"],
-              required_correction: "Provide valid confirmed package and canonical HASH",
+              required_correction:
+                "Provide valid confirmed package and canonical HASH",
               recheck_target: "sandbox admission",
             };
 
@@ -152,7 +161,10 @@ export class SandboxService {
 
     // --- 3. SandboxCreated ---
     const sandboxId = `sandbox:${runId}:${randomUUID()}`;
-    const workspacePath = join(this.root, sandboxId.replace(/[^a-zA-Z0-9_-]/g, "_"));
+    const workspacePath = join(
+      this.root,
+      sandboxId.replace(/[^a-zA-Z0-9_-]/g, "_"),
+    );
     mkdirSync(workspacePath, { recursive: true });
 
     this.ev(runId, "SandboxCreated", "Completed", {
@@ -180,12 +192,16 @@ export class SandboxService {
     // --- 5. ExecutionCompleted ---
     this.ev(runId, "ExecutionCompleted", "Completed", {
       test_result: runnerResult.condition === "success" ? "Passed" : "Failed",
-      ...(runnerResult.condition === "success" ? {} : { issue_type: "Root Cause" as const }),
+      ...(runnerResult.condition === "success"
+        ? {}
+        : { issue_type: "Root Cause" as const }),
       message: `exit_codes=${runnerResult.exit_codes.join(",")}`,
     });
 
     // --- 6. ExecutionEvidenceRecorded & Hash Recomputation ---
-    const hashSandbox = await this.contracts.createHash(input.confirmed_package.core);
+    const hashSandbox = await this.contracts.createHash(
+      input.confirmed_package.core,
+    );
 
     const evidence: ExecutionEvidence = {
       execution_id: auth.execution_id,
@@ -195,8 +211,12 @@ export class SandboxService {
       completed_at: completedAt,
       commands: runnerResult.commands,
       exit_codes: runnerResult.exit_codes,
-      stdout_refs: runnerResult.stdout_lines.map((_, i) => `stdout:${auth.execution_id}:${i + 1}`),
-      stderr_refs: runnerResult.stderr_lines.map((_, i) => `stderr:${auth.execution_id}:${i + 1}`),
+      stdout_refs: runnerResult.stdout_lines.map(
+        (_, i) => `stdout:${auth.execution_id}:${i + 1}`,
+      ),
+      stderr_refs: runnerResult.stderr_lines.map(
+        (_, i) => `stderr:${auth.execution_id}:${i + 1}`,
+      ),
       file_changes: runnerResult.file_changes,
       bytes_written: runnerResult.bytes_written,
       resource_usage: runnerResult.resource_usage,
@@ -253,7 +273,8 @@ export class SandboxService {
           expected: `Execution completes within ${auth.timeout_seconds}s`,
           actual: `Execution timed out after ${runnerResult.timeout_evidence?.elapsed_seconds || auth.timeout_seconds}s`,
           evidence_ids: [`evidence:${auth.execution_id}`],
-          required_correction: "Optimize execution steps or increase authorized timeout limit",
+          required_correction:
+            "Optimize execution steps or increase authorized timeout limit",
           recheck_target: sandboxId,
         },
       };
@@ -271,13 +292,17 @@ export class SandboxService {
           expected: `Files changed <= ${auth.max_files_changed} and bytes written <= ${auth.max_total_bytes_written}`,
           actual: `Files changed = ${runnerResult.file_changes.length}, bytes written = ${runnerResult.bytes_written}`,
           evidence_ids: [`evidence:${auth.execution_id}`],
-          required_correction: "Adjust workload output volume or authorized resource limits",
+          required_correction:
+            "Adjust workload output volume or authorized resource limits",
           recheck_target: sandboxId,
         },
       };
     }
 
-    if (runnerResult.condition === "failure" || runnerResult.exit_codes.some((c) => c !== 0)) {
+    if (
+      runnerResult.condition === "failure" ||
+      runnerResult.exit_codes.some((c) => c !== 0)
+    ) {
       return {
         result: "Failed",
         issue_type: "Root Cause",
@@ -289,7 +314,8 @@ export class SandboxService {
           expected: "All execution steps exit with code 0",
           actual: `Commands exited with codes: ${runnerResult.exit_codes.join(", ")}. Stderr: ${runnerResult.stderr_lines.join(" ").slice(0, 500)}`,
           evidence_ids: [`evidence:${auth.execution_id}`],
-          required_correction: "Review stderr diagnostics and plan step commands",
+          required_correction:
+            "Review stderr diagnostics and plan step commands",
           recheck_target: sandboxId,
         },
       };
@@ -307,7 +333,8 @@ export class SandboxService {
           expected: input.hash,
           actual: hashSandbox,
           evidence_ids: [`evidence:${auth.execution_id}`],
-          required_correction: "Recompute sandbox hash from exact confirmed immutable core",
+          required_correction:
+            "Recompute sandbox hash from exact confirmed immutable core",
           recheck_target: sandboxId,
         },
       };

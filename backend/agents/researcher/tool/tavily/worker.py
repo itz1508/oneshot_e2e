@@ -35,9 +35,7 @@ def _extract(client: TavilyClient, request: dict[str, Any]) -> dict[str, Any]:
     return client.extract(**kwargs)
 
 
-def _research_stream(
-    client: TavilyClient, request: dict[str, Any]
-) -> dict[str, Any]:
+def _research_stream(client: TavilyClient, request: dict[str, Any]) -> dict[str, Any]:
     stream = client.research(
         input=str(request["query"]),
         model=request.get("model", "mini"),

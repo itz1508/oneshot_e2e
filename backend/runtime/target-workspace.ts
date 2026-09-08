@@ -1,6 +1,14 @@
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
-import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import {
+  cp,
+  mkdir,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 import type { RuntimePaths } from "./runtime-config.js";
@@ -23,10 +31,18 @@ const run = promisify(execFile);
  * GNU tar on Linux reads .tar/.tar.gz/.tgz). No new npm dependencies.
  */
 export class TargetWorkspaceError extends Error {
-  constructor(message: string, readonly status = 400) { super(message); }
+  constructor(
+    message: string,
+    readonly status = 400,
+  ) {
+    super(message);
+  }
 }
 
-export type TargetSource = "upload" | "workspace-root" | "project-root-fallback";
+export type TargetSource =
+  | "upload"
+  | "workspace-root"
+  | "project-root-fallback";
 
 export interface TargetWorkspaceInfo {
   /** Absolute path of the materialized target workspace root. */
@@ -44,7 +60,9 @@ export interface TargetWorkspaceInfo {
 
 const INFO_NAME = "target-workspace.info";
 
-async function treeStats(root: string): Promise<{ files: string[]; bytes: number }> {
+async function treeStats(
+  root: string,
+): Promise<{ files: string[]; bytes: number }> {
   const files: string[] = [];
   let bytes = 0;
   async function walk(dir: string): Promise<void> {
@@ -52,7 +70,10 @@ async function treeStats(root: string): Promise<{ files: string[]; bytes: number
       const full = join(dir, entry.name);
       // Extraction-escape guard: every materialized path must stay inside root.
       if (relative(root, full).startsWith("..")) {
-        throw new TargetWorkspaceError("Archive entry escapes the target workspace root", 400);
+        throw new TargetWorkspaceError(
+          "Archive entry escapes the target workspace root",
+          400,
+        );
       }
       if (entry.isDirectory()) await walk(full);
       else if (entry.isFile()) {
@@ -76,9 +97,16 @@ async function digestTree(root: string, files: string[]): Promise<string> {
   return hash.digest("hex");
 }
 
-async function writeInfo(paths: RuntimePaths, info: TargetWorkspaceInfo): Promise<void> {
+async function writeInfo(
+  paths: RuntimePaths,
+  info: TargetWorkspaceInfo,
+): Promise<void> {
   await mkdir(paths.targetWorkspace, { recursive: true });
-  await writeFile(join(paths.targetWorkspace, INFO_NAME), JSON.stringify(info, null, 2) + "\n", "utf8");
+  await writeFile(
+    join(paths.targetWorkspace, INFO_NAME),
+    JSON.stringify(info, null, 2) + "\n",
+    "utf8",
+  );
 }
 
 class TargetWorkspaceService {
@@ -88,15 +116,27 @@ class TargetWorkspaceService {
   async materializeUpload(uploadName: string): Promise<TargetWorkspaceInfo> {
     const clean = basename(String(uploadName || ""));
     if (!clean || clean.startsWith(".")) {
-      throw new TargetWorkspaceError("Provide the name of an uploaded archive file", 400);
+      throw new TargetWorkspaceError(
+        "Provide the name of an uploaded archive file",
+        400,
+      );
     }
     const uploadsRoot = resolve(this.paths.uploads);
     const uploadPath = resolve(uploadsRoot, clean);
     if (!uploadPath.startsWith(uploadsRoot + sep)) {
-      throw new TargetWorkspaceError("Upload path escapes the uploads directory", 400);
+      throw new TargetWorkspaceError(
+        "Upload path escapes the uploads directory",
+        400,
+      );
     }
-    try { await stat(uploadPath); }
-    catch { throw new TargetWorkspaceError(`Uploaded archive not found: ${clean}`, 404); }
+    try {
+      await stat(uploadPath);
+    } catch {
+      throw new TargetWorkspaceError(
+        `Uploaded archive not found: ${clean}`,
+        404,
+      );
+    }
 
     const root = this.paths.targetWorkspace;
     // Never mix materializations: clear the previous target before extracting.
@@ -138,7 +178,10 @@ class TargetWorkspaceService {
    * ONESHOT_WORKSPACE_ROOT, or the established local/demo projectRoot fallback
    * (§11.2 — permitted only when explicitly the selected target/demo mode).
    */
-  async selectExisting(source: Exclude<TargetSource, "upload">, root: string): Promise<TargetWorkspaceInfo> {
+  async selectExisting(
+    source: Exclude<TargetSource, "upload">,
+    root: string,
+  ): Promise<TargetWorkspaceInfo> {
     const target = resolve(root);
     await mkdir(target, { recursive: true });
     const { files, bytes } = await treeStats(target);
@@ -158,7 +201,9 @@ class TargetWorkspaceService {
   /** Current explicit target, if one has been selected. */
   async current(): Promise<TargetWorkspaceInfo | undefined> {
     try {
-      return JSON.parse(await readFile(join(this.paths.targetWorkspace, INFO_NAME), "utf8")) as TargetWorkspaceInfo;
+      return JSON.parse(
+        await readFile(join(this.paths.targetWorkspace, INFO_NAME), "utf8"),
+      ) as TargetWorkspaceInfo;
     } catch (error: any) {
       if (error.code === "ENOENT") return undefined;
       throw error;

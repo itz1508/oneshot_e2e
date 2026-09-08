@@ -19,13 +19,7 @@ import { ensureQueueReadiness } from "./redis-readiness.mjs";
 
 const ROOT = resolve(import.meta.dirname || ".", "..", "..");
 
-const C = {
-  reset: "\x1b[0m",
-  bold: "\x1b[1m",
-  green: "\x1b[32m",
-  cyan: "\x1b[36m",
-  red: "\x1b[31m",
-};
+import { colors as C } from "../lib/terminal-colors.mjs";
 
 function log(msg) {
   console.log(`${C.cyan}[bootstrap]${C.reset} ${msg}`);
@@ -43,7 +37,9 @@ function fail(msg, detail) {
 
 function banner(text) {
   console.log(`\n${C.bold}${C.cyan}╔${"═".repeat(60)}╗${C.reset}`);
-  console.log(`${C.bold}${C.cyan}║${C.reset}  ${text.padEnd(58)}${C.bold}${C.cyan}║${C.reset}`);
+  console.log(
+    `${C.bold}${C.cyan}║${C.reset}  ${text.padEnd(58)}${C.bold}${C.cyan}║${C.reset}`,
+  );
   console.log(`${C.bold}${C.cyan}╚${"═".repeat(60)}╝${C.reset}\n`);
 }
 
@@ -84,7 +80,8 @@ export async function bootstrap(options = {}) {
   log("Step 2.5: Queue/Redis readiness");
   try {
     const rr = await ensureQueueReadiness({});
-    if (!rr.ok) fail("Redis/queue readiness failed", rr.rootCause || rr.message);
+    if (!rr.ok)
+      fail("Redis/queue readiness failed", rr.rootCause || rr.message);
     pass(rr.message);
   } catch (err) {
     fail("Redis/queue readiness check failed", err.message);

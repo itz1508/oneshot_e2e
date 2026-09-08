@@ -29,7 +29,9 @@ export class InitSkill {
         description: "Provision required OneShot runtime data directories",
       },
       async (input: { root?: string } = {}): Promise<WorkspaceInitResult> => {
-        const root = resolve(input.root || process.env.ONESHOT_ROOT || process.cwd());
+        const root = resolve(
+          input.root || process.env.ONESHOT_ROOT || process.cwd(),
+        );
         const runtimePaths = getRuntimePaths(root);
         const dirs = [
           { path: runtimePaths.runs, name: "runs" },
@@ -59,10 +61,13 @@ export class InitSkill {
     this.registry.register(
       {
         name: "check_preflight",
-        description: "Verify environment configuration, node/python runtime, and schemas",
+        description:
+          "Verify environment configuration, node/python runtime, and schemas",
       },
       async (input: { root?: string } = {}): Promise<PreflightCheckResult> => {
-        const root = resolve(input.root || process.env.ONESHOT_ROOT || process.cwd());
+        const root = resolve(
+          input.root || process.env.ONESHOT_ROOT || process.cwd(),
+        );
         const checks: PreflightCheckResult["checks"] = [];
 
         // Check 1: Schema directory
@@ -82,8 +87,13 @@ export class InitSkill {
           message: `Node.js version is ${process.version}`,
         });
 
-// Check 3: Contract registry (canonical location)
-        const registryFile = join(root, "backend", "schema", "contract-registry.json");
+        // Check 3: Contract registry (canonical location)
+        const registryFile = join(
+          root,
+          "backend",
+          "schema",
+          "contract-registry.json",
+        );
         checks.push({
           name: "contract_registry_exists",
           passed: existsSync(registryFile),

@@ -7,12 +7,7 @@
 
 import { execSync } from "node:child_process";
 
-const C = {
-  reset: "\x1b[0m",
-  green: "\x1b[32m",
-  red: "\x1b[31m",
-  yellow: "\x1b[33m",
-};
+import { colors as C } from "../lib/terminal-colors.mjs";
 
 function pass(msg) {
   console.log(`${C.green}✓${C.reset} ${msg}`);
@@ -25,8 +20,8 @@ function fail(msg) {
 export function checkNode(minVersion = "24.13.0") {
   try {
     const version = execSync("node --version", { encoding: "utf8" }).trim();
-    const major = parseInt(version.slice(1).split('.')[0]);
-    const required = parseInt(minVersion.split('.')[0]);
+    const major = parseInt(version.slice(1).split(".")[0]);
+    const required = parseInt(minVersion.split(".")[0]);
 
     if (major >= required) {
       pass(`Node.js ${version}`);
@@ -53,16 +48,24 @@ export function checkNpm(minVersion = "11.8.0") {
 
 export function checkPython() {
   try {
-    const version = execSync("python --version", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    const version = execSync("python --version", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
     pass(version);
     return true;
   } catch {
     try {
-      const version = execSync("python3 --version", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+      const version = execSync("python3 --version", {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      }).trim();
       pass(version);
       return true;
     } catch {
-      console.log(`${C.yellow}⚠${C.reset} Python not found (some features limited)`);
+      console.log(
+        `${C.yellow}⚠${C.reset} Python not found (some features limited)`,
+      );
       return false;
     }
   }
@@ -77,7 +80,7 @@ export function runPreflight() {
     python: checkPython(),
   };
 
-  const allPassed = Object.values(results).every(r => r !== false);
+  const allPassed = Object.values(results).every((r) => r !== false);
 
   if (allPassed) {
     console.log("\nPreflight checks passed");

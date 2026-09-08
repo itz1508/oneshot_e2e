@@ -9,9 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def requirement_files(provider: str | None = None) -> list[Path]:
     files = [ROOT / "app/requirements" / "base.txt"]
     selected = (
-        provider
-        if provider is not None
-        else os.getenv("ONESHOT_RESEARCH_PROVIDER", "")
+        provider if provider is not None else os.getenv("ONESHOT_RESEARCH_PROVIDER", "")
     ).lower()
     if selected in {"featherless", "featherless_gemma4"}:
         files.append(ROOT / "app/requirements" / "featherless.txt")
@@ -20,9 +18,7 @@ def requirement_files(provider: str | None = None) -> list[Path]:
     return files
 
 
-def verify_requirement_files(
-    files: list[Path], version_lookup=version
-) -> list[str]:
+def verify_requirement_files(files: list[Path], version_lookup=version) -> list[str]:
     errors = []
     for path in files:
         for line in path.read_text(encoding="utf-8").splitlines():

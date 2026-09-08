@@ -11,7 +11,7 @@ test('frontend modules exist and compose',()=>{
   for(const f of SRC_MODULES) assert.ok(fs.existsSync('src/'+f),`missing src/${f}`);
   const app=fs.readFileSync('src/app.js','utf8');
   for(const f of ['visual-settings.js','runtime-view-state.js','live-activity.js','task-management.js'])
-    assert.ok(app.includes(`from '/${f}'`),`app.js must import /${f}`);
+    assert.match(app, new RegExp(`from\\s+[\'"]/${f.replaceAll('.', '\\.')}[\'"]`), `app.js must import /${f}`);
 });
 
 test('stable E2E selectors',()=>{
@@ -44,12 +44,12 @@ test('no fabricated terminal values',()=>{
 test('runtime events are deduplicated then sequence-sorted',()=>{
   assert.ok(j.includes('state.seen.has(e.eventId)'));
   assert.ok(j.includes('state.seen.add(e.eventId)'));
-  assert.ok(j.includes('state.run.events.sort((a,b)=>a.sequence-b.sequence)'));
+  assert.match(j, /state\.run\.events\.sort\(\s*\(a,\s*b\)\s*=>\s*a\.sequence\s*-\s*b\.sequence\s*,?\s*\)/);
 });
 
 test('Generate readiness is runtime-owned',()=>{
   assert.ok(j.includes('n.intent?.ready_for_prompt'));
-  assert.ok(j.includes('c.sufficient===true'));
+  assert.match(j, /c\.sufficient\s*===\s*true/);
   assert.ok(!/message\.oninput[^\n]*setReadiness/.test(j));
 });
 
@@ -59,6 +59,6 @@ test('approved shell mechanics are present',()=>{
   assert.ok(h.includes('id="top-handle"'));
   assert.ok(c.includes('--left-open'));
   assert.ok(c.includes('--right-open'));
-  assert.ok(j.includes("localStorage.setItem('oneshot.rail.y'"));
-  assert.ok(j.includes("localStorage.setItem('oneshot.operator.v3'"));
+  assert.match(j, /localStorage\.setItem\(\s*['"]oneshot\.rail\.y['"]/);
+  assert.match(j, /localStorage\.setItem\(\s*['"]oneshot\.operator\.v3['"]/);
 });

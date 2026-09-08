@@ -19,15 +19,29 @@ export interface PipelineIssue {
 
 export type StageOutcome<T = unknown> =
   | { kind: "advance"; value: T }
-  | { kind: "refine"; value: T; issue: PipelineIssue; validation_feedback: string }
+  | {
+      kind: "refine";
+      value: T;
+      issue: PipelineIssue;
+      validation_feedback: string;
+    }
   | { kind: "terminal"; value: T; issue: PipelineIssue };
 
 export function advance<T>(value: T): StageOutcome<T> {
   return { kind: "advance", value };
 }
 
-export function refine<T>(value: T, issue: PipelineIssue, validationFeedback: string): StageOutcome<T> {
-  return { kind: "refine", value, issue, validation_feedback: validationFeedback };
+export function refine<T>(
+  value: T,
+  issue: PipelineIssue,
+  validationFeedback: string,
+): StageOutcome<T> {
+  return {
+    kind: "refine",
+    value,
+    issue,
+    validation_feedback: validationFeedback,
+  };
 }
 
 export function terminal<T>(value: T, issue: PipelineIssue): StageOutcome<T> {

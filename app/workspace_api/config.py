@@ -41,9 +41,7 @@ class WorkspaceSettings(BaseSettings):
     database_echo: bool = False
     auto_create_schema: bool = True
 
-    jwt_secret: SecretStr = SecretStr(
-        "development-only-jwt-secret-change-me-now"
-    )
+    jwt_secret: SecretStr = SecretStr("development-only-jwt-secret-change-me-now")
     jwt_algorithm: Literal["HS256", "HS384", "HS512"] = "HS256"
     access_token_ttl_minutes: int = Field(default=30, ge=5, le=1440)
     api_key_pepper: SecretStr = SecretStr(
@@ -80,8 +78,7 @@ class WorkspaceSettings(BaseSettings):
             problems.append("ONESHOT_WORKSPACE_ENCRYPTION_KEYS")
         if problems:
             raise ValueError(
-                "production security configuration is missing: "
-                + ", ".join(problems)
+                "production security configuration is missing: " + ", ".join(problems)
             )
         return self
 
@@ -89,7 +86,9 @@ class WorkspaceSettings(BaseSettings):
     def cors_origin_list(self) -> list[str]:
         """Return normalized configured CORS origins."""
 
-        return [value.strip() for value in self.cors_origins.split(",") if value.strip()]
+        return [
+            value.strip() for value in self.cors_origins.split(",") if value.strip()
+        ]
 
     @property
     def fernet_keys(self) -> list[str]:

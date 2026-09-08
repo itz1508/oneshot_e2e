@@ -51,9 +51,7 @@ export class OneShotStageAgent extends BaseAgent {
       author: this.name,
       actions: createEventActions({
         stateDelta: result.stateDelta ?? {},
-        ...(result.escalate === undefined
-          ? {}
-          : { escalate: result.escalate }),
+        ...(result.escalate === undefined ? {} : { escalate: result.escalate }),
       }),
     });
   }

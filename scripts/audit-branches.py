@@ -38,7 +38,7 @@ def main() -> None:
         "observed_at": datetime.now(timezone.utc).isoformat(),
         "main_sha": git("rev-parse", base),
         "all_local_branch_commits_published": all(b["unpublished_commits"] == 0 for b in branches),
-        "note": "Ancestry and patch identity do not prove semantic equivalence or runtime quality. See docs/BRANCH_RECONCILIATION.md.",
+        "note": "Ancestry and patch identity do not prove semantic equivalence or runtime quality.",
         "branches": branches,
     }, indent=2))
 

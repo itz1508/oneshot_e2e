@@ -1,8 +1,5 @@
 import type { Prompt } from "../../../../contracts/schema/types.js";
-import {
-  TavilyPythonRunner,
-  type TavilyRunner,
-} from "./bridge.js";
+import { TavilyPythonRunner, type TavilyRunner } from "./bridge.js";
 
 export interface TavilyEvidence {
   source: string;
@@ -62,11 +59,7 @@ function modeFromEnvironment(): TavilyMode {
 }
 
 function compactQuery(prompt: Prompt): string {
-  return [
-    prompt.intent,
-    prompt.requested_outcome,
-    ...prompt.research_direction,
-  ]
+  return [prompt.intent, prompt.requested_outcome, ...prompt.research_direction]
     .filter(Boolean)
     .join(" ")
     .replace(/\s+/g, " ")
@@ -89,7 +82,9 @@ export class TavilyEvidenceCollector {
     const mode = modeFromEnvironment();
     if (mode === "off") return [];
     if (!(process.env.TAVILY_API_KEY || "").trim()) {
-      throw new Error(`TAVILY_API_KEY is required when ONESHOT_TAVILY_MODE=${mode}`);
+      throw new Error(
+        `TAVILY_API_KEY is required when ONESHOT_TAVILY_MODE=${mode}`,
+      );
     }
 
     const query = compactQuery(prompt);
@@ -180,7 +175,9 @@ export class TavilyEvidenceCollector {
       format: "markdown",
     });
     const extractRequestId = extract.request_id || requestId;
-    for (const result of Array.isArray(extract.results) ? extract.results : []) {
+    for (const result of Array.isArray(extract.results)
+      ? extract.results
+      : []) {
       const url = typeof result.url === "string" ? result.url : "";
       const content = clip(result.raw_content);
       if (!url || !content) continue;

@@ -58,7 +58,10 @@ function isInsufficientIntent(text: string): boolean {
   if (!trimmed) return true;
   if (VAGUE_GENERIC.test(trimmed) || VAGUE_PHRASES.test(trimmed)) return true;
   const words = trimmed.split(/\s+/).filter(Boolean);
-  if (words.length <= 2 && /^(?:build|make|fix|create|do)\s+(?:it|this|that)$/i.test(trimmed)) {
+  if (
+    words.length <= 2 &&
+    /^(?:build|make|fix|create|do)\s+(?:it|this|that)$/i.test(trimmed)
+  ) {
     return true;
   }
   return false;
@@ -197,10 +200,7 @@ export class IntentCollectionService {
    * `{ result: "Root Cause", root_cause, help_request, intent }` when
    * user-owned information is still missing.
    */
-  createPrompt(
-    conversationId: string,
-    promptId: string,
-  ): PromptCreationResult {
+  createPrompt(conversationId: string, promptId: string): PromptCreationResult {
     const snap = this.store.require(conversationId);
     const intent = snap.intent;
 
@@ -215,7 +215,12 @@ export class IntentCollectionService {
         required_correction: `Ask user: ${help.question}`,
         recheck_target: intent.intent_id,
       };
-      return { result: "Root Cause", root_cause: rc, help_request: help, intent };
+      return {
+        result: "Root Cause",
+        root_cause: rc,
+        help_request: help,
+        intent,
+      };
     }
 
     const prompt = this.promptGenerator.generate(intent, promptId);
@@ -258,10 +263,7 @@ export class IntentCollectionService {
     const byKind = new Map(previous.statements.map((x) => [x.kind, x]));
     const statements = [...previous.statements];
 
-    const upsert = (
-      kind: IntentStatement["kind"],
-      value?: string,
-    ): void => {
+    const upsert = (kind: IntentStatement["kind"], value?: string): void => {
       if (!value) return;
       const old = byKind.get(kind);
       const next = statement(kind, value, turn.turn_id, revision, old);
@@ -316,8 +318,7 @@ export class IntentCollectionService {
   // -------------------------------------------------------------------------
 
   private buildHelpRequest(intent: IntentState): HelpRequest {
-    const field =
-      intent.missing_required_information[0] ?? "requested_outcome";
+    const field = intent.missing_required_information[0] ?? "requested_outcome";
 
     const question =
       field === "goal"

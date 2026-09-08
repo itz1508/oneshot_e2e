@@ -1,6 +1,9 @@
 import { node, type NodeContext } from "@google/adk";
 
-import type { Prompt, ResearchBundle } from "../../../contracts/schema/types.js";
+import type {
+  Prompt,
+  ResearchBundle,
+} from "../../../contracts/schema/types.js";
 import { ResearcherAgent } from "../../../agents/researcher/agent.js";
 import type { ResearcherWorkflow } from "../../../agents/researcher/workflow.js";
 

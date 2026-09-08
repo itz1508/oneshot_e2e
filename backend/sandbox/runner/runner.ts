@@ -23,7 +23,12 @@ export interface RunnerExecutionResult {
     workspace_cleaned: boolean;
     processes_terminated: boolean;
   };
-  condition?: "success" | "failure" | "timeout" | "resource_exhausted" | "denied";
+  condition?:
+    | "success"
+    | "failure"
+    | "timeout"
+    | "resource_exhausted"
+    | "denied";
 }
 
 /** Abstract sandbox runner interface. */

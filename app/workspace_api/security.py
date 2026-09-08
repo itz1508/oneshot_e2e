@@ -126,7 +126,9 @@ class SecretCipher:
         try:
             return self._cipher.decrypt(ciphertext.encode()).decode()
         except InvalidToken as error:
-            raise AuthenticationError("Provider credential cannot be decrypted") from error
+            raise AuthenticationError(
+                "Provider credential cannot be decrypted"
+            ) from error
 
     def rotate_encryption(self, ciphertext: str) -> str:
         """Re-encrypt an existing token under the primary configured key."""
@@ -134,7 +136,9 @@ class SecretCipher:
         try:
             return self._cipher.rotate(ciphertext.encode()).decode()
         except InvalidToken as error:
-            raise AuthenticationError("Provider credential cannot be rotated") from error
+            raise AuthenticationError(
+                "Provider credential cannot be rotated"
+            ) from error
 
 
 class ApiKeyService:

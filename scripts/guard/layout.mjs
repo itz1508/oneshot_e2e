@@ -45,14 +45,14 @@ const APPROVED_DIRECTORIES = new Set([
   ".agents",
   ".github",
   ".ollama",
-  ".runtime",        // Generated/ignored
-  ".venv",           // Python virtual environment
-  "dist",            // Build output
-  "node_modules",    // Node dependencies
+  ".runtime", // Generated/ignored
+  ".venv", // Python virtual environment
+  "dist", // Build output
+  "node_modules", // Node dependencies
   ".headless_profile", // Local browser profile (ignored)
-  ".pytest_cache",   // Local pytest cache (ignored)
-  "data",            // Local data directory (ignored)
-  "runtime",         // Local runtime state (ignored)
+  ".pytest_cache", // Local pytest cache (ignored)
+  "data", // Local data directory (ignored)
+  "runtime", // Local runtime state (ignored)
 
   // Evidence / generated
   "evidence",
@@ -81,14 +81,7 @@ const APPROVED_FILES = new Set([
   "oneshot.mjs",
 ]);
 
-const C = {
-  reset: "\x1b[0m",
-  green: "\x1b[32m",
-  red: "\x1b[31m",
-  yellow: "\x1b[33m",
-  cyan: "\x1b[36m",
-  bold: "\x1b[1m",
-};
+import { colors as C } from "../lib/terminal-colors.mjs";
 
 function log(msg) {
   console.log(`${C.cyan}[layout-guard]${C.reset} ${msg}`);
@@ -113,7 +106,11 @@ function checkLayout() {
 
   for (const item of items) {
     // Skip hidden items that start with . (except approved ones)
-    if (item.startsWith(".") && !APPROVED_DIRECTORIES.has(item) && !APPROVED_FILES.has(item)) {
+    if (
+      item.startsWith(".") &&
+      !APPROVED_DIRECTORIES.has(item) &&
+      !APPROVED_FILES.has(item)
+    ) {
       if (item !== ".git" && !item.startsWith(".git")) {
         // Check if it's actually a problem
         const fullPath = join(ROOT, item);
@@ -168,9 +165,15 @@ function report(violations, warnings, enforce = false) {
     }
 
     if (enforce && violations.length > 0) {
-      error("\nLayout violations detected. Please remove or move the unapproved directories.");
-      console.log(`${C.reset}Approved directories:${C.reset} ${Array.from(APPROVED_DIRECTORIES).join(", ")}`);
-      console.log(`${C.reset}Approved files:${C.reset} ${Array.from(APPROVED_FILES).join(", ")}\n`);
+      error(
+        "\nLayout violations detected. Please remove or move the unapproved directories.",
+      );
+      console.log(
+        `${C.reset}Approved directories:${C.reset} ${Array.from(APPROVED_DIRECTORIES).join(", ")}`,
+      );
+      console.log(
+        `${C.reset}Approved files:${C.reset} ${Array.from(APPROVED_FILES).join(", ")}\n`,
+      );
       return false;
     }
   } else {

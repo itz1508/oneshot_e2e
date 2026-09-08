@@ -34,28 +34,18 @@ export interface TransitionServicesHandle {
  * `(key, value, ...args)` shape the checkpoint client uses, so the calls are
  * forwarded through a runtime-identical loose signature.
  */
-function adaptRedisClient(
-  redis: Redis,
-): RedisCheckpointClient {
+function adaptRedisClient(redis: Redis): RedisCheckpointClient {
   return {
     get: (key: string) => redis.get(key),
 
-    set: (
-      key: string,
-      value: string,
-      ...args: Array<string | number>
-    ) =>
+    set: (key: string, value: string, ...args: Array<string | number>) =>
       (
         redis.set as unknown as (
           ...callArgs: Array<string | number>
         ) => Promise<unknown>
       )(key, value, ...args),
 
-    eval: (
-      script: string,
-      numberOfKeys: number,
-      ...args: string[]
-    ) =>
+    eval: (script: string, numberOfKeys: number, ...args: string[]) =>
       (
         redis.eval as unknown as (
           evalScript: string,
@@ -85,28 +75,17 @@ function adaptRedisClient(
 export function createTransitionServices(
   input: TransitionServicesInput,
 ): TransitionServicesHandle {
-  const {
-    runs,
-    store,
-    events,
-    redis,
-    history,
-  } = input;
+  const { runs, store, events, redis, history } = input;
 
-  const checkpoints = new PipelineCheckpoints(
-    adaptRedisClient(redis),
-  );
+  const checkpoints = new PipelineCheckpoints(adaptRedisClient(redis));
 
-  const waitForHuman = async (
-    runId: string,
-  ): Promise<void> => {
+  const waitForHuman = async (runId: string): Promise<void> => {
     await history?.append({
       runId,
       stage: "await-human",
       type: "waiting",
       iteration: 0,
-      message:
-        "Researcher complete; waiting for confirm-plan before planner.",
+      message: "Researcher complete; waiting for confirm-plan before planner.",
     });
   };
 
@@ -115,10 +94,7 @@ export function createTransitionServices(
     testResult: "Passed" | "Failed",
     issue?: PipelineIssue,
   ): Promise<void> => {
-    const previousState =
-      await checkpoints.getTerminalState(
-        runId,
-      );
+    const previousState = await checkpoints.getTerminalState(runId);
 
     if (previousState === "committed") {
       return;
@@ -129,13 +105,8 @@ export function createTransitionServices(
      */
     const effectiveIssue =
       previousState === "pending"
-        ? (await checkpoints.getTerminalIssue(
-            runId,
-          )) ?? undefined
-        : await checkpoints.markTerminalPending(
-            runId,
-            issue,
-          );
+        ? ((await checkpoints.getTerminalIssue(runId)) ?? undefined)
+        : await checkpoints.markTerminalPending(runId, issue);
 
     const snapshot = runs.get(runId);
 
@@ -151,8 +122,10 @@ export function createTransitionServices(
     } else if (snapshot.pipeline_status !== "Done") {
       if (testResult === "Failed") {
         const rootCause: RootCause = effectiveIssue?.evidence ?? {
-          issue: "Finalize received a failed result without structured evidence",
-          expected: "Every failed finalization carries structured issue evidence",
+          issue:
+            "Finalize received a failed result without structured evidence",
+          expected:
+            "Every failed finalization carries structured issue evidence",
           actual: "Finalization evidence was absent",
           evidence_ids: [],
           required_correction: "Preserve the originating stage evidence",
@@ -178,27 +151,23 @@ export function createTransitionServices(
           /* Hash proof unavailable; finish without it. */
         }
 
-        runs.finish(
-          runId,
-          "Passed",
-          hashProof,
-        );
+        runs.finish(runId, "Passed", hashProof);
       }
 
       events.emit(runId, "Done", "Completed", {
         scope: "SUPPORT",
-        test_result:
-          testResult,
+        test_result: testResult,
         ...(effectiveIssue
-          ? { issue_type: effectiveIssue.issue_type, issue: effectiveIssue.evidence }
+          ? {
+              issue_type: effectiveIssue.issue_type,
+              issue: effectiveIssue.evidence,
+            }
           : {}),
         message: effectiveIssue?.evidence.issue,
       });
     }
 
-    await checkpoints.markTerminalCommitted(
-      runId,
-    );
+    await checkpoints.markTerminalCommitted(runId);
   };
 
   const services: TransitionServices = {
@@ -210,9 +179,18 @@ export function createTransitionServices(
     checkpoints,
     waitForHuman,
     waitForBuild: async (runId) => {
-      await history?.append({ runId, stage: "build-ready", type: "waiting", iteration: 0,
-        message: "Confirmed package and hash ready; waiting for explicit build authorization." });
-      events.emit(runId, "BuildReady", "Running", { scope: "SUPPORT", message: "Review the confirmed package and confirm Build." });
+      await history?.append({
+        runId,
+        stage: "build-ready",
+        type: "waiting",
+        iteration: 0,
+        message:
+          "Confirmed package and hash ready; waiting for explicit build authorization.",
+      });
+      events.emit(runId, "BuildReady", "Running", {
+        scope: "SUPPORT",
+        message: "Review the confirmed package and confirm Build.",
+      });
     },
     finish,
   };

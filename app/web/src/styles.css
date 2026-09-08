@@ -1574,7 +1574,8 @@ button:not(:disabled):active { filter: brightness(1.12); }
 }
 
 /* ==========================================================================
-   Design token system — ported from docs/design/oneshot-console.html.
+   Design token system — refined layout, typography and component treatment
+   from the OneShot web console design (app/web/src/oneshot-v8.*).
    Semantic layer above the legacy palette above; new surfaces should use
    these names. Existing class names keep working unchanged.
    ========================================================================== */
@@ -1637,8 +1638,9 @@ button:not(:disabled):active { filter: brightness(1.12); }
 
 /* ==========================================================================
    Prototype-aligned visual polish — makes the production app adopt the
-   refined layout, typography and component treatment from
-   docs/design/oneshot-console.html while keeping all E2E selectors intact.
+   refined layout, typography and component treatment of the OneShot web
+   console design (app/web/src/oneshot-v8.*) while keeping all E2E
+   selectors intact.
    ========================================================================== */
 
 /* Prototype layout / spacing tokens override legacy sizes */

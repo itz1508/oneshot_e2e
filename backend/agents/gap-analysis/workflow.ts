@@ -6,7 +6,11 @@ import type {
   RootCause,
 } from "../../contracts/schema/types.js";
 import { clone, unique } from "../../core/clone.js";
-import { detectGaps, type GapFinding } from "./tool/coverage.js";
+import {
+  detectGaps,
+  GAP_REFERENCE_FIELDS,
+  type GapFinding,
+} from "./tool/coverage.js";
 import { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";
 
 export interface GapFixResult {
@@ -44,39 +48,18 @@ export class GapAnalysisWorkflow {
           expected: `A plan branch for ${gap.key}`,
           actual: "No deterministic target step",
           evidence_ids: evidenceIds,
-          required_correction: "Provide the missing information required to identify the correct plan branch",
+          required_correction:
+            "Provide the missing information required to identify the correct plan branch",
           recheck_target: plan.plan_id,
         },
       };
     }
 
-    const before = {
-      requirement: step.requirement_refs.length,
-      goal: step.goal_refs.length,
-      fixture: step.fixture_refs.length,
-      schema: step.schema_refs.length,
-    };
+    const field = GAP_REFERENCE_FIELDS[gap.affected_branch];
+    const before = step[field].length;
+    step[field] = unique([...step[field], gap.ref_id]);
 
-    if (gap.affected_branch === "requirement") {
-      step.requirement_refs = unique([...step.requirement_refs, gap.ref_id]);
-    }
-    if (gap.affected_branch === "goal") {
-      step.goal_refs = unique([...step.goal_refs, gap.ref_id]);
-    }
-    if (gap.affected_branch === "fixture") {
-      step.fixture_refs = unique([...step.fixture_refs, gap.ref_id]);
-    }
-    if (gap.affected_branch === "schema") {
-      step.schema_refs = unique([...step.schema_refs, gap.ref_id]);
-    }
-
-    const after = {
-      requirement: step.requirement_refs.length,
-      goal: step.goal_refs.length,
-      fixture: step.fixture_refs.length,
-      schema: step.schema_refs.length,
-    };
-    if (after[gap.affected_branch] <= before[gap.affected_branch]) {
+    if (step[field].length <= before) {
       return {
         plan,
         rootCause: {
@@ -84,7 +67,8 @@ export class GapAnalysisWorkflow {
           expected: `${gap.ref_id} adds new validated value to ${gap.affected_branch} traceability`,
           actual: `${gap.ref_id} was already represented or the proposed correction added no value`,
           evidence_ids: evidenceIds,
-          required_correction: "Provide additional evidence for a different deterministic improvement",
+          required_correction:
+            "Provide additional evidence for a different deterministic improvement",
           recheck_target: plan.plan_id,
         },
       };
@@ -172,8 +156,7 @@ export class GapAnalysisWorkflow {
       const introducedNewGap = [...afterKeys].some(
         (key) => !beforeKeys.has(key),
       );
-      const progressed =
-        afterKeys.size < beforeKeys.size && !introducedNewGap;
+      const progressed = afterKeys.size < beforeKeys.size && !introducedNewGap;
 
       if (!progressed) {
         return {
@@ -185,9 +168,7 @@ export class GapAnalysisWorkflow {
             actual: `before=${[...beforeKeys].join(",")}; after=${[
               ...afterKeys,
             ].join(",")}`,
-            evidence_ids: bundle.researcher.evidence.map(
-              (e) => e.evidence_id,
-            ),
+            evidence_ids: bundle.researcher.evidence.map((e) => e.evidence_id),
             required_correction:
               "Correct the deterministic gap target or provide the missing information",
             recheck_target: plan.plan_id,

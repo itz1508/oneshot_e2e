@@ -1,7 +1,4 @@
-import type {
-  PipelineStage,
-  StageProgress,
-} from "./types.js";
+import type { PipelineStage, StageProgress } from "./types.js";
 import type { PipelineContext, saveArtifact } from "./context.js";
 import {
   loadAudit,
@@ -55,10 +52,7 @@ export interface StageServices {
   pythonReasoner?: PythonReasoner;
 }
 
-const CANONICAL_NAME: Record<
-  PipelineStage,
-  string
-> = {
+const CANONICAL_NAME: Record<PipelineStage, string> = {
   researcher: "Researcher",
   planner: "Planner",
   refactor: "Refactor",
@@ -78,15 +72,10 @@ export function emitStage(
   state: "Running" | "Completed",
   extra: Parameters<ProcessingEventBus["emit"]>[3] = {},
 ): void {
-  services.events.emit(
-    ctx.runId,
-    CANONICAL_NAME[stage],
-    state,
-    {
-      scope: "WORKFLOW",
-      ...extra,
-    },
-  );
+  services.events.emit(ctx.runId, CANONICAL_NAME[stage], state, {
+    scope: "WORKFLOW",
+    ...extra,
+  });
 }
 
 export async function reportProgress(
@@ -122,10 +111,7 @@ export async function runResearcherStage(
     captured.id,
     captured,
   );
-  const researcher = new ResearcherWorkflow(
-    provider,
-    services.contracts,
-  );
+  const researcher = new ResearcherWorkflow(provider, services.contracts);
   const bundle = await researcher.run(prompt, ctx.runId);
 
   const researchRevision = ctx.stageIteration ?? 0;
@@ -137,42 +123,20 @@ export async function runResearcherStage(
     `research_bundle.v${researchRevision}`,
     bundle,
   );
-  await services.saveArtifact(
-    ctx,
-    "research_bundle",
-    bundle,
-  );
+  await services.saveArtifact(ctx, "research_bundle", bundle);
   await services.saveArtifact(ctx, "plan", bundle.plan);
-  await services.saveArtifact(
-    ctx,
-    "schema_artifact",
-    bundle.schema_artifact,
-  );
-  await services.saveArtifact(
-    ctx,
-    "fixture",
-    bundle.fixture,
-  );
+  await services.saveArtifact(ctx, "schema_artifact", bundle.schema_artifact);
+  await services.saveArtifact(ctx, "fixture", bundle.fixture);
   await services.saveArtifact(ctx, "goal", bundle.goal);
-  await services.saveArtifact(
-    ctx,
-    "validation_definition",
-    bundle.validation,
-  );
+  await services.saveArtifact(ctx, "validation_definition", bundle.validation);
 
   emitStage(ctx, services, "researcher", "Completed", {
     test_result: "Passed",
     artifact_id: bundle.researcher.researcher_id,
   });
 
-  await reportProgress(
-    progress,
-    "researcher",
-    100,
-    "Research complete",
-  );
+  await reportProgress(progress, "researcher", 100, "Research complete");
 }
-
 
 /* ============================================================
    PLANNER
@@ -193,10 +157,7 @@ export async function runPlannerStage(
   emitStage(ctx, services, "planner", "Running");
 
   const bundle = await loadResearchBundle(ctx);
-  const audit = await services.planner.run(
-    bundle,
-    ctx.runId,
-  );
+  const audit = await services.planner.run(bundle, ctx.runId);
 
   await services.saveArtifact(ctx, "audit", audit);
 
@@ -205,12 +166,7 @@ export async function runPlannerStage(
     artifact_id: audit.audit_id,
   });
 
-  await reportProgress(
-    progress,
-    "planner",
-    100,
-    "Planner audit passed",
-  );
+  await reportProgress(progress, "planner", 100, "Planner audit passed");
 }
 
 /* ============================================================
@@ -222,21 +178,13 @@ export async function runRefactorStage(
   services: StageServices,
   progress: (value: StageProgress) => Promise<void> | void,
 ): Promise<void> {
-  await reportProgress(
-    progress,
-    "refactor",
-    10,
-    "Refining approved plan",
-  );
+  await reportProgress(progress, "refactor", 10, "Refining approved plan");
 
   emitStage(ctx, services, "refactor", "Running");
 
   const bundle = await loadResearchBundle(ctx);
   const audit = await loadAudit(ctx);
-  const plan = await services.refactor.run(
-    bundle,
-    audit,
-  );
+  const plan = await services.refactor.run(bundle, audit);
 
   await services.saveArtifact(ctx, "plan", plan);
 
@@ -245,12 +193,7 @@ export async function runRefactorStage(
     artifact_id: plan.plan_id,
   });
 
-  await reportProgress(
-    progress,
-    "refactor",
-    100,
-    "Plan refactor complete",
-  );
+  await reportProgress(progress, "refactor", 100, "Plan refactor complete");
 }
 
 /* ============================================================
@@ -273,19 +216,16 @@ export async function runGapAnalysisStage(
 
   const bundle = await loadResearchBundle(ctx);
   const plan = await loadPlan(ctx);
-  const { plan: updatedPlan, gap } =
-    await services.gapper.run(bundle, plan);
+  const { plan: updatedPlan, gap } = await services.gapper.run(bundle, plan);
 
   await services.saveArtifact(ctx, "plan", updatedPlan);
-  await services.saveArtifact(
-    ctx,
-    "gap_analysis",
-    gap,
-  );
+  await services.saveArtifact(ctx, "gap_analysis", gap);
 
   emitStage(ctx, services, "gap-analysis", "Completed", {
     test_result: gap.result,
-    ...(gap.result === "Failed" ? { issue_type: gap.issue_type, issue: gap.root_cause } : {}),
+    ...(gap.result === "Failed"
+      ? { issue_type: gap.issue_type, issue: gap.root_cause }
+      : {}),
     artifact_id: gap.plan_id,
   });
 
@@ -308,40 +248,25 @@ export async function runEvaluationStage(
   services: StageServices,
   progress: (value: StageProgress) => Promise<void> | void,
 ): Promise<void> {
-  await reportProgress(
-    progress,
-    "evaluation",
-    10,
-    "Evaluating final plan",
-  );
+  await reportProgress(progress, "evaluation", 10, "Evaluating final plan");
 
   emitStage(ctx, services, "evaluation", "Running");
 
   const bundle = await loadResearchBundle(ctx);
   const plan = await loadPlan(ctx);
-  const evaluation = await services.evaluator.run(
-    bundle,
-    plan,
-  );
+  const evaluation = await services.evaluator.run(bundle, plan);
 
-  await services.saveArtifact(
-    ctx,
-    "evaluation",
-    evaluation,
-  );
+  await services.saveArtifact(ctx, "evaluation", evaluation);
 
   if (services.pythonReasoner) {
-    await runPythonEvaluationCanary(
-      ctx,
-      services,
-      bundle,
-      plan,
-    );
+    await runPythonEvaluationCanary(ctx, services, bundle, plan);
   }
 
   emitStage(ctx, services, "evaluation", "Completed", {
     test_result: evaluation.result,
-    ...(evaluation.result === "Failed" ? { issue_type: evaluation.issue_type, issue: evaluation.root_cause } : {}),
+    ...(evaluation.result === "Failed"
+      ? { issue_type: evaluation.issue_type, issue: evaluation.root_cause }
+      : {}),
     artifact_id: evaluation.plan_id,
   });
 
@@ -365,31 +290,16 @@ async function runPythonEvaluationCanary(
   }
 
   try {
-    const request = buildReasoningRequest(
-      ctx.runId,
-      bundle,
-      plan,
-    );
+    const request = buildReasoningRequest(ctx.runId, bundle, plan);
 
     const response = await reasoner.reason(request);
 
-    await services.saveArtifact(
-      ctx,
-      "python-evaluation-canary",
-      response,
-    );
+    await services.saveArtifact(ctx, "python-evaluation-canary", response);
   } catch (error) {
-    await services.saveArtifact(
-      ctx,
-      "python-evaluation-canary",
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : String(error),
-        status: "CANARY_FAILED",
-      },
-    );
+    await services.saveArtifact(ctx, "python-evaluation-canary", {
+      error: error instanceof Error ? error.message : String(error),
+      status: "CANARY_FAILED",
+    });
   }
 }
 
@@ -458,36 +368,21 @@ export async function runTripleValidationStage(
     "Starting goal validation",
   );
 
-  const triple = await services.triple.run(
-    bundle,
-    plan,
-  );
+  const triple = await services.triple.run(bundle, plan);
 
-  await services.saveArtifact(
-    ctx,
-    "triple_validation",
-    triple,
-  );
+  await services.saveArtifact(ctx, "triple_validation", triple);
 
-  emitStage(
-    ctx,
-    services,
-    "triple-validation",
-    "Completed",
-    {
-      test_result: triple.all_valid ? "Passed" : "Failed",
-      ...(triple.all_valid ? {} : { issue_type: "Missing" as const }),
-      artifact_id: triple.validation_id,
-    },
-  );
+  emitStage(ctx, services, "triple-validation", "Completed", {
+    test_result: triple.all_valid ? "Passed" : "Failed",
+    ...(triple.all_valid ? {} : { issue_type: "Missing" as const }),
+    artifact_id: triple.validation_id,
+  });
 
   await reportProgress(
     progress,
     "triple-validation",
     100,
-    triple.all_valid
-      ? "All validation passed"
-      : "Validation failed",
+    triple.all_valid ? "All validation passed" : "Validation failed",
   );
 }
 
@@ -525,25 +420,15 @@ export async function runConfirmationStage(
     triple,
   );
 
-  await services.saveArtifact(
-    ctx,
-    "confirmed",
-    confirmed,
-  );
+  await services.saveArtifact(ctx, "confirmed", confirmed);
 
   emitStage(ctx, services, "confirmation", "Completed", {
     test_result: "Passed",
     artifact_id: confirmed.core.researcher.researcher_id,
   });
 
-  await reportProgress(
-    progress,
-    "confirmation",
-    100,
-    "Package confirmed",
-  );
+  await reportProgress(progress, "confirmation", 100, "Package confirmed");
 }
-
 
 /* ============================================================
    HASH
@@ -554,24 +439,20 @@ export async function runHashStage(
   services: StageServices,
   progress: (value: StageProgress) => Promise<void> | void,
 ): Promise<void> {
-  await reportProgress(
-    progress,
-    "hash",
-    10,
-    "Creating canonical hash proof",
-  );
+  await reportProgress(progress, "hash", 10, "Creating canonical hash proof");
 
   emitStage(ctx, services, "hash", "Running");
 
   const confirmed = await loadConfirmedPackage(ctx);
   const proof = await services.hash.run(confirmed);
-  if (proof.equal) await new BuildReviewService(ctx.store).open(ctx.runId, confirmed, proof.created_hash);
+  if (proof.equal)
+    await new BuildReviewService(ctx.store).open(
+      ctx.runId,
+      confirmed,
+      proof.created_hash,
+    );
 
-  await services.saveArtifact(
-    ctx,
-    "hash_proof",
-    proof,
-  );
+  await services.saveArtifact(ctx, "hash_proof", proof);
 
   emitStage(ctx, services, "hash", "Completed", {
     test_result: proof.equal ? "Passed" : "Failed",
@@ -583,9 +464,7 @@ export async function runHashStage(
     progress,
     "hash",
     100,
-    proof.equal
-      ? "Hash proof created"
-      : "Hash mismatch",
+    proof.equal ? "Hash proof created" : "Hash mismatch",
   );
 }
 
@@ -605,7 +484,14 @@ interface FileMutationRecord {
 function deriveFileMutations(
   runId: string,
   result: SandboxExecutionResult,
-): { run_id: string; execution_id: string; created_at: string; records: FileMutationRecord[] } | undefined {
+):
+  | {
+      run_id: string;
+      execution_id: string;
+      created_at: string;
+      records: FileMutationRecord[];
+    }
+  | undefined {
   const evidence = result.evidence;
   if (!evidence) return undefined;
   const records = evidence.file_changes as FileMutationRecord[];
@@ -626,29 +512,22 @@ export async function runBuildStage(
   services: StageServices,
   progress: (value: StageProgress) => Promise<void> | void,
 ): Promise<void> {
-  await reportProgress(
-    progress,
-    "build",
-    10,
-    "Preparing verified build",
-  );
+  await reportProgress(progress, "build", 10, "Preparing verified build");
 
   emitStage(ctx, services, "build", "Running");
 
   const confirmed = await loadConfirmedPackage(ctx);
   const proof = await loadHashProof(ctx);
-  await new BuildReviewService(ctx.store).requireApproved(ctx.runId, confirmed, proof.created_hash);
-  if (await services.hash.create(confirmed) !== proof.created_hash) throw new Error("Confirmed package no longer matches the authorized hash");
-  const result = await services.builder.run(
+  await new BuildReviewService(ctx.store).requireApproved(
+    ctx.runId,
     confirmed,
     proof.created_hash,
   );
+  if ((await services.hash.create(confirmed)) !== proof.created_hash)
+    throw new Error("Confirmed package no longer matches the authorized hash");
+  const result = await services.builder.run(confirmed, proof.created_hash);
 
-  await services.saveArtifact(
-    ctx,
-    "build_result",
-    result,
-  );
+  await services.saveArtifact(ctx, "build_result", result);
 
   const mutations = deriveFileMutations(ctx.runId, result);
   if (mutations) {
@@ -659,7 +538,12 @@ export async function runBuildStage(
 
   emitStage(ctx, services, "build", "Completed", {
     test_result: passed ? "Passed" : "Failed",
-    ...(passed ? {} : { issue_type: "Root Cause" as const, issue: "root_cause" in result ? result.root_cause : undefined }),
+    ...(passed
+      ? {}
+      : {
+          issue_type: "Root Cause" as const,
+          issue: "root_cause" in result ? result.root_cause : undefined,
+        }),
     artifact_id: proof.created_hash,
   });
 
@@ -667,9 +551,7 @@ export async function runBuildStage(
     progress,
     "build",
     100,
-    passed
-      ? "Build promoted successfully"
-      : "Build failed",
+    passed ? "Build promoted successfully" : "Build failed",
   );
 }
 
@@ -689,19 +571,9 @@ export async function runFinalizeStage(
   services: StageServices,
   progress: (value: StageProgress) => Promise<void> | void,
 ): Promise<void> {
-  await reportProgress(
-    progress,
-    "finalize",
-    10,
-    "Finalizing workflow",
-  );
+  await reportProgress(progress, "finalize", 10, "Finalizing workflow");
 
   emitStage(ctx, services, "finalize", "Running");
 
-  await reportProgress(
-    progress,
-    "finalize",
-    100,
-    "Workflow finalized",
-  );
+  await reportProgress(progress, "finalize", 100, "Workflow finalized");
 }

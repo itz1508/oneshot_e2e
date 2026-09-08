@@ -146,9 +146,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         if request.url.path in self.EXEMPT_PATHS:
             return await call_next(request)
-        decision = await self.limiter.check(
-            self._key(request), self.limit, self.window
-        )
+        decision = await self.limiter.check(self._key(request), self.limit, self.window)
         headers = {
             "X-RateLimit-Limit": str(decision.limit),
             "X-RateLimit-Remaining": str(decision.remaining),

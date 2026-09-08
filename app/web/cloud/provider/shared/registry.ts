@@ -3,7 +3,10 @@ import { resolve } from "node:path";
 import type { ResearchProvider } from "../../provider.js";
 import type { ProviderRuntimeSettings } from "../../provider-runtime-config.js";
 import { FixtureResearchProvider } from "../fixture-provider.js";
-import { AnthropicModelProvider, loadAnthropicConfig } from "../anthropic/provider.js";
+import {
+  AnthropicModelProvider,
+  loadAnthropicConfig,
+} from "../anthropic/provider.js";
 import { GeminiModelProvider, loadGeminiConfig } from "../gemini/provider.js";
 import { OpenAIModelProvider, loadOpenAIConfig } from "../openai/provider.js";
 
@@ -77,8 +80,7 @@ export const PROVIDER_ADAPTERS: Record<string, ProviderResearchAdapter> = {
     envVar: "ANTHROPIC_API_KEY",
     defaultModel: "claude-sonnet-4-20250514",
     defaultApiBase: DEFAULT_ANTHROPIC_BASE,
-    supportsTemperature: (model) =>
-      /^claude-(sonnet-4-20250514|3)/.test(model),
+    supportsTemperature: (model) => /^claude-(sonnet-4-20250514|3)/.test(model),
     create: (projectRoot, settings, apiKey) =>
       new AnthropicModelProvider(projectRoot, {
         ...loadAnthropicConfig(projectRoot),
@@ -147,9 +149,15 @@ export function createUnconfiguredProvider(): ResearchProvider {
  * a fallback to a repository-layout variant.
  */
 export function resolveSeedFixture(projectRoot: string): string {
-  const p1 = resolve(projectRoot, "app/fixtures/product/complete-success-seed.json");
+  const p1 = resolve(
+    projectRoot,
+    "app/fixtures/product/complete-success-seed.json",
+  );
   if (existsSync(p1)) return p1;
-  const p2 = resolve(projectRoot, "fixtures/product/complete-success-seed.json");
+  const p2 = resolve(
+    projectRoot,
+    "fixtures/product/complete-success-seed.json",
+  );
   if (existsSync(p2)) return p2;
   return p1;
 }

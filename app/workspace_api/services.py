@@ -186,7 +186,9 @@ class WorkspaceService:
 
         self.require_role(session, workspace_id, actor_user_id, WorkspaceRole.ADMIN)
         if role == WorkspaceRole.OWNER:
-            raise ConflictError("Workspace ownership transfer uses a separate operation")
+            raise ConflictError(
+                "Workspace ownership transfer uses a separate operation"
+            )
         user = session.scalar(
             select(User).where(func.lower(User.email) == email.lower())
         )

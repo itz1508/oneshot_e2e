@@ -67,14 +67,20 @@ export async function resolveResearchProvider(
 
   // The normal Agent pipeline shares the web-managed source of truth.
   // Environment-selected adapters are only a compatibility/test entrypoint.
-  if (mode !== "test" && process.env.ONESHOT_LEGACY_PROVIDER_ENABLED !== "true") {
-    return new ProviderManager({ projectRoot, events, runtimePaths: getRuntimePaths(projectRoot) }).createProvider();
+  if (
+    mode !== "test" &&
+    process.env.ONESHOT_LEGACY_PROVIDER_ENABLED !== "true"
+  ) {
+    return new ProviderManager({
+      projectRoot,
+      events,
+      runtimePaths: getRuntimePaths(projectRoot),
+    }).createProvider();
   }
 
   const modulePath = process.env.ONESHOT_RESEARCH_PROVIDER_MODULE;
   const selected = (
-    process.env.ONESHOT_RESEARCH_PROVIDER ||
-    (modulePath ? "module" : "")
+    process.env.ONESHOT_RESEARCH_PROVIDER || (modulePath ? "module" : "")
   ).toLowerCase();
 
   if (!selected) return new MissingProductionResearchProvider();
@@ -83,7 +89,8 @@ export async function resolveResearchProvider(
     return withEvents(new FeatherlessResearchProvider(projectRoot), events);
   }
 
-  const adapter = PROVIDER_ADAPTERS[selected === "google" ? "gemini" : selected];
+  const adapter =
+    PROVIDER_ADAPTERS[selected === "google" ? "gemini" : selected];
   if (adapter) {
     return withEvents(adapter.createDefault(projectRoot), events);
   }
