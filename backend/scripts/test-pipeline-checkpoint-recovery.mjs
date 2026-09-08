@@ -232,6 +232,41 @@ async function createAndConfirmRun() {
   return runId;
 }
 
+/*
+ * The pipeline parks at the Build Ready human gate once Hash completes
+ * (hash → wait-build). Poll the gate until it opens, then authorize the
+ * build so the run can proceed to Build → Finalize → Done.
+ */
+async function authorizeBuildWhenReady(runId, timeoutMs) {
+  const gate = await waitUntil(
+    "Build Ready gate to open",
+    async () => {
+      try {
+        return await requestJson(
+          `/api/runs/${encodeURIComponent(runId)}/build-review`,
+        );
+      } catch {
+        return false; // 404 until Hash completes and opens the gate
+      }
+    },
+    timeoutMs,
+  );
+
+  const approved = await requestJson(
+    `/api/runs/${encodeURIComponent(runId)}/build-review`,
+    {
+      method: "POST",
+      body: JSON.stringify({ action: "approve", hash: gate.hash }),
+    },
+  );
+  if (approved?.status !== "approved") {
+    throw new Error(
+      `Build review was not approved: ${JSON.stringify(approved)}`,
+    );
+  }
+  console.log("   ✔ Build Ready gate authorized");
+}
+
 async function main() {
   await assertApiHealth();
 
@@ -294,6 +329,13 @@ async function main() {
 
   try {
     console.log("8. Waiting for the workflow to reach Done...");
+    // The Build Ready gate opens once Hash completes; authorize it
+    // concurrently so the run can proceed to Build → Finalize → Done.
+    const gateApproval = authorizeBuildWhenReady(
+      runId,
+      PIPELINE_TIMEOUT_MS,
+    ).catch((error) => ({ error }));
+
     const run = await waitUntil(
       "workflow Done",
       async () => {
@@ -307,6 +349,11 @@ async function main() {
       },
       PIPELINE_TIMEOUT_MS,
     );
+
+    if (gateApproval) {
+      const result = await gateApproval;
+      if (result?.error) throw result.error;
+    }
 
     const events = await getHistory(runId);
 

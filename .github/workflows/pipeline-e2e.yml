@@ -107,6 +107,8 @@ jobs:
       PIPELINE_FAULTS_ENABLED: "true"
       PIPELINE_FAULT_STAGE: planner
       PIPELINE_FAULT_MODE: fail-once
+      # Recovery scripts poll history every 500ms; lift the API rate limit for CI.
+      API_RATE_LIMIT_MAX: "100000"
 
     steps:
       - uses: actions/checkout@v4

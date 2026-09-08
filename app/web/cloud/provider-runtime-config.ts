@@ -155,13 +155,16 @@ function validateStructural(raw: unknown): ProviderRuntimeConfig | undefined {
 
   // Ensure the active provider exists, merging in defaults if absent.
   if (!out.providers[activeProvider]) {
-    const d = DEFAULTS[activeProvider] ?? { model: "fixture" };
+    const d: ProviderRuntimeSettings = DEFAULTS[activeProvider] ?? {
+      enabled: true,
+      model: "fixture",
+    };
     out.providers[activeProvider] = {
-      enabled: d.enabled ?? true,
-      model: (d.model as string) ?? "fixture",
-      apiBase: d.apiBase as string | undefined,
-      timeoutSeconds: d.timeoutSeconds as number | undefined,
-      parallelism: d.parallelism as number | undefined,
+      enabled: d.enabled,
+      model: d.model,
+      apiBase: d.apiBase,
+      timeoutSeconds: d.timeoutSeconds,
+      parallelism: d.parallelism,
     };
   }
   return out;

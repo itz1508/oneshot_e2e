@@ -323,6 +323,41 @@ async function waitForPipelineEnd(runId) {
   );
 }
 
+/*
+ * The pipeline parks at the Build Ready human gate once Hash completes
+ * (hash → wait-build). Poll the gate until it opens, then authorize the
+ * build so the run can proceed to Build → Finalize → Done.
+ */
+async function authorizeBuildWhenReady(runId, timeoutMs) {
+  const gate = await waitUntil(
+    "Build Ready gate to open",
+    async () => {
+      try {
+        return await requestJson(
+          `/api/runs/${encodeURIComponent(runId)}/build-review`,
+        );
+      } catch {
+        return false; // 404 until Hash completes and opens the gate
+      }
+    },
+    timeoutMs,
+  );
+
+  const approved = await requestJson(
+    `/api/runs/${encodeURIComponent(runId)}/build-review`,
+    {
+      method: "POST",
+      body: JSON.stringify({ action: "approve", hash: gate.hash }),
+    },
+  );
+  if (approved?.status !== "approved") {
+    throw new Error(
+      `Build review was not approved: ${JSON.stringify(approved)}`,
+    );
+  }
+  console.log("   ✔ Build Ready gate authorized");
+}
+
 async function verifyPipelineHistory(runId) {
   console.log("7. Verifying stage history...");
   const events = await getHistory(runId);
@@ -477,12 +512,28 @@ async function main() {
   await waitForHumanGate(runId);
   await confirmPlan(runId);
   await verifyDuplicateConfirmation(runId);
-  const { run: finalRun } = await waitForPipelineEnd(runId);
-  await verifyPipelineHistory(runId);
 
   const isValidationFailure =
     FAULT_STAGE === "triple-validation" &&
     FAULT_MODE === "fail-always";
+
+  // Authorize the Build Ready gate concurrently while the pipeline runs; the
+  // gate only opens after Hash completes. Validation-failure mode never
+  // reaches Hash, so no authorization is attempted there.
+  const gateApproval = isValidationFailure
+    ? null
+    : authorizeBuildWhenReady(runId, PIPELINE_TIMEOUT_MS).catch(
+        (error) => ({ error }),
+      );
+
+  const { run: finalRun } = await waitForPipelineEnd(runId);
+  await verifyPipelineHistory(runId);
+
+  if (gateApproval) {
+    const result = await gateApproval;
+    if (result?.error) throw result.error;
+  }
+
   if (!isValidationFailure) {
     await verifyBuild(finalRun);
   }
