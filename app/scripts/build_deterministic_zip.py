@@ -15,9 +15,9 @@ import hashlib, sys, zipfile
 from pathlib import Path
 
 try:
-    from .source_file_policy import iter_source_files
+    from .source_file_policy import canonical_file_bytes, iter_source_files
 except ImportError:
-    from source_file_policy import iter_source_files
+    from source_file_policy import canonical_file_bytes, iter_source_files
 
 FIXED = (2020, 1, 1, 0, 0, 0)
 
@@ -35,7 +35,7 @@ def build(src: Path, out: Path):
             zi.create_system = 3
             zi.external_attr = 0o100644 << 16
             z.writestr(
-                zi, p.read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9
+                zi, canonical_file_bytes(p), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9
             )
     h = hashlib.sha256(out.read_bytes()).hexdigest()
     print(h)

@@ -92,6 +92,27 @@ def source_file_is_eligible(root: Path, path: Path) -> bool:
     return not source_path_is_forbidden(relative.as_posix())
 
 
+def canonical_file_bytes(path: Path) -> bytes:
+    """Return the canonical bytes used for manifest hashing and archives.
+
+    CRLF is normalized to LF so that CRLF and LF checkouts hash identically
+    across Windows and Linux. Only CRLF pairs are folded: binary assets and
+    byte-stable legacy files that use lone CR bytes (no LF) are preserved
+    byte-for-byte so canonicalization never corrupts them.
+    """
+    data = path.read_bytes()
+    if b"\x00" in data or b"\r\n" not in data:
+        return data
+    return data.replace(b"\r\n", b"\n")
+
+
+def canonical_sha256(path: Path) -> str:
+    """Return the SHA-256 hex digest of ``canonical_file_bytes(path)``."""
+    import hashlib
+
+    return hashlib.sha256(canonical_file_bytes(path)).hexdigest()
+
+
 def iter_source_files(root: Path) -> Iterator[Path]:
     root = root.resolve()
     files = (path for path in root.rglob("*") if source_file_is_eligible(root, path))

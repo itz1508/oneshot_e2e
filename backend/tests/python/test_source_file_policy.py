@@ -8,10 +8,30 @@ from pathlib import Path
 
 from app.scripts.build_deterministic_zip import build
 from app.scripts.generate_manifest import generate_manifest
+from app.scripts.source_file_policy import canonical_file_bytes, canonical_sha256
 from app.scripts.verify_manifest import verify_manifest
 
 
 class SourceFilePolicyTests(unittest.TestCase):
+    def test_canonical_bytes_normalize_crlf_to_lf_without_touching_binary(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            crlf = root / "crlf.txt"
+            crlf.write_bytes(b"line-one\r\nline-two\r\n")
+            lone_cr = root / "lone-cr.txt"
+            lone_cr.write_bytes(b"line-one\rline-two\r")
+            binary = root / "asset.bin"
+            binary.write_bytes(b"\x00\x01\r\n\x02")
+
+            self.assertEqual(canonical_file_bytes(crlf), b"line-one\nline-two\n")
+            # Lone CR bytes are byte-stable legacy content, not CRLF text.
+            self.assertEqual(canonical_file_bytes(lone_cr), b"line-one\rline-two\r")
+            self.assertEqual(canonical_file_bytes(binary), b"\x00\x01\r\n\x02")
+
+            lf = root / "lf.txt"
+            lf.write_bytes(b"line-one\nline-two\n")
+            self.assertEqual(canonical_sha256(crlf), canonical_sha256(lf))
+
     def test_manifest_verifier_and_zip_share_secret_exclusions(self) -> None:
         with tempfile.TemporaryDirectory() as source_temp, tempfile.TemporaryDirectory() as output_temp:
             root = Path(source_temp) / "source"

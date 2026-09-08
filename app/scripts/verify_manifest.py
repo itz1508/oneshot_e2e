@@ -1,11 +1,18 @@
 from __future__ import annotations
-import hashlib
 from pathlib import Path
 
 try:
-    from .source_file_policy import iter_source_files, source_path_is_forbidden
+    from .source_file_policy import (
+        canonical_sha256,
+        iter_source_files,
+        source_path_is_forbidden,
+    )
 except ImportError:
-    from source_file_policy import iter_source_files, source_path_is_forbidden
+    from source_file_policy import (
+        canonical_sha256,
+        iter_source_files,
+        source_path_is_forbidden,
+    )
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -30,7 +37,7 @@ def verify_manifest(root: Path = ROOT, manifest_path: Path | None = None) -> lis
         if not path.is_file():
             errors.append(f"missing {rel}")
             continue
-        actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+        actual_hash = canonical_sha256(path)
         if actual_hash != expected:
             errors.append(f"hash mismatch {rel}")
 
