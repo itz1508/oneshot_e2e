@@ -1,5 +1,5 @@
 import type { Redis } from "ioredis";
-import type { RootCause } from "../contracts/schema/types.js";
+import type { RootCause, HashProof } from "../contracts/schema/types.js";
 import type { ProcessingEventBus } from "../runtime/event-bus.js";
 import type { ArtifactStore } from "../runtime/artifact-store.js";
 import type { RunRepository } from "../runtime/run-repository.js";
@@ -110,6 +110,15 @@ export function createTransitionServices(
 
     const snapshot = runs.get(runId);
 
+    let hashProof: HashProof | undefined;
+    if (snapshot) {
+      try {
+        hashProof = await loadHashProof({ runId, runs, store });
+      } catch {
+        /* Hash proof unavailable; finish without it. */
+      }
+    }
+
     if (!snapshot) {
       /*
        * Nothing to terminalize — never throw here, or the transition job
@@ -134,23 +143,12 @@ export function createTransitionServices(
         runs.finish(
           runId,
           "Failed",
-          undefined,
+          hashProof,
           rootCause,
           undefined,
           effectiveIssue?.issue_type ?? "Root Cause",
         );
       } else {
-        let hashProof;
-        try {
-          hashProof = await loadHashProof({
-            runId,
-            runs,
-            store,
-          });
-        } catch {
-          /* Hash proof unavailable; finish without it. */
-        }
-
         runs.finish(runId, "Passed", hashProof);
       }
 
