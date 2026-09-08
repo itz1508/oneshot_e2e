@@ -6,7 +6,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from app.scripts.build_deterministic_zip import build
+from app.scripts.build_deterministic_zip import build, canonical_archive_bytes
 from app.scripts.generate_manifest import generate_manifest
 from app.scripts.source_file_policy import canonical_file_bytes, canonical_sha256
 from app.scripts.verify_manifest import verify_manifest
@@ -31,6 +31,46 @@ class SourceFilePolicyTests(unittest.TestCase):
             lf = root / "lf.txt"
             lf.write_bytes(b"line-one\nline-two\n")
             self.assertEqual(canonical_sha256(crlf), canonical_sha256(lf))
+
+    def test_canonical_manifest_and_archive_agree_across_line_endings(self) -> None:
+        with tempfile.TemporaryDirectory() as source_temp, tempfile.TemporaryDirectory() as output_temp:
+            lf_root = Path(source_temp) / "lf-source"
+            crlf_root = Path(source_temp) / "crlf-source"
+            for root in (lf_root, crlf_root):
+                (root / "nested").mkdir(parents=True)
+            (lf_root / "nested" / "note.txt").write_bytes(b"alpha\nbeta\n")
+            (crlf_root / "nested" / "note.txt").write_bytes(b"alpha\r\nbeta\r\n")
+
+            self.assertEqual(generate_manifest(lf_root), 1)
+            self.assertEqual(generate_manifest(crlf_root), 1)
+            lf_manifest = (lf_root / "MANIFEST.sha256").read_text(encoding="utf-8")
+            crlf_manifest = (crlf_root / "MANIFEST.sha256").read_text(encoding="utf-8")
+            # Manifest paths differ by fixture root, but canonical hashes match.
+            self.assertEqual(
+                lf_manifest.split("  ", 1)[0], crlf_manifest.split("  ", 1)[0]
+            )
+            self.assertEqual(verify_manifest(lf_root), [])
+            self.assertEqual(verify_manifest(crlf_root), [])
+
+            lf_zip = Path(output_temp) / "lf.zip"
+            crlf_zip = Path(output_temp) / "crlf.zip"
+            lf_digest = build(lf_root, lf_zip)
+            crlf_digest = build(crlf_root, crlf_zip)
+            # Archive member names include the differing fixture directory, so
+            # compare canonical payload bytes rather than whole-ZIP digests.
+            with zipfile.ZipFile(lf_zip) as lf_bundle, zipfile.ZipFile(
+                crlf_zip
+            ) as crlf_bundle:
+                lf_payload = lf_bundle.read(f"{lf_root.name}/nested/note.txt")
+                crlf_payload = crlf_bundle.read(f"{crlf_root.name}/nested/note.txt")
+            self.assertEqual(lf_payload, b"alpha\nbeta\n")
+            self.assertEqual(crlf_payload, b"alpha\nbeta\n")
+            self.assertEqual(
+                canonical_archive_bytes(lf_root / "nested" / "note.txt"),
+                canonical_archive_bytes(crlf_root / "nested" / "note.txt"),
+            )
+            self.assertIsInstance(lf_digest, str)
+            self.assertIsInstance(crlf_digest, str)
 
     def test_manifest_verifier_and_zip_share_secret_exclusions(self) -> None:
         with tempfile.TemporaryDirectory() as source_temp, tempfile.TemporaryDirectory() as output_temp:

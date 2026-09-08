@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path, PurePosixPath
 from typing import Iterator
 
@@ -95,10 +96,13 @@ def source_file_is_eligible(root: Path, path: Path) -> bool:
 def canonical_file_bytes(path: Path) -> bytes:
     """Return the canonical bytes used for manifest hashing and archives.
 
-    CRLF is normalized to LF so that CRLF and LF checkouts hash identically
-    across Windows and Linux. Only CRLF pairs are folded: binary assets and
-    byte-stable legacy files that use lone CR bytes (no LF) are preserved
-    byte-for-byte so canonicalization never corrupts them.
+    Source text is LF-normalized per repository policy; CRLF is still folded
+    to LF so that CRLF and LF checkouts hash identically across Windows and
+    Linux. Only CRLF pairs are folded: binary assets and byte-stable legacy
+    files that use lone CR bytes (no LF) are preserved byte-for-byte so
+    canonicalization never corrupts them. Because ``MANIFEST.sha256`` stores
+    the hash of these canonical bytes, ``sha256sum`` on a CRLF worktree file
+    may differ from the manifest entry even though verification passes.
     """
     data = path.read_bytes()
     if b"\x00" in data or b"\r\n" not in data:
@@ -108,8 +112,6 @@ def canonical_file_bytes(path: Path) -> bytes:
 
 def canonical_sha256(path: Path) -> str:
     """Return the SHA-256 hex digest of ``canonical_file_bytes(path)``."""
-    import hashlib
-
     return hashlib.sha256(canonical_file_bytes(path)).hexdigest()
 
 
