@@ -162,7 +162,7 @@ export async function startSession() {
   );
   await waitFor("chat input", async () =>
     (await evaluate(
-      `!!document.querySelector('textarea[placeholder="Message OneShot..."]')`,
+      `!!document.querySelector('#message')`,
     )) ? true : undefined,
   );
   await sleep(1500);

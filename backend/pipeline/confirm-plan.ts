@@ -8,23 +8,63 @@ import type {
   ConfirmPlanResult,
 } from "./types.js";
 import { PipelineIdempotency } from "./idempotency.js";
+import { loadResearchBundle, saveArtifact } from "./context.js";
+import {
+  applyPlanReviewEdits,
+  validatePlanReviewEdits,
+  type PlanReview,
+} from "../runtime/plan-review.js";
+import {
+  getCurrentResearchRevision,
+} from "./stage-scope.js";
 
 export async function confirmPlan({
   runId,
   redis,
   history,
+  edits,
+  store,
+  runs,
 }: ConfirmPlanInput & { redis: Redis }): Promise<ConfirmPlanResult> {
   const idempotency = new PipelineIdempotency(redis);
 
   /*
-   * The human gate only opens after the researcher stage has completed.
-   * We use the durable stage marker rather than the BullMQ job record
-   * because completed jobs may be removed from BullMQ.
+   * The human gate only opens after the current research revision has
+   * completed. We use the durable stage marker rather than the BullMQ job
+   * record because completed jobs may be removed from BullMQ.
    */
-  if (!(await idempotency.isCompleted(runId, "researcher"))) {
+  const researchRevision = await getCurrentResearchRevision(redis, runId);
+  if (!(await idempotency.isCompleted(runId, "researcher", researchRevision))) {
     throw new Error(
-      `Researcher stage has not completed for run ${runId}; plan cannot be confirmed yet`,
+      `Researcher revision ${researchRevision} has not completed for run ${runId}; plan cannot be confirmed yet`,
     );
+  }
+
+  if (edits) {
+    if (!store || !runs) {
+      throw new Error(
+        "confirmPlan requires store and runs when research edits are supplied",
+      );
+    }
+    const ctx = { runId, runs, store };
+    const research = await loadResearchBundle(ctx);
+    const syntheticReview: PlanReview = {
+      run_id: runId,
+      revision: 1,
+      status: "pending",
+      created_at: new Date().toISOString(),
+      research,
+      edits: {
+        objective: research.goal.objective,
+        requirements: research.plan.requirements.map(r => ({ id: r.requirement_id, statement: r.statement })),
+        steps: research.plan.steps.map(s => ({ id: s.step_id, description: s.description })),
+        notes: [],
+      },
+    };
+    syntheticReview.edits = validatePlanReviewEdits(edits, syntheticReview);
+    const reviewed = applyPlanReviewEdits(syntheticReview);
+    await saveArtifact(ctx, "research.reviewed", reviewed);
+    await saveArtifact(ctx, "plan.reviewed", reviewed.plan);
   }
 
   const confirmationKey = `oneshot:run:${runId}:plan-confirmed`;

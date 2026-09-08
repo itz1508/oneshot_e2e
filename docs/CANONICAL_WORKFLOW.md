@@ -1,5 +1,16 @@
 # OneShot Canonical Workflow
 
+Required product behavior includes the two human gates in the supplied
+[web application requirements](ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v2.md) and
+[LLM call diagram](LLM%20WorkFlow%20CALL.txt). The sequence below preserves
+artifact ownership while showing those control boundaries. See the
+[reconciliation](WEB_APP_REQUIREMENTS_RECONCILIATION.md) for implementation
+status. The hash-to-Build transition now stops at Build Ready authorization:
+`wait-build` after `hash`, with `BuildReviewService` enforcing a hash- and
+package-bound Confirm Build before Builder (see the reconciliation table and
+`backend/tests/ts/build-review.test.ts`). [WORKFLOW_TREE](WORKFLOW_TREE) maps
+current code.
+
 ```text
 Prompt_id
 → Researcher
@@ -9,6 +20,7 @@ Prompt_id
    ├── fixture_id
    ├── goal_id
    └── validation_id
+→ STOP: Research Review → explicit acceptance
 → Planner
 → audit_id
 → Refactor
@@ -25,6 +37,9 @@ Prompt_id
 → CONFIRMED
 → CREATE HASH
 → HASH
+→ STOP: Build Ready → explicit Confirm Build
+→ Builder / Sandbox (exact confirmed package + HASH)
+→ successful execution + HASH == hash_sandbox
 → DONE
 ```
 
@@ -46,7 +61,16 @@ Validation operations: `VALID | NOT_VALID`.
 
 ## External execution verification boundary
 
-The confirmed immutable package and its created hash may be handed to the external Builder/Sandbox boundary. Verification uses the same canonical comparable representation and direct equality:
+The required product flow hands the confirmed immutable package and its created
+hash to the external Builder/Sandbox boundary only after explicit Confirm Build.
+Cancel/return keeps the run waiting without starting Builder or mutating the
+target. This gate is implemented as `wait-build` after the hash stage, with
+`BuildReviewService` (`backend/runtime/build-review.ts`) rejecting stale hash,
+changed package, duplicate approval, and approval after terminal state; Builder
+additionally calls `requireApproved` before execution. Remaining acceptance
+evidence: cross-worker stale-action audit and UI end-to-end verification.
+Verification uses the same canonical comparable representation
+and direct equality:
 
 ```text
 HASH == hash_sandbox

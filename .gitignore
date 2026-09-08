@@ -42,3 +42,8 @@ scripts/config/
 pnpm-lock.yaml
 pnpm-workspace.yaml
 
+
+# Next.js generated output
+app/web/.next/
+app/web/out/
+app/web/*.tsbuildinfo

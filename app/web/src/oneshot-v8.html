@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OneShot</title>
+  <link rel="stylesheet" href="./oneshot-v8.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar" id="topbar">
+      <div class="brand"><span class="brand-mark">1S</span><span class="brand-name">OneShot</span></div>
+      <div class="target-info" id="target-info" title="Selected target workspace">
+        <span class="target-label">Target</span>
+        <span class="target-value" id="target-value">Loading…</span>
+      </div>
+      <div class="run-info" id="run-info" hidden>
+        <span class="run-label">Job</span>
+        <span class="run-value" id="run-value"></span>
+      </div>
+      <div class="topbar-actions">
+        <span class="connection-badge" id="connection-badge">Connecting</span>
+        <button class="icon-btn" id="new-job-btn" title="New Job">＋</button>
+      </div>
+    </header>
+    <div class="shell" id="shell">
+      <aside class="left-rail" id="left-rail" aria-label="Left rail">
+        <button class="rail-btn active" id="explorer-toggle" title="Explorer" aria-pressed="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <div class="rail-spacer"></div>
+        <span class="rail-status" id="left-rail-status" aria-label="Runtime status"></span>
+      </aside>
+      <aside class="explorer" id="explorer" aria-label="Explorer">
+        <div class="explorer-header">
+          <h2>Explorer</h2>
+          <button class="icon-btn" id="refresh-tree" title="Refresh workspace">↻</button>
+        </div>
+        <div class="explorer-state" id="explorer-state">Loading workspace…</div>
+        <div class="explorer-tree" id="explorer-tree" role="tree"></div>
+      </aside>
+      <main class="conversation" id="conversation" aria-label="Conversation">
+        <div class="conversation-scroll" id="conversation-scroll" aria-live="polite">
+          <div class="empty-state" id="empty-state">
+            <h1>Describe what you want to build</h1>
+            <p>OneShot will research the selected target, review the findings with you, prepare a validated plan, and build it in an isolated sandbox.</p>
+          </div>
+          <div class="messages" id="messages"></div>
+        </div>
+        <div class="promptbar" id="promptbar">
+          <div class="promptbar-mode" id="promptbar-mode" hidden>
+            <span class="mode-label" id="mode-label">Research Again</span>
+            <button class="mode-close" id="mode-close" title="Cancel research-again mode">×</button>
+          </div>
+          <form class="composer" id="composer">
+            <textarea id="composer-input" placeholder="Describe the outcome and constraints…" rows="1" autocomplete="off" aria-label="Message"></textarea>
+            <button type="submit" class="send-btn" id="send-btn" title="Send" aria-label="Send">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </form>
+        </div>
+      </main>
+      <aside class="task-panel" id="task-panel" aria-label="Task Management">
+        <div class="panel-header">
+          <h2 id="panel-title">Current Job</h2>
+          <span class="panel-badge" id="panel-badge" hidden></span>
+        </div>
+        <div class="flip-container" id="flip-container">
+          <div class="flip-face front" id="current-job-face" aria-hidden="false">
+            <div class="job-empty" id="job-empty">No active job.</div>
+            <div class="job-content" id="job-content" hidden>
+              <div class="job-meta">
+                <span class="job-id" id="job-id"></span>
+                <span class="job-status" id="job-status"></span>
+              </div>
+              <div class="phase-block">
+                <span class="phase-label">Phase</span>
+                <span class="phase-value" id="phase-value">—</span>
+              </div>
+              <div class="step-block">
+                <span class="step-label">Step</span>
+                <span class="step-value" id="step-value">—</span>
+              </div>
+              <div class="task-list-wrap" id="task-list-wrap" hidden>
+                <span class="task-label">Tasks</span>
+                <ul class="task-list" id="task-list"></ul>
+              </div>
+              <div class="progress-block"><div class="progress-bar" id="progress-bar"></div></div>
+              <div class="hook-state" id="hook-state" hidden>
+                <span class="hook-icon">⏸</span>
+                <span id="hook-text">Waiting for you</span>
+              </div>
+            </div>
+          </div>
+          <div class="flip-face back" id="job-history-face" aria-hidden="true" inert>
+            <div class="history-split">
+              <div class="history-list-wrap">
+                <label for="history-select">Saved jobs</label>
+                <select id="history-select" size="2"><option value="">Select a job</option></select>
+                <p class="history-state" id="history-state"></p>
+              </div>
+              <div class="history-detail" id="history-detail">
+                <p class="empty-note">Select a job to inspect its recorded state and workspace changes.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <aside class="right-rail" id="right-rail" aria-label="Right rail">
+        <button class="rail-btn" id="flip-toggle" title="Job History" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <div class="rail-spacer"></div>
+        <span class="rail-status" id="right-rail-status" aria-label="Runtime status"></span>
+      </aside>
+    </div>
+  </div>
+  <dialog id="file-preview" class="file-preview">
+    <header>
+      <h3 id="preview-title">File preview</h3>
+      <div class="preview-actions">
+        <button id="preview-copy" class="text-btn">Copy</button>
+        <button id="preview-close" class="icon-btn" aria-label="Close">×</button>
+      </div>
+    </header>
+    <pre id="preview-content" tabindex="0"></pre>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="./oneshot-v8.js"></script>
+</body>
+</html>
+

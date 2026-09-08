@@ -12,6 +12,7 @@ export interface TransitionServices {
   queue: TransitionQueue;
   checkpoints: PipelineCheckpoints;
   waitForHuman(runId: string): Promise<void>;
+  waitForBuild?(runId: string): Promise<void>;
   finish(runId: string, testResult: "Passed" | "Failed", issue?: PipelineIssue): Promise<void>;
 }
 
@@ -36,6 +37,10 @@ export async function applyTransition(identity: StageIdentity, transition: Pipel
     }
     case "wait-human":
       await services.waitForHuman(identity.runId);
+      break;
+    case "wait-build":
+      if (!services.waitForBuild) throw new Error("Build authorization transition service is unavailable");
+      await services.waitForBuild(identity.runId);
       break;
     case "done":
       await services.finish(identity.runId, transition.test_result, transition.issue);

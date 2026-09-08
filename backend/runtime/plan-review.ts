@@ -92,27 +92,34 @@ function nonempty(value: unknown): string {
     throw new PlanReviewError("Review fields must contain between 1 and 20000 characters", 400);
   return value.trim();
 }
-function validateEdits(value: unknown, review: PlanReview): PlanReviewEdits {
+
+function keyedEdits<T extends "statement" | "description">(
+  items: unknown,
+  originals: Array<{ id: string }>,
+  field: T,
+): Array<{ id: string } & Record<T, string>> {
+  if (!Array.isArray(items) || items.length !== originals.length)
+    throw new PlanReviewError("Keep the draft requirement and task identities", 400);
+  return originals.map(original => {
+    const matches = items.filter(item => item && item.id === original.id);
+    if (matches.length !== 1) throw new PlanReviewError("Review contains an unknown or duplicate identity", 400);
+    return { id: original.id, [field]: nonempty(matches[0][field]) } as { id: string } & Record<T, string>;
+  });
+}
+
+export function validatePlanReviewEdits(value: unknown, review: PlanReview): PlanReviewEdits {
   if (!value || typeof value !== "object") throw new PlanReviewError("Review edits are required", 400);
   const edits = value as PlanReviewEdits;
-  const keyed = (items: unknown, originals: Array<{ id: string }>, field: "statement" | "description") => {
-    if (!Array.isArray(items) || items.length !== originals.length)
-      throw new PlanReviewError("Keep the draft requirement and task identities", 400);
-    return originals.map(original => {
-      const matches = items.filter(item => item && item.id === original.id);
-      if (matches.length !== 1) throw new PlanReviewError("Review contains an unknown or duplicate identity", 400);
-      return { id: original.id, [field]: nonempty(matches[0][field]) };
-    });
-  };
   if (!Array.isArray(edits.notes) || edits.notes.length > 50) throw new PlanReviewError("At most 50 review notes are supported", 400);
   return {
     objective: nonempty(edits.objective),
-    requirements: keyed(edits.requirements, review.edits.requirements, "statement") as PlanReviewEdits["requirements"],
-    steps: keyed(edits.steps, review.edits.steps, "description") as PlanReviewEdits["steps"],
+    requirements: keyedEdits(edits.requirements, review.edits.requirements, "statement") as PlanReviewEdits["requirements"],
+    steps: keyedEdits(edits.steps, review.edits.steps, "description") as PlanReviewEdits["steps"],
     notes: edits.notes.map(nonempty),
   };
 }
-function applyReview(review: PlanReview): ResearchBundle {
+
+export function applyPlanReviewEdits(review: PlanReview): ResearchBundle {
   const research = structuredClone(review.research);
   research.goal.objective = review.edits.objective;
   for (const requirement of research.plan.requirements) {
@@ -127,4 +134,12 @@ function applyReview(review: PlanReview): ResearchBundle {
   research.researcher.evidence.push({ evidence_id: `review:${review.run_id}`, source: "user-plan-review",
     statement: JSON.stringify(review.edits), provenance: "user-confirmed-draft" });
   return research;
+}
+
+function validateEdits(value: unknown, review: PlanReview): PlanReviewEdits {
+  return validatePlanReviewEdits(value, review);
+}
+
+function applyReview(review: PlanReview): ResearchBundle {
+  return applyPlanReviewEdits(review);
 }

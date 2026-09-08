@@ -2,6 +2,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   renameSync,
   statSync,
   unlinkSync,
@@ -141,6 +142,18 @@ export class RunRepository {
     return r;
   }
 
+  /** Enumerate actual persisted runs; browser storage is not the history ledger. */
+  list(): RunSnapshot[] {
+    const ids = new Set(this.runs.keys());
+    if (this.root && existsSync(this.root)) {
+      for (const name of readdirSync(this.root)) {
+        if (name.endsWith(".json")) ids.add(name.slice(0, -5));
+      }
+    }
+    return [...ids].map(id => this.get(id)).filter((run): run is RunSnapshot => Boolean(run))
+      .sort((a, b) => (b.events.at(-1)?.created_at ?? "").localeCompare(a.events.at(-1)?.created_at ?? ""));
+  }
+
   event(runId: string, event: ProcessingEvent): void {
     const r = this.require(runId);
     r.events.push(event);
@@ -152,6 +165,20 @@ export class RunRepository {
     const r = this.require(runId);
     r.artifacts[name] = path;
     this.persist(r);
+  }
+
+  /**
+   * Remove an invalidated artifact entry from the snapshot.
+   *
+   * Used by plan/phase/task edit scopes to reset downstream state for the
+   * current plan revision. Historical event evidence is never touched.
+   */
+  removeArtifact(runId: string, name: string): void {
+    const r = this.require(runId);
+    if (name in r.artifacts) {
+      delete r.artifacts[name];
+      this.persist(r);
+    }
   }
 
   finish(

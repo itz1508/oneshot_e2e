@@ -25,3 +25,6 @@ data
 **/.pytest_cache
 .pytest_cache
 .runtime
+app/web/.next
+app/web/out
+app/web/*.tsbuildinfo

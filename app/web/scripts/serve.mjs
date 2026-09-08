@@ -15,13 +15,20 @@ const app = express();
 app.disable("x-powered-by");
 
 app.use(
-  "/api",
   createProxyMiddleware({
+    pathFilter: ["/api", "/api/**", "/v1", "/v1/**"],
     target: backendTarget,
     changeOrigin: true,
-    secure: false,
     timeout: 0,
     proxyTimeout: 0,
+    on: {
+      error: (err, _req, res) => {
+        if (!res.headersSent) {
+          res.writeHead(502, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: `Backend unavailable (${err.message})` }));
+        }
+      },
+    },
   })
 );
 
@@ -33,7 +40,11 @@ app.use(
   })
 );
 
-app.use((_request, response, _next) => {
+app.use((request, response, _next) => {
+  if (request.path.startsWith("/api") || request.path.startsWith("/v1")) {
+    return response.status(502).json({ error: "Backend unavailable" });
+  }
+  if (!request.accepts("html")) return response.status(404).end();
   response.sendFile(path.join(root, "index.html"));
 });
 
@@ -41,3 +52,4 @@ app.listen(port, "0.0.0.0", () => {
   console.log(`OneShot Console: http://localhost:${port}`);
   console.log(`OneShot Backend: ${backendTarget}`);
 });
+

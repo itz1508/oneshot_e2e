@@ -11,8 +11,10 @@
  * stage-outcome.ts (it is part of the durable checkpoint key space).
  */
 import type { PipelineStage } from "./stage-outcome.js";
+import type { PlanReviewEdits } from "../runtime/plan-review.js";
 
 export type { PipelineStage };
+export type { PlanReviewEdits };
 
 export type GateAction = "auto" | "await-human";
 
@@ -44,6 +46,12 @@ export interface StageProgress {
 export interface ConfirmPlanInput {
   runId: string;
   history?: import("./history.js").PipelineHistory;
+  /** Optional user edits to the research baseline, validated and persisted before Planner runs. */
+  edits?: PlanReviewEdits;
+  /** Required when edits are supplied so the edited bundle can be loaded and saved. */
+  store?: import("../runtime/artifact-store.js").ArtifactStore;
+  /** Required when edits are supplied so artifact paths are recorded in the run snapshot. */
+  runs?: import("../runtime/run-repository.js").RunRepository;
 }
 
 export type ConfirmPlanResult =

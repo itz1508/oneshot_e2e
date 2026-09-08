@@ -51,6 +51,7 @@ import { WorkflowRuntime } from "./runtime/workflow-runtime.js";
 import { SandboxService } from "./sandbox/sandbox-service.js";
 import { HardenedProcessRunner } from "./sandbox/runner/process-runner.js";
 import { ContainerSandboxRunner } from "./sandbox/runner/container-runner.js";
+import { TargetWorkspaceService } from "./runtime/target-workspace.js";
 import { startHttpServer, type RuntimeInfo } from "./server/http-server.js";
 import { getRuntimePaths, ensureRuntimeDirectories } from "./runtime/runtime-config.js";
 import { createPythonReasoner } from "./reasoning/python-client.js";
@@ -64,6 +65,12 @@ const projectRoot = process.env.ONESHOT_ROOT || process.cwd();
 // --- Runtime Directory Initialization ---
 const runtimePaths = getRuntimePaths(projectRoot);
 ensureRuntimeDirectories(runtimePaths);
+
+// --- Target Workspace (§11–12) ---
+// Explicitly-selected target project workspace. Uploads are materialized into
+// `.runtime/target-workspace/`; the service records which target is actually
+// selected so the UI can present real provenance.
+const targetWorkspace = new TargetWorkspaceService(runtimePaths);
 
 // --- Task Management infrastructure ---
 const taskEventStore = new AppendOnlyProcessingEventStore(
@@ -318,16 +325,23 @@ const server = await startHttpServer(
     workspaceRoot,
     executeInline: (job) =>
       executeRunJob({ data: job, updateProgress: async () => {} }, queueDeps),
+    targetWorkspace,
     pipeline: pipelineReady
       ? {
           queueReady: true,
           enqueue: (runId: string, stage) =>
             enqueueStage(runId, stage, pipelineHistory),
-          confirmPlan: async (runId: string) => {
+          confirmPlan: async (
+            runId: string,
+            edits?: import("./pipeline/types.js").PlanReviewEdits,
+          ) => {
             return confirmPlan({
               runId,
               redis: getSharedRedis(),
               history: pipelineHistory,
+              store: artifactStore,
+              runs,
+              edits,
             });
           },
           history: pipelineHistory,

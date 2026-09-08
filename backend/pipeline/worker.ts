@@ -131,6 +131,7 @@ export function createPipelineWorker(
         runId,
         runs,
         store,
+        stageIteration: requestedIteration,
       };
 
       const progress = async (
@@ -140,16 +141,20 @@ export function createPipelineWorker(
       };
 
       /*
-       * Run-level stages are pinned to iteration 0 so Researcher/Planner can
-       * never be re-executed by a refinement iteration (stage-scope.ts).
+       * Run-level stages are pinned to iteration 0 so Planner can never be
+       * re-executed by a refinement iteration. Researcher is the exception: its
+       * iteration carries the research revision used for Research Again reruns.
        */
       const identity: StageIdentity = {
         runId,
         stage,
-        iteration: stageIteration(
-          stage,
-          requestedIteration,
-        ),
+        iteration:
+          stage === "researcher"
+            ? requestedIteration
+            : stageIteration(
+                stage,
+                requestedIteration,
+              ),
       };
 
       const execute =

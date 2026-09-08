@@ -8,6 +8,7 @@ export interface FinalizationIntent {
 export type PipelineTransition =
   | { type: "next"; stage: PipelineStage; iteration: number; finalization?: FinalizationIntent }
   | { type: "wait-human" }
+  | { type: "wait-build" }
   | { type: "done"; test_result: "Passed" | "Failed"; issue?: PipelineIssue };
 
 export const MAX_REFINEMENT_ITERATIONS = 3;
@@ -45,7 +46,7 @@ export function resolveTransition(stage: PipelineStage, outcome: StageOutcome, i
       : { type: "next", stage: "triple-validation", iteration };
     case "triple-validation": return resolveTripleValidationTransition(outcome, iteration);
     case "confirmation": return { type: "next", stage: "hash", iteration: 0 };
-    case "hash": return { type: "next", stage: "build", iteration: 0 };
+    case "hash": return { type: "wait-build" };
     case "build": return { type: "next", stage: "finalize", iteration: 0 };
     case "finalize": return outcome.kind === "terminal"
       ? { type: "done", test_result: "Failed", issue: outcome.issue }

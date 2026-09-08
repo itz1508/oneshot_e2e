@@ -38,7 +38,7 @@ export function createActiveRunPanel() {
     const normal = $('#sidebar-normal');
     if (panel && normal) {
       visible = true;
-      normal.hidden = true;
+      normal.hidden = false;
       panel.hidden = false;
       panel.classList.add('enter');
     }

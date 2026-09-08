@@ -1,0 +1,48 @@
+User Prompt
+   ↓
+1. Researcher                      ← LLM #1
+   ↓
+STOP — Research Review             ← HUMAN GATE #1
+   ├─ edit sections
+   ├─ request more research
+   └─ ACCEPT
+        ↓
+Accepted Research Baseline
+        ↓
+2. Planner                         ← LLM #2
+        ↓
+3. Refactor                        ← LLM #3
+        ↓
+4. Gap Analysis                    ← LLM #4
+        ↓
+5. Evaluation                      ← LLM #5
+        ↓
+Triple Validation                  ← DETERMINISTIC
+   ├─ Schema VALID
+   ├─ Fixture VALID
+   └─ Goal VALID
+        ↓
+CONFIRMED
+        ↓
+Create confirmation hash           ← DETERMINISTIC
+        ↓
+STOP — BUILD READY                 ← HUMAN GATE #2
+        │
+        │ Screen shows:
+        │   ✓ Schema VALID
+        │   ✓ Fixture VALID
+        │   ✓ Goal VALID
+        │   ✓ Plan confirmed
+        │   ✓ Confirmation hash created
+        │   ✓ Build package ready
+        │
+        ├─ Cancel / return
+        └─ CONFIRM BUILD
+              ↓
+6. Builder                         ← LLM #6
+              ↓
+Sandbox execution                  ← CODE/RUNTIME
+              ↓
+Post-build validation/hash check   ← DETERMINISTIC
+              ↓
+DONE

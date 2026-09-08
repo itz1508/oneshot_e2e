@@ -34,6 +34,12 @@ export interface FileChangeEvidence {
   path: string;
   action: "created" | "modified" | "deleted";
   bytes: number;
+  /** SHA-256 of the file content after the mutation, when readable. */
+  sha256?: string;
+  /** SHA-256 of the file content before the mutation, for modified/deleted files. */
+  previous_sha256?: string;
+  /** Size of the file before the mutation, for modified/deleted files. */
+  previous_bytes?: number;
 }
 
 /** Resource consumption metrics collected during sandboxed execution. */

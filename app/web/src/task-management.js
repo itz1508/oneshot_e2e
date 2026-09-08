@@ -72,6 +72,7 @@ export function createTaskManagement({ apiFetch } = {}) {
   const _apiFetch = apiFetch || ((url, opts) => fetch(url, { credentials: 'same-origin', ...opts }));
   const stepStates = new Map();
   let lastRunningAgent = null;
+  let waitingReason = null;
 
   const q = (sel, root = document) => root.querySelector(sel);
   const qall = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -157,8 +158,8 @@ export function createTaskManagement({ apiFetch } = {}) {
     const source = document.createElement('div');
     source.className = 'plan-source';
     source.textContent = `Plan · rev ${plan?.revision ?? '?'} · owner: ${group.owner}`;
-    container.append(source);
     for (const it of group.items) container.append(taskItem(it));
+    container.append(source);
   }
 
   function clearRoleTaskContainers() {
@@ -208,8 +209,12 @@ export function createTaskManagement({ apiFetch } = {}) {
      * Plan contents are read through the runtime artifact API (workspace
      * policy denies data/ paths by design). */
     async onSnapshot(snapshot, runId) {
+      if (waitingReason) {
+        this.renderPlanMessage(`Waiting for ${waitingReason} decision. The runtime will continue after your authorization.`);
+        return;
+      }
       const artifacts = snapshot?.artifacts && typeof snapshot.artifacts === 'object' ? snapshot.artifacts : {};
-      const name = artifacts['plan.gap'] ? 'plan.gap' : artifacts['plan.reviewed'] ? 'plan.reviewed' : artifacts['plan.researcher'] ? 'plan.researcher' : null;
+      const name = artifacts.plan ? 'plan' : artifacts['plan.gap'] ? 'plan.gap' : artifacts['plan.reviewed'] ? 'plan.reviewed' : artifacts['plan.researcher'] ? 'plan.researcher' : null;
       if (!name || !runId) {
         this.renderPlanMessage(PLAN_EMPTY);
         return;
@@ -224,6 +229,7 @@ export function createTaskManagement({ apiFetch } = {}) {
       }
     },
     renderPlan(plan, sourceName) {
+      waitingReason = null;
       const groups = planToGroups(plan);
       clearRoleTaskContainers();
       const extras = q('#task-plan-extras');
@@ -277,12 +283,20 @@ export function createTaskManagement({ apiFetch } = {}) {
     resetPlan() {
       stepStates.clear();
       lastRunningAgent = null;
+      waitingReason = null;
       qall('.agent-group').forEach(g => {
         g.classList.remove('active-agent');
         const em = g.querySelector(':scope > summary em');
         if (em) em.textContent = 'Pending';
       });
       this.renderPlanMessage(PLAN_EMPTY);
+    },
+    setWaiting(reason) {
+      waitingReason = reason;
+      this.renderPlanMessage(`Waiting for ${reason} decision. The runtime will continue after your authorization.`);
+    },
+    clearWaiting() {
+      waitingReason = null;
     },
     bindManualToggles() {
       qall('.agent-group > summary').forEach(summary => {

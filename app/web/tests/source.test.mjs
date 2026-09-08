@@ -29,7 +29,7 @@ test('uses recovered OneShot browser contracts',()=>{
     '/run',
     '/api/runs/',
     '/events',
-    '/v1/workspace/tree?path=.&depth=3',
+    '/v1/workspace/tree?path=.',
     '/v1/workspace/file?path='
   ]) assert.ok(j.includes(x),`missing ${x}`);
   for(const x of['/api/session','/api/provider','/api/conversations/messages','/api/workspace/tree','/api/workspace/file','/context`']){

@@ -349,8 +349,8 @@ test("validation refine transitions to gap-analysis at the next iteration", () =
     "schema validation failed",
   );
 
-  // Run-level stages stay pinned to iteration 0; iterative stages advance.
-  assert.equal(stageIteration("researcher", 5), 0);
+  // Researcher preserves its revision iteration; planner stays pinned to 0; iterative stages advance.
+  assert.equal(stageIteration("researcher", 5), 5);
   assert.equal(stageIteration("planner", 5), 0);
   assert.equal(stageIteration("evaluation", 5), 5);
   assert.equal(stageIteration("triple-validation", 5), 5);

@@ -25,6 +25,8 @@ export interface PipelineContext {
   runId: string;
   runs: RunRepository;
   store: ArtifactStore;
+  /** Iteration passed to the current stage job. For Researcher this is the research revision. */
+  stageIteration?: number;
 }
 
 export async function loadPrompt(
@@ -53,6 +55,13 @@ export async function loadProvider(
 export async function loadResearchBundle(
   ctx: PipelineContext,
 ): Promise<ResearchBundle> {
+  const snapshot = ctx.runs.require(ctx.runId);
+  if ("research.reviewed" in snapshot.artifacts) {
+    return ctx.store.load<ResearchBundle>(
+      ctx.runId,
+      "research.reviewed",
+    );
+  }
   return ctx.store.load<ResearchBundle>(
     ctx.runId,
     "research_bundle",
@@ -62,6 +71,10 @@ export async function loadResearchBundle(
 export async function loadPlan(
   ctx: PipelineContext,
 ): Promise<Plan> {
+  const snapshot = ctx.runs.require(ctx.runId);
+  if ("plan.reviewed" in snapshot.artifacts) {
+    return ctx.store.load<Plan>(ctx.runId, "plan.reviewed");
+  }
   return ctx.store.load<Plan>(ctx.runId, "plan");
 }
 

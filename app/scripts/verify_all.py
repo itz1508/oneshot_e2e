@@ -1,8 +1,9 @@
-﻿from __future__ import annotations
-import shutil, subprocess, sys
+from __future__ import annotations
+import os, shutil, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+os.environ["NODE_OPTIONS"] = os.environ.get("NODE_OPTIONS", "--max-old-space-size=2048")
 
 
 def run(cmd):

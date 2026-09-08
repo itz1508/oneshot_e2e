@@ -14,6 +14,17 @@
       ]
     },
     {
+      "contract_id": "urn:oneshot:schema:build-review-action:2",
+      "version": "2",
+      "artifact_type": "build-review-action",
+      "schema_path": "schema/build-review-action.schema.json",
+      "schema_digest": "d4f5043f58a8b031373bfa8fc5666ca808300c3bfacfc491d663f2659cd24a96",
+      "producer": "BuildReviewUI",
+      "consumers": [
+        "BuildReviewService"
+      ]
+    },
+    {
       "contract_id": "urn:oneshot:schema:common:2",
       "version": "2",
       "artifact_type": "common",

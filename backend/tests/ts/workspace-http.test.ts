@@ -249,3 +249,72 @@ test("workspace filesystem security boundary is enforced consistently", async ()
     await new Promise((resolveDelay) => setTimeout(resolveDelay, 250));
   }
 });
+
+test("workspace tree endpoint returns materialized files with size", async () => {
+  const savedEnvironment = {
+    token: process.env.ONESHOT_API_TOKEN,
+    rateMax: process.env.API_RATE_LIMIT_MAX,
+    rateWindow: process.env.API_RATE_LIMIT_WINDOW_MS,
+  };
+  const temporaryRoot = await mkdtemp(join(tmpdir(), "oneshot-workspace-tree-"));
+  const workspaceRoot = join(temporaryRoot, "workspace");
+  await mkdir(join(workspaceRoot, "src"), { recursive: true });
+  await writeFile(join(workspaceRoot, "README.md"), "# Test project\n");
+  await writeFile(join(workspaceRoot, "src", "index.ts"), "export const x = 1;\n");
+
+  let server: Server | undefined;
+  try {
+    process.env.API_RATE_LIMIT_MAX = "1000";
+    server = await launch(workspaceRoot);
+    const base = baseUrl(server);
+
+    const treeRes = await fetch(`${base}/v1/workspace/tree`, { headers: AUTHORIZATION });
+    assert.equal(treeRes.status, 200);
+    const tree = (await treeRes.json()) as { nodes: any[] };
+    assert.ok(Array.isArray(tree.nodes));
+    const readme = tree.nodes.find((n) => n.path === "README.md" && n.type === "file");
+    assert.ok(readme, "README.md must be in tree");
+    assert.equal(typeof readme.size, "number");
+    assert.ok(readme.size > 0, "README.md must have non-zero size");
+
+    const srcFolder = tree.nodes.find((n) => n.path === "src" && n.type === "folder");
+    assert.ok(srcFolder, "src folder must be in tree");
+    assert.ok(Array.isArray(srcFolder.children));
+    const indexTs = srcFolder.children.find((c: any) => c.path === "src/index.ts");
+    assert.ok(indexTs, "src/index.ts must be in tree");
+    assert.ok(indexTs.size > 0, "src/index.ts must have non-zero size");
+  } finally {
+    if (server) await closeServer(server);
+    process.env.ONESHOT_API_TOKEN = savedEnvironment.token;
+    if (savedEnvironment.rateMax === undefined) delete process.env.API_RATE_LIMIT_MAX;
+    else process.env.API_RATE_LIMIT_MAX = savedEnvironment.rateMax;
+    if (savedEnvironment.rateWindow === undefined) delete process.env.API_RATE_LIMIT_WINDOW_MS;
+    else process.env.API_RATE_LIMIT_WINDOW_MS = savedEnvironment.rateWindow;
+    await rm(temporaryRoot, { recursive: true, force: true });
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 250));
+  }
+});
+
+test("workspace tree and select endpoints are gated by auth", async () => {
+  const temporaryRoot = await mkdtemp(join(tmpdir(), "oneshot-workspace-auth-"));
+  const workspaceRoot = join(temporaryRoot, "workspace");
+  await mkdir(workspaceRoot, { recursive: true });
+
+  let server: Server | undefined;
+  try {
+    server = await launch(workspaceRoot);
+    const base = baseUrl(server);
+
+    const noAuthTree = await fetch(`${base}/v1/workspace/tree`);
+    assert.equal(noAuthTree.status, 401);
+
+    const badTree = await fetch(`${base}/v1/workspace/tree`, {
+      headers: { Authorization: "Bearer wrong" },
+    });
+    assert.equal(badTree.status, 401);
+  } finally {
+    if (server) await closeServer(server);
+    await rm(temporaryRoot, { recursive: true, force: true });
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 250));
+  }
+});

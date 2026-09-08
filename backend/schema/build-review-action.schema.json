@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oneshot:schema:build-review-action:2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action", "hash"],
+  "properties": {
+    "action": { "enum": ["approve", "return"] },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -32,6 +32,8 @@ import type {
   ReasoningRequest,
 } from "../reasoning/python-client.js";
 import type { Plan, ResearchBundle } from "../contracts/schema/types.js";
+import type { SandboxExecutionResult } from "../sandbox/types.js";
+import { BuildReviewService } from "../runtime/build-review.js";
 
 export interface StageServices {
   events: ProcessingEventBus;
@@ -126,6 +128,15 @@ export async function runResearcherStage(
   );
   const bundle = await researcher.run(prompt, ctx.runId);
 
+  const researchRevision = ctx.stageIteration ?? 0;
+
+  // Preserve each research revision as history. The unversioned research_bundle
+  // always points to the latest result so it becomes the current review baseline.
+  await services.saveArtifact(
+    ctx,
+    `research_bundle.v${researchRevision}`,
+    bundle,
+  );
   await services.saveArtifact(
     ctx,
     "research_bundle",
@@ -554,6 +565,7 @@ export async function runHashStage(
 
   const confirmed = await loadConfirmedPackage(ctx);
   const proof = await services.hash.run(confirmed);
+  if (proof.equal) await new BuildReviewService(ctx.store).open(ctx.runId, confirmed, proof.created_hash);
 
   await services.saveArtifact(
     ctx,
@@ -578,6 +590,34 @@ export async function runHashStage(
 }
 
 /* ============================================================
+   FILE MUTATION LEDGER
+   ============================================================ */
+
+interface FileMutationRecord {
+  path: string;
+  action: "created" | "modified" | "deleted";
+  bytes: number;
+  sha256?: string;
+  previous_bytes?: number;
+  previous_sha256?: string;
+}
+
+function deriveFileMutations(
+  runId: string,
+  result: SandboxExecutionResult,
+): { run_id: string; execution_id: string; created_at: string; records: FileMutationRecord[] } | undefined {
+  const evidence = result.evidence;
+  if (!evidence) return undefined;
+  const records = evidence.file_changes as FileMutationRecord[];
+  return {
+    run_id: runId,
+    execution_id: result.execution_id ?? evidence.execution_id ?? "unknown",
+    created_at: evidence.completed_at ?? new Date().toISOString(),
+    records,
+  };
+}
+
+/* ============================================================
    BUILD / PROMOTE
    ============================================================ */
 
@@ -597,6 +637,8 @@ export async function runBuildStage(
 
   const confirmed = await loadConfirmedPackage(ctx);
   const proof = await loadHashProof(ctx);
+  await new BuildReviewService(ctx.store).requireApproved(ctx.runId, confirmed, proof.created_hash);
+  if (await services.hash.create(confirmed) !== proof.created_hash) throw new Error("Confirmed package no longer matches the authorized hash");
   const result = await services.builder.run(
     confirmed,
     proof.created_hash,
@@ -607,6 +649,11 @@ export async function runBuildStage(
     "build_result",
     result,
   );
+
+  const mutations = deriveFileMutations(ctx.runId, result);
+  if (mutations) {
+    await services.saveArtifact(ctx, "file-mutations", mutations);
+  }
 
   const passed = result.result === "Passed";
 

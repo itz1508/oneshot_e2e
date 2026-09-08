@@ -209,6 +209,11 @@ export function createTransitionServices(
     queue: pipelineQueue as unknown as TransitionServices["queue"],
     checkpoints,
     waitForHuman,
+    waitForBuild: async (runId) => {
+      await history?.append({ runId, stage: "build-ready", type: "waiting", iteration: 0,
+        message: "Confirmed package and hash ready; waiting for explicit build authorization." });
+      events.emit(runId, "BuildReady", "Running", { scope: "SUPPORT", message: "Review the confirmed package and confirm Build." });
+    },
     finish,
   };
 

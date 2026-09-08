@@ -6,6 +6,7 @@ export type {
   GateAction,
   ConfirmPlanInput,
   ConfirmPlanResult,
+  PlanReviewEdits,
 } from "./types.js";
 
 export {
@@ -84,7 +85,13 @@ export type {
   TerminalState,
   TerminalIssue,
 } from "./checkpoints.js";
-export { isIterativeStage, stageIteration } from "./stage-scope.js";
+export {
+  isIterativeStage,
+  stageIteration,
+  getCurrentResearchRevision,
+  incrementResearchRevision,
+  researchRevisionKey,
+} from "./stage-scope.js";
 export { applyTransition } from "./apply-transition.js";
 export type {
   TransitionQueue,

@@ -172,7 +172,7 @@ export function createLiveActivity({ maxRows = LIVE_ACTION_CAP } = {}) {
       if (!aside || !normal || liveVisible === on) return;
       liveVisible = on;
       if (on) {
-        normal.hidden = true;
+        normal.hidden = false;
         aside.hidden = false;
         requestAnimationFrame(() => aside.classList.add('enter'));
       } else {

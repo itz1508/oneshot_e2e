@@ -18,6 +18,7 @@ import type { ArtifactStore } from "./artifact-store.js";
 import type { ProcessingEventBus } from "./event-bus.js";
 import type { RunRepository } from "./run-repository.js";
 import { PlanReviewService } from "./plan-review.js";
+import { BuildReviewService } from "./build-review.js";
 
 const APP_NAME = "oneshot-dynamic-workflow";
 export type DynamicDependencyFactory = (runId: string) => Promise<BoundDynamicDependencies>;
@@ -64,12 +65,13 @@ function unwrapAdkError(error: unknown): unknown {
  */
 export class WorkflowRuntime {
   readonly review: PlanReviewService;
+  readonly buildReview: BuildReviewService;
   constructor(
     private events: ProcessingEventBus,
     private runs: RunRepository,
     readonly store: ArtifactStore,
     private bindDependencies: DynamicDependencyFactory,
-  ) { this.review = new PlanReviewService(store); }
+  ) { this.review = new PlanReviewService(store); this.buildReview = new BuildReviewService(store); }
 
   private ev(
     runId: string,
@@ -163,6 +165,14 @@ export class WorkflowRuntime {
     try {
       bound = await this.bindDependencies(runId);
       const rootAgent = createOneShotDynamicWorkflow(bound, {
+        buildReview: async (jobId, confirmed, hash) => {
+          if (!await this.buildReview.enabled(jobId)) return;
+          await this.buildReview.open(jobId, confirmed, hash);
+          this.ev(jobId, "BuildReady", "Running", { scope: "SUPPORT", message: "Confirmed package ready. Confirm Build to continue." });
+          await this.buildReview.wait(jobId, () => this.runs.get(jobId)?.pipeline_status === "Done");
+          await this.buildReview.requireApproved(jobId, confirmed, hash);
+          this.ev(jobId, "BuildReady", "Completed", { scope: "SUPPORT", message: "Build authorized for the confirmed package." });
+        },
         review: async (jobId, research) => {
           if (!await this.review.open(jobId, research)) return research;
           this.ev(jobId, "PlanReview", "Running", { scope: "SUPPORT", message: "Draft ready. Review and confirm before Planner continues." });

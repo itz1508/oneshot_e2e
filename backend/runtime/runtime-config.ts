@@ -35,6 +35,8 @@ export interface RuntimePaths {
   checkpoints: string;
   conversations: string;
   sandboxWorkspaces: string;
+  /** `.runtime/target-workspace/` — the materialized, explicitly selected target project. */
+  targetWorkspace: string;
   cache: string;
   uploads: string;
   qc: string;
@@ -69,7 +71,8 @@ export function getRuntimePaths(projectRoot?: string): RuntimePaths {
     checkpoints: resolve(root, "checkpoints"),
     conversations: resolve(root, "conversations"),
     sandboxWorkspaces: resolve(root, "sandbox-workspaces"),
-        cache: resolve(root, "cache"),
+    targetWorkspace: resolve(root, "target-workspace"),
+    cache: resolve(root, "cache"),
     uploads: resolve(root, "uploads"),
     qc: resolve(root, "qc"),
     config: resolve(root, "config"),
@@ -89,7 +92,8 @@ export function ensureRuntimeDirectories(paths?: RuntimePaths): RuntimePaths {
     runtimePaths.checkpoints,
     runtimePaths.conversations,
     runtimePaths.sandboxWorkspaces,
-        runtimePaths.cache,
+    runtimePaths.targetWorkspace,
+    runtimePaths.cache,
     runtimePaths.uploads,
     runtimePaths.qc,
     runtimePaths.config,

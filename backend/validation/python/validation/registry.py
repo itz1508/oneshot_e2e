@@ -2,6 +2,7 @@ from __future__ import annotations
 import hashlib, json
 from pathlib import Path
 PRODUCER_CONSUMERS = {
+    'build-review-action': ('BuildReviewUI', ['BuildReviewService']),
     'common': ('ContractSystem', ['AllContracts']),
     'prompt': ('Prompt', ['Researcher']),
     'researcher': ('Researcher', ['Planner', 'TripleValidation']),

@@ -52,6 +52,7 @@ export interface OneShotDynamicDependencies {
 }
 
 export interface OneShotDynamicEffects {
+  buildReview?(jobId: string, confirmed: ConfirmedPackage, hash: string): Promise<void>;
   review?(jobId: string, research: ResearchBundle): Promise<ResearchBundle>;
   event?(
     jobId: string,
@@ -410,6 +411,7 @@ export function createOneShotDynamicWorkflow(
         artifact_id: createdHash,
       });
 
+      await effects.buildReview?.(jobId, confirmed, createdHash);
       effects.event?.(jobId, "Builder", "Running");
       const builder = (await ctx.runNode(
         builderNode,

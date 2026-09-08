@@ -320,7 +320,7 @@ ensureNodeDependencies(
     "web",
     "node_modules",
     ".bin",
-    isWindows ? "vite.cmd" : "vite",
+    isWindows ? "next.cmd" : "next",
   ),
   "web",
 );

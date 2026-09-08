@@ -35,8 +35,11 @@ test("provider output survives canonical validation, real sandbox execution and 
 
     // The production queue uses build_result rather than builder-result.
     await h.store.save(runId, "hash_proof", snapshot.hash_proof);
+    const confirmedPkg = await h.store.load<ConfirmedPackage>(runId, "confirmed");
+    await h.runtime.buildReview.open(runId, confirmedPkg, snapshot.hash_proof!.created_hash);
+    await h.runtime.buildReview.decide(runId, { action: "approve", hash: snapshot.hash_proof!.created_hash });
     await runBuildStage({ runId, runs: h.runs, store: h.store }, {
-      builder: h.builder, events: { emit() {} }, saveArtifact,
+      builder: h.builder, events: { emit() {} }, saveArtifact, hash: h.hash,
     } as unknown as StageServices, () => {});
     const queued = await h.store.load<BuilderWorkflowResult>(runId, "build_result");
     assert.ok(queued.result === "Passed");

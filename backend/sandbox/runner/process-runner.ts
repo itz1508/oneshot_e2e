@@ -1,8 +1,10 @@
+import { createHash } from "node:crypto";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
   readdirSync,
+  readFileSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -93,36 +95,108 @@ export class HardenedProcessRunner implements SandboxRunner {
     return env;
   }
 
-  /** Scan workspace directory and record file changes and total bytes written. */
-  private scanWorkspace(workDir: string, outDir: string): {
-    changes: FileChangeEvidence[];
-    bytesWritten: number;
-  } {
-    const changes: FileChangeEvidence[] = [];
-    let bytesWritten = 0;
+  /**
+   * Snapshot a directory tree, recording the relative path, size, and SHA-256
+   * hash of every regular file. Returns a map keyed by the relative path used
+   * in the mutation ledger (e.g. "/work/foo.ts").
+   */
+  private snapshotDir(
+    dir: string,
+    baseLabel: string,
+  ): Map<
+    string,
+    { size: number; sha256: string }
+  > {
+    const files = new Map<string, { size: number; sha256: string }>();
 
-    const scan = (dir: string, baseLabel: string) => {
-      if (!existsSync(dir)) return;
-      for (const entry of readdirSync(dir, { withFileTypes: true })) {
-        const fullPath = join(dir, entry.name);
+    const scan = (currentDir: string, label: string) => {
+      if (!existsSync(currentDir)) return;
+      for (const entry of readdirSync(currentDir, { withFileTypes: true })) {
+        const fullPath = join(currentDir, entry.name);
         if (entry.isDirectory()) {
-          scan(fullPath, `${baseLabel}/${entry.name}`);
+          scan(fullPath, `${label}/${entry.name}`);
         } else if (entry.isFile()) {
           try {
             const st = statSync(fullPath);
-            bytesWritten += st.size;
-            changes.push({
-              path: `${baseLabel}/${entry.name}`,
-              action: "created",
-              bytes: st.size,
+            const buffer = readFileSync(fullPath);
+            const sha256 = createHash("sha256")
+              .update(buffer)
+              .digest("hex");
+            files.set(`${label}/${entry.name}`, {
+              size: st.size,
+              sha256,
             });
           } catch {}
         }
       }
     };
 
-    scan(workDir, "/work");
-    scan(outDir, "/output");
+    scan(dir, baseLabel);
+    return files;
+  }
+
+  /**
+   * Scan workspace directories after execution and compare against the baseline
+   * snapshot taken before execution. Produces created / modified / deleted
+   * records with real hashes. Unchanged files are omitted from the ledger.
+   */
+  private scanWorkspace(
+    workDir: string,
+    outDir: string,
+    before?: Map<string, { size: number; sha256: string }>,
+  ): {
+    changes: FileChangeEvidence[];
+    bytesWritten: number;
+  } {
+    const after = new Map<string, { size: number; sha256: string }>();
+    for (const [dir, label] of [
+      [workDir, "/work"],
+      [outDir, "/output"],
+    ] as const) {
+      for (const [path, meta] of this.snapshotDir(dir, label)) {
+        after.set(path, meta);
+      }
+    }
+
+    const baseline = before ?? new Map<string, { size: number; sha256: string }>();
+    const changes: FileChangeEvidence[] = [];
+    let bytesWritten = 0;
+
+    for (const [path, meta] of after) {
+      const prev = baseline.get(path);
+      if (!prev) {
+        changes.push({
+          path,
+          action: "created",
+          bytes: meta.size,
+          sha256: meta.sha256,
+        });
+        bytesWritten += meta.size;
+      } else if (prev.sha256 !== meta.sha256) {
+        changes.push({
+          path,
+          action: "modified",
+          bytes: meta.size,
+          sha256: meta.sha256,
+          previous_bytes: prev.size,
+          previous_sha256: prev.sha256,
+        });
+        bytesWritten += meta.size;
+      }
+    }
+
+    for (const [path, prev] of baseline) {
+      if (!after.has(path)) {
+        changes.push({
+          path,
+          action: "deleted",
+          bytes: 0,
+          previous_bytes: prev.size,
+          previous_sha256: prev.sha256,
+        });
+        bytesWritten += prev.size;
+      }
+    }
 
     return { changes, bytesWritten };
   }
@@ -160,6 +234,18 @@ export class HardenedProcessRunner implements SandboxRunner {
     const env = this.buildEnvironment(auth.environment_allowlist);
     const processSet = new Set<ChildProcess>();
     this.activeProcesses.set(sandboxId, processSet);
+
+    // Capture a baseline snapshot before any commands run so created/modified/deleted
+    // classification is based on real workspace state, not a hard-coded default.
+    const baseline = new Map<string, { size: number; sha256: string }>();
+    for (const [dir, label] of [
+      [workDir, "/work"],
+      [outDir, "/output"],
+    ] as const) {
+      for (const [path, meta] of this.snapshotDir(dir, label)) {
+        baseline.set(path, meta);
+      }
+    }
 
     // Derive execution tasks from plan steps
     const tasks = plan.steps.map((s) => {
@@ -275,7 +361,7 @@ export class HardenedProcessRunner implements SandboxRunner {
     }
 
     const durationMs = Date.now() - startTime;
-    const { changes, bytesWritten } = this.scanWorkspace(workDir, outDir);
+    const { changes, bytesWritten } = this.scanWorkspace(workDir, outDir, baseline);
 
     // Limit check
     if (bytesWritten > auth.max_total_bytes_written || changes.length > auth.max_files_changed) {
