@@ -1,149 +1,149 @@
 # Repository Guidelines — OneShot
 
-> This file is the orientation map for the whole repository. Read it top to bottom to
-> navigate every source tree. Paths are relative to the repository root unless marked.
+Repository-wide working guidance. Paths are relative to the repository root.
+Read nested `AGENTS.md` files before changing their subtree.
 
-## Orientation
+## Start here
 
-OneShot is a full-stack workspace automation platform: a prompt-driven, six-phase
-pipeline (Research → Plan/Refine → Validate → Build) with two explicit human gates
-(Research Review, Build Ready), deterministic validation and hashing, and a sandboxed
-Builder. The web console, backend runtime, pipeline, validation, workspace API,
-container images, installers, and CI all live in this one repository.
+1. Inspect the branch, working tree, relevant manifests, and actual callers.
+   Preserve existing edits; do not use a refactor to replace unrelated work.
+2. Find the responsible module using the map below. Read its implementation and
+   relevant authority document before proposing changes.
+3. Make a bounded change that completes the request. Preserve public imports,
+   artifact identities, resource paths, and launch behavior when moving code.
+4. Check the changed behavior at the appropriate scope and report what changed,
+   what was verified, and any remaining limitation.
 
-Root files: `README.md` (one-click install + agent prompt) · `AGENTS.md` (this file) ·
-`package.json` / `package-lock.json` (Node module, `type: module`, Node >=24.13) ·
-`tsconfig.json` / `tsconfig.test.json` · `LICENSE` (Apache-2.0) · `MANIFEST.sha256`
-(generated source hash manifest) · `start-web.ps1` (primary Windows launcher: builds
-and serves the web app on http://localhost:8787; pass `-Sample` for sample mode).
-Repository metadata: `.gitignore` · `.gitattributes` · `.dockerignore`.
+Use `rg` for searches. Keep source text LF-normalized. Do not hand-edit generated
+output or introduce dependencies solely to reformat files.
 
-## Top-level module map
+## Authority and invariants
 
-### `.agents/` — agent/skill metadata
-- `rules/oneshot-skill-architecture.md` — authoritative rule for agent/skill/tool roles.
-- `skills/oneshot-judge/SKILL.md` — judge skill (evaluates the containerized platform
-  without external API keys).
+| Responsibility | Source of truth |
+| --- | --- |
+| Workflow order, ownership, and human gates | [Canonical workflow](docs/CANONICAL_WORKFLOW.md) |
+| Required web behavior | [Web requirements v3](docs/ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v3.md) |
+| Requirement-to-implementation gaps | [Reconciliation](docs/WEB_APP_REQUIREMENTS_RECONCILIATION.md) |
+| Agent, skill, tool, and IAM boundaries | [Architecture rule](.agents/rules/oneshot-skill-architecture.md) |
+| Payload contracts | `backend/schema/` and its contract registry |
+| Executable transitions | `backend/workflow/graph.json`, `backend/workflow/canonical-transition.ts` |
 
-### `.github/workflows/` — CI
-`adk-v2-verify.yml` · `pipeline-e2e.yml` · `tavily-researcher-verify.yml` ·
-`tmp-adk-researcher-node-test.yml`.
+When documentation and implementation disagree, identify the discrepancy before
+changing either. Historical reports and green builds do not establish current
+runtime or deployment behavior.
 
-### `app/` — deployment, support, frontend
-- `env/` — `.env` (local, gitignored) and `.env.example`.
-- `bootstrap/` — `demo.mjs`, `readme.ts`, `setup.bat`, `setup.sh`.
-- `scripts/` — Python tooling: `generate_manifest.py` (regenerate `MANIFEST.sha256`),
-  `verify_manifest.py`, `source_file_policy.py`, `verify_all.py`, `verify_dependencies.py`,
-  `build_deterministic_zip.py`, `bootstrap.py`.
-- `fixtures/` — product seed fixtures (e.g. `product/complete-success-seed.json`).
-- `legal/` — third-party/platform legal notices.
-- `requirements/` — pinned Python dependency requirements.
-- `vendor/` — vendored artifacts (npm `.tgz` like `typescript`, `@types/node`).
-- `deploy/` — deployment helper material.
-- `web/` — canonical frontend. `src/` is the plain HTML/CSS/JS console
-  (`index.html`, `app.js`, `styles.css`, `oneshot-v8.*` v8 UI, `human-gates.js`,
-  `job-history.js`, `task-management.js`, `active-run-panel.js`, `console-interactions.js`,
-  `live-activity.js`, `workflow-trace*.js`, `terminal-message.js`, `providers-panel.js`,
-  `visual-settings.js`, `runtime-view-state.js`, `run-atmosphere.js`); the Next.js
-  app lives under `app/`, `components/`, `lib/` (route, server components, API/projection
-  libs) with `next.config.mjs`, `tsconfig.json`, `postcss.config.mjs`; `cloud/` holds the
-  provider manager, credential stores, catalog, adapters, and Python workers; `tests/`
-  is `node:test`; `scripts/` has `serve.mjs`, `export.mjs`; `dist/`/`out` are build output.
-  See `app/web/README.md` and `app/web/cloud/README.md`.
-- `workspace_api/` — standalone FastAPI control plane (package `workspace_api`,
-  import root `app`, run with `--app-dir app`).
+- Preserve Research Review before Planner and hash/package-bound Build Ready
+  authorization before Builder. Do not replace either gate with automatic progress.
+- Preserve the same logical plan identity through refinement. Hash the canonical
+  comparable representation, `confirmed_package.core`.
+- UI state projects real backend records, IDs, events, and results. Do not fabricate
+  progress, evidence, successful execution, or hash equality.
+- Agent SOPs under `backend/agents/` are distinct from reusable skills discovered
+  under `backend/skills/`. Directory ownership does not establish IAM permission.
+- Credentials stay server-side and outside browser-readable output. Preserve
+  authentication, workspace path policy, and sandbox admission checks.
 
-### `backend/` — TypeScript runtime
-- `index.ts` — server entrypoint. `environment.ts` — env/config loading.
-  `python-runtime.ts` — resolves the Python executable. `requirements-ledger.txt`.
-- `schema/` — JSON Schema Draft 2020-12 payload contracts + `contract-registry.json`.
-- `workflow/` — canonical workflow: `graph.json`, `canonical-transition.ts`,
-  `stage-scope.ts`, plus queue/pipeline glue. Authority: `docs/CANONICAL_WORKFLOW.md`.
-- `pipeline/` — BullMQ pipeline: `worker.ts`, `queue.ts`, `processors.ts`,
-  `apply-transition.ts`, `confirm-plan.ts`, `context.ts`, `types.ts`, `transition-services.ts`.
-- `runtime/` — `workflow-runtime.ts`, `run-repository.ts`, `artifact-store.ts`,
-  `plan-review.ts`, `build-review.ts`, `runtime-config.ts`, `target-workspace.ts`.
-- `server/` — HTTP/SSE (`http-server.ts`).
-- `sandbox/` — execution boundary (`runner/process-runner.ts`, `types.ts`).
-- `agents/` — workflow agents, each with `SKILL.md` (researcher, planner, refactor,
-  gap-analysis, evaluation, builder). Each agent owns its sub-tools under
-  `<agent>/tool/` — e.g. `researcher/tool/{tavily,evidence}` (web-search and
-  evidence providers). Instructions stay in the agent `SKILL.md`.
-- `skills/` — reusable skills (`init`, `oneshot-canonical-contracts`,
-  `oneshot-intent-collection`, `oneshot-task-runtime`, `oneshot-sandbox-runtime`, …).
-- `validation/` — deterministic Python validation + hashing; package at
-  `validation/python/validation`, import root `backend/validation/python`.
-- `intent/` — intent collection. `task/` — task management. `reasoning/` — policy on
-  hidden chain-of-thought. `tool/` — tool implementations. `contracts/`, `core/`,
-  `graph/` — canonical contracts/core types/graph data.
-- `python/` — standalone Python service: own `pyproject.toml`, `Dockerfile`, `app/`,
-  `tests/`. `config/`, `typescript/` are (empty) scaffolds.
-- `tests/` — `python/` (unittest) and `ts/` (node:test) suites.
+Before suggesting technology or changing responsibility boundaries, consult the
+relevant official specification or documentation and include its URL. Prefer
+specification → product/API docs → SDK docs → official repository/examples.
+Choose the owning layer from actual callers, not a presumed language sequence.
 
-### `docker/` — images & compose
-`Dockerfile` (prod) · `Dockerfile.dev` · `Dockerfile.gemma` ·
-`docker-compose.dev.yml` · `docker-compose.gemma.yml` · `docker-compose.local.yml` ·
-`README.md`.
+Useful references: [JSON Schema](https://json-schema.org/specification),
+[TypeScript modules](https://www.typescriptlang.org/docs/handbook/2/modules.html),
+[Python](https://docs.python.org/3/reference/index.html), and
+[Next.js static exports](https://nextjs.org/docs/app/guides/static-exports).
+Consult other technologies only when the task involves them.
 
-### `scripts/` — launchers & tooling
-- `oneshot.mjs` — bootstrap/build/verify/start/IDE entrypoint.
-- `judge.mjs`, `judge-launch.ps1`, `judge-launch.sh` — judge launcher.
-- `install-e2e.ps1`, `install-e2e.sh`, `installation/` — installers.
-- `run-local-oneshot.ps1`, `kill-server.ps1`, `setup-local-adc.ps1`,
-  `preflight-local-adc.ps1` — local runners.
-- `deploy-cloud-run.sh`, `preflight-cloud-deploy.sh`, `verify-cloud-run.sh`,
-  `verify-gemini-models.py` — GCP deploy/verify.
-- `verify-local-health.ps1`, `docker-entrypoint-gemma.sh`, `audit-branches.py`,
-  `guard/layout.mjs` (layout guard), `smoke/bullmq-redis-smoke.mjs`.
-- `e2e/` — genuine browser E2E (`browser/`, `cdp-session.mjs`, `debug-send.mjs`, …).
+## Module map
 
-### `docs/` — documentation
-- `CANONICAL_WORKFLOW.md` — authority for workflow order/ownership/gate placement.
-- `ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v3.md` — master web-app behavior source of truth.
-- `WEB_APP_REQUIREMENTS_RECONCILIATION.md` — requirement↔implementation reconciliation.
-- `LLM WorkFlow CALL.txt` — supplied six-phase target sequence.
-- `WORKFLOW_TREE` — ASCII workflow map (referenced by README badge).
-- `JUDGE_AGENT_PROMPT.txt`, `ONESHOT_APP_REVIEW_HANDOFF.md`.
-- `license/` — `LICENSE`, `NOTICE` (bundled into images). `evidence/` — demo artifacts.
+| Area | Implementation and navigation |
+| --- | --- |
+| Production web UI | `app/web/app/` routes; `app/web/components/` workspace, review cards, file browser, dialogs, icons |
+| Browser data access | `app/web/lib/api.ts` public exports; HTTP client, event stream, contracts, and projections beside it |
+| Legacy/reference console | `app/web/src/`; retained HTML/CSS/JS and associated tests, not the Next.js production entrypoint |
+| Provider integration | `app/web/cloud/`; manager, runtime config, secret store, adapters, and Python workers |
+| Server entry and configuration | `backend/index.ts`, `backend/environment.ts`, `backend/python-runtime.ts` |
+| HTTP and workspace access | `backend/server/`; routing, response helpers, workspace inspection, security, path policy |
+| Per-stage pipeline | `backend/pipeline/`; processors, workers, queues, checkpoints, transitions, review confirmation, stage scope |
+| Runtime state and gates | `backend/runtime/`; run repository, events, artifacts, plan/build review, target workspace |
+| Workflow execution | `backend/workflow/`; canonical transitions and ADK integration under `backend/workflow/adk/` |
+| Agent operations | `backend/agents/`; Researcher, Planner, Refactor, Gap Analysis, Evaluation, Builder and their private tools |
+| Reusable capabilities | `backend/skills/`; discovery, resolution, activation, and callable bindings |
+| Supporting domains | `backend/intent/`, `backend/task/`, `backend/sandbox/`, `backend/tool/`, `backend/graph/`, `backend/core/` |
+| Deterministic validation | `backend/validation/python/validation/`; schema, fixture, goal, references, canonicalization, hashing |
+| Standalone Python service | `backend/python/`; own package, dependencies, app, and tests |
+| Workspace control plane | `app/workspace_api/`; FastAPI package with import root `app` |
+| Bootstrap and packaging | `scripts/`, `app/bootstrap/`, `app/scripts/`; shared CLI colors in `scripts/lib/` |
+| Deployment | `docker/`, `app/deploy/`, cloud deployment/preflight/verification scripts in `scripts/` |
+| Fixtures and dependencies | `app/fixtures/`, `app/requirements/`, `app/vendor/`; local environment in `app/env/` |
+| Checks | `backend/tests/`, `app/web/tests/`, `app/workspace_api/tests/`, `scripts/e2e/browser/`, `.github/workflows/` |
 
-## Build, Test, and Development Commands
+### Frontend boundary
 
-- `npm run oneshot`: bootstrap, build, verify, start, and open the IDE.
-- `npm run build`: `tsc -p tsconfig.json` + `npm --prefix app/web run build`.
-- `npm run build:backend` / `npm run build:ui`: build each half individually.
-- `npm start`: run the compiled server (`node dist/backend/index.js`). The primary
-  launch path on Windows is `.\start-web.ps1` (port, build, sample-mode switches).
-- `npm run dev`: run the compiled server with `app/env/.env`.
-- `npm run verify`: dependency checks, Python tests, build, serialized Node E2E tests.
-- `npm test`: build backend + run compiled Node tests.
-- `npm --prefix app/web test`: web tests (`node:test`).
-- `python -m unittest discover -s backend/tests/python -p 'test_source_file_policy.py' -v`.
-- `python app/scripts/generate_manifest.py` then `python app/scripts/verify_manifest.py`:
-  refresh + verify `MANIFEST.sha256` after reviewing the bounded diff.
-- Python validation: `PYTHONPATH=backend/validation/python python -m validation.rpc`.
-- Workspace API: `uvicorn --app-dir app workspace_api.main:app`.
-- Redis/queue: `npm run redis:up` / `redis:down` (Docker compose) ; queue mode gated by
-  `ONESHOT_QUEUE_REQUIRED` (`docker/docker-compose.dev.yml`).
+The production build is Next.js App Router → static export → `app/web/dist/`,
+served by the existing Node backend. Follow [app/web/AGENTS.md](app/web/AGENTS.md)
+and read relevant installed Next.js guides before changing frontend code.
 
-## Coding Style & Naming Conventions
+`app/web/scripts/export.mjs` publishes the export and externalizes trusted
+bootstrap scripts for the existing CSP. Preserve this build path and CSP.
+Do not edit `app/web/.next/`, `app/web/out/`, or `app/web/dist/` as source.
 
-TypeScript is ESM with strict checking; the frontend additionally rejects unused
-locals/parameters, fallthrough, and unchecked side-effect imports. Follow existing
-two-space backend and four-space frontend/Python formatting (no repo-wide linter).
-New contract fields originate in `backend/schema/`, then receive Python and TypeScript
-representations. Never embed API tokens in browser code or trust client-supplied
-identity headers. Use the canonical comparable representation
-(`confirmed_package.core`) for hashing.
+### Language and contract conventions
 
-## Testing Guidelines
+TypeScript uses strict ESM. Keep Node-side relative imports compatible with the
+existing `.js` import convention. Use two-space backend/cloud indentation and
+four-space frontend/Python indentation; follow the surrounding module.
 
-Use `unittest` for Python and `node:test` for backend/E2E and frontend behavior.
-Security changes require positive and negative coverage. Run `npm run verify`, web
-tests, and manifest verification before release-facing commits.
+Contract changes begin in `backend/schema/`; update affected TypeScript/Python
+representations and consumers together. Preserve JSON field names and result
+vocabulary. Keep separate Python import roots intact when moving modules.
 
-## Commit & Pull Request Guidelines
+## Commands
 
-Recent history uses concise conventional prefixes such as `feat:`, `fix:`, `docs:`,
-`docs(scope):`, and `release:`. Keep one bounded concern per commit and record exact
-verification commands in the PR description. No PR template is tracked. After adding or
-touching source files, regenerate and re-verify `MANIFEST.sha256` and keep the diff bounded.
+Run from the repository root unless a different directory is stated.
+Root package requirements: Node >=24.13.0 and npm >=11.8.0.
+Use the relevant Python package/dependency files for its runtime requirements.
+
+| Purpose | Command |
+| --- | --- |
+| Windows launch | `./start-web.ps1` (default port 8787; supports `-Rebuild`, `-Sample`, `-NoBrowser`, `-Port`) |
+| Bootstrap through launch | `npm run oneshot` |
+| Build all / backend / frontend | `npm run build` / `npm run build:backend` / `npm run build:ui` |
+| Start compiled backend | `npm start`; `npm run dev` additionally loads `app/env/.env` |
+| Frontend development / types | `npm --prefix app/web run dev` / `npm --prefix app/web run typecheck` |
+| Backend tests | `npm test` (compiles backend and tests) |
+| Compile tests separately | `npm run build:test` |
+| Web tests | `npm --prefix app/web test` |
+| Repository verification | `npm run verify` |
+| Workspace API | `uvicorn --app-dir app workspace_api.main:app` |
+| Python reasoner tests | From `backend/python/`: `python -m pytest` |
+| Local Redis | `npm run redis:up`; see `docker/docker-compose.dev.yml` |
+| Pipeline E2E | `npm run test:pipeline:e2e`; requires the configured server, worker, and Redis |
+| Manifest | `python app/scripts/generate_manifest.py`, then `python app/scripts/verify_manifest.py` |
+
+For direct validation RPC in PowerShell, set
+`$env:PYTHONPATH = "backend/validation/python"`, then run
+`python -m validation.rpc`. This environment assignment applies to the current shell.
+
+## Verification and delivery
+
+Match verification to the change. Documentation-only work needs path/command
+checks and a diff review, not a full runtime suite. Refactors need relevant
+compilation and behavior checks; security changes need positive and negative cases.
+Avoid tests that depend only on whitespace or quote style.
+
+Before release-facing commits, run `npm run verify`, web tests, and manifest
+verification. Compile tests explicitly with `npm run build:test` when checking
+compiled test output; do not assume an old `dist/` proves current source.
+
+After source changes, regenerate the manifest only after builds have stopped,
+then review its diff and verify it. The manifest uses
+`app/scripts/source_file_policy.py`; generated output, credentials, and local
+diagnostic logs must not become release source artifacts.
+
+Commit and push only when authorized by the user. Stage reviewed paths explicitly.
+Use a concise conventional commit title and record relevant validation in PRs.
+Before pushing, inspect branch/upstream divergence, including pre-existing local
+commits. After pushing, verify the remote SHA and working tree, and report CI for
+that exact commit. Distinguish local checks from live provider, Redis/BullMQ,
+browser, container, and deployment proof.
