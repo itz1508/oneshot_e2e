@@ -59,7 +59,7 @@
     "steps": [
       {
         "step_id": "step:seed",
-        "description": "cmd /c echo mutation-proof-A > proof-a.txt && echo mutation-proof-B > proof-b.txt && type proof-a.txt && type proof-b.txt",
+        "description": "echo mutation-proof-A > proof-a.txt && echo mutation-proof-B > proof-b.txt",
         "responsibility": "CanonicalProof",
         "depends_on": [],
         "requirement_refs": [
