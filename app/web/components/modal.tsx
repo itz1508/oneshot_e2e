@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 
 export function Modal({
     title,
@@ -10,15 +10,22 @@ export function Modal({
     close: () => void;
 }) {
     const ref = useRef<HTMLDialogElement>(null);
+    const titleId = useId();
     useEffect(() => {
-        ref.current?.showModal();
+        const dialog = ref.current;
+        const opener = document.activeElement;
+        dialog?.showModal();
+        return () => {
+            dialog?.close();
+            if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+        };
     }, []);
     return (
-        <dialog ref={ref} onCancel={close} className="modal-dialog">
+        <dialog ref={ref} onCancel={close} className="modal-dialog" aria-labelledby={titleId}>
             <div className="modal-card">
                 <header className="modal-header">
                     <div className="modal-title-wrap">
-                        <h3>{title}</h3>
+                        <h3 id={titleId}>{title}</h3>
                     </div>
                     <div className="modal-actions">
                         <button

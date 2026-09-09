@@ -2087,6 +2087,21 @@ summary:focus-visible {
 }
 
 /* Responsive */
+.left-rail { grid-column: 1; grid-row: 1; }
+.explorer-panel { grid-column: 2; grid-row: 1; }
+.conversation-panel { grid-column: 3; grid-row: 1; min-width: 0; }
+.task-panel { grid-column: 4; grid-row: 1; }
+.right-rail { grid-column: 5; grid-row: 1; }
+.shell-layout:not(.left-open) {
+  --explorer-w: 0px;
+}
+.shell-layout:not(.right-open) {
+  --task-w: 0px;
+}
+.shell-layout:not(.left-open) .explorer-panel,
+.shell-layout:not(.right-open) .task-panel {
+  visibility: hidden;
+}
 @media (max-width: 1080px) {
   .shell-layout {
     grid-template-columns: var(--rail-w) 0 minmax(0, 1fr) var(--task-w) var(--rail-w);
@@ -2106,8 +2121,31 @@ summary:focus-visible {
 }
 
 @media (max-width: 760px) {
-  .shell-layout {
+  .shell-layout,
+  .shell-layout.left-open {
+    position: relative;
     grid-template-columns: var(--rail-w) 0 minmax(0, 1fr) 0 var(--rail-w);
+  }
+  .shell-layout .explorer-panel,
+  .shell-layout .task-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--rail-w);
+    right: var(--rail-w);
+    z-index: 30;
+  }
+  .shell-layout.right-open .task-panel {
+    display: flex;
+  }
+  .topbar {
+    gap: 6px;
+    padding: 0 8px;
+  }
+  .job-chip,
+  .pipeline-pulse,
+  .brand-tag {
+    display: none;
   }
   .target-chip,
   .provider-chip,

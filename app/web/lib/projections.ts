@@ -1,4 +1,22 @@
-import type { Bundle, Edits, EventRecord, Run } from "./contracts";
+import type { Bundle, Edits, EventRecord, Run, BuildReview, Conversation } from "./contracts";
+
+export function readiness(run: Run | null, conversation: Conversation | null, build: BuildReview | null, waiting: boolean, connection: string): { score: number; label: string } {
+    if (run?.pipeline_status === "Done") return { score: verifiedResult(run) ? 3 : 0, label: verifiedResult(run) ? "Passed" : run.test_result === "Failed" ? "Failed" : "Verification incomplete" };
+    if (waiting) return { score: 2, label: "Research Review" };
+    if (build?.status === "pending") return { score: 2, label: "Build Ready" };
+    if (run) return { score: 1, label: "Running" };
+    if (conversation?.intent?.ready_for_prompt) return { score: 3, label: "Ready" };
+    return { score: 0, label: connection === "Connected" ? "Awaiting request" : connection };
+}
+
+export function stageState(run: Run | null, stage: string): string | undefined {
+    const aliases: Record<string, string[]> = {
+        "Gap Analysis": ["GapAnalysis", "Gap Analysis"],
+        "Triple Validation": ["TripleValidation", "Triple Validation"],
+        "Hash Verification": ["Hash", "Hash Verification", "Finalize"],
+    };
+    return run?.events.filter(event => (aliases[stage] || [stage]).includes(event.processor)).at(-1)?.execution_status;
+}
 
 export function mergeEvents(
     previous: EventRecord[],

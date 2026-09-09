@@ -4,8 +4,23 @@ import fs from 'node:fs';
 import ts from 'typescript';
 const source = fs.readFileSync(new URL('../lib/projections.ts', import.meta.url), 'utf8');
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
-const { verifiedResult, builderStarted, researchWaiting, editsFromBundle, eventNeedsSnapshot, mergeEvents, currentPhase } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`);
+const { verifiedResult, builderStarted, researchWaiting, editsFromBundle, eventNeedsSnapshot, mergeEvents, currentPhase, readiness, stageState } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`);
 const event = (processor, execution_status, sequence) => ({ processor, execution_status, sequence });
+test('readiness is supplied by backend intent and human gates take precedence over Running', () => {
+  assert.deepEqual(readiness(null, null, null, false, 'Connected'), { score: 0, label: 'Awaiting request' });
+  assert.deepEqual(readiness(null, { intent: { ready_for_prompt: false } }, null, false, 'Connected'), { score: 0, label: 'Awaiting request' });
+  assert.deepEqual(readiness(null, { intent: { ready_for_prompt: true } }, null, false, 'Connected'), { score: 3, label: 'Ready' });
+  assert.equal(readiness({ pipeline_status: 'Running' }, null, null, true, 'Connected').label, 'Research Review');
+  assert.equal(readiness({ pipeline_status: 'Running' }, null, { status: 'pending' }, false, 'Connected').label, 'Build Ready');
+  assert.equal(readiness({ pipeline_status: 'Done', test_result: 'Failed' }, null, null, false, 'Connected').score, 0);
+});
+test('later processors and terminal success do not invent missing stage completions', () => {
+  const run = { pipeline_status: 'Done', test_result: 'Passed', events: [event('Builder', 'Completed', 3)] };
+  assert.equal(stageState(run, 'Planner'), undefined);
+  assert.equal(stageState(run, 'Builder'), 'Completed');
+  run.events.push(event('Builder', 'Failed', 4));
+  assert.equal(stageState(run, 'Builder'), 'Failed');
+});
 test('terminal success requires matching nonempty hashes and terminal state', () => {
   const run = { pipeline_status: 'Done', test_result: 'Passed', hash_proof: { equal: true, created_hash: 'abc', recomputed_hash: 'abc' } };
   assert.equal(verifiedResult(run), true);
@@ -36,4 +51,12 @@ test('ordinary events do not trigger API refetches and replay is deduplicated', 
   assert.equal(eventNeedsSnapshot(event('BuildReady', 'Running', 3)), true);
   assert.deepEqual(mergeEvents([b, a], [a]), [a, b]);
   assert.equal(currentPhase({ current_processor: 'ChatMessage', events: [a, b] }), 'Preparing work');
+});
+
+test('canonical backend processor names map to visible stages', () => {
+  const run = { events: [event('GapAnalysis', 'Completed', 1), event('TripleValidation', 'Completed', 2), event('Hash', 'Completed', 3)] };
+  assert.equal(stageState(run, 'Gap Analysis'), 'Completed');
+  assert.equal(stageState(run, 'Triple Validation'), 'Completed');
+  assert.equal(stageState(run, 'Hash Verification'), 'Completed');
+  assert.equal(stageState(run, 'Builder'), undefined);
 });

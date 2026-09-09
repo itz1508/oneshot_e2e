@@ -20,6 +20,8 @@ import {
     mergeEvents,
     phaseLabel,
     researchWaiting,
+    readiness,
+    stageState,
 } from "../lib/projections";
 import { Icon } from "./icon";
 import { Modal } from "./modal";
@@ -33,9 +35,9 @@ const STAGE_ORDER = [
     "Gap Analysis",
     "Evaluation",
     "Triple Validation",
+    "Confirmed",
     "Builder",
     "Hash Verification",
-    "Confirmed",
     "Done",
 ];
 
@@ -80,6 +82,9 @@ export default function Workspace() {
     const [auth, setAuth] = useState(false);
     const [providers, setProviders] = useState<Provider[]>([]);
     const [activeProvider, setActiveProvider] = useState("");
+    const [providerBusy, setProviderBusy] = useState(false);
+    const [providerMessage, setProviderMessage] = useState("");
+    const providerLock = useRef(false);
     const [refreshKey, setRefreshKey] = useState(0);
     const [authKey, setAuthKey] = useState(0);
     const [newChat, setNewChat] = useState(false);
@@ -119,14 +124,14 @@ export default function Workspace() {
     const mutationsMap = useMemo(() => {
         const map = new Map<string, Mutation>();
         const source =
-            history && historicalMutations ? historicalMutations : mutations;
+            mutations;
         if (source) {
             for (const m of source) {
                 if (m.path) map.set(m.path, m);
             }
         }
         return map;
-    }, [mutations, historicalMutations, history]);
+    }, [mutations]);
 
     const loadTree = useCallback(async () => {
         setTreeStatus("Reading target workspace…");
@@ -169,8 +174,9 @@ export default function Workspace() {
             }>("/api/providers");
             setProviders(data.providers || []);
             setActiveProvider(data.activeProvider || "");
-        } catch {
-            // providers endpoint optional
+        } catch (cause) {
+            setProviderMessage(cause instanceof Error ? cause.message : "Provider catalog unavailable.");
+            throw cause;
         }
     }, []);
 
@@ -210,7 +216,7 @@ export default function Workspace() {
             });
 
         void loadTree();
-        void loadProviders();
+        void loadProviders().catch(() => {});
 
         const cid = localStorage.getItem("oneshot.currentConversationId");
         if (cid) {
@@ -226,9 +232,14 @@ export default function Workspace() {
                         localStorage.getItem("oneshot.currentRunId") || "",
                     );
                 })
-                .catch(() => {
-                    localStorage.removeItem("oneshot.currentConversationId");
-                    localStorage.removeItem("oneshot.currentRunId");
+                .catch((cause) => {
+                    if (signal.aborted) return;
+                    if (cause instanceof ApiError && cause.status === 404) {
+                        localStorage.removeItem("oneshot.currentConversationId");
+                        localStorage.removeItem("oneshot.currentRunId");
+                    } else {
+                        setError("Could not restore the saved session. Check your connection or session token, then reload to retry.");
+                    }
                 });
         }
         return () => controller.abort();
@@ -399,14 +410,16 @@ export default function Workspace() {
     }, [selectedJob]);
 
     async function perform(action: () => Promise<void>) {
-        if (busyRef.current) return;
+        if (busyRef.current) return false;
         busyRef.current = true;
         setBusy(true);
         setError("");
         try {
             await action();
+            return true;
         } catch (e) {
             setError(e instanceof Error ? e.message : String(e));
+            return false;
         } finally {
             busyRef.current = false;
             setBusy(false);
@@ -448,7 +461,11 @@ export default function Workspace() {
     }
 
     async function startRun() {
-        if (!conversation || runId || !target) return;
+        if (!conversation || runId) return;
+        if (target?.source !== "configured") {
+            setError("Select a target by setting ONESHOT_WORKSPACE_ROOT and restarting OneShot before starting Research.");
+            return;
+        }
         await perform(async () => {
             const data = await request<{ run_id: string }>(
                 `/api/conversations/${encodeURIComponent(conversation.conversation_id)}/run`,
@@ -484,8 +501,8 @@ export default function Workspace() {
     }
 
     async function decideBuild(action: "approve" | "return") {
-        if (!build) return;
-        await perform(async () => {
+        if (!build) return false;
+        return perform(async () => {
             const result = await request<BuildReview>(
                 `/api/runs/${encodeURIComponent(runId)}/build-review`,
                 { action, hash: build.hash },
@@ -535,38 +552,8 @@ export default function Workspace() {
         !!run && researchWaiting(run) && review?.status !== "approved";
     const active = providers.find((p) => p.id === activeProvider);
 
-    // Calculate Progress %
-    const currentProc = run?.current_processor || "";
-    const stageIdx = STAGE_ORDER.indexOf(currentProc);
-    const progressPct =
-        stageIdx >= 0
-            ? Math.round(((stageIdx + 1) / STAGE_ORDER.length) * 100)
-            : 0;
-
-    // Readiness Score: 0 (empty), 1 (intent draft), 2 (scope defined/waiting), 3 (plan confirmed)
-    const intentScore = useMemo(() => {
-        if (run?.pipeline_status === "Done") return 3;
-        if (
-            run?.pipeline_status === "Running" ||
-            waiting ||
-            build?.status === "pending"
-        )
-            return 2;
-        if (conversation?.intent?.ready_for_prompt) return 3;
-        if (draft.trim().length > 30) return 2;
-        if (draft.trim().length > 0) return 1;
-        return 0;
-    }, [run, waiting, build, conversation, draft]);
-
-    const readyLabel = useMemo(() => {
-        if (run?.pipeline_status === "Done")
-            return run.test_result === "Passed" ? "Passed" : "Failed";
-        if (run?.pipeline_status === "Running") return "Running";
-        if (waiting) return "Waiting";
-        if (conversation?.intent?.ready_for_prompt) return "Ready";
-        if (status === "Connected") return "Awaiting request";
-        return status;
-    }, [run, waiting, conversation, status]);
+    const progressPct = Math.round(STAGE_ORDER.filter(stage => stageState(run, stage) === "Completed").length / STAGE_ORDER.length * 100);
+    const { score: intentScore, label: readyLabel } = readiness(run, conversation, build, waiting, status);
 
     // Provider dot style
     const providerClass = useMemo(() => {
@@ -852,6 +839,7 @@ export default function Workspace() {
                         disabled={
                             !conversation?.intent?.ready_for_prompt ||
                             !!runId ||
+                            target?.source !== "configured" ||
                             busy
                         }
                         onClick={startRun}
@@ -1055,6 +1043,11 @@ export default function Workspace() {
                         id="conversation-scroll"
                         data-testid="chat-view"
                     >
+                        {target && target.source !== "configured" && (
+                            <div role="alert" className="promptbar-error-banner">
+                                No target selected. Set ONESHOT_WORKSPACE_ROOT to your project folder and restart OneShot to enable Research.
+                            </div>
+                        )}
                         {!entries.length && (
                             <div
                                 className="conversation-empty"
@@ -1305,7 +1298,7 @@ export default function Workspace() {
                                         <button
                                             type="button"
                                             className="btn btn-primary"
-                                            disabled={busy || !target}
+                                            disabled={busy || target?.source !== "configured"}
                                             onClick={startRun}
                                         >
                                             Start Research
@@ -1450,29 +1443,10 @@ export default function Workspace() {
                                             <div className="stage-nodes">
                                                 {STAGE_ORDER.map(
                                                     (stage, idx) => {
-                                                        const isDone =
-                                                            stageIdx > idx ||
-                                                            (run.pipeline_status ===
-                                                                "Done" &&
-                                                                run.test_result ===
-                                                                    "Passed");
-                                                        const isActive =
-                                                            (stageIdx === idx &&
-                                                                run.pipeline_status ===
-                                                                    "Running") ||
-                                                            (stage ===
-                                                                "Researcher" &&
-                                                                waiting) ||
-                                                            (stage ===
-                                                                "Triple Validation" &&
-                                                                build?.status ===
-                                                                    "pending");
-                                                        const isFailed =
-                                                            run.pipeline_status ===
-                                                                "Done" &&
-                                                            run.test_result ===
-                                                                "Failed" &&
-                                                            stageIdx === idx;
+                                                        const recorded = stageState(run, stage);
+                                                        const isDone = recorded === "Completed";
+                                                        const isActive = recorded === "Running";
+                                                        const isFailed = recorded === "Failed";
                                                         return (
                                                             <div
                                                                 key={stage}
@@ -2078,8 +2052,10 @@ export default function Workspace() {
                             }}
                         >
                             Configure active model provider and runtime
-                            settings. Credentials remain stored locally.
+                            settings. Credentials are stored on the backend and never returned to the browser.
                         </p>
+                        {providerMessage && <p role="status">{providerMessage}</p>}
+                        {!providers.length && <button type="button" disabled={providerBusy} onClick={() => void loadProviders().catch(() => {})}>Retry provider catalog</button>}
                         <div
                             style={{
                                 display: "flex",
@@ -2090,8 +2066,39 @@ export default function Workspace() {
                             {providers.map((p) => {
                                 const isSelected = p.id === activeProvider;
                                 return (
-                                    <div
+                                    <form
                                         key={p.id}
+                                        onSubmit={async (event) => {
+                                            event.preventDefault();
+                                            if (providerLock.current) return;
+                                            providerLock.current = true;
+                                            const form = event.currentTarget;
+                                            const fields = new FormData(form);
+                                            const credential = form.elements.namedItem("credential") as HTMLInputElement | null;
+                                            setProviderBusy(true);
+                                            setProviderMessage("");
+                                            try {
+                                                const path = `/api/providers/${encodeURIComponent(p.id)}`;
+                                                if (credential?.value.trim()) {
+                                                    await request(`${path}/credential`, { value: credential.value.trim() }, "PUT");
+                                                    credential.value = "";
+                                                }
+                                                await request(path, {
+                                                    model: String(fields.get("model") || "").trim(),
+                                                    apiBase: String(fields.get("apiBase") || "").trim(),
+                                                }, "PUT");
+                                                const activated = await request<{ activeProvider: string }>(`${path}/activate`, {}, "POST");
+                                                setActiveProvider(activated.activeProvider);
+                                                await loadProviders();
+                                                setProviderMessage(`${p.displayName} saved and active.`);
+                                            } catch (cause) {
+                                                setProviderMessage(cause instanceof Error ? cause.message : "Provider configuration failed.");
+                                            } finally {
+                                                if (credential) credential.value = "";
+                                                providerLock.current = false;
+                                                setProviderBusy(false);
+                                            }
+                                        }}
                                         style={{
                                             padding: "10px 12px",
                                             background: isSelected
@@ -2100,6 +2107,8 @@ export default function Workspace() {
                                             border: `1px solid ${isSelected ? "var(--accent-blue-border)" : "var(--line-subtle)"}`,
                                             borderRadius: "var(--radius-sm)",
                                             display: "flex",
+                                            flexWrap: "wrap",
+                                            gap: "10px",
                                             alignItems: "center",
                                             justifyContent: "space-between",
                                         }}
@@ -2123,31 +2132,30 @@ export default function Workspace() {
                                                     "default"}
                                             </span>
                                         </div>
+                                        <label>
+                                            Model
+                                            <input name="model" aria-label={`${p.displayName} model`} defaultValue={p.runtime?.model || p.model || ""} required disabled={providerBusy} />
+                                        </label>
+                                        <label>
+                                            API base URL
+                                            <input name="apiBase" type="url" aria-label={`${p.displayName} API base URL`} defaultValue={p.runtime?.apiBase || p.apiBaseUrl || ""} disabled={providerBusy} />
+                                        </label>
+                                        {p.credentialType !== "none" && <label>
+                                            Credential {p.configured ? "(leave blank to keep saved credential)" : ""}
+                                            <input name="credential" aria-label={`${p.displayName} credential`} type="password" autoComplete="off" disabled={providerBusy} />
+                                        </label>}
                                         <button
-                                            type="button"
+                                            type="submit"
+                                            disabled={providerBusy}
                                             className={`btn ${isSelected ? "btn-primary" : "btn-secondary"}`}
                                             style={{
                                                 height: "26px",
                                                 fontSize: "11px",
                                             }}
-                                            onClick={async () => {
-                                                try {
-                                                    await request(
-                                                        `/api/providers/${p.id}/activate`,
-                                                        {},
-                                                        "POST",
-                                                    );
-                                                    setActiveProvider(p.id);
-                                                } catch {
-                                                    setActiveProvider(p.id);
-                                                }
-                                            }}
                                         >
-                                            {isSelected
-                                                ? "✓ Active"
-                                                : "Activate"}
+                                            {providerBusy ? "Saving…" : "Save and activate"}
                                         </button>
-                                    </div>
+                                    </form>
                                 );
                             })}
                         </div>

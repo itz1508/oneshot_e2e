@@ -317,7 +317,7 @@ export function BuildCard({
     review: BuildReview;
     terminal: boolean;
     busy: boolean;
-    onDecision: (action: "approve" | "return") => Promise<void>;
+    onDecision: (action: "approve" | "return") => Promise<boolean>;
 }) {
     const [collapsed, setCollapsed] = useState(false);
 
@@ -348,28 +348,28 @@ export function BuildCard({
             </header>
 
             <p className="card-lead">
-                The confirmed package passed deterministic Triple Validation.
-                Builder is waiting in the isolated sandbox for your explicit
-                authorization.
+                {review.status === "approved"
+                    ? "The runtime accepted authorization for this confirmed package."
+                    : "Review the recorded validation and confirmed package before authorizing Builder."}
             </p>
 
             <div className="validation-signals-grid">
                 <div className="sig-box">
                     <span className="sig-label">Schema Validation</span>
                     <span className="sig-val">
-                        {review.validation?.schema || "VALID"}
+                        {review.validation?.schema || "Unavailable"}
                     </span>
                 </div>
                 <div className="sig-box">
                     <span className="sig-label">Fixture Validation</span>
                     <span className="sig-val">
-                        {review.validation?.fixture || "VALID"}
+                        {review.validation?.fixture || "Unavailable"}
                     </span>
                 </div>
                 <div className="sig-box">
                     <span className="sig-label">Goal Validation</span>
                     <span className="sig-val">
-                        {review.validation?.goal || "VALID"}
+                        {review.validation?.goal || "Unavailable"}
                     </span>
                 </div>
             </div>
@@ -415,8 +415,9 @@ export function BuildCard({
                                 data-gate-action="return"
                                 disabled={busy}
                                 onClick={async () => {
-                                    await onDecision("return");
-                                    setCollapsed(true);
+                                    if (await onDecision("return")) {
+                                        setCollapsed(true);
+                                    }
                                 }}
                             >
                                 Cancel / Return
@@ -441,7 +442,7 @@ export function BuildCard({
 export function MutationsTable({ records }: { records: Mutation[] | null }) {
     if (!records || !records.length) {
         return (
-            <p className="text-dim">No workspace file mutations recorded.</p>
+            <p className="text-dim">{records === null ? "Workspace mutation evidence unavailable." : "No workspace file mutations recorded."}</p>
         );
     }
 
@@ -538,7 +539,7 @@ export function ResultCard({
 
             <p className="card-lead">
                 Job <code className="mono">{run.run_id}</code> has completed
-                processing. Verified deterministic proof recorded below.
+                processing. {verified ? "Verified deterministic proof recorded below." : "Review the available execution evidence below."}
             </p>
 
             <div className="validation-signals-grid">
@@ -567,7 +568,7 @@ export function ResultCard({
                                 : "var(--accent-rose)",
                         }}
                     >
-                        {hashEqual ? "VERIFIED EQUAL" : "NOT EQUAL"}
+                        {hashEqual ? "VERIFIED EQUAL" : proof?.created_hash && proof?.recomputed_hash ? "NOT EQUAL" : "UNAVAILABLE"}
                     </span>
                 </div>
                 <div className="sig-box">
