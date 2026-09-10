@@ -1,18 +1,22 @@
 import { ToolRegistry } from "../../../tool/registry.js";
 import type {
-  Prompt,
-  ResearchBundle,
-} from "../../../contracts/schema/types.js";
-import type { ResearchProvider } from "../../../../app/web/cloud/provider.js";
-export function researcherTools(provider: ResearchProvider) {
-  const r = new ToolRegistry();
-  r.register<{ prompt: Prompt; runId: string }, ResearchBundle>(
+  ModelGenerateRequest,
+  ModelProvider,
+} from "../../../provider/model-provider.js";
+
+/**
+ * Researcher tool boundary over a model transport.
+ * The provider can generate text; it cannot perform Researcher work or return
+ * OneShot Researcher artifacts.
+ */
+export function researcherTools(provider: ModelProvider) {
+  const registry = new ToolRegistry();
+  registry.register<ModelGenerateRequest, string>(
     {
-      name: "research",
-      description:
-        "Resolve the configured ResearchProvider and return the Researcher-owned canonical bundle.",
+      name: "generate_text",
+      description: "Generate model text for a Researcher-owned instruction.",
     },
-    ({ prompt, runId }) => provider.research(prompt, runId),
+    (request) => provider.generate(request),
   );
-  return r;
+  return registry;
 }
