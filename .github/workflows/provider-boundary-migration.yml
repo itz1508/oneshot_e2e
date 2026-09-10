@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  migrate-and-verify:
+  correct-and-verify:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -23,7 +23,7 @@ jobs:
           node-version: '24.13.0'
           cache: npm
 
-      - name: Wire backend provider boundary
+      - name: Correct compile gaps without restoring ResearchProvider
         shell: bash
         run: |
           python3 - <<'PY'
@@ -38,101 +38,77 @@ jobs:
                   text = text.replace(old, new)
               p.write_text(text, encoding='utf-8')
 
-          edit('backend/pipeline/context.ts', [
-              ('../../app/web/cloud/provider-runtime-config.js', '../provider/runtime-config.js'),
+          # Source compile corrections.
+          edit('backend/agents/researcher/bundle-builder.ts', [
+              (') as {\n    $id?: string;\n    properties: Record<string, Record<string, unknown>>;\n  };', ') as any;'),
           ])
-
-          edit('backend/server/http-server.ts', [
+          edit('backend/agents/researcher/workflow.ts', [
+              ('    if (!provider) return sampleResearchDraft(prompt);',
+               '    if (!provider) throw new Error("live Researcher requires a model provider");'),
+          ])
+          edit('backend/provider/adapter/openai.ts', [
+              ('    compatibility: "strict",\n', ''),
+          ])
+          edit('backend/scripts/run-worker-cli.ts', [
               ('../../app/web/cloud/provider-manager.js', '../provider/manager.js'),
-              ('../../app/web/cloud/provider-runtime-config.js', '../provider/runtime-config.js'),
-              ('../../app/web/cloud/provider-secret-store.js', '../provider/secret-store.js'),
           ])
 
-          edit('backend/scripts/run-pipeline-worker.ts', [
-              ('../../app/web/cloud/provider-manager.js', '../provider/manager.js'),
-          ])
-
-          edit('backend/pipeline/processors.ts', [
-              ('../../app/web/cloud/provider-manager.js', '../provider/manager.js'),
-              ('const researcher = new ResearcherWorkflow(provider, services.contracts);',
-               'if (provider) {\n    const readiness = await provider.ready(ctx.runId);\n    if (!readiness.ready) {\n      throw new Error(readiness.detail || "Model provider is not ready");\n    }\n  }\n  const researcher = new ResearcherWorkflow(\n    provider,\n    services.contracts,\n    services.providerManager.projectRoot,\n  );'),
-          ])
-
-          edit('backend/runtime/queue.ts', [
-              ('import type { ResearchProvider } from "../../app/web/cloud/provider.js";',
-               'import type { ModelProvider } from "../provider/model-provider.js";'),
-              ('import type { ProviderRuntimeSettings } from "../../app/web/cloud/provider-runtime-config.js";',
-               'import type { ProviderRuntimeSettings } from "../provider/runtime-config.js";'),
-              ('createRuntime: (provider: ResearchProvider) => Promise<WorkflowRuntime>;',
-               'createRuntime: (provider: ModelProvider | undefined) => Promise<WorkflowRuntime>;'),
-              (') => Promise<ResearchProvider>;', ') => Promise<ModelProvider | undefined>;'),
-              ('let provider: ResearchProvider;', 'let provider: ModelProvider | undefined;'),
-          ])
-
-          edit('backend/index.ts', [
-              ('import { ProviderManager } from "../app/web/cloud/provider-manager.js";',
-               'import { ProviderManager } from "./provider/manager.js";'),
-              ('import type { ResearchProvider } from "../app/web/cloud/provider.js";\n', ''),
-              ('  catalogPath: resolve(projectRoot, "app/web/cloud/providers.json"),\n', ''),
-              ('  provider: {\n    ready: async () => ({ ready: false, provider: "<default>", models: [] }),\n    research: async () => { throw new Error("Per-run provider binding required"); },\n  },',
-               '  provider: undefined,'),
-          ])
-
-          edit('backend/tests/ts/harness.ts', [
-              ('import type { ResearchProvider } from "../../../app/web/cloud/provider.js";',
-               'import type { ModelProvider } from "../../provider/model-provider.js";'),
-              ('import { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";\n', ''),
-              ('  provider?: ResearchProvider,', '  provider?: ModelProvider,'),
-              ('  const researchProvider: ResearchProvider = provider || new FixtureResearchProvider();\n  researchProvider.attachEvents?.(events);\n\n', ''),
-              ('  const researcher = new ResearcherWorkflow(researchProvider, contracts);',
-               '  const researcher = new ResearcherWorkflow(provider, contracts);'),
-              ('      researchProvider.close?.();', '      provider?.close?.();'),
-          ])
-
-          edit('backend/tests/ts/provider-http.test.ts', [
+          # Remaining test imports that point at the deleted web-owned provider runtime.
+          edit('backend/tests/ts/run-job-contract.test.ts', [
               ('../../../app/web/cloud/provider-manager.js', '../../provider/manager.js'),
               ('../../../app/web/cloud/provider-secret-store.js', '../../provider/secret-store.js'),
               ('../../../app/web/cloud/provider-runtime-config.js', '../../provider/runtime-config.js'),
-              ('    assert.equal(list.activeProvider, "sample");\n    assert.ok(Array.isArray(list.providers));\n    const sample = list.providers.find((p: any) => p.id === "sample");\n    assert.ok(sample, "sample provider listed");\n    assert.equal(typeof sample.editable, "boolean");\n    assert.ok(!JSON.stringify(list).includes("apiKey"));\n    assert.ok(!JSON.stringify(list).includes("value"));\n    const detail = await (await fetch(`${base}/api/providers/sample`, { headers: AUTH })).json();\n    assert.equal(detail.id, "sample");\n    assert.equal(detail.configured, true);\n    const updated = await (await putJson(`${base}/api/providers/sample`, { model: "fixture-x" })).json();\n    assert.equal(updated.id, "sample");\n    assert.equal(updated.runtime.model, "fixture-x");\n    const tested = await (await postJson(`${base}/api/providers/sample/test`, {})).json();\n    assert.equal(tested.ok, true);\n    assert.equal(tested.provider, "<default>");\n    assert.ok(!JSON.stringify(tested).includes("apiKey"));',
-               '    assert.equal(list.activeProvider, "<default>");\n    assert.ok(Array.isArray(list.providers));\n    assert.deepEqual(list.providers.map((p: any) => p.id).sort(), ["anthropic", "gemini", "openai"]);\n    assert.ok(!JSON.stringify(list).includes("apiKey"));\n    assert.ok(!JSON.stringify(list).includes("value"));\n    assert.equal((await fetch(`${base}/api/providers/sample`, { headers: AUTH })).status, 404);'),
           ])
 
-          edit('tsconfig.json', [
-              ('"include": ["app/bootstrap/readme.ts", "backend/**/*.ts", "app/web/cloud/**/*.ts"]',
-               '"include": ["app/bootstrap/readme.ts", "backend/**/*.ts"]'),
+          edit('backend/tests/ts/canonical-matrix.test.ts', [
+              ('import type { ResearchProvider } from "../../../app/web/cloud/provider.js";',
+               'import type { ModelProvider } from "../../provider/model-provider.js";'),
+              ('const provider:ResearchProvider={async ready(){return {ready:true,provider:"test-provider-failure",models:[]};},async research(_p,_r){throw new WorkflowRootCauseError({issue:"provider",expected:"configured provider",actual:"provider failed",evidence_ids:[],required_correction:"configure provider",recheck_target:"provider"});}};',
+               'const provider:ModelProvider={id:"test-provider-failure",model:"test-model",async ready(){return {ready:true,provider:"test-provider-failure",models:["test-model"]};},async generate(){throw new WorkflowRootCauseError({issue:"provider",expected:"configured provider",actual:"provider failed",evidence_ids:[],required_correction:"configure provider",recheck_target:"provider"});}};'),
           ])
 
-          Path('backend/tests/ts/provider-manager.test.ts').write_text('''import test from "node:test";\nimport assert from "node:assert/strict";\nimport { mkdtempSync, rmSync } from "node:fs";\nimport { tmpdir } from "node:os";\nimport { join } from "node:path";\nimport { ProviderManager } from "../../provider/manager.js";\nimport { LocalFileSecretStore } from "../../provider/secret-store.js";\nimport { FileProviderRuntimeConfigStore } from "../../provider/runtime-config.js";\n\nfunction manager(mode: "production" | "sample" = "sample") {\n  const root = mkdtempSync(join(tmpdir(), "oneshot-provider-manager-"));\n  const pm = new ProviderManager({\n    projectRoot: process.cwd(),\n    mode,\n    secretStore: new LocalFileSecretStore(join(root, "secrets")),\n    runtimeConfigStore: new FileProviderRuntimeConfigStore(join(root, "providers.json")),\n  });\n  return { pm, root };\n}\n\ntest("provider catalog contains only real model providers", async () => {\n  const { pm, root } = manager();\n  try {\n    assert.deepEqual((await pm.list()).map((p) => p.id).sort(), ["anthropic", "gemini", "openai"]);\n    assert.equal(await pm.get("sample"), undefined);\n  } finally { rmSync(root, { recursive: true, force: true }); }\n});\n\ntest("sample mode is Researcher runtime behavior, not Provider Configuration", async () => {\n  const { pm, root } = manager();\n  try {\n    const captured = pm.captureForRun();\n    assert.equal(captured.id, "sample");\n    assert.equal(await pm.resolveForRun(captured.id, captured), undefined);\n  } finally { rmSync(root, { recursive: true, force: true }); }\n});\n\ntest("provider status never returns credential values", async () => {\n  const { pm, root } = manager("production");\n  try {\n    await pm.setCredential("openai", {\n      providerId: "openai", credentialType: "api_key", value: "private-provider-test-value", createdAt: new Date().toISOString(),\n    });\n    const status = await pm.getProviderStatus("openai");\n    const serialized = JSON.stringify(status);\n    assert.ok(!serialized.includes("private-provider-test-value"));\n    assert.ok(!serialized.includes("apiKey"));\n    assert.equal(status.configured, true);\n  } finally { rmSync(root, { recursive: true, force: true }); }\n});\n''', encoding='utf-8')
+          Path('backend/tests/ts/help-request.test.ts').write_text('''import test from "node:test";\nimport assert from "node:assert/strict";\nimport type { ModelProvider } from "../../provider/model-provider.js";\nimport { WorkflowInformationRequiredError } from "../../core/information-required-error.js";\nimport { harness, prompt } from "./harness.js";\n\nclass NeedUserInfo implements ModelProvider {\n  readonly id = "test-need-user-info";\n  readonly model = "test-model";\n\n  async ready() {\n    return { ready: true, provider: this.id, models: [this.model] };\n  }\n\n  async generate(): Promise<string> {\n    throw new WorkflowInformationRequiredError(\n      {\n        issue: "Additional information required",\n        expected: "User-owned target environment is known",\n        actual: "Target environment was not supplied",\n        evidence_ids: [],\n        required_correction: "Ask user for target environment",\n        recheck_target: "run:need-help",\n      },\n      {\n        request_id: "help:test",\n        reason: "target environment missing",\n        question: "Which target environment should this run use?",\n        required_information: ["target_environment"],\n        source_processor: "Researcher",\n        prompt_revision_required: true,\n      },\n    );\n  }\n}\n\ntest("runtime ROOT CAUSE preserves targeted help request without recovery loop", async () => {\n  const h = await harness("need-help", new NeedUserInfo());\n  const runId = "run:need-help";\n  h.runs.create(runId);\n  const out = await h.runtime.run(runId, prompt(runId));\n  assert.equal(out.test_result, "Failed");\n  assert.equal(out.issue_type, "Root Cause");\n  assert.equal(out.help_request?.request_id, "help:test");\n  assert.equal(out.help_request?.source_processor, "Researcher");\n  assert.ok(\n    out.events.some(\n      (e) =>\n        e.scope === "SUPPORT" &&\n        e.processor === "HelpRequest" &&\n        e.test_result === "Failed" &&\n        e.issue_type === "Root Cause",\n    ),\n  );\n  assert.equal(\n    out.events.filter(\n      (e) => e.processor === "Researcher" && e.execution_status === "Running",\n    ).length,\n    1,\n  );\n  h.close();\n});\n''', encoding='utf-8')
 
-          Path('backend/tests/ts/provider-config-domain.test.ts').write_text('''import test from "node:test";\nimport assert from "node:assert/strict";\nimport { readFileSync } from "node:fs";\n\ntest("provider contract is transport-only", () => {\n  const source = readFileSync("backend/provider/model-provider.ts", "utf8");\n  assert.match(source, /generate\(input: ModelGenerateRequest\)/);\n  assert.doesNotMatch(source, /research\s*\(/);\n  assert.doesNotMatch(source, /Promise<ResearchBundle>/);\n});\n\ntest("Researcher owns canonical bundle construction", () => {\n  const source = readFileSync("backend/agents/researcher/bundle-builder.ts", "utf8");\n  assert.match(source, /researchDraftToBundle/);\n  assert.match(source, /fixture_id/);\n  assert.match(source, /goal_id/);\n});\n''', encoding='utf-8')
+          edit('backend/tests/ts/plan-review.test.ts', [
+              ('import { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";\n', ''),
+              ('  const dir = await mkdtemp(join(tmpdir(), "oneshot-review-"));\n  try {',
+               '  const dir = await mkdtemp(join(tmpdir(), "oneshot-review-"));\n  const seed = await harness("review-unit-seed");\n  try {'),
+              ('    const bundle = await new FixtureResearchProvider().research(prompt(\'review-unit\'), \'review-unit\');',
+               '    const bundle = await seed.researcher.run(prompt("review-unit"), "review-unit");'),
+              ('  } finally { await rm(dir, { recursive: true, force: true }); }',
+               '  } finally { seed.close(); await rm(dir, { recursive: true, force: true }); }'),
+          ])
 
-          Path('backend/tests/ts/provider.test.ts').write_text('''import test from "node:test";\nimport assert from "node:assert/strict";\nimport { mkdtempSync, rmSync } from "node:fs";\nimport { tmpdir } from "node:os";\nimport { join } from "node:path";\nimport { ProviderManager } from "../../provider/manager.js";\nimport { LocalFileSecretStore } from "../../provider/secret-store.js";\nimport { FileProviderRuntimeConfigStore } from "../../provider/runtime-config.js";\n\nfor (const id of ["openai", "anthropic", "gemini"] as const) {\n  test(`${id} resolves to a model transport, never a Researcher`, async () => {\n    const root = mkdtempSync(join(tmpdir(), `oneshot-${id}-`));\n    const pm = new ProviderManager({\n      projectRoot: process.cwd(), mode: "production",\n      secretStore: new LocalFileSecretStore(join(root, "secrets")),\n      runtimeConfigStore: new FileProviderRuntimeConfigStore(join(root, "providers.json")),\n    });\n    try {\n      await pm.setCredential(id, { providerId: id, credentialType: "api_key", value: `test-${id}-key`, createdAt: new Date().toISOString() });\n      await pm.activate(id);\n      const captured = pm.captureForRun();\n      const provider = await pm.resolveForRun(id, captured);\n      assert.ok(provider);\n      assert.equal(provider.id, id);\n      assert.equal(typeof provider.generate, "function");\n      assert.equal("research" in provider, false);\n    } finally { rmSync(root, { recursive: true, force: true }); }\n  });\n}\n''', encoding='utf-8')
+          Path('backend/tests/ts/reconciled-deliverable.test.ts').write_text('''import test from "node:test";\nimport assert from "node:assert/strict";\nimport { readFile } from "node:fs/promises";\nimport { randomUUID } from "node:crypto";\nimport type { ModelProvider } from "../../provider/model-provider.js";\nimport type { ConfirmedPackage } from "../../contracts/schema/types.js";\nimport type { BuilderWorkflowResult } from "../../agents/builder/workflow.js";\nimport { HardenedProcessRunner } from "../../sandbox/runner/process-runner.js";\nimport { runBuildStage, type StageServices } from "../../pipeline/processors.js";\nimport { saveArtifact } from "../../pipeline/context.js";\nimport { harness, prompt } from "./harness.js";\n\ntest("model output survives Researcher construction, validation, sandbox execution and durable build artifacts", async () => {\n  const output = `Generated document ${randomUUID()} — preserve exact user-facing content.`;\n  const draft = JSON.parse(\n    await readFile("app/fixtures/provider/adk-research-draft.json", "utf8"),\n  );\n  draft.deliverable = output;\n  const provider: ModelProvider = {\n    id: "test-model",\n    model: "test-model",\n    ready: async () => ({\n      ready: true,\n      provider: "test-model",\n      models: ["test-model"],\n      detail: "Explicit deterministic model transport",\n    }),\n    generate: async () => JSON.stringify(draft),\n  };\n  const h = await harness(\n    `reconciled-output-${randomUUID()}`,\n    provider,\n    new HardenedProcessRunner(),\n  );\n  const runId = `output-${randomUUID()}`;\n  try {\n    h.runs.create(runId);\n    const snapshot = await h.runtime.run(runId, prompt(runId));\n    assert.equal(snapshot.test_result, "Passed");\n    assert.equal(snapshot.hash_proof?.equal, true);\n    const builder = await h.store.load<BuilderWorkflowResult>(runId, "builder-result");\n    assert.equal(builder.result, "Passed");\n    assert.equal(builder.final_output, output);\n    assert.ok(builder.output_step_id);\n    assert.equal(builder.evidence.exit_codes.at(-1), 0);\n\n    await h.store.save(runId, "hash_proof", snapshot.hash_proof);\n    const confirmedPkg = await h.store.load<ConfirmedPackage>(runId, "confirmed");\n    await h.runtime.buildReview.open(\n      runId,\n      confirmedPkg,\n      snapshot.hash_proof!.created_hash,\n    );\n    await h.runtime.buildReview.decide(runId, {\n      action: "approve",\n      hash: snapshot.hash_proof!.created_hash,\n    });\n    await runBuildStage(\n      { runId, runs: h.runs, store: h.store },\n      { builder: h.builder, events: { emit() {} }, saveArtifact, hash: h.hash } as unknown as StageServices,\n      () => {},\n    );\n    const queued = await h.store.load<BuilderWorkflowResult>(runId, "build_result");\n    assert.equal(queued.result, "Passed");\n    assert.equal(queued.final_output, output);\n    assert.equal(queued.hash_sandbox, snapshot.hash_proof?.created_hash);\n\n    const confirmed = await h.store.load<ConfirmedPackage>(runId, "confirmed");\n    confirmed.core.plan.steps.at(-1)!.description += "tamper";\n    const rejected = await h.builder.run(\n      confirmed,\n      snapshot.hash_proof!.created_hash,\n    );\n    assert.equal(rejected.result, "Failed");\n    assert.equal(rejected.final_output, null);\n    assert.equal(rejected.output_step_id, null);\n  } finally {\n    h.close();\n  }\n});\n''', encoding='utf-8')
 
-          Path('backend/tests/ts/provider-infra.test.ts').write_text('''import test from "node:test";\nimport assert from "node:assert/strict";\nimport { readFileSync } from "node:fs";\n\ntest("official AI SDK adapters replace hand-written provider protocol", () => {\n  const openai = readFileSync("backend/provider/adapter/openai.ts", "utf8");\n  const anthropic = readFileSync("backend/provider/adapter/anthropic.ts", "utf8");\n  const google = readFileSync("backend/provider/adapter/google.ts", "utf8");\n  assert.match(openai, /@ai-sdk\/openai/);\n  assert.match(anthropic, /@ai-sdk\/anthropic/);\n  assert.match(google, /@ai-sdk\/google/);\n  for (const source of [openai, anthropic, google]) {\n    assert.match(source, /generateText/);\n    assert.doesNotMatch(source, /ResearchBundle|fixture_id|goal_id|research\s*\(/);\n  }\n});\n''', encoding='utf-8')
-
-          Path('backend/tests/ts/provider-cloud-paths.test.ts').write_text('''import test from "node:test";\nimport assert from "node:assert/strict";\nimport { readFileSync, readdirSync, statSync } from "node:fs";\nimport { join } from "node:path";\n\nfunction tsFiles(root: string): string[] {\n  const out: string[] = [];\n  for (const name of readdirSync(root)) {\n    if (name === "tests") continue;\n    const path = join(root, name);\n    if (statSync(path).isDirectory()) out.push(...tsFiles(path));\n    else if (path.endsWith(".ts")) out.push(path);\n  }\n  return out;\n}\n\ntest("backend runtime does not import provider authority from app/web", () => {\n  for (const path of tsFiles("backend")) {\n    const source = readFileSync(path, "utf8");\n    assert.doesNotMatch(source, /app\\/web\\/cloud\\/provider/, path);\n    assert.doesNotMatch(source, /ResearchProvider/, path);\n  }\n});\n''', encoding='utf-8')
-
-          for obsolete in [
-              'backend/tests/ts/featherless-provider.test.ts',
-              'backend/tests/ts/native-gemini-session-e2e.test.ts',
-          ]:
-              Path(obsolete).unlink(missing_ok=True)
+          p = Path('backend/tests/ts/session-transcript-e2e.test.ts')
+          text = p.read_text(encoding='utf-8-sig')
+          text = text.replace(
+              'import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";\nimport type {\n  ResearchProvider,\n  ResearchProviderReadiness,\n} from "../../../app/web/cloud/provider.js";\nimport type { ProcessingEventBus } from "../../runtime/event-bus.js";\nimport { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";\n',
+              'import type { Prompt } from "../../contracts/schema/types.js";\n',
+          )
+          start = text.index('class CapturingResearchProvider')
+          end = text.index('async function waitForTerminal')
+          text = text[:start] + text[end:]
+          text = text.replace(
+              '  const provider = new CapturingResearchProvider(new FixtureResearchProvider());\n  const h = await harness("session-transcript-e2e", provider);',
+              '  const h = await harness("session-transcript-e2e");',
+          )
+          old = '''    const final = await waitForTerminal(base, started.run_id);\n    assert.ok(provider.receivedPrompt, "Researcher did not receive Prompt(id)");\n    console.log(\n      `RESEARCHER_RECEIVED_PROMPT_JSON=${JSON.stringify(provider.receivedPrompt)}`,\n    );\n\n    const expectedRunPrompt = new PromptGenerator().generate(\n      conversation.intent,\n      started.prompt_id,\n    );\n    assert.deepEqual(provider.receivedPrompt, expectedRunPrompt);'''
+          new = '''    const final = await waitForTerminal(base, started.run_id);\n    const expectedRunPrompt = new PromptGenerator().generate(\n      conversation.intent,\n      started.prompt_id,\n    );\n    const receivedPrompt = await h.store.load<Prompt>(started.run_id, "prompt");\n    const researcher = await h.store.load<any>(started.run_id, "researcher");\n    console.log(`RESEARCHER_RECEIVED_PROMPT_JSON=${JSON.stringify(receivedPrompt)}`);\n    assert.deepEqual(receivedPrompt, expectedRunPrompt);\n    assert.equal(researcher.prompt_id, expectedRunPrompt.prompt_id);'''
+          if old not in text:
+              raise SystemExit('session transcript assertion block not found')
+          p.write_text(text.replace(old, new), encoding='utf-8')
           PY
 
-          git rm -r --ignore-unmatch \
-            app/web/cloud/provider \
-            app/web/cloud/provider-manager.ts \
-            app/web/cloud/provider-resolver.ts \
-            app/web/cloud/provider-runtime-config.ts \
-            app/web/cloud/provider-secret-store.ts \
-            app/web/cloud/provider.ts \
-            app/web/cloud/providers.json
-
-          git add backend tsconfig.json app/web/cloud
+          git add backend
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "refactor: separate providers from Researcher role"
+          git commit -m "fix: complete provider Researcher separation"
           git push origin HEAD:fix/provider-researcher-boundary
+
+      - name: Use repository npm version
+        run: npm install --global npm@11.8.0
 
       - name: Install dependencies
         run: npm ci
@@ -144,7 +120,7 @@ jobs:
         run: npm run build:test
 
       - name: Provider and Researcher tests
-        run: node --test --test-concurrency=1 --test-force-exit dist/backend/tests/ts/provider*.test.js dist/backend/tests/ts/adk-researcher-node.test.js
+        run: node --test --test-concurrency=1 --test-force-exit dist/backend/tests/ts/provider*.test.js dist/backend/tests/ts/adk-researcher-node.test.js dist/backend/tests/ts/help-request.test.js dist/backend/tests/ts/session-transcript-e2e.test.js
 
       - name: Pipeline E2E
         run: npm run test:pipeline:e2e
@@ -160,6 +136,12 @@ jobs:
             echo "legacy ResearchProvider contract remains in backend runtime" >&2
             exit 1
           fi
+          for f in backend/provider/adapter/*.ts backend/provider/model-provider.ts; do
+            if grep -E "ResearchBundle|fixture_id|goal_id|schema_artifact|Researcher" "$f"; then
+              echo "provider transport leaked Researcher/domain ownership: $f" >&2
+              exit 1
+            fi
+          done
           git diff --check HEAD~1 HEAD
 
       - name: Mark plan complete
@@ -170,7 +152,10 @@ jobs:
           p = Path('docs/work/provider-researcher-boundary.md')
           text = p.read_text()
           text = text.replace('Status: APPROVED', 'Status: COMPLETE')
-          text = text.replace('APPROVED — implementation authorized by user on 2026-09-10.', 'COMPLETE — provider transport and Researcher role boundaries separated and verified on 2026-09-10.')
+          text = text.replace(
+            'APPROVED — implementation authorized by user on 2026-09-10.',
+            'COMPLETE — provider transport and Researcher role boundaries separated and verified on 2026-09-10.',
+          )
           p.write_text(text)
           PY
           git add docs/work/provider-researcher-boundary.md
