@@ -127,10 +127,10 @@ const workflowDefs: NodeDefinition[] = [
 
 const providerDefs: NodeDefinition[] = [
   {
-    id: "Provider:researcher",
-    label: "Researcher Provider Binding",
+    id: "Researcher:boundary",
+    label: "Researcher Boundary",
     kind: "boundary",
-    processor: "ProviderBinding:Researcher",
+    processor: "ResearcherStarted",
   },
   {
     id: "Provider:cache",

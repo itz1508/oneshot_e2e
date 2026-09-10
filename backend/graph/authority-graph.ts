@@ -31,7 +31,7 @@ const CATALOG: Record<
     responsibility: "research and evidence synthesis",
     skill: "researcher",
     tool: "evidence-collector",
-    capability: "ResearchProvider",
+    capability: "Researcher",
     input: "Prompt(id)",
     output: "Researcher(id)",
   },

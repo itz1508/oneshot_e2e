@@ -22,9 +22,7 @@ import {
   type RunQueue,
   type RunJobV1,
 } from "../runtime/queue.js";
-import type { ProviderManager } from "../../app/web/cloud/provider-manager.js";
-import type { ProviderRuntimeSettings } from "../../app/web/cloud/provider-runtime-config.js";
-import type { ProviderCredential } from "../../app/web/cloud/provider-secret-store.js";
+
 import type { ArtifactStore } from "../runtime/artifact-store.js";
 import { getProducerRedis } from "../runtime/redis-connection.js";
 import {
@@ -123,7 +121,7 @@ function workspacePolicyError(res: ServerResponse, error: unknown): boolean {
 
 export interface RuntimeInfo {
   mode: string;
-  provider: string;
+  provider?: string;
   /** Whether the BullMQ run queue (Redis) is available. */
   queue?: boolean;
 }
@@ -184,7 +182,6 @@ export async function startHttpServer(
    * via `runtime`, preserving the original behavior.
    */
   runQueue?: RunQueue,
-  providerManager?: ProviderManager,
   queueReady?: boolean,
 ): Promise<ReturnType<typeof createServer>> {
   const bindHost =
@@ -223,18 +220,11 @@ export async function startHttpServer(
       });
     }
 
-    let selector;
-    try {
-      selector = providerManager?.captureForRun() ?? {
-        id: "sample",
-        configRevision: 0,
-        model: "fixture",
-      };
-    } catch {
-      return json(res, 409, {
-        error: "Configure and activate a provider before starting a run",
-      });
-    }
+    const selector = {
+      id: "standalone",
+      configRevision: 0,
+      model: "standalone",
+    };
 
     runs.create(runId);
 
@@ -288,7 +278,10 @@ export async function startHttpServer(
           providerId: selector.id,
           revision: selector.configRevision,
           model: selector.model,
-          settings: "settings" in selector ? selector.settings : undefined,
+          settings:
+            "settings" in selector && typeof (selector as any).settings === "object"
+              ? ((selector as any).settings as Record<string, unknown>)
+              : undefined,
         });
         return json(res, 202, { run_id: runId, queued: true, ...extra });
       } catch {
@@ -425,12 +418,8 @@ export async function startHttpServer(
         // Health
         // ---------------------------------------------------------------
         if (req.method === "GET" && url.pathname === "/api/health") {
-          const activeId =
-            providerManager?.runtimeConfig().activeProvider || "<default>";
-          const mode =
-            providerManager?.mode ?? runtimeInfo?.mode ?? "production";
-          const publicName =
-            providerManager?.publicNameFor(activeId) || "<default>";
+          const mode = runtimeInfo?.mode ?? "production";
+          const publicName = runtimeInfo?.provider ?? "none";
           const pipelineReady = options.pipeline?.queueReady ?? false;
           const legacyReady = Boolean(runQueue && queueReady);
           const anyQueueReady = pipelineReady || legacyReady;
@@ -457,34 +446,11 @@ export async function startHttpServer(
               : legacyReady
                 ? "ok"
                 : "degraded";
-          let providerConfiguration:
-            | "configured"
-            | "unconfigured"
-            | "sample"
-            | "degraded"
-            | "disabled" = "disabled";
-          if (providerManager) {
-            try {
-              if (activeId === "<default>") {
-                providerConfiguration = "unconfigured";
-              } else if (activeId === "sample" && mode !== "production") {
-                providerConfiguration = "sample";
-              } else {
-                const status = await providerManager.get(activeId);
-                providerConfiguration = status?.credential?.configured
-                  ? "configured"
-                  : "degraded";
-              }
-            } catch {
-              providerConfiguration = "degraded";
-            }
-          }
           const infraOk =
             (redis === "ok" || redis === "disabled") &&
             (queue === "ok" || queue === "disabled") &&
             (worker === "ok" || worker === "disabled");
-          const status =
-            infraOk && providerConfiguration !== "degraded" ? "ok" : "degraded";
+          const status = infraOk ? "ok" : "degraded";
           return json(res, 200, {
             status,
             workflow: "oneshot-canonical-workflow",
@@ -493,7 +459,6 @@ export async function startHttpServer(
             redis,
             queue,
             worker,
-            providerConfiguration,
             run_queue: {
               enabled: Boolean(runQueue || options.pipeline),
               redis_available: anyQueueReady,
@@ -514,7 +479,6 @@ export async function startHttpServer(
             task_management: Boolean(task),
             intent_collection: Boolean(intent),
             sandbox_service: Boolean(sandbox),
-            provider_management: Boolean(providerManager),
             adk_graph: "oneshot-adk-researcher-v1",
             authority_graph: "oneshot-authority-trace-v1",
             sandbox_graph: "oneshot-sandbox-execution-v1",
@@ -1013,254 +977,6 @@ export async function startHttpServer(
             return json(res, 500, {
               error: e instanceof Error ? e.message : String(e),
               run_id: runId,
-            });
-          }
-        }
-
-        // ---------------------------------------------------------------
-        // Provider management endpoints (web-managed configuration)
-        // ---------------------------------------------------------------
-        //
-        // GET /api/providers â€” catalog + non-secret runtime status (no secrets)
-        if (req.method === "GET" && url.pathname === "/api/providers") {
-          if (!providerManager)
-            return json(res, 503, { error: "provider management unavailable" });
-          try {
-            const statuses = await providerManager.list();
-            const rc = providerManager.runtimeConfig();
-            return json(res, 200, {
-              version: providerManager.runtimeConfig().version,
-              providers: statuses,
-              activeProvider: rc.activeProvider,
-              advancedResearch: {
-                tavily: {
-                  configured: Boolean(process.env.TAVILY_API_KEY),
-                  enabled:
-                    Boolean(process.env.TAVILY_API_KEY) &&
-                    process.env.ONESHOT_TAVILY_MODE !== "off",
-                },
-              },
-              revision: rc.revision ?? 0,
-            });
-          } catch (e) {
-            return json(res, 500, {
-              error: e instanceof Error ? e.message : String(e),
-            });
-          }
-        }
-
-        // GET /api/providers/:id â€” status only (never returns a credential)
-        const providerGet = url.pathname.match(/^\/api\/providers\/([^/]+)$/);
-        if (req.method === "GET" && providerGet) {
-          if (!providerManager)
-            return json(res, 503, { error: "provider management unavailable" });
-          const pid = decodeURIComponent(providerGet[1]);
-          try {
-            const status = await providerManager.get(pid);
-            if (!status)
-              return json(res, 404, { error: `Unknown provider: ${pid}` });
-            return json(res, 200, status);
-          } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            return json(res, msg.includes("Unknown provider") ? 404 : 500, {
-              error: msg,
-            });
-          }
-        }
-
-        // PUT /api/providers/:id/credential â€” submit a credential (WRITE ONLY)
-        // The browser may submit a credential but can never retrieve it.
-        const providerCredPut = url.pathname.match(
-          /^\/api\/providers\/([^/]+)\/credential$/,
-        );
-        if (req.method === "PUT" && providerCredPut) {
-          if (!providerManager)
-            return json(res, 503, { error: "provider management unavailable" });
-          const pid = decodeURIComponent(providerCredPut[1]);
-          const status = await providerManager.get(pid);
-          if (!status)
-            return json(res, 404, { error: `Unknown provider: ${pid}` });
-          const entry = status; // Use status for credential check
-          if (entry.credential?.type === "none")
-            return json(res, 400, {
-              error: "provider does not require a credential",
-            });
-          const credBody = await body(req);
-          const value =
-            typeof (credBody.value ?? credBody.apiKey) === "string"
-              ? String(credBody.value ?? credBody.apiKey).trim()
-              : "";
-          if (!value.trim())
-            return json(res, 400, { error: "credential value is required" });
-          try {
-            await providerManager.setCredential(pid, {
-              providerId: pid,
-              credentialType:
-                entry.credentialType as ProviderCredential["credentialType"],
-              value,
-              createdAt: new Date().toISOString(),
-            });
-            // Return ONLY a status confirmation â€” never the credential.
-            return json(res, 200, {
-              providerId: pid,
-              credentialSource: "local-secret-store",
-              stored: true,
-            });
-          } catch (e) {
-            return json(res, 500, {
-              error: e instanceof Error ? e.message : String(e),
-            });
-          }
-        }
-
-        // DELETE /api/providers/:id/credential â€” remove a stored credential
-        const providerCredDel = url.pathname.match(
-          /^\/api\/providers\/([^/]+)\/credential$/,
-        );
-        if (req.method === "DELETE" && providerCredDel) {
-          if (!providerManager)
-            return json(res, 503, { error: "provider management unavailable" });
-          const pid = decodeURIComponent(providerCredDel[1]);
-          try {
-            await providerManager.setCredential(pid);
-            const refreshed = await providerManager.getProviderStatus(pid);
-            return json(res, 200, {
-              providerId: pid,
-              configured: refreshed.configured,
-              credentialSource: refreshed.credentialSource,
-              deleted: true,
-            });
-          } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            return json(res, msg.includes("Unknown provider") ? 404 : 500, {
-              error: msg,
-            });
-          }
-        }
-
-        // POST /api/providers/runtime-config â€” update non-secret runtime config
-        if (
-          req.method === "POST" &&
-          url.pathname === "/api/providers/runtime-config"
-        ) {
-          if (!providerManager)
-            return json(res, 503, { error: "provider management unavailable" });
-          const rcBody = await body(req);
-          try {
-            if (
-              typeof rcBody.activeProvider === "string" &&
-              rcBody.activeProvider !== "<default>"
-            ) {
-              const target = await providerManager.get(rcBody.activeProvider);
-              if (!target?.configured || !target.enabled)
-                return json(res, 400, {
-                  error:
-                    "Provider requires an enabled configuration and credential",
-                });
-            }
-            const updated = providerManager.saveRuntimeConfigPatch({
-              activeProvider:
-                typeof rcBody.activeProvider === "string"
-                  ? rcBody.activeProvider
-                  : undefined,
-              providers:
-                rcBody.providers && typeof rcBody.providers === "object"
-                  ? (rcBody.providers as Record<
-                      string,
-                      Partial<ProviderRuntimeSettings>
-                    >)
-                  : undefined,
-            });
-            return json(res, 200, { runtime: updated });
-          } catch (e) {
-            return json(res, 500, {
-              error: e instanceof Error ? e.message : String(e),
-            });
-          }
-        }
-
-        // PUT /api/providers/:id â€” update non-secret runtime settings (model, apiBase)
-        const providerUpdate = url.pathname.match(
-          /^\/api\/providers\/([^/]+)$/,
-        );
-        if (req.method === "PUT" && providerUpdate) {
-          if (!providerManager)
-            return json(res, 503, { error: "provider management unavailable" });
-          const pid = decodeURIComponent(providerUpdate[1]);
-          const input = await body(req);
-          try {
-            const summary = await providerManager.update(pid, {
-              model: typeof input.model === "string" ? input.model : undefined,
-              apiBase:
-                typeof input.apiBase === "string" ? input.apiBase : undefined,
-              temperature:
-                typeof input.temperature === "number"
-                  ? input.temperature
-                  : undefined,
-            });
-            return json(res, 200, summary);
-          } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            return json(res, msg.includes("not found") ? 404 : 500, {
-              error: msg,
-            });
-          }
-        }
-
-        // POST /api/providers/:id/test â€” test connection (transient credential,
-        // never persisted or logged)
-        const providerTest = url.pathname.match(
-          /^\/api\/providers\/([^/]+)\/test$/,
-        );
-        if (req.method === "POST" && providerTest) {
-          if (!providerManager)
-            return json(res, 503, { error: "provider management unavailable" });
-          const pid = decodeURIComponent(providerTest[1]);
-          const testBody = await body(req);
-          const transient =
-            typeof testBody.value === "string" ||
-            typeof testBody.apiKey === "string"
-              ? {
-                  providerId: pid,
-                  credentialType: "api_key" as const,
-                  value: String(testBody.value ?? testBody.apiKey ?? ""),
-                  createdAt: new Date().toISOString(),
-                }
-              : undefined;
-          try {
-            const result = await providerManager.test(pid, transient, {
-              ...(typeof testBody.model === "string"
-                ? { model: testBody.model }
-                : {}),
-              ...(typeof testBody.temperature === "number"
-                ? { temperature: testBody.temperature }
-                : {}),
-            });
-            return json(res, 200, result);
-          } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            return json(res, msg.includes("not found") ? 404 : 500, {
-              error: msg,
-            });
-          }
-        }
-
-        // POST /api/providers/:id/activate â€” set the active provider for upcoming runs
-        const providerActivate = url.pathname.match(
-          /^\/api\/providers\/([^/]+)\/activate$/,
-        );
-        if (req.method === "POST" && providerActivate) {
-          if (!providerManager)
-            return json(res, 503, { error: "provider management unavailable" });
-          const pid = decodeURIComponent(providerActivate[1]);
-          try {
-            await providerManager.activate(pid);
-            const provider = await providerManager.get(pid);
-            return json(res, 200, { activeProvider: pid, provider });
-          } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            return json(res, msg.includes("not found") ? 404 : 500, {
-              error: msg,
             });
           }
         }

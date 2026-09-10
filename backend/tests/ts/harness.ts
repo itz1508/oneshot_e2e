@@ -1,7 +1,6 @@
-﻿import { rmSync } from "node:fs";
+import { rmSync } from "node:fs";
 import { resolve } from "node:path";
 import type { Prompt } from "../../contracts/schema/types.js";
-import type { ResearchProvider } from "../../../app/web/cloud/provider.js";
 import { AgentPipeline } from "../../pipeline/agent-pipeline.js";
 import { ProcessingEventBus } from "../../runtime/event-bus.js";
 import { AppendOnlyProcessingEventStore } from "../../task/event/event-store.js";
@@ -13,7 +12,7 @@ import { PythonBridge } from "../../validation/python-bridge.js";
 import { ValidationLanePool } from "../../validation/validation-lane-pool.js";
 import { DeterministicValidationRuntime } from "../../validation/deterministic-validation.js";
 import { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";
-import { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";
+
 import { ResearcherWorkflow } from "../../agents/researcher/workflow.js";
 import { PlannerWorkflow } from "../../agents/planner/workflow.js";
 import { RefactorWorkflow } from "../../agents/refactor/workflow.js";
@@ -79,7 +78,7 @@ export function prompt(runId: string): Prompt {
 
 export async function harness(
   name: string,
-  provider?: ResearchProvider,
+  provider?: unknown,
   sandboxRunner: SandboxRunner = new DeterministicTestSandboxRunner(),
 ) {
   const taskStore = new AppendOnlyProcessingEventStore(
@@ -99,8 +98,9 @@ export async function harness(
     task.onEvent(e, runs.require(e.run_id));
   });
 
-  const researchProvider: ResearchProvider = provider || new FixtureResearchProvider();
-  researchProvider.attachEvents?.(events);
+  if (provider && typeof (provider as any).attachEvents === "function") {
+    (provider as any).attachEvents(events);
+  }
 
   const bridge = new PythonBridge();
   const contracts = new CanonicalContractSkill(bridge);
@@ -114,7 +114,7 @@ export async function harness(
   };
 
   const validation = new DeterministicValidationRuntime(validationLanes);
-  const researcher = new ResearcherWorkflow(researchProvider, contracts);
+  const researcher = new ResearcherWorkflow(contracts, provider);
   const planner = new PlannerWorkflow(contracts);
   const refactor = new RefactorWorkflow(contracts);
   const gapper = new GapAnalysisWorkflow(contracts);
@@ -182,7 +182,7 @@ export async function harness(
     store,
     runtime,
     close() {
-      researchProvider.close?.();
+      (provider as any)?.close?.();
       bridge.close();
     },
   };

@@ -4,8 +4,6 @@ import { EvaluationWorkflow } from "../agents/evaluation/workflow.js";
 import { GapAnalysisWorkflow } from "../agents/gap-analysis/workflow.js";
 import { PlannerWorkflow } from "../agents/planner/workflow.js";
 import { RefactorWorkflow } from "../agents/refactor/workflow.js";
-import type { ResearchProvider } from "../../app/web/cloud/provider.js";
-import { resolveResearchProvider } from "../../app/web/cloud/provider-resolver.js";
 import { ResearcherWorkflow } from "../agents/researcher/workflow.js";
 import type { SandboxService } from "../sandbox/sandbox-service.js";
 import type { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
@@ -30,51 +28,28 @@ export function createAgentPipeline(
   const pipeline = new AgentPipeline(events);
 
   pipeline.register("Researcher", async (runId) => {
-    events.emit(runId, "ProviderBinding:Researcher", "Running", {
+    events.emit(runId, "ResearcherStarted", "Running", {
       scope: "SUPPORT",
-      message: "resolve and probe ResearchProvider",
+      message: "Researcher activation",
     });
 
-    let provider: ResearchProvider | undefined;
-    try {
-      provider = await resolveResearchProvider(projectRoot, events);
-      const readiness = await provider.ready(runId);
-      if (!readiness.ready) {
-        throw new WorkflowRootCauseError({
-          issue: "Researcher provider binding is not ready",
-          expected:
-            "The explicitly selected ResearchProvider and all required model bindings pass readiness before Researcher runs",
-          actual: readiness.detail || "provider readiness returned false",
-          evidence_ids: readiness.models.map((model) => `model:${model}`),
-          required_correction:
-            "Correct provider/model configuration and activate Researcher again",
-          recheck_target: runId,
-        });
-      }
+    // Researcher does not require a fixed provider binding.
+    // It may inspect available Integration capabilities when needed,
+    // but the general path does not mandate a selected provider.
+    const researchProvider = undefined;
 
-      events.emit(runId, "ProviderBinding:Researcher", "Completed", {
-        scope: "SUPPORT",
-        test_result: "Passed",
-        artifact_id: `provider:${readiness.provider}`,
-        message: `models=${readiness.models.join(",") || "fixture"}`,
-      });
+    events.emit(runId, "ResearcherCompleted", "Completed", {
+      scope: "SUPPORT",
+      test_result: "Passed",
+      artifact_id: "researcher:no-binding",
+      message: "Researcher runs without mandatory provider binding",
+    });
 
-      const boundProvider = provider;
-      return {
-        agent_id: "Researcher" as const,
-        runtime: new ResearcherWorkflow(boundProvider, contracts),
-        deactivate: () => boundProvider.close?.(),
-      };
-    } catch (error) {
-      provider?.close?.();
-      events.emit(runId, "ProviderBinding:Researcher", "Completed", {
-        scope: "SUPPORT",
-        test_result: "Failed",
-        issue_type: "Root Cause",
-        message: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
-    }
+    return {
+      agent_id: "Researcher" as const,
+      runtime: new ResearcherWorkflow(contracts, researchProvider),
+      deactivate: () => undefined,
+    };
   });
 
   pipeline.register("Planner", () => ({

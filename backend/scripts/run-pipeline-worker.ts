@@ -16,7 +16,6 @@ import { FileArtifactStore } from "../runtime/artifact-store.js";
 import { AppendOnlyProcessingEventStore } from "../task/event/event-store.js";
 import { CheckpointStore } from "../task/checkpoint/checkpoint-store.js";
 import { TaskManagement } from "../task/task-management.js";
-import { ProviderManager } from "../../app/web/cloud/provider-manager.js";
 import { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 import { createSkillSystem } from "../skills/bootstrap.js";
 import { SandboxService } from "../sandbox/sandbox-service.js";
@@ -60,11 +59,6 @@ events.observe((e) => {
 });
 
 async function main() {
-  const providerManager = new ProviderManager({
-    projectRoot,
-    runtimePaths,
-  });
-
   const bridge = new PythonBridge();
   const validationLanes = new ValidationLanePool();
   const skills = createSkillSystem();
@@ -98,7 +92,6 @@ async function main() {
 
   const services: StageServices = {
     events,
-    providerManager,
     contracts,
     planner: new PlannerWorkflow(contracts),
     refactor: new RefactorWorkflow(contracts),
@@ -135,7 +128,6 @@ async function main() {
     await worker.close();
     validationLanes.close();
     bridge.close();
-    providerManager.close();
     process.exit(0);
   };
 

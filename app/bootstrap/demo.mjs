@@ -56,13 +56,9 @@ function banner(text) {
 banner("Launch OneShot for Demonstration");
 
 const mode = (process.env.ONESHOT_MODE || "sample").toLowerCase();
-const provider =
-    process.env.ONESHOT_RESEARCH_PROVIDER ||
-    (mode === "sample" ? "Deterministic Sample Provider" : "unconfigured");
 
 log(`DEMONSTRATION MODE`);
 log(`Mode:     ${C.bold}${mode.toUpperCase()}${C.reset}`);
-log(`Provider: ${C.bold}${provider}${C.reset}`);
 log("");
 
 log("Cleaning stale build output (dist/)...");
@@ -174,14 +170,12 @@ child.stdout.on("data", async (data) => {
             }
 
             const activeMode = (health.mode || mode).toUpperCase();
-            const activeProvider = health.provider || provider;
 
             log("");
             log(`${C.green}${C.bold}✓ Real OneShot IDE is ready${C.reset}`);
             log("");
             log(`  ${C.bold}URL:${C.reset}       ${C.cyan}${url}${C.reset}`);
             log(`  ${C.bold}Mode:${C.reset}      ${activeMode}`);
-            log(`  ${C.bold}Provider:${C.reset}  ${activeProvider}`);
             log("");
             log(
                 `${C.dim}  1. Interact with the real OneShot IDE in your browser${C.reset}`,

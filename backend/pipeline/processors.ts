@@ -8,7 +8,6 @@ import {
   loadHashProof,
   loadPlan,
   loadPrompt,
-  loadProvider,
   loadResearchBundle,
   loadTripleValidation,
 } from "./context.js";
@@ -22,7 +21,7 @@ import type { BuilderWorkflow } from "../agents/builder/workflow.js";
 import type { TripleValidationWorkflow } from "../workflow/triple-validation.js";
 import type { ConfirmationWorkflow } from "../workflow/confirmation.js";
 import type { HashWorkflow } from "../workflow/hash.js";
-import { ProviderManager } from "../../app/web/cloud/provider-manager.js";
+
 import type { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 import type {
   PythonReasoner,
@@ -34,7 +33,6 @@ import { BuildReviewService } from "../runtime/build-review.js";
 
 export interface StageServices {
   events: ProcessingEventBus;
-  providerManager: ProviderManager;
   contracts: CanonicalContractSkill;
   planner: PlannerWorkflow;
   refactor: RefactorWorkflow;
@@ -106,12 +104,7 @@ export async function runResearcherStage(
   emitStage(ctx, services, "researcher", "Running");
 
   const prompt = await loadPrompt(ctx);
-  const captured = await loadProvider(ctx);
-  const provider = await services.providerManager.resolveForRun(
-    captured.id,
-    captured,
-  );
-  const researcher = new ResearcherWorkflow(provider, services.contracts);
+  const researcher = new ResearcherWorkflow(services.contracts);
   const bundle = await researcher.run(prompt, ctx.runId);
 
   const researchRevision = ctx.stageIteration ?? 0;

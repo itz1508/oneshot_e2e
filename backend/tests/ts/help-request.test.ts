@@ -1,11 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";
-import type { ResearchProvider } from "../../../app/web/cloud/provider.js";
 import { WorkflowInformationRequiredError } from "../../core/information-required-error.js";
 import { harness, prompt } from "./harness.js";
 
-class NeedUserInfo implements ResearchProvider {
+class NeedUserInfo {
   async ready() {
     return {
       ready: true,

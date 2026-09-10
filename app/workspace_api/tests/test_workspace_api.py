@@ -19,7 +19,7 @@ from workspace_api.models import (
     ProviderCredential,
     ProviderKind,
 )
-from web.cloud.workspace.providers import ModelRequest, ModelResult, ModelUsage, ProviderMessage
+from workspace_api.clients import ModelRequest, ModelResult, ModelUsage, ProviderMessage
 from workspace_api.rate_limit import MemoryRateLimiter
 from workspace_api.router import ModelRouter
 from workspace_api.security import SecretCipher
@@ -88,11 +88,11 @@ class WorkspaceApiTests(unittest.TestCase):
                 token = registration["token"]["access_token"]
                 headers = {"Authorization": f"Bearer {token}"}
 
-                providers = client.get("/v1/providers", headers=headers)
-                self.assertEqual(providers.status_code, 200, providers.text)
+                providers_resp = client.get("/v1/providers", headers=headers)
+                self.assertEqual(providers_resp.status_code, 200, providers_resp.text)
                 featherless_id = next(
                     item["id"]
-                    for item in providers.json()
+                    for item in providers_resp.json()
                     if item["slug"] == "featherless"
                 )
 

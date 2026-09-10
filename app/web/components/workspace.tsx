@@ -8,7 +8,6 @@ import type {
     Conversation,
     Edits,
     Mutation,
-    Provider,
     ResearchReview,
     Run,
     TreeNode,
@@ -78,13 +77,7 @@ export default function Workspace() {
     const busyRef = useRef(false);
     const [gateLoading, setGateLoading] = useState(false);
     const [error, setError] = useState("");
-    const [settings, setSettings] = useState(false);
     const [auth, setAuth] = useState(false);
-    const [providers, setProviders] = useState<Provider[]>([]);
-    const [activeProvider, setActiveProvider] = useState("");
-    const [providerBusy, setProviderBusy] = useState(false);
-    const [providerMessage, setProviderMessage] = useState("");
-    const providerLock = useRef(false);
     const [refreshKey, setRefreshKey] = useState(0);
     const [authKey, setAuthKey] = useState(0);
     const [newChat, setNewChat] = useState(false);
@@ -166,19 +159,6 @@ export default function Workspace() {
         }
     }, []);
 
-    const loadProviders = useCallback(async () => {
-        try {
-            const data = await request<{
-                providers: Provider[];
-                activeProvider: string;
-            }>("/api/providers");
-            setProviders(data.providers || []);
-            setActiveProvider(data.activeProvider || "");
-        } catch (cause) {
-            setProviderMessage(cause instanceof Error ? cause.message : "Provider catalog unavailable.");
-            throw cause;
-        }
-    }, []);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -216,7 +196,6 @@ export default function Workspace() {
             });
 
         void loadTree();
-        void loadProviders().catch(() => {});
 
         const cid = localStorage.getItem("oneshot.currentConversationId");
         if (cid) {
@@ -243,7 +222,7 @@ export default function Workspace() {
                 });
         }
         return () => controller.abort();
-    }, [loadTree, loadProviders, authKey]);
+    }, [loadTree, authKey]);
 
     useEffect(() => {
         if (!runId) return;
@@ -550,23 +529,9 @@ export default function Workspace() {
 
     const waiting =
         !!run && researchWaiting(run) && review?.status !== "approved";
-    const active = providers.find((p) => p.id === activeProvider);
 
     const progressPct = Math.round(STAGE_ORDER.filter(stage => stageState(run, stage) === "Completed").length / STAGE_ORDER.length * 100);
     const { score: intentScore, label: readyLabel } = readiness(run, conversation, build, waiting, status);
-
-    // Provider dot style
-    const providerClass = useMemo(() => {
-        const name = (
-            active?.displayName ||
-            activeProvider ||
-            ""
-        ).toLowerCase();
-        if (name.includes("anthropic") || name.includes("claude"))
-            return "anthropic";
-        if (name.includes("openai") || name.includes("gpt")) return "openai";
-        return "";
-    }, [active, activeProvider]);
 
     // Build Conversation Entries
     const entries: { key: string; time: string; content: ReactNode }[] = (
@@ -808,23 +773,6 @@ export default function Workspace() {
                 </div>
 
                 <div className="topbar-right">
-                    <button
-                        type="button"
-                        className="provider-chip"
-                        id="topbar-provider"
-                        title="Active LLM Provider"
-                        onClick={() => setSettings(true)}
-                    >
-                        <span className={`provider-dot ${providerClass}`} />
-                        <span
-                            className="provider-label"
-                            id="provider-name-display"
-                        >
-                            {active
-                                ? `${active.displayName} · ${active.runtime?.model || active.model || ""}`
-                                : "Provider"}
-                        </span>
-                    </button>
                     <div
                         className={`connection-pill ${status.toLowerCase()}`}
                         id="connection-pill"
@@ -1282,16 +1230,6 @@ export default function Workspace() {
                                 }}
                             />
                             <div className="composer-controls">
-                                <button
-                                    type="button"
-                                    className="composer-provider-btn"
-                                    onClick={() => setSettings(true)}
-                                >
-                                    {active
-                                        ? `${active.displayName} · ${active.runtime?.model || active.model || ""}`
-                                        : "Configure Provider"}{" "}
-                                    ⌄
-                                </button>
                                 <span className="grow" />
                                 {conversation?.intent.ready_for_prompt &&
                                     !runId && (
@@ -1966,17 +1904,7 @@ export default function Workspace() {
                     >
                         <Icon kind="history" />
                     </button>
-                    <div className="rail-spacer" />
-                    <button
-                        type="button"
-                        className="rail-btn"
-                        id="settings-rail-btn"
-                        title="Provider Configuration"
-                        aria-label="Provider Configuration"
-                        onClick={() => setSettings(true)}
-                    >
-                        <Icon kind="settings" />
-                    </button>
+
                 </aside>
             </div>
 
@@ -2032,136 +1960,6 @@ export default function Workspace() {
                 </Modal>
             )}
 
-            {/* Provider Configuration Modal */}
-            {settings && (
-                <Modal
-                    title="Provider Configuration"
-                    close={() => setSettings(false)}
-                >
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "14px",
-                        }}
-                    >
-                        <p
-                            style={{
-                                fontSize: "12px",
-                                color: "var(--text-muted)",
-                            }}
-                        >
-                            Configure active model provider and runtime
-                            settings. Credentials are stored on the backend and never returned to the browser.
-                        </p>
-                        {providerMessage && <p role="status">{providerMessage}</p>}
-                        {!providers.length && <button type="button" disabled={providerBusy} onClick={() => void loadProviders().catch(() => {})}>Retry provider catalog</button>}
-                        <div
-                            style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "8px",
-                            }}
-                        >
-                            {providers.map((p) => {
-                                const isSelected = p.id === activeProvider;
-                                return (
-                                    <form
-                                        key={p.id}
-                                        onSubmit={async (event) => {
-                                            event.preventDefault();
-                                            if (providerLock.current) return;
-                                            providerLock.current = true;
-                                            const form = event.currentTarget;
-                                            const fields = new FormData(form);
-                                            const credential = form.elements.namedItem("credential") as HTMLInputElement | null;
-                                            setProviderBusy(true);
-                                            setProviderMessage("");
-                                            try {
-                                                const path = `/api/providers/${encodeURIComponent(p.id)}`;
-                                                if (credential?.value.trim()) {
-                                                    await request(`${path}/credential`, { value: credential.value.trim() }, "PUT");
-                                                    credential.value = "";
-                                                }
-                                                await request(path, {
-                                                    model: String(fields.get("model") || "").trim(),
-                                                    apiBase: String(fields.get("apiBase") || "").trim(),
-                                                }, "PUT");
-                                                const activated = await request<{ activeProvider: string }>(`${path}/activate`, {}, "POST");
-                                                setActiveProvider(activated.activeProvider);
-                                                await loadProviders();
-                                                setProviderMessage(`${p.displayName} saved and active.`);
-                                            } catch (cause) {
-                                                setProviderMessage(cause instanceof Error ? cause.message : "Provider configuration failed.");
-                                            } finally {
-                                                if (credential) credential.value = "";
-                                                providerLock.current = false;
-                                                setProviderBusy(false);
-                                            }
-                                        }}
-                                        style={{
-                                            padding: "10px 12px",
-                                            background: isSelected
-                                                ? "var(--bg-raised)"
-                                                : "var(--bg-surface)",
-                                            border: `1px solid ${isSelected ? "var(--accent-blue-border)" : "var(--line-subtle)"}`,
-                                            borderRadius: "var(--radius-sm)",
-                                            display: "flex",
-                                            flexWrap: "wrap",
-                                            gap: "10px",
-                                            alignItems: "center",
-                                            justifyContent: "space-between",
-                                        }}
-                                    >
-                                        <div>
-                                            <strong
-                                                style={{
-                                                    fontSize: "12px",
-                                                    color: "var(--text-primary)",
-                                                }}
-                                            >
-                                                {p.displayName}
-                                            </strong>
-                                            <span
-                                                className="block text-dim"
-                                                style={{ fontSize: "10.5px" }}
-                                            >
-                                                Model:{" "}
-                                                {p.runtime?.model ||
-                                                    p.model ||
-                                                    "default"}
-                                            </span>
-                                        </div>
-                                        <label>
-                                            Model
-                                            <input name="model" aria-label={`${p.displayName} model`} defaultValue={p.runtime?.model || p.model || ""} required disabled={providerBusy} />
-                                        </label>
-                                        <label>
-                                            API base URL
-                                            <input name="apiBase" type="url" aria-label={`${p.displayName} API base URL`} defaultValue={p.runtime?.apiBase || p.apiBaseUrl || ""} disabled={providerBusy} />
-                                        </label>
-                                        {p.credentialType !== "none" && <label>
-                                            Credential {p.configured ? "(leave blank to keep saved credential)" : ""}
-                                            <input name="credential" aria-label={`${p.displayName} credential`} type="password" autoComplete="off" disabled={providerBusy} />
-                                        </label>}
-                                        <button
-                                            type="submit"
-                                            disabled={providerBusy}
-                                            className={`btn ${isSelected ? "btn-primary" : "btn-secondary"}`}
-                                            style={{
-                                                height: "26px",
-                                                fontSize: "11px",
-                                            }}
-                                        >
-                                            {providerBusy ? "Saving…" : "Save and activate"}
-                                        </button>
-                                    </form>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </Modal>
-            )}
 
             {/* Session Access Token Modal */}
             {auth && (

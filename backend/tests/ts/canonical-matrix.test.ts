@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { clone } from "../../core/clone.js";
 import type { Fixture, ResearchBundle } from "../../contracts/schema/types.js";
-import type { ResearchProvider } from "../../../app/web/cloud/provider.js";
 import { harness, prompt } from "./harness.js";
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
 
@@ -32,4 +31,29 @@ test("canonical Agent/runtime fixture matrix",async(t)=>{const h=await harness("
  await t.test("workflow graph and Skill registry",async()=>{await h.contracts.verifyStatic();assert.deepEqual(h.contracts.definitions().map(x=>x.name).sort(),["canonicalize","create_hash","resolve_artifact","run_fixture","trace_artifact","validate_artifact","validate_graph","validate_parity","validate_references","validate_registry","validate_schema","verify_hash"]);});
  }finally{h.bridge.close();}});
 
-test("provider/runtime failure terminates visibly at Done ROOT_CAUSE",async()=>{const provider:ResearchProvider={async ready(){return {ready:true,provider:"test-provider-failure",models:[]};},async research(_p,_r){throw new WorkflowRootCauseError({issue:"provider",expected:"configured provider",actual:"provider failed",evidence_ids:[],required_correction:"configure provider",recheck_target:"provider"});}};const h=await harness("provider-failure",provider);const runId="provider-failure";h.runs.create(runId);try{const out=await h.runtime.run(runId,prompt(runId));assert.equal(out.test_result,"Failed");assert.equal(out.issue_type,"Root Cause");const done=out.events.filter(e=>e.processor==="Done"&&e.execution_status==="Completed").at(-1);assert.equal(done?.test_result,"Failed");assert.equal(done?.issue_type,"Root Cause");assert.equal(out.root_cause?.actual,"provider failed");}finally{h.bridge.close();}});
+test("research/runtime failure terminates visibly at Done ROOT_CAUSE", async () => {
+  const customResearch = async () => {
+    throw new WorkflowRootCauseError({
+      issue: "research",
+      expected: "research execution",
+      actual: "research failed",
+      evidence_ids: [],
+      required_correction: "configure research",
+      recheck_target: "research",
+    });
+  };
+  const h = await harness("research-failure", customResearch);
+  const runId = "research-failure";
+  h.runs.create(runId);
+  try {
+    const out = await h.runtime.run(runId, prompt(runId));
+    assert.equal(out.test_result, "Failed");
+    assert.equal(out.issue_type, "Root Cause");
+    const done = out.events.filter(e => e.processor === "Done" && e.execution_status === "Completed").at(-1);
+    assert.equal(done?.test_result, "Failed");
+    assert.equal(done?.issue_type, "Root Cause");
+    assert.equal(out.root_cause?.actual, "research failed");
+  } finally {
+    h.bridge.close();
+  }
+});

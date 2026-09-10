@@ -36,8 +36,6 @@ import type {
 import type { RunRepository } from "./run-repository.js";
 import type { ProcessingEventBus } from "./event-bus.js";
 import type { WorkflowRuntime } from "./workflow-runtime.js";
-import type { ResearchProvider } from "../../app/web/cloud/provider.js";
-import type { ProviderRuntimeSettings } from "../../app/web/cloud/provider-runtime-config.js";
 import { WorkflowRootCauseError } from "../core/root-cause-error.js";
 import {
   closeSharedRedis,
@@ -70,14 +68,14 @@ export interface RunJobProviderV1 {
   id: string;
   model?: string;
   configRevision?: number;
-  settings?: ProviderRuntimeSettings;
+  settings?: Record<string, unknown>;
 }
 
 export interface RunJobV1 {
   version: 1;
   runId: string;
   prompt: Prompt;
-  provider: RunJobProviderV1;
+  provider?: RunJobProviderV1;
   submittedAt: string;
 }
 
@@ -144,21 +142,23 @@ export function validateRunJobV1(data: unknown): {
         `unsupported payload version ${String(d.version)} (expected 1)`,
       );
     }
-    if (!d.provider || typeof d.provider !== "object") {
-      errors.push("v1 payload requires a provider object");
-    } else {
-      const p = d.provider as Record<string, unknown>;
-      if (typeof p.id !== "string" || !p.id) {
-        errors.push("provider.id must be a non-empty string");
-      }
-      if (p.model !== undefined && typeof p.model !== "string") {
-        errors.push("provider.model must be a string");
-      }
-      if (
-        p.configRevision !== undefined &&
-        typeof p.configRevision !== "number"
-      ) {
-        errors.push("provider.configRevision must be a number");
+    if (d.provider !== undefined && d.provider !== null) {
+      if (typeof d.provider !== "object") {
+        errors.push("provider must be an object");
+      } else {
+        const p = d.provider as Record<string, unknown>;
+        if (typeof p.id !== "string" || !p.id) {
+          errors.push("provider.id must be a non-empty string");
+        }
+        if (p.model !== undefined && typeof p.model !== "string") {
+          errors.push("provider.model must be a string");
+        }
+        if (
+          p.configRevision !== undefined &&
+          typeof p.configRevision !== "number"
+        ) {
+          errors.push("provider.configRevision must be a number");
+        }
       }
     }
     if (typeof d.submittedAt !== "string" || !d.submittedAt) {
@@ -188,7 +188,7 @@ export interface RunQueue {
     providerId: string;
     revision: number;
     model?: string;
-    settings?: ProviderRuntimeSettings;
+    settings?: Record<string, unknown>;
   }): Promise<{ jobId: string }>;
   getJob(runId: string): Promise<Job<RunJobData> | undefined>;
   getJobState(runId: string): Promise<RunJobState>;
@@ -211,14 +211,14 @@ export interface RunQueueDeps {
   runs: RunRepository;
   events: ProcessingEventBus;
   /** Factory that builds a fresh WorkflowRuntime for a job (per-run binding). */
-  createRuntime: (provider: ResearchProvider) => Promise<WorkflowRuntime>;
+  createRuntime: () => Promise<WorkflowRuntime>;
   /** Resolves the provider for a given providerId (per-run binding). */
-  resolveProvider: (
+  resolveProvider?: (
     providerId: string,
     events: ProcessingEventBus,
     runId: string,
     captured?: RunJobProviderV1,
-  ) => Promise<ResearchProvider>;
+  ) => Promise<any>;
   projectRoot: string;
 }
 
@@ -406,7 +406,7 @@ export class BullMQRunQueue implements RunQueue {
     providerId: string;
     revision: number;
     model?: string;
-    settings?: ProviderRuntimeSettings;
+    settings?: Record<string, unknown>;
   }): Promise<{ jobId: string }> {
     // Versioned v1 payload — no secrets. jobId = runId (BullMQ dedups by jobId,
     // so re-submitting the same runId never creates a duplicate queue entry).
@@ -617,41 +617,35 @@ export async function executeRunJob(
       return { runId, status: "failed" };
     }
 
-    // Provider binding happens PER RUN, immediately before the workflow. This
-    // PROVES provider readiness before Researcher consumes the provider:
-    //   capture provider selection (job metadata) → resolve credential
-    //   server-side → prove readiness (provider constructed) → ProviderBinding
-    //   event → Researcher. A readiness failure is surfaced as a ProviderBinding
-    //   ROOT_CAUSE event carrying the REAL root cause — never hidden behind a
-    //   generic "Run worker failure" / BullMQ failure message. The provider is
-    //   bound ONCE here; an already-active run is never re-bound mid-workflow.
-    let provider: ResearchProvider;
-    try {
-      provider = await deps.resolveProvider(
-        providerId,
-        deps.events,
-        runId,
-        data.provider ?? { id: providerId, configRevision: data.revision },
-      );
-    } catch (err) {
-      const wrc =
-        err instanceof WorkflowRootCauseError ? err.rootCause : undefined;
-      const actual =
-        wrc?.actual ?? (err instanceof Error ? err.message : String(err));
-      const issue =
-        wrc?.issue ??
-        "Provider binding failed before the workflow could execute";
-      deps.events.emit(runId, "ProviderBinding", "Completed", {
-        scope: "SUPPORT",
-        test_result: "Failed",
-        issue_type: "Root Cause",
-        message: firstLine(actual),
-      });
-      finalizeFailure(issue, actual);
-      return { runId, status: "failed" };
+    // Optional integration/provider verification if configured for this run.
+    if (deps.resolveProvider) {
+      try {
+        await deps.resolveProvider(
+          providerId,
+          deps.events,
+          runId,
+          data.provider ?? { id: providerId, configRevision: data.revision },
+        );
+      } catch (err) {
+        const wrc =
+          err instanceof WorkflowRootCauseError ? err.rootCause : undefined;
+        const actual =
+          wrc?.actual ?? (err instanceof Error ? err.message : String(err));
+        const issue =
+          wrc?.issue ??
+          "Provider binding failed before the workflow could execute";
+        deps.events.emit(runId, "ResearcherBinding", "Completed", {
+          scope: "SUPPORT",
+          test_result: "Failed",
+          issue_type: "Root Cause",
+          message: firstLine(actual),
+        });
+        finalizeFailure(issue, actual);
+        return { runId, status: "failed" };
+      }
     }
 
-    deps.events.emit(runId, "ProviderBinding", "Completed", {
+    deps.events.emit(runId, "ResearcherBinding", "Completed", {
       scope: "SUPPORT",
       message: `Provider bound; credentials resolved server-side; ready for Researcher (requested=${providerId}, revision=${revision})`,
     });
@@ -661,7 +655,7 @@ export async function executeRunJob(
       message: `Run dequeued for execution (provider=${providerId}, revision=${revision})`,
     });
 
-    const runtime = await deps.createRuntime(provider);
+    const runtime = await deps.createRuntime();
     await runtime.run(runId, prompt);
 
     const snapshot = deps.runs.get(runId);

@@ -2,38 +2,20 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";
-import type {
-  ResearchProvider,
-  ResearchProviderReadiness,
-} from "../../../app/web/cloud/provider.js";
 import type { ProcessingEventBus } from "../../runtime/event-bus.js";
-import { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";
+import { createFixtureResearchBundle } from "../../agents/researcher/fixture.js";
 import { ConversationStore } from "../../intent/conversation-store.js";
 import { IntentCollectionService } from "../../intent/intent-collection.js";
 import { PromptGenerator } from "../../intent/prompt-generator.js";
 import { startHttpServer } from "../../server/http-server.js";
 import { harness } from "./harness.js";
 
-class CapturingResearchProvider implements ResearchProvider {
+class CapturingResearch {
   receivedPrompt?: Prompt;
-
-  constructor(private inner: ResearchProvider) {}
-
-  ready(runId: string): Promise<ResearchProviderReadiness> {
-    return this.inner.ready(runId);
-  }
-
-  attachEvents(events: ProcessingEventBus): void {
-    this.inner.attachEvents?.(events);
-  }
 
   async research(prompt: Prompt, runId: string): Promise<ResearchBundle> {
     this.receivedPrompt = structuredClone(prompt);
-    return await this.inner.research(prompt, runId);
-  }
-
-  close(): void {
-    this.inner.close?.();
+    return await createFixtureResearchBundle(prompt, runId);
   }
 }
 
@@ -49,7 +31,7 @@ async function waitForTerminal(base: string, runId: string): Promise<any> {
 }
 
 test("session start -> PromptGenerator -> Researcher -> canonical workflow -> final response emits full E2E transcript", async () => {
-  const provider = new CapturingResearchProvider(new FixtureResearchProvider());
+  const provider = new CapturingResearch();
   const h = await harness("session-transcript-e2e", provider);
   const intent = new IntentCollectionService(new ConversationStore());
   const server = await startHttpServer(

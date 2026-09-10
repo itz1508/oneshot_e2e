@@ -1,17 +1,22 @@
 import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";
 import { researcherTools } from "./tool/registry.js";
-import type { ResearchProvider } from "../../../app/web/cloud/provider.js";
 import { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";
 import { ResearcherAgent } from "./agent.js";
 
 export class ResearcherWorkflow {
   readonly agent = ResearcherAgent;
   private tools: ReturnType<typeof researcherTools>;
+  private researchTool: ((prompt: Prompt, runId: string) => Promise<any>) | undefined;
   constructor(
-    provider: ResearchProvider,
     private contracts: CanonicalContractSkill,
+    modelCapability?: unknown,
   ) {
-    this.tools = researcherTools(provider);
+    if (typeof modelCapability === "function") {
+      this.researchTool = modelCapability as (prompt: Prompt, runId: string) => Promise<ResearchBundle>;
+    } else if (modelCapability && typeof (modelCapability as any).research === "function") {
+      this.researchTool = (modelCapability as any).research.bind(modelCapability);
+    }
+    this.tools = researcherTools(this.researchTool);
   }
   async run(prompt: Prompt, runId: string): Promise<ResearchBundle> {
     await this.contracts.validate("urn:oneshot:schema:prompt:2", prompt);

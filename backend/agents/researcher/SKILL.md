@@ -11,29 +11,15 @@ Consume Prompt_id and produce the Researcher-owned researched package: Researche
 
 ## Responsibility boundary
 
-Researcher owns evidence collection, provenance, consolidation, and the canonical ResearchBundle handoff. Provider selection and evidence acquisition are separate concerns:
+Researcher owns evidence collection, provenance, consolidation, and the canonical ResearchBundle handoff. Integration capabilities and evidence acquisition are separate concerns:
 
-- `ONESHOT_RESEARCH_PROVIDER` selects the model/provider used to create the structured research draft.
-- Tavily is an optional Researcher evidence capability and never replaces or silently changes the configured Researcher provider.
-- Local repository evidence and Tavily web evidence are consolidated before provider synthesis and canonical validation.
+- Optional model integrations under `backend/integration/` provide inference capabilities when installed.
+- Tavily is an optional Researcher evidence capability.
+- Local repository evidence and Tavily web evidence are consolidated before canonical validation.
 
-## Provider integration
+## Integration packages
 
-Production supports the configured Researcher provider, including Featherless and native Gemini.
-
-Examples:
-
-```text
-ONESHOT_MODE=production
-ONESHOT_RESEARCH_PROVIDER=featherless
-```
-
-or:
-
-```text
-ONESHOT_MODE=production
-ONESHOT_RESEARCH_PROVIDER=gemini
-```
+When model integration packages are installed under `backend/integration/`, Researcher can optionally leverage them for structured drafting. When unconfigured or offline, Researcher deterministically produces valid canonical bundles from local workspace context and canonical fixtures.
 
 ## Tavily evidence acquisition
 
