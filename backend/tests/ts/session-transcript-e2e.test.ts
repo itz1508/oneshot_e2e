@@ -1,41 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
-import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";
-import type {
-  ResearchProvider,
-  ResearchProviderReadiness,
-} from "../../../app/web/cloud/provider.js";
-import type { ProcessingEventBus } from "../../runtime/event-bus.js";
-import { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";
+import type { Prompt } from "../../contracts/schema/types.js";
 import { ConversationStore } from "../../intent/conversation-store.js";
 import { IntentCollectionService } from "../../intent/intent-collection.js";
 import { PromptGenerator } from "../../intent/prompt-generator.js";
 import { startHttpServer } from "../../server/http-server.js";
 import { harness } from "./harness.js";
-
-class CapturingResearchProvider implements ResearchProvider {
-  receivedPrompt?: Prompt;
-
-  constructor(private inner: ResearchProvider) {}
-
-  ready(runId: string): Promise<ResearchProviderReadiness> {
-    return this.inner.ready(runId);
-  }
-
-  attachEvents(events: ProcessingEventBus): void {
-    this.inner.attachEvents?.(events);
-  }
-
-  async research(prompt: Prompt, runId: string): Promise<ResearchBundle> {
-    this.receivedPrompt = structuredClone(prompt);
-    return await this.inner.research(prompt, runId);
-  }
-
-  close(): void {
-    this.inner.close?.();
-  }
-}
 
 async function waitForTerminal(base: string, runId: string): Promise<any> {
   for (let i = 0; i < 240; i += 1) {
@@ -49,8 +20,7 @@ async function waitForTerminal(base: string, runId: string): Promise<any> {
 }
 
 test("session start -> PromptGenerator -> Researcher -> canonical workflow -> final response emits full E2E transcript", async () => {
-  const provider = new CapturingResearchProvider(new FixtureResearchProvider());
-  const h = await harness("session-transcript-e2e", provider);
+  const h = await harness("session-transcript-e2e");
   const intent = new IntentCollectionService(new ConversationStore());
   const server = await startHttpServer(
     h.runtime,
@@ -102,16 +72,15 @@ test("session start -> PromptGenerator -> Researcher -> canonical workflow -> fi
     console.log(`SESSION_RUN_CREATED_JSON=${JSON.stringify(started)}`);
 
     const final = await waitForTerminal(base, started.run_id);
-    assert.ok(provider.receivedPrompt, "Researcher did not receive Prompt(id)");
-    console.log(
-      `RESEARCHER_RECEIVED_PROMPT_JSON=${JSON.stringify(provider.receivedPrompt)}`,
-    );
-
     const expectedRunPrompt = new PromptGenerator().generate(
       conversation.intent,
       started.prompt_id,
     );
-    assert.deepEqual(provider.receivedPrompt, expectedRunPrompt);
+    const receivedPrompt = await h.store.load<Prompt>(started.run_id, "prompt");
+    const researcher = await h.store.load<any>(started.run_id, "researcher");
+    console.log(`RESEARCHER_RECEIVED_PROMPT_JSON=${JSON.stringify(receivedPrompt)}`);
+    assert.deepEqual(receivedPrompt, expectedRunPrompt);
+    assert.equal(researcher.prompt_id, expectedRunPrompt.prompt_id);
 
     const events = h.events.list(started.run_id);
     for (const event of events) {

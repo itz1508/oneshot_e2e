@@ -33,7 +33,7 @@ export class ResearcherWorkflow {
 
   private async liveDraft(prompt: Prompt, runId: string) {
     const provider = this.provider;
-    if (!provider) return sampleResearchDraft(prompt);
+    if (!provider) throw new Error("live Researcher requires a model provider");
 
     const gathered = await this.evidence.collect(prompt);
     const tools = researcherTools(provider);

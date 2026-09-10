@@ -246,10 +246,7 @@ export async function researchDraftToBundle(
       resolve(projectRoot, "backend/schema/plan.schema.json"),
       "utf8",
     ),
-  ) as {
-    $id?: string;
-    properties: Record<string, Record<string, unknown>>;
-  };
+  ) as any;
   const schemaDocument = structuredClone(canonicalSchema);
   schemaDocument.$id = `urn:oneshot:research-schema:${runId}`;
   schemaDocument.properties.plan_id = {

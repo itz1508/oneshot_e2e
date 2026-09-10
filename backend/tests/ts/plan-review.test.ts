@@ -6,7 +6,6 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PlanReviewService } from "../../runtime/plan-review.js";
 import { FileArtifactStore } from "../../runtime/artifact-store.js";
-import { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";
 import { harness, prompt } from "./harness.js";
 import { startHttpServer } from "../../server/http-server.js";
 import { IntentCollectionService } from "../../intent/intent-collection.js";
@@ -14,11 +13,12 @@ import { ConversationStore } from "../../intent/conversation-store.js";
 
 test("review persists decisions and validates identities, empty edits and stale confirmations", async () => {
   const dir = await mkdtemp(join(tmpdir(), "oneshot-review-"));
+  const seed = await harness("review-unit-seed");
   try {
     const store = new FileArtifactStore(dir);
     const producer = new PlanReviewService(store);
     const consumer = new PlanReviewService(store);
-    const bundle = await new FixtureResearchProvider().research(prompt('review-unit'), 'review-unit');
+    const bundle = await seed.researcher.run(prompt("review-unit"), "review-unit");
     assert.equal(await producer.open('automatic', bundle), undefined);
     await producer.enable('review-unit');
     const draft = (await producer.open('review-unit', bundle))!;
@@ -36,7 +36,7 @@ test("review persists decisions and validates identities, empty edits and stale 
     assert.deepEqual(reviewed.plan.steps[0].requirement_refs, bundle.plan.steps[0].requirement_refs);
     await assert.rejects(() => producer.decide('review-unit', { action: 'approve', revision: 1, edits: draft.edits }), /already/);
     assert.equal((await new PlanReviewService(store).get('review-unit'))?.status, 'approved');
-  } finally { await rm(dir, { recursive: true, force: true }); }
+  } finally { seed.close(); await rm(dir, { recursive: true, force: true }); }
 });
 
 for (const action of ['approve', 'cancel'] as const) {

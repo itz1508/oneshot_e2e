@@ -12,7 +12,6 @@ export function createOpenAIModelProvider(
   const client = createOpenAI({
     apiKey: config.apiKey,
     ...(config.apiBase ? { baseURL: config.apiBase } : {}),
-    compatibility: "strict",
   });
   const model = client(config.model);
 

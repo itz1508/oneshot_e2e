@@ -8,9 +8,9 @@ import { join } from "node:path";
 import { startHttpServer } from "../../server/http-server.js";
 import { ProcessingEventBus } from "../../runtime/event-bus.js";
 import { RunRepository } from "../../runtime/run-repository.js";
-import { ProviderManager } from "../../../app/web/cloud/provider-manager.js";
-import { LocalFileSecretStore } from "../../../app/web/cloud/provider-secret-store.js";
-import { FileProviderRuntimeConfigStore } from "../../../app/web/cloud/provider-runtime-config.js";
+import { ProviderManager } from "../../provider/manager.js";
+import { LocalFileSecretStore } from "../../provider/secret-store.js";
+import { FileProviderRuntimeConfigStore } from "../../provider/runtime-config.js";
 import { AppendOnlyProcessingEventStore } from "../../task/event/event-store.js";
 import {
   executeRunJob,

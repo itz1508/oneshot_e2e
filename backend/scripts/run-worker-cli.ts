@@ -21,7 +21,7 @@ import { FileArtifactStore } from "../runtime/artifact-store.js";
 import { AppendOnlyProcessingEventStore } from "../task/event/event-store.js";
 import { CheckpointStore } from "../task/checkpoint/checkpoint-store.js";
 import { TaskManagement } from "../task/task-management.js";
-import { ProviderManager } from "../../app/web/cloud/provider-manager.js";
+import { ProviderManager } from "../provider/manager.js";
 import { BullMQRunQueue, RUN_QUEUE_NAME, type RunQueueDeps } from "../runtime/queue.js";
 import {
   getRuntimePaths,
