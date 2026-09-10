@@ -4,8 +4,8 @@ import { EvaluationWorkflow } from "../agents/evaluation/workflow.js";
 import { GapAnalysisWorkflow } from "../agents/gap-analysis/workflow.js";
 import { PlannerWorkflow } from "../agents/planner/workflow.js";
 import { RefactorWorkflow } from "../agents/refactor/workflow.js";
-import type { ResearchProvider } from "../../app/web/cloud/provider.js";
-import { resolveResearchProvider } from "../../app/web/cloud/provider-resolver.js";
+import type { ModelProvider } from "../provider/model-provider.js";
+import { resolveModelProvider } from "../provider/resolver.js";
 import { ResearcherWorkflow } from "../agents/researcher/workflow.js";
 import type { SandboxService } from "../sandbox/sandbox-service.js";
 import type { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
@@ -19,10 +19,7 @@ export interface AgentPipelineBootstrapInput {
   sandbox: SandboxService;
 }
 
-/**
- * Register canonical Agent factories without activating them.
- * Activation is explicit and happens only when the ADK workflow reaches a Agent.
- */
+/** Register canonical Agent factories without activating them. */
 export function createAgentPipeline(
   input: AgentPipelineBootstrapInput,
 ): AgentPipeline {
@@ -32,38 +29,46 @@ export function createAgentPipeline(
   pipeline.register("Researcher", async (runId) => {
     events.emit(runId, "ProviderBinding:Researcher", "Running", {
       scope: "SUPPORT",
-      message: "resolve and probe ResearchProvider",
+      message: "resolve and probe model provider",
     });
 
-    let provider: ResearchProvider | undefined;
+    let provider: ModelProvider | undefined;
     try {
-      provider = await resolveResearchProvider(projectRoot, events);
-      const readiness = await provider.ready(runId);
-      if (!readiness.ready) {
-        throw new WorkflowRootCauseError({
-          issue: "Researcher provider binding is not ready",
-          expected:
-            "The explicitly selected ResearchProvider and all required model bindings pass readiness before Researcher runs",
-          actual: readiness.detail || "provider readiness returned false",
-          evidence_ids: readiness.models.map((model) => `model:${model}`),
-          required_correction:
-            "Correct provider/model configuration and activate Researcher again",
-          recheck_target: runId,
+      provider = await resolveModelProvider(projectRoot, events);
+      if (provider) {
+        const readiness = await provider.ready(runId);
+        if (!readiness.ready) {
+          throw new WorkflowRootCauseError({
+            issue: "Researcher model provider binding is not ready",
+            expected:
+              "The explicitly selected model provider passes readiness before Researcher runs",
+            actual: readiness.detail || "provider readiness returned false",
+            evidence_ids: readiness.models.map((model) => `model:${model}`),
+            required_correction:
+              "Correct provider/model configuration and activate Researcher again",
+            recheck_target: runId,
+          });
+        }
+        events.emit(runId, "ProviderBinding:Researcher", "Completed", {
+          scope: "SUPPORT",
+          test_result: "Passed",
+          artifact_id: `provider:${readiness.provider}`,
+          message: `models=${readiness.models.join(",")}`,
+        });
+      } else {
+        events.emit(runId, "ProviderBinding:Researcher", "Completed", {
+          scope: "SUPPORT",
+          test_result: "Passed",
+          artifact_id: "researcher:sample-mode",
+          message: "deterministic Researcher sample mode; no model provider",
         });
       }
-
-      events.emit(runId, "ProviderBinding:Researcher", "Completed", {
-        scope: "SUPPORT",
-        test_result: "Passed",
-        artifact_id: `provider:${readiness.provider}`,
-        message: `models=${readiness.models.join(",") || "fixture"}`,
-      });
 
       const boundProvider = provider;
       return {
         agent_id: "Researcher" as const,
-        runtime: new ResearcherWorkflow(boundProvider, contracts),
-        deactivate: () => boundProvider.close?.(),
+        runtime: new ResearcherWorkflow(boundProvider, contracts, projectRoot),
+        deactivate: () => boundProvider?.close?.(),
       };
     } catch (error) {
       provider?.close?.();

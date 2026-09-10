@@ -4,7 +4,7 @@ import { EvaluationWorkflow } from "../../agents/evaluation/workflow.js";
 import { GapAnalysisWorkflow } from "../../agents/gap-analysis/workflow.js";
 import { PlannerWorkflow } from "../../agents/planner/workflow.js";
 import { RefactorWorkflow } from "../../agents/refactor/workflow.js";
-import type { ResearchProvider } from "../../../app/web/cloud/provider.js";
+import type { ModelProvider } from "../../provider/model-provider.js";
 import { ResearcherWorkflow } from "../../agents/researcher/workflow.js";
 import type { SandboxService } from "../../sandbox/sandbox-service.js";
 import type { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";
@@ -20,7 +20,8 @@ export interface DynamicDependencyFactoryInput {
   contracts: CanonicalContractSkill;
   sandbox: SandboxService;
   triple: TripleValidationWorkflow;
-  provider: ResearchProvider;
+  /** Model transport only. Undefined is permitted only for deterministic sample mode. */
+  provider: ModelProvider | undefined;
   confirmation?: ConfirmationWorkflow;
   hash?: HashWorkflow;
 }
@@ -29,10 +30,7 @@ export interface BoundDynamicDependencies extends OneShotDynamicDependencies {
   release(): void | Promise<void>;
 }
 
-/**
- * Resolve production dependencies for one ADK job. ResearchProvider readiness
- * is proved before the Researcher node is allowed to enter RUNNING.
- */
+/** Bind a model transport before the backend Researcher role runs. */
 export function createDynamicDependencyFactory(
   input: DynamicDependencyFactoryInput,
 ) {
@@ -43,37 +41,46 @@ export function createDynamicDependencyFactory(
   return async (runId: string): Promise<BoundDynamicDependencies> => {
     input.events.emit(runId, "ProviderBinding:Researcher", "Running", {
       scope: "SUPPORT",
-      message:
-        "resolve provider and prove model readiness before ADK Researcher node",
+      message: "resolve model transport before Researcher",
     });
 
-    let provider: ResearchProvider | undefined;
+    const provider = input.provider;
     try {
-      provider = input.provider;
-      const readiness = await provider.ready(runId);
-      if (!readiness.ready) {
-        throw new WorkflowRootCauseError({
-          issue: "Researcher provider binding is not ready",
-          expected:
-            "Configured ResearchProvider and required model bindings are ready before ctx.runNode(Researcher)",
-          actual: readiness.detail || "provider readiness returned false",
-          evidence_ids: readiness.models.map((model) => `model:${model}`),
-          required_correction:
-            "Correct provider/model configuration and retry the same job",
-          recheck_target: runId,
+      if (provider) {
+        const readiness = await provider.ready(runId);
+        if (!readiness.ready) {
+          throw new WorkflowRootCauseError({
+            issue: "Researcher model provider binding is not ready",
+            expected:
+              "Configured model provider is ready before ctx.runNode(Researcher)",
+            actual: readiness.detail || "provider readiness returned false",
+            evidence_ids: readiness.models.map((model) => `model:${model}`),
+            required_correction:
+              "Correct provider/model configuration and retry the same job",
+            recheck_target: runId,
+          });
+        }
+        input.events.emit(runId, "ProviderBinding:Researcher", "Completed", {
+          scope: "SUPPORT",
+          test_result: "Passed",
+          artifact_id: `provider:${readiness.provider}`,
+          message: `models=${readiness.models.join(",")}`,
+        });
+      } else {
+        input.events.emit(runId, "ProviderBinding:Researcher", "Completed", {
+          scope: "SUPPORT",
+          test_result: "Passed",
+          artifact_id: "researcher:sample-mode",
+          message: "deterministic Researcher sample mode; no model provider",
         });
       }
 
-      input.events.emit(runId, "ProviderBinding:Researcher", "Completed", {
-        scope: "SUPPORT",
-        test_result: "Passed",
-        artifact_id: `provider:${readiness.provider}`,
-        message: `models=${readiness.models.join(",") || "fixture"}`,
-      });
-
-      const boundProvider = provider;
       return {
-        researcher: new ResearcherWorkflow(boundProvider, input.contracts),
+        researcher: new ResearcherWorkflow(
+          provider,
+          input.contracts,
+          input.projectRoot,
+        ),
         planner: new PlannerWorkflow(input.contracts),
         refactor: new RefactorWorkflow(input.contracts),
         gapper: new GapAnalysisWorkflow(input.contracts),
@@ -83,7 +90,7 @@ export function createDynamicDependencyFactory(
         hash,
         builder: new BuilderWorkflow(input.sandbox),
         release() {
-          boundProvider.close?.();
+          provider?.close?.();
         },
       };
     } catch (error) {
