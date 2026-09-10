@@ -22,7 +22,7 @@ import type { BuilderWorkflow } from "../agents/builder/workflow.js";
 import type { TripleValidationWorkflow } from "../workflow/triple-validation.js";
 import type { ConfirmationWorkflow } from "../workflow/confirmation.js";
 import type { HashWorkflow } from "../workflow/hash.js";
-import { ProviderManager } from "../../app/web/cloud/provider-manager.js";
+import { ProviderManager } from "../provider/manager.js";
 import type { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 import type {
   PythonReasoner,
@@ -111,7 +111,17 @@ export async function runResearcherStage(
     captured.id,
     captured,
   );
-  const researcher = new ResearcherWorkflow(provider, services.contracts);
+  if (provider) {
+    const readiness = await provider.ready(ctx.runId);
+    if (!readiness.ready) {
+      throw new Error(readiness.detail || "Model provider is not ready");
+    }
+  }
+  const researcher = new ResearcherWorkflow(
+    provider,
+    services.contracts,
+    services.providerManager.projectRoot,
+  );
   const bundle = await researcher.run(prompt, ctx.runId);
 
   const researchRevision = ctx.stageIteration ?? 0;

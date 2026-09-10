@@ -12,7 +12,7 @@ import type {
 } from "../contracts/schema/types.js";
 import type { ArtifactStore } from "../runtime/artifact-store.js";
 import type { RunRepository } from "../runtime/run-repository.js";
-import type { ProviderRuntimeSettings } from "../../app/web/cloud/provider-runtime-config.js";
+import type { ProviderRuntimeSettings } from "../provider/runtime-config.js";
 
 export interface CapturedProvider {
   id: string;

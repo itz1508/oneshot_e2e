@@ -36,8 +36,8 @@ import type {
 import type { RunRepository } from "./run-repository.js";
 import type { ProcessingEventBus } from "./event-bus.js";
 import type { WorkflowRuntime } from "./workflow-runtime.js";
-import type { ResearchProvider } from "../../app/web/cloud/provider.js";
-import type { ProviderRuntimeSettings } from "../../app/web/cloud/provider-runtime-config.js";
+import type { ModelProvider } from "../provider/model-provider.js";
+import type { ProviderRuntimeSettings } from "../provider/runtime-config.js";
 import { WorkflowRootCauseError } from "../core/root-cause-error.js";
 import {
   closeSharedRedis,
@@ -211,14 +211,14 @@ export interface RunQueueDeps {
   runs: RunRepository;
   events: ProcessingEventBus;
   /** Factory that builds a fresh WorkflowRuntime for a job (per-run binding). */
-  createRuntime: (provider: ResearchProvider) => Promise<WorkflowRuntime>;
+  createRuntime: (provider: ModelProvider | undefined) => Promise<WorkflowRuntime>;
   /** Resolves the provider for a given providerId (per-run binding). */
   resolveProvider: (
     providerId: string,
     events: ProcessingEventBus,
     runId: string,
     captured?: RunJobProviderV1,
-  ) => Promise<ResearchProvider>;
+  ) => Promise<ModelProvider | undefined>;
   projectRoot: string;
 }
 
@@ -625,7 +625,7 @@ export async function executeRunJob(
     //   ROOT_CAUSE event carrying the REAL root cause — never hidden behind a
     //   generic "Run worker failure" / BullMQ failure message. The provider is
     //   bound ONCE here; an already-active run is never re-bound mid-workflow.
-    let provider: ResearchProvider;
+    let provider: ModelProvider | undefined;
     try {
       provider = await deps.resolveProvider(
         providerId,

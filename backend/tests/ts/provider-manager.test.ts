@@ -1,94 +1,50 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ProviderManager } from "../../../app/web/cloud/provider-manager.js";
-import { LocalFileSecretStore } from "../../../app/web/cloud/provider-secret-store.js";
-import { FileProviderRuntimeConfigStore } from "../../../app/web/cloud/provider-runtime-config.js";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { ProviderManager } from "../../provider/manager.js";
+import { LocalFileSecretStore } from "../../provider/secret-store.js";
+import { FileProviderRuntimeConfigStore } from "../../provider/runtime-config.js";
 
-test("returns configured providers", async () => {
+function manager(mode: "production" | "sample" = "sample") {
+  const root = mkdtempSync(join(tmpdir(), "oneshot-provider-manager-"));
   const pm = new ProviderManager({
-    projectRoot: ".",
-    mode: "sample",
-    catalogPath: "app/web/cloud/providers.json",
-    secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
-    runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
+    projectRoot: process.cwd(),
+    mode,
+    secretStore: new LocalFileSecretStore(join(root, "secrets")),
+    runtimeConfigStore: new FileProviderRuntimeConfigStore(join(root, "providers.json")),
   });
-  const ids = (await pm.list()).map((p) => p.id).sort();
-  assert.deepEqual(ids, ["anthropic", "gemini", "openai", "sample"]);
+  return { pm, root };
+}
+
+test("provider catalog contains only real model providers", async () => {
+  const { pm, root } = manager();
+  try {
+    assert.deepEqual((await pm.list()).map((p) => p.id).sort(), ["anthropic", "gemini", "openai"]);
+    assert.equal(await pm.get("sample"), undefined);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test("never returns credential values", async () => {
-  const pm = new ProviderManager({
-    projectRoot: ".",
-    mode: "sample",
-    catalogPath: "app/web/cloud/providers.json",
-    secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
-    runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
-  });
-  const status = await pm.getProviderStatus("openai");
-  assert.ok(!JSON.stringify(status).includes("apiKey"));
-  assert.ok(!JSON.stringify(status).includes("value"));
-  assert.ok(!JSON.stringify(status).includes("secret"));
+test("sample mode is Researcher runtime behavior, not Provider Configuration", async () => {
+  const { pm, root } = manager();
+  try {
+    const captured = pm.captureForRun();
+    assert.equal(captured.id, "sample");
+    assert.equal(await pm.resolveForRun(captured.id, captured), undefined);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test("stable provider IDs", async () => {
-  const pm1 = new ProviderManager({
-    projectRoot: ".",
-    mode: "sample",
-    catalogPath: "app/web/cloud/providers.json",
-    secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
-    runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
-  });
-  const pm2 = new ProviderManager({
-    projectRoot: ".",
-    mode: "sample",
-    catalogPath: "app/web/cloud/providers.json",
-    secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
-    runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
-  });
-  const ids1 = (await pm1.list()).map((p) => p.providerId).sort();
-  const ids2 = Object.keys(pm2["catalog"].providers).sort();
-  assert.deepEqual(ids1, ids2);
-});
-
-test("active/configured/ready state is truthful", async () => {
-  const pm = new ProviderManager({
-    projectRoot: ".",
-    mode: "sample",
-    catalogPath: "app/web/cloud/providers.json",
-    secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
-    runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
-  });
-  const sample = await pm.getProviderStatus("sample");
-  assert.equal(sample.configured, true);
-  assert.equal(sample.credentialSource, "none");
-  assert.equal(sample.active, true);
-
-  const openai = await pm.getProviderStatus("openai");
-  assert.equal(openai.configured, false);
-  assert.equal(openai.credentialType, "api_key");
-  assert.equal(openai.active, false);
-});
-
-test("public name resolution does not leak implementation class names", async () => {
-  const pm = new ProviderManager({
-    projectRoot: ".",
-    mode: "sample",
-    catalogPath: "app/web/cloud/providers.json",
-    secretStore: new LocalFileSecretStore("/tmp/test-secrets"),
-    runtimeConfigStore: new FileProviderRuntimeConfigStore("/tmp/test-runtime"),
-  });
-  // sample → <default>
-  assert.equal(pm.publicNameFor("sample"), "<default>");
-  // public providers → their display names
-  assert.equal(pm.publicNameFor("openai"), "OpenAI");
-  assert.equal(pm.publicNameFor("anthropic"), "Anthropic");
-  assert.equal(pm.publicNameFor("gemini"), "Gemini");
-  // no implementation class names leak
-  const allNames = ["sample", "openai", "anthropic", "gemini"].map((id) => pm.publicNameFor(id));
-  for (const name of allNames) {
-    assert.ok(!name.includes("Provider"), `name "${name}" should not include "Provider"`);
-    assert.ok(!name.includes("ResearchProvider"), `name "${name}" should not include "ResearchProvider"`);
-    assert.ok(!name.includes("ModelProvider"), `name "${name}" should not include "ModelProvider"`);
-    assert.ok(!name.includes("Featherless"), `name "${name}" should not include "Featherless"`);
-  }
+test("provider status never returns credential values", async () => {
+  const { pm, root } = manager("production");
+  try {
+    await pm.setCredential("openai", {
+      providerId: "openai", credentialType: "api_key", value: "private-provider-test-value", createdAt: new Date().toISOString(),
+    });
+    const status = await pm.getProviderStatus("openai");
+    const serialized = JSON.stringify(status);
+    assert.ok(!serialized.includes("private-provider-test-value"));
+    assert.ok(!serialized.includes("apiKey"));
+    assert.equal(status.configured, true);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });

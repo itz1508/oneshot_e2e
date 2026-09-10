@@ -1,64 +1,29 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveResearchProvider } from "../../../app/web/cloud/provider-resolver.js";
-import { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";
-import { OpenAIModelProvider } from "../../../app/web/cloud/provider/openai/provider.js";
-import { AnthropicModelProvider } from "../../../app/web/cloud/provider/anthropic/provider.js";
-import { GeminiModelProvider } from "../../../app/web/cloud/provider/gemini/provider.js";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { ProviderManager } from "../../provider/manager.js";
+import { LocalFileSecretStore } from "../../provider/secret-store.js";
+import { FileProviderRuntimeConfigStore } from "../../provider/runtime-config.js";
 
-test("ResearchProvider resolution separates sample, unconfigured production, and explicit remote providers", async () => {
-  const saved = {
-    mode: process.env.ONESHOT_MODE,
-    provider: process.env.ONESHOT_RESEARCH_PROVIDER,
-    module: process.env.ONESHOT_RESEARCH_PROVIDER_MODULE,
-  };
-  try {
-    process.env.ONESHOT_MODE = "sample";
-    delete process.env.ONESHOT_RESEARCH_PROVIDER;
-    delete process.env.ONESHOT_RESEARCH_PROVIDER_MODULE;
-    assert.ok(
-      (await resolveResearchProvider(process.cwd())) instanceof
-        FixtureResearchProvider,
-    );
-
-    // Production must not silently choose a model/provider. Binding is explicit.
-    process.env.ONESHOT_MODE = "production";
-    delete process.env.ONESHOT_RESEARCH_PROVIDER;
-    const unconfigured = await resolveResearchProvider(process.cwd());
-    const readiness = await unconfigured.ready("provider-test");
-    assert.equal(readiness.ready, false);
-    assert.equal(readiness.provider, "<default>");
-    assert.match(readiness.detail || "", /configure/i);
-    unconfigured.close?.();
-
-    process.env.ONESHOT_MODE = "test";
-    process.env.ONESHOT_RESEARCH_PROVIDER = "openai";
-    const openai = await resolveResearchProvider(process.cwd());
-    assert.ok(openai instanceof OpenAIModelProvider);
-    openai.close?.();
-
-    process.env.ONESHOT_RESEARCH_PROVIDER = "anthropic";
-    const anthropic = await resolveResearchProvider(process.cwd());
-    assert.ok(anthropic instanceof AnthropicModelProvider);
-    anthropic.close?.();
-
-    process.env.ONESHOT_RESEARCH_PROVIDER = "gemini";
-    process.env.GEMINI_DISTRIBUTION_MODEL = "test-distribution";
-    process.env.GEMINI_RESEARCH_MODEL = "test-research";
-    process.env.GEMINI_SYNTHESIS_MODEL = "test-synthesis";
-    const gemini = await resolveResearchProvider(process.cwd());
-    assert.ok(gemini instanceof GeminiModelProvider);
-    gemini.close?.();
-  } finally {
-    const names = {
-      mode: "ONESHOT_MODE",
-      provider: "ONESHOT_RESEARCH_PROVIDER",
-      module: "ONESHOT_RESEARCH_PROVIDER_MODULE",
-    } as const;
-    for (const [key, value] of Object.entries(saved)) {
-      const name = names[key as keyof typeof names];
-      if (value === undefined) delete process.env[name];
-      else process.env[name] = value;
-    }
-  }
-});
+for (const id of ["openai", "anthropic", "gemini"] as const) {
+  test(`${id} resolves to a model transport, never a Researcher`, async () => {
+    const root = mkdtempSync(join(tmpdir(), `oneshot-${id}-`));
+    const pm = new ProviderManager({
+      projectRoot: process.cwd(), mode: "production",
+      secretStore: new LocalFileSecretStore(join(root, "secrets")),
+      runtimeConfigStore: new FileProviderRuntimeConfigStore(join(root, "providers.json")),
+    });
+    try {
+      await pm.setCredential(id, { providerId: id, credentialType: "api_key", value: `test-${id}-key`, createdAt: new Date().toISOString() });
+      await pm.activate(id);
+      const captured = pm.captureForRun();
+      const provider = await pm.resolveForRun(id, captured);
+      assert.ok(provider);
+      assert.equal(provider.id, id);
+      assert.equal(typeof provider.generate, "function");
+      assert.equal("research" in provider, false);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
+}

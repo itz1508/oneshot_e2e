@@ -14,8 +14,7 @@ import { ValidationLanePool } from "./validation/validation-lane-pool.js";
 import { DeterministicValidationRuntime } from "./validation/deterministic-validation.js";
 import { CanonicalContractSkill } from "./skills/canonical-contract-skill.js";
 import { createSkillSystem } from "./skills/bootstrap.js";
-import { ProviderManager } from "../app/web/cloud/provider-manager.js";
-import type { ResearchProvider } from "../app/web/cloud/provider.js";
+import { ProviderManager } from "./provider/manager.js";
 import { createDynamicDependencyFactory } from "./workflow/adk/dynamic-dependencies.js";
 import {
   BullMQRunQueue,
@@ -123,7 +122,6 @@ await contracts.verifyStatic();
 const providerManager = new ProviderManager({
   projectRoot,
   events,
-  catalogPath: resolve(projectRoot, "app/web/cloud/providers.json"),
   runtimePaths: runtimePaths,
 });
 
@@ -188,10 +186,7 @@ const bindDependencies = createDynamicDependencyFactory({
   contracts,
   sandbox,
   triple,
-  provider: {
-    ready: async () => ({ ready: false, provider: "<default>", models: [] }),
-    research: async () => { throw new Error("Per-run provider binding required"); },
-  },
+  provider: undefined,
 });
 const runtime = new WorkflowRuntime(
   events,

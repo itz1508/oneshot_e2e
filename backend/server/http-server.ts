@@ -22,9 +22,9 @@ import {
   type RunQueue,
   type RunJobV1,
 } from "../runtime/queue.js";
-import type { ProviderManager } from "../../app/web/cloud/provider-manager.js";
-import type { ProviderRuntimeSettings } from "../../app/web/cloud/provider-runtime-config.js";
-import type { ProviderCredential } from "../../app/web/cloud/provider-secret-store.js";
+import type { ProviderManager } from "../provider/manager.js";
+import type { ProviderRuntimeSettings } from "../provider/runtime-config.js";
+import type { ProviderCredential } from "../provider/secret-store.js";
 import type { ArtifactStore } from "../runtime/artifact-store.js";
 import { getProducerRedis } from "../runtime/redis-connection.js";
 import {
