@@ -62,7 +62,8 @@ export function isSensitiveWorkspacePath(relativePath: string): boolean {
 
   return lowered.some((part) => {
     if (DENIED_DIRECTORY_NAMES.has(part)) return true;
-    if (part === ".env" || part.startsWith(".env.")) return true;
+    if (part === ".env" || part.startsWith(".env.") || part.endsWith(".env"))
+      return true;
     if (part.startsWith("credentials") || part.startsWith("secrets")) {
       return true;
     }

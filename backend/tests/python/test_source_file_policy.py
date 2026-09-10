@@ -83,6 +83,7 @@ class SourceFilePolicyTests(unittest.TestCase):
                 ".env": "secret",
                 ".env.local": "secret",
                 "app/env/.env": "secret",
+                "app/env/oneshot_e2e.env": "secret",
                 "private.pem": "secret",
                 "credentials.json": "secret",
                 "secrets-local.txt": "secret",

@@ -72,7 +72,7 @@ def source_path_is_forbidden(relative_path: str | PurePosixPath) -> bool:
         return True
 
     name = lowered[-1]
-    if name == ".env" or name.startswith(".env."):
+    if name == ".env" or name.startswith(".env.") or name.endswith(".env"):
         return True
     return PurePosixPath(name).suffix.lower() in PRIVATE_KEY_SUFFIXES | {
         ".log",

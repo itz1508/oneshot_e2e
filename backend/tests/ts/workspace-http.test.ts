@@ -97,6 +97,7 @@ test("workspace filesystem security boundary is enforced consistently", async ()
     await writeFile(join(workspaceRoot, "app", "env", ".env.example"), "PUBLIC=yes", "utf8");
     await writeFile(join(workspaceRoot, "app", "env", ".env.workspace.example"), "PUBLIC=yes", "utf8");
     await writeFile(join(workspaceRoot, "app", "env", ".env"), "TOKEN=secret", "utf8");
+    await writeFile(join(workspaceRoot, "app", "env", "oneshot_e2e.env"), "TOKEN=secret", "utf8");
     await writeFile(join(workspaceRoot, "nested", ".env.example"), "PRIVATE=yes", "utf8");
     await writeFile(join(workspaceRoot, "private.key"), "private", "utf8");
     await writeFile(join(workspaceRoot, "credentials.json"), "{}", "utf8");
@@ -183,6 +184,7 @@ test("workspace filesystem security boundary is enforced consistently", async ()
 
     for (const deniedPath of [
       ".env", ".env.local", "private.key", "credentials.json", "secrets-note.txt",
+      "app/env/oneshot_e2e.env",
       "nested/.env.example", "data/runtime.txt", "outside-link/outside.txt", "safe-link/value.txt",
     ]) {
       const response = await fetch(
