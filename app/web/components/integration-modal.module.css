@@ -1,0 +1,108 @@
+.integrationDialog :global(.modal-card) {
+    width: min(640px, calc(100vw - 32px));
+    max-height: min(760px, calc(100vh - 32px));
+}
+
+.integrationDialog :global(.modal-header) {
+    align-items: flex-start;
+}
+
+.integrationSubtitle {
+    margin: 5px 0 0;
+    max-width: 470px;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+
+.integrationDialog :global(.modal-body) > div {
+    gap: 10px !important;
+}
+
+.integrationDialog :global(.modal-body) > div > p:first-child {
+    display: none;
+}
+
+.integrationDialog :global(.modal-body) > div > div {
+    border-color: var(--line-subtle) !important;
+    border-radius: 14px !important;
+    padding: 13px 14px !important;
+    background: color-mix(in srgb, var(--bg-input) 58%, transparent);
+}
+
+.integrationDialog :global(.modal-body) > div > div:has(> form) {
+    gap: 12px !important;
+    background: color-mix(in srgb, var(--bg-input) 72%, transparent);
+}
+
+.integrationDialog :global(.modal-body) > div > div:has(> button.btn-primary) {
+    min-height: 58px;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between;
+    gap: 12px !important;
+}
+
+.integrationDialog :global(.modal-body) > div > div:has(> button.btn-primary) > div:first-child {
+    flex: 1;
+}
+
+.integrationDialog :global(.modal-body) > div > div > div:first-child > div:first-child > span {
+    display: none;
+}
+
+.integrationDialog :global(.modal-body) form {
+    border-top: 1px solid var(--line-subtle);
+    padding-top: 12px;
+}
+
+.integrationDialog :global(.modal-body) form::before {
+    content: "Configuration";
+    display: block;
+    margin-bottom: 2px;
+    color: var(--text-primary);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.integrationDialog :global(.modal-body) form input {
+    min-height: 36px;
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+}
+
+.integrationDialog :global(.modal-body) form > button {
+    min-height: 34px;
+    padding-inline: 13px;
+}
+
+.integrationDialog :global(.modal-body) > div > div:has(> button.btn-primary) > button.btn-primary {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0 !important;
+    border-radius: 9px;
+    font-size: 0;
+    line-height: 1;
+}
+
+.integrationDialog :global(.modal-body) > div > div:has(> button.btn-primary) > button.btn-primary::after {
+    content: "+";
+    font-size: 19px;
+    font-weight: 500;
+}
+
+.integrationDialog :global(.modal-body) > div > div:has(> button.btn-primary) > button.btn-primary:disabled::after {
+    content: "…";
+}
+
+@media (max-width: 640px) {
+    .integrationDialog :global(.modal-card) {
+        width: calc(100vw - 18px);
+    }
+
+    .integrationDialog :global(.modal-body) > div > div:has(> button.btn-primary) {
+        min-height: 54px;
+    }
+}
