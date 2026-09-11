@@ -5,7 +5,9 @@ WORKDIR /app
 # Install root runtime + build dependencies.
 COPY package*.json tsconfig.json ./
 COPY app/vendor ./app/vendor
+COPY app/integration ./app/integration
 RUN npm install --ignore-scripts --no-audit --no-fund
+RUN npm install --prefix app/integration/gemini --ignore-scripts --no-audit --no-fund --package-lock=false
 
 # Copy backend source and compile
 COPY backend ./backend
@@ -38,6 +40,7 @@ RUN pip install --no-cache-dir -r app/requirements/base.txt
 # Runtime dependencies for the compiled backend.
 COPY package*.json ./
 COPY --from=node-builder /app/node_modules ./node_modules
+COPY --from=node-builder /app/app/integration ./app/integration
 
 # Copy compiled backend and Web IDE assets
 COPY --from=node-builder /app/dist ./dist

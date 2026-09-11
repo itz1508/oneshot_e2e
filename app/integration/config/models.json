@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "integrations": [
+    {
+      "id": "gemini",
+      "bundled": true,
+      "package": "@ai-sdk/google@4.0.67",
+      "configuration": [
+        { "key": "GOOGLE_GENERATIVE_AI_API_KEY", "secret": true, "required": true },
+        { "key": "GEMINI_MODEL", "secret": false, "required": false, "default": "gemini-2.5-flash" }
+      ]
+    },
+    {
+      "id": "openai",
+      "bundled": false,
+      "package": "@ai-sdk/openai@4.0.65",
+      "configuration": [
+        { "key": "OPENAI_API_KEY", "secret": true, "required": true },
+        { "key": "OPENAI_MODEL", "secret": false, "required": false, "default": "gpt-5-mini" }
+      ]
+    },
+    {
+      "id": "anthropic",
+      "bundled": false,
+      "package": "@ai-sdk/anthropic@4.0.52",
+      "configuration": [
+        { "key": "ANTHROPIC_API_KEY", "secret": true, "required": true },
+        { "key": "ANTHROPIC_MODEL", "secret": false, "required": false, "default": "claude-sonnet-4-5" }
+      ]
+    }
+  ]
+}

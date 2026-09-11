@@ -15,6 +15,7 @@ export interface IntegrationStatus {
   packageVersion: string;
   installed: boolean;
   configured: boolean;
+  bundled: boolean;
 }
 
 export interface IntegrationModelConfig {
@@ -25,7 +26,7 @@ export interface IntegrationModelConfig {
 
 export function integrationDirectory(projectRoot: string, integrationId: string): string {
   const spec = integrationPackageSpec(integrationId);
-  const root = resolve(projectRoot, "backend/integration");
+  const root = resolve(projectRoot, "app/integration");
   const target = resolve(root, spec.id);
   const rel = relative(root, target);
   if (rel.startsWith("..") || isAbsolute(rel)) {
@@ -53,6 +54,7 @@ export async function integrationStatus(
     packageVersion: spec.packageVersion,
     installed,
     configured: Boolean((process.env[spec.apiKeyEnv] || "").trim()),
+    bundled: spec.bundled,
   };
 }
 
@@ -92,7 +94,7 @@ export async function loadIntegrationPackage(
 
 /**
  * Instantiate the model exported by the installed AI SDK provider package.
- * Vendor-specific SDK code remains inside the installed package; Core only
+ * Vendor-specific SDK code remains inside app/integration/<id>; Core only
  * knows the declarative factory export recorded in the curated catalog.
  */
 export async function loadIntegrationModel(
@@ -146,13 +148,10 @@ export async function resolveActiveIntegrationModel(
 
     if (!candidate) return undefined;
 
-    const defaultModel =
-      candidate.id === "gemini"
-        ? (process.env.GEMINI_MODEL || "gemini-2.0-flash")
-        : "default";
-
+    const spec = integrationPackageSpec(candidate.id);
+    const modelName = (process.env[spec.modelEnv] || spec.defaultModel).trim();
     const model = await loadIntegrationModel(projectRoot, candidate.id, {
-      model: defaultModel,
+      model: modelName,
     });
 
     return {

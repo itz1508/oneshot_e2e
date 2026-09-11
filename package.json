@@ -9,6 +9,7 @@
     "npm": ">=11.8.0"
   },
   "scripts": {
+    "postinstall": "npm install --prefix app/integration/gemini --ignore-scripts --no-audit --no-fund --package-lock=false",
     "oneshot": "node scripts/oneshot.mjs",
     "dev": "node --env-file=app/env/.env dist/backend/index.js",
     "dev:worker": "node --env-file=app/env/.env dist/backend/scripts/run-pipeline-worker.js",
