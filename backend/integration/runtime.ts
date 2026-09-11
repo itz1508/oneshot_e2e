@@ -151,8 +151,16 @@ export async function resolveActiveIntegrationModel(
         ? (process.env.GEMINI_MODEL || "gemini-2.0-flash")
         : "default";
 
+    // Honor the base URL saved through the configure endpoint so
+    // self-hosted/proxied Gemini endpoints are used at runtime.
+    const baseURL =
+      candidate.id === "gemini"
+        ? (process.env.GEMINI_BASE_URL || "").trim()
+        : "";
+
     const model = await loadIntegrationModel(projectRoot, candidate.id, {
       model: defaultModel,
+      ...(baseURL ? { baseURL } : {}),
     });
 
     return {

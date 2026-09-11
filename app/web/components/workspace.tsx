@@ -2084,7 +2084,13 @@ export default function Workspace() {
                                                 const form = e.currentTarget;
                                                 const keyInput = form.elements.namedItem("apiKey") as HTMLInputElement;
                                                 const modelInput = form.elements.namedItem("model") as HTMLInputElement;
-                                                configureIntegrationPkg(item.id, keyInput?.value || "", modelInput?.value || "");
+                                                const baseURLInput = form.elements.namedItem("baseURL") as HTMLInputElement;
+                                                configureIntegrationPkg(
+                                                    item.id,
+                                                    keyInput?.value || "",
+                                                    modelInput?.value || "",
+                                                    baseURLInput?.value || undefined,
+                                                );
                                             }}
                                             style={{ display: "flex", flexDirection: "column", gap: "8px" }}
                                         >
@@ -2114,6 +2120,24 @@ export default function Workspace() {
                                                     name="model"
                                                     type="text"
                                                     defaultValue={item.id === "gemini" ? "gemini-2.0-flash" : "default"}
+                                                    style={{
+                                                        padding: "6px 8px",
+                                                        background: "var(--bg-input)",
+                                                        border: "1px solid var(--line-subtle)",
+                                                        borderRadius: "var(--radius-sm)",
+                                                        color: "var(--text-primary)",
+                                                        fontSize: "11.5px",
+                                                    }}
+                                                />
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                                <label style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
+                                                    Base URL (optional)
+                                                </label>
+                                                <input
+                                                    name="baseURL"
+                                                    type="text"
+                                                    placeholder="https://generativelanguage.googleapis.com"
                                                     style={{
                                                         padding: "6px 8px",
                                                         background: "var(--bg-input)",
