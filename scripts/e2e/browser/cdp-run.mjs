@@ -9,7 +9,6 @@ import { join } from "node:path";
 import {
   EVIDENCE,
   ROOT,
-  TOKEN,
   dumpEvidence,
   evidence,
   sleep,
@@ -129,9 +128,7 @@ export function extractIds() {
 }
 
 export async function apiGet(path) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { authorization: `Bearer ${TOKEN}` },
-  });
+  const res = await fetch(`${BASE_URL}${path}`);
   return { status: res.status, body: res.ok ? await res.json() : null };
 }
 
@@ -364,7 +361,6 @@ export async function collectArtifacts() {
     try {
       const res = await fetch(
         `${BASE_URL}/api/runs/${evidence.run_id}/artifacts/${name}`,
-        { headers: { authorization: `Bearer ${TOKEN}` } },
       );
       if (!res.ok) continue;
       const data = await res.json();

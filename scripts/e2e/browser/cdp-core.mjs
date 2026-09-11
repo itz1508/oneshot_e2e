@@ -23,13 +23,11 @@ function loadDotEnv(f) {
   return out;
 }
 const dotenv = { ...loadDotEnv(join(ROOT, "app", "env", ".env")) };
-export const TOKEN = process.env.ONESHOT_API_TOKEN || dotenv.ONESHOT_API_TOKEN;
 export const BASE = process.env.ONESHOT_BASE_URL || "http://127.0.0.1:8787";
 export const EDGE =
   process.env.EDGE_PATH ||
   "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 const CDP_PORT = Number(process.env.CDP_PORT || 9223);
-if (!TOKEN) throw new Error("ONESHOT_API_TOKEN missing");
 if (!existsSync(EDGE)) throw new Error(`Edge not found: ${EDGE}`);
 
 export const evidence = {

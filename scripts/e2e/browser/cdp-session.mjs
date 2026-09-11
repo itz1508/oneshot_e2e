@@ -1,7 +1,6 @@
 // OneShot E2E CDP session — launch, page tap, network capture, UI launch proof.
 import {
   BASE,
-  TOKEN,
   evidence,
   launchBrowser,
   sleep,
@@ -127,31 +126,7 @@ export async function startSession() {
     });
   });
 
-  // production auth boundary: fresh ONESHOT_API_TOKEN on every app request
-  await cdp.send("Fetch.enable", {
-    patterns: [{ urlPattern: "*", requestStage: "Request" }],
-  });
-  cdp.on("Fetch.requestPaused", async (p) => {
-    try {
-      if (!p.request.url.startsWith(BASE)) {
-        await cdp.send("Fetch.continueRequest", { requestId: p.requestId });
-        return;
-      }
-      const headers = Object.entries(p.request.headers)
-        .filter(([k]) => k.toLowerCase() !== "authorization")
-        .map(([k, v]) => ({ name: k, value: String(v) }));
-      headers.push({ name: "authorization", value: `Bearer ${TOKEN}` });
-      await cdp.send("Fetch.continueRequest", {
-        requestId: p.requestId,
-        headers,
-      });
-    } catch {
-      try {
-        await cdp.send("Fetch.continueRequest", { requestId: p.requestId });
-      } catch {}
-    }
-  });
-
+  // Same-origin browser session: no OneShot-issued credential is injected.
   await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
     source: INJECTED_TAP,
   });

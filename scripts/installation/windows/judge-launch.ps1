@@ -52,15 +52,9 @@ if (-not $existing) {
     Write-Host "Found existing judge image: $ImageTag"
 }
 
-# 3. Generate a cryptographically random local ONESHOT_API_TOKEN
-$TokenBytes = New-Object byte[] 32
-$Rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-$Rng.GetBytes($TokenBytes)
-$LocalToken = [System.BitConverter]::ToString($TokenBytes).Replace("-", "").ToLowerInvariant()
-
 $TmpEnvFile = Join-Path $RepoRoot ".runtime\judge.env.tmp"
 New-Item -ItemType Directory -Force -Path (Join-Path $RepoRoot ".runtime") | Out-Null
-Set-Content -Path $TmpEnvFile -Value "ONESHOT_API_TOKEN=$LocalToken`nONESHOT_BIND_HOST=0.0.0.0`nPORT=$Port`nONESHOT_MODE=sample" -Encoding ascii
+Set-Content -Path $TmpEnvFile -Value "ONESHOT_BIND_HOST=0.0.0.0`nPORT=$Port`nONESHOT_MODE=sample" -Encoding ascii
 
 # 4. Remove stale container if running
 $stale = docker ps -a -q --filter "name=^/${ContainerName}$" 2>$null
@@ -106,8 +100,7 @@ $Deadline = (Get-Date).AddSeconds(30)
 Write-Host "Waiting for container health check at $HealthUrl..."
 while ((Get-Date) -lt $Deadline) {
     try {
-        $headers = @{ Authorization = "Bearer $LocalToken" }
-        $resp = Invoke-RestMethod -Uri $HealthUrl -Headers $headers -TimeoutSec 2 -ErrorAction Stop
+        $resp = Invoke-RestMethod -Uri $HealthUrl -TimeoutSec 2 -ErrorAction Stop
         if ($resp.status -eq "ok") {
             $Healthy = $true
             Write-Host "Health check PASSED: mode=$($resp.mode), integration=$($resp.integration)"
@@ -170,8 +163,6 @@ $E2EResult = "NOT_RUN"
 if ($RunE2E) {
     Write-Host "Running canonical browser E2E test against container..."
     try {
-        $prevToken = $env:ONESHOT_API_TOKEN
-        $env:ONESHOT_API_TOKEN = $LocalToken
         $e2eOut = node scripts/e2e/browser/state-adaptive-e2e.mjs 2>&1
         if ($LASTEXITCODE -eq 0) {
             $E2EResult = "PASSED"
@@ -185,8 +176,6 @@ if ($RunE2E) {
         Remove-Item -Force -LiteralPath (Join-Path $RepoRoot "dist\e2e-evidence\state-adaptive-evidence.json") -ErrorAction SilentlyContinue
     } catch {
         $E2EResult = "FAILED: $_"
-    } finally {
-        $env:ONESHOT_API_TOKEN = $prevToken
     }
 }
 
@@ -197,7 +186,6 @@ Write-Host "ONESHOT_JUDGE_RESULT = PASSED"
 Write-Host "URL = http://localhost:${Port}"
 Write-Host "MODE = sample"
 Write-Host "PROVIDER_KEY_REQUIRED = NO"
-Write-Host "LOCAL_ACCESS_TOKEN = GENERATED"
 Write-Host "CONTAINER = $ContainerName"
 Write-Host "IMAGE = $ImageTag ($ImageId)"
 Write-Host "HEALTH = PASSED"

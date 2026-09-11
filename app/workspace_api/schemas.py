@@ -22,7 +22,6 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr
 from workspace_api.models import (
     AvailabilityStatus,
     ConversationStatus,
-    CredentialStatus,
     MessageRole,
     ProviderKind,
     SubscriptionStatus,
@@ -80,7 +79,7 @@ class WorkspaceRead(OrmSchema):
     id: str
     name: str
     slug: str
-    owner_user_id: str
+    owner_user_id: str | None
     is_active: bool
     settings_json: dict[str, Any]
     created_at: datetime
@@ -148,37 +147,11 @@ class ProviderCredentialRead(OrmSchema):
     name: str
     secret_prefix: str
     version: int
-    status: CredentialStatus
+    status: str
     rotated_from_id: str | None
     expires_at: datetime | None
     last_used_at: datetime | None
     created_at: datetime
-
-
-class WorkspaceApiKeyCreate(BaseModel):
-    name: str = Field(min_length=1, max_length=100)
-    scopes: list[str] = Field(default_factory=lambda: ["chat:write", "usage:read"])
-    expires_at: datetime | None = None
-
-
-class WorkspaceApiKeyRead(OrmSchema):
-    id: str
-    workspace_id: str
-    name: str
-    key_prefix: str
-    version: int
-    status: CredentialStatus
-    scopes_json: list[str]
-    rotated_from_id: str | None
-    expires_at: datetime | None
-    last_used_at: datetime | None
-    created_at: datetime
-
-
-class WorkspaceApiKeyIssued(WorkspaceApiKeyRead):
-    """One-time response containing the new raw workspace API key."""
-
-    secret: str
 
 
 class ModelConfigurationCreate(BaseModel):
@@ -327,7 +300,6 @@ class UsageEventRead(OrmSchema):
     request_id: str
     workspace_id: str
     user_id: str | None
-    api_key_id: str | None
     conversation_id: str | None
     model_config_id: str | None
     provider_id: str | None

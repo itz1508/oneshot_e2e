@@ -4,7 +4,6 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const state = {
     conversationId: localStorage.getItem("oneshot.v8.conversationId") || "",
     runId: localStorage.getItem("oneshot.v8.runId") || "",
-    authToken: sessionStorage.getItem("oneshot.accessToken") || "",
     connected: false,
     connecting: true,
     run: null,
@@ -54,9 +53,7 @@ function escapeHtml(value) {
 }
 
 function headers(extra = {}) {
-    const h = { ...extra };
-    if (state.authToken) h.Authorization = `Bearer ${state.authToken}`;
-    return h;
+    return { ...extra };
 }
 
 async function apiFetch(url, options = {}) {
@@ -68,16 +65,10 @@ async function apiFetch(url, options = {}) {
     ) {
         opts.headers = { ...opts.headers, "Content-Type": "application/json" };
     }
-    const res = await fetch(url, {
+    return fetch(url, {
         ...opts,
         headers: headers(opts.headers || {}),
     });
-    if (res.status === 401) {
-        setConnection("auth");
-        toast("Authentication required");
-        throw new Error("Authentication required");
-    }
-    return res;
 }
 
 async function apiJson(url, options = {}) {

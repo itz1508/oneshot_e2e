@@ -16,7 +16,6 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-export ONESHOT_INTERNAL_TOKEN="local-development-secret"
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8100
 ```
 
@@ -45,12 +44,13 @@ These are comparison artifacts; they do not overwrite the shared contracts.
 
 ## Integration with TypeScript
 
-Set these environment variables when starting the OneShot server or worker:
+Set this environment variable when starting the OneShot server or worker:
 
 ```env
 PYTHON_REASONER_URL=http://127.0.0.1:8100
-ONESHOT_INTERNAL_TOKEN=local-development-secret
 ```
 
+The reasoner is an internal deployment component reachable only through the
+deployment/network boundary; it requires no user-configured authentication.
 The TypeScript client in `backend/reasoning/python-client.ts` validates every
 request and response against the shared JSON schemas.

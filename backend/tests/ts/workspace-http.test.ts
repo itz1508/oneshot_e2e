@@ -8,8 +8,6 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { startHttpServer } from "../../server/http-server.js";
 
-const AUTHORIZATION = { Authorization: "Bearer workspace-security-test" };
-
 function containsPath(nodes: any[], expected: string): boolean {
   for (const node of nodes) {
     if (node.path === expected) return true;
@@ -49,7 +47,6 @@ function baseUrl(server: Server): string {
 test("workspace filesystem security boundary is enforced consistently", async () => {
   const savedEnvironment = {
     bind: process.env.ONESHOT_BIND_HOST,
-    token: process.env.ONESHOT_API_TOKEN,
     rateMax: process.env.API_RATE_LIMIT_MAX,
     rateWindow: process.env.API_RATE_LIMIT_WINDOW_MS,
   };
@@ -109,7 +106,6 @@ test("workspace filesystem security boundary is enforced consistently", async ()
     await symlink(join(workspaceRoot, "secrets-store"), join(workspaceRoot, "safe-link"), process.platform === "win32" ? "junction" : "dir");
 
     delete process.env.ONESHOT_BIND_HOST;
-    delete process.env.ONESHOT_API_TOKEN;
     process.env.API_RATE_LIMIT_MAX = "100";
     process.env.API_RATE_LIMIT_WINDOW_MS = "60000";
 
@@ -117,22 +113,20 @@ test("workspace filesystem security boundary is enforced consistently", async ()
     openServers.push(defaultServer);
     const defaultAddress = defaultServer.address();
     assert.ok(defaultAddress && typeof defaultAddress === "object");
-    assert.equal(defaultAddress.address, "127.0.0.1");
+    assert.equal(defaultAddress.address, "0.0.0.0");
     assert.equal((await fetch(`${baseUrl(defaultServer)}/api/health`)).status, 200);
     await closeServer(defaultServer);
     openServers.splice(openServers.indexOf(defaultServer), 1);
 
+    // Non-loopback deployment is supported: bind to the platform-supplied host
+    // without any OneShot-issued token.
     process.env.ONESHOT_BIND_HOST = "0.0.0.0";
-    await assert.rejects(launch(workspaceRoot), /ROOT_CAUSE:.*requires ONESHOT_API_TOKEN/);
-
-    process.env.ONESHOT_API_TOKEN = "workspace-security-test";
     const externalServer = await launch(workspaceRoot);
     openServers.push(externalServer);
     const externalAddress = externalServer.address();
     assert.ok(externalAddress && typeof externalAddress === "object");
     assert.equal(externalAddress.address, "0.0.0.0");
-    assert.equal((await fetch(`${baseUrl(externalServer)}/api/health`)).status, 401);
-    assert.equal((await fetch(`${baseUrl(externalServer)}/api/health`, { headers: AUTHORIZATION })).status, 200);
+    assert.equal((await fetch(`${baseUrl(externalServer)}/api/health`)).status, 200);
     await closeServer(externalServer);
     openServers.splice(openServers.indexOf(externalServer), 1);
 
@@ -141,19 +135,7 @@ test("workspace filesystem security boundary is enforced consistently", async ()
     openServers.push(secureServer);
     const secureBase = baseUrl(secureServer);
 
-    assert.equal((await fetch(`${secureBase}/api`)).status, 401);
-    assert.equal((await fetch(`${secureBase}/v1`)).status, 401);
-    assert.equal((await fetch(`${secureBase}/api/status`)).status, 401);
-    assert.equal((await fetch(`${secureBase}/api/workspace/tree?path=.`)).status, 401);
-    assert.equal((await fetch(`${secureBase}/v1/workspace/tree?path=.`)).status, 401);
-    assert.equal((await fetch(`${secureBase}/v1/workspace/file?path=one/two/three/four/five/proof.txt`)).status, 401);
-    assert.equal((await fetch(`${secureBase}/v1/workspace/file`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ path: "safe-write/unauthorized.txt", content: "no" }),
-    })).status, 401);
-
-    const treeResponse = await fetch(`${secureBase}/v1/workspace/tree?path=.`, { headers: AUTHORIZATION });
+    const treeResponse = await fetch(`${secureBase}/v1/workspace/tree?path=.`);
     assert.equal(treeResponse.status, 200);
     const tree = (await treeResponse.json()) as any;
     assert.equal(tree.depth, null);
@@ -169,14 +151,14 @@ test("workspace filesystem security boundary is enforced consistently", async ()
 
     const safeRead = await fetch(
       `${secureBase}/v1/workspace/file?path=${encodeURIComponent("one/two/three/four/five/proof.txt")}`,
-      { headers: AUTHORIZATION },
+
     );
     assert.equal(safeRead.status, 200);
     assert.equal(((await safeRead.json()) as any).content, "whole-repo-readable");
 
     const safeWrite = await fetch(`${secureBase}/v1/workspace/file`, {
       method: "POST",
-      headers: { ...AUTHORIZATION, "content-type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ path: "safe-write/proof.txt", content: "safe-write-passed" }),
     });
     assert.equal(safeWrite.status, 200);
@@ -189,7 +171,7 @@ test("workspace filesystem security boundary is enforced consistently", async ()
     ]) {
       const response = await fetch(
         `${secureBase}/v1/workspace/file?path=${encodeURIComponent(deniedPath)}`,
-        { headers: AUTHORIZATION },
+
       );
       assert.equal(response.status, 403, `${deniedPath} must be denied`);
     }
@@ -203,7 +185,7 @@ test("workspace filesystem security boundary is enforced consistently", async ()
     ]) {
       const response = await fetch(`${secureBase}/v1/workspace/file`, {
         method: "POST",
-        headers: { ...AUTHORIZATION, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ path: deniedPath, content: "denied" }),
       });
       assert.equal(response.status, 403, `${deniedPath} write must be denied`);
@@ -211,12 +193,12 @@ test("workspace filesystem security boundary is enforced consistently", async ()
 
     const traversal = await fetch(
       `${secureBase}/v1/workspace/file?path=${encodeURIComponent("../package.json")}`,
-      { headers: AUTHORIZATION },
+
     );
     assert.equal(traversal.status, 400);
     const traversalWrite = await fetch(`${secureBase}/v1/workspace/file`, {
       method: "POST",
-      headers: { ...AUTHORIZATION, "content-type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ path: "../outside.txt", content: "denied" }),
     });
     assert.equal(traversalWrite.status, 400);
@@ -227,16 +209,16 @@ test("workspace filesystem security boundary is enforced consistently", async ()
     const apiRateServer = await launch(workspaceRoot);
     openServers.push(apiRateServer);
     const apiRateBase = baseUrl(apiRateServer);
-    assert.equal((await fetch(`${apiRateBase}/api/status`, { headers: AUTHORIZATION })).status, 200);
-    assert.equal((await fetch(`${apiRateBase}/api/status`, { headers: AUTHORIZATION })).status, 429);
+    assert.equal((await fetch(`${apiRateBase}/api/status`)).status, 200);
+    assert.equal((await fetch(`${apiRateBase}/api/status`)).status, 429);
     await closeServer(apiRateServer);
     openServers.splice(openServers.indexOf(apiRateServer), 1);
 
     const v1RateServer = await launch(workspaceRoot);
     openServers.push(v1RateServer);
     const v1RateBase = baseUrl(v1RateServer);
-    assert.equal((await fetch(`${v1RateBase}/v1/status`, { headers: AUTHORIZATION })).status, 200);
-    assert.equal((await fetch(`${v1RateBase}/v1/status`, { headers: AUTHORIZATION })).status, 429);
+    assert.equal((await fetch(`${v1RateBase}/v1/status`)).status, 200);
+    assert.equal((await fetch(`${v1RateBase}/v1/status`)).status, 429);
   } finally {
     for (const server of openServers) await closeServer(server);
     const restore = (name: string, value: string | undefined) => {
@@ -244,7 +226,6 @@ test("workspace filesystem security boundary is enforced consistently", async ()
       else process.env[name] = value;
     };
     restore("ONESHOT_BIND_HOST", savedEnvironment.bind);
-    restore("ONESHOT_API_TOKEN", savedEnvironment.token);
     restore("API_RATE_LIMIT_MAX", savedEnvironment.rateMax);
     restore("API_RATE_LIMIT_WINDOW_MS", savedEnvironment.rateWindow);
     await rm(temporaryRoot, { recursive: true, force: true });
@@ -254,7 +235,6 @@ test("workspace filesystem security boundary is enforced consistently", async ()
 
 test("workspace tree endpoint returns materialized files with size", async () => {
   const savedEnvironment = {
-    token: process.env.ONESHOT_API_TOKEN,
     rateMax: process.env.API_RATE_LIMIT_MAX,
     rateWindow: process.env.API_RATE_LIMIT_WINDOW_MS,
   };
@@ -270,7 +250,7 @@ test("workspace tree endpoint returns materialized files with size", async () =>
     server = await launch(workspaceRoot);
     const base = baseUrl(server);
 
-    const treeRes = await fetch(`${base}/v1/workspace/tree`, { headers: AUTHORIZATION });
+    const treeRes = await fetch(`${base}/v1/workspace/tree`);
     assert.equal(treeRes.status, 200);
     const tree = (await treeRes.json()) as { nodes: any[] };
     assert.ok(Array.isArray(tree.nodes));
@@ -287,7 +267,6 @@ test("workspace tree endpoint returns materialized files with size", async () =>
     assert.ok(indexTs.size > 0, "src/index.ts must have non-zero size");
   } finally {
     if (server) await closeServer(server);
-    process.env.ONESHOT_API_TOKEN = savedEnvironment.token;
     if (savedEnvironment.rateMax === undefined) delete process.env.API_RATE_LIMIT_MAX;
     else process.env.API_RATE_LIMIT_MAX = savedEnvironment.rateMax;
     if (savedEnvironment.rateWindow === undefined) delete process.env.API_RATE_LIMIT_WINDOW_MS;
@@ -297,8 +276,8 @@ test("workspace tree endpoint returns materialized files with size", async () =>
   }
 });
 
-test("workspace tree and select endpoints are gated by auth", async () => {
-  const temporaryRoot = await mkdtemp(join(tmpdir(), "oneshot-workspace-auth-"));
+test("workspace tree endpoints respond without any OneShot credential", async () => {
+  const temporaryRoot = await mkdtemp(join(tmpdir(), "oneshot-workspace-open-"));
   const workspaceRoot = join(temporaryRoot, "workspace");
   await mkdir(workspaceRoot, { recursive: true });
 
@@ -307,13 +286,8 @@ test("workspace tree and select endpoints are gated by auth", async () => {
     server = await launch(workspaceRoot);
     const base = baseUrl(server);
 
-    const noAuthTree = await fetch(`${base}/v1/workspace/tree`);
-    assert.equal(noAuthTree.status, 401);
-
-    const badTree = await fetch(`${base}/v1/workspace/tree`, {
-      headers: { Authorization: "Bearer wrong" },
-    });
-    assert.equal(badTree.status, 401);
+    const tree = await fetch(`${base}/v1/workspace/tree`);
+    assert.equal(tree.status, 200);
   } finally {
     if (server) await closeServer(server);
     await rm(temporaryRoot, { recursive: true, force: true });

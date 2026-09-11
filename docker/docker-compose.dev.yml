@@ -42,7 +42,6 @@ services:
       REDIS_URL: redis://redis:6379
       ONESHOT_MODE: sample
       PYTHON_REASONER_URL: http://reasoner:8000
-      ONESHOT_INTERNAL_TOKEN: local-development-secret
       ONESHOT_RUNTIME_DIR: /app/.runtime
     volumes:
       - oneshot_runtime:/app/.runtime
@@ -64,7 +63,6 @@ services:
       REDIS_URL: redis://redis:6379
       ONESHOT_MODE: sample
       PYTHON_REASONER_URL: http://reasoner:8000
-      ONESHOT_INTERNAL_TOKEN: local-development-secret
       ONESHOT_RUNTIME_DIR: /app/.runtime
     volumes:
       - oneshot_runtime:/app/.runtime
@@ -79,8 +77,6 @@ services:
     container_name: oneshot-python-reasoner
     ports:
       - "127.0.0.1:8100:8000"
-    environment:
-      ONESHOT_INTERNAL_TOKEN: local-development-secret
     depends_on:
       - redis
 

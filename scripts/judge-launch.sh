@@ -35,14 +35,11 @@ else
     echo "Found existing judge image: ${IMAGE_TAG}"
 fi
 
-# 3. Generate a cryptographically random local ONESHOT_API_TOKEN
-LOCAL_TOKEN="$(head -c 32 /dev/urandom | xxd -p | tr -d '\n' 2>/dev/null || openssl rand -hex 32)"
 # Use .runtime/ directory for runtime artifacts (not data/)
 RUNTIME_DIR="${REPO_ROOT}/.runtime"
 mkdir -p "${RUNTIME_DIR}"
 TMP_ENV="${RUNTIME_DIR}/judge.env.tmp"
 cat <<EOF > "${TMP_ENV}"
-ONESHOT_API_TOKEN=${LOCAL_TOKEN}
 ONESHOT_BIND_HOST=0.0.0.0
 PORT=${PORT}
 ONESHOT_MODE=sample
@@ -69,7 +66,7 @@ DEADLINE=$(( $(date +%s) + 30 ))
 
 echo "Waiting for container health check at ${HEALTH_URL}..."
 while [ $(date +%s) -lt ${DEADLINE} ]; do
-    if curl -s -H "Authorization: Bearer ${LOCAL_TOKEN}" "${HEALTH_URL}" | grep -q '"status":"ok"'; then
+    if curl -s "${HEALTH_URL}" | grep -q '"status":"ok"'; then
         HEALTHY=1
         echo "Health check PASSED"
         break
@@ -88,14 +85,7 @@ if [ ${HEALTHY} -ne 1 ]; then
     exit 1
 fi
 
-# 7. Verify UI, Auth, and Static Files
-STATUS_UNAUTH="$(curl -s -o /dev/null -w "%{http_code}" "${HEALTH_URL}")"
-if [ "${STATUS_UNAUTH}" != "401" ]; then
-    echo "ROOT_CAUSE: Auth verification failed. Unauthenticated status was ${STATUS_UNAUTH} (expected 401)" >&2
-    exit 1
-fi
-echo "Auth check PASSED: 401 on unauthenticated access"
-
+# 7. Verify UI and Static Files
 STATUS_UI="$(curl -s -o /dev/null -w "%{http_code}" "${ROOT_URL}")"
 if [ "${STATUS_UI}" != "200" ]; then
     echo "ROOT_CAUSE: Web UI returned status ${STATUS_UI} (expected 200)" >&2
@@ -116,7 +106,7 @@ E2E_RESULT="NOT_RUN"
 if [ "${RUN_E2E}" = "true" ]; then
     echo "Running canonical browser E2E test against container..."
     if command -v node >/dev/null 2>&1 && [ -f "${REPO_ROOT}/scripts/e2e/browser/state-adaptive-e2e.mjs" ]; then
-        if ONESHOT_API_TOKEN="${LOCAL_TOKEN}" node "${REPO_ROOT}/scripts/e2e/browser/state-adaptive-e2e.mjs" >/dev/null 2>&1; then
+        if node "${REPO_ROOT}/scripts/e2e/browser/state-adaptive-e2e.mjs" >/dev/null 2>&1; then
             E2E_RESULT="PASSED"
             echo "Browser E2E test PASSED"
         else
@@ -136,7 +126,6 @@ echo "ONESHOT_JUDGE_RESULT = PASSED"
 echo "URL = http://localhost:${PORT}"
 echo "MODE = sample"
 echo "PROVIDER_KEY_REQUIRED = NO"
-echo "LOCAL_ACCESS_TOKEN = GENERATED"
 echo "CONTAINER = ${CONTAINER_NAME}"
 echo "IMAGE = ${IMAGE_TAG} (${IMAGE_ID})"
 echo "HEALTH = PASSED"

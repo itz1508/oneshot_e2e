@@ -66,13 +66,11 @@ export interface ReasoningResponse {
 
 export interface PythonReasonerOptions {
   baseUrl?: string;
-  token?: string;
   timeoutMs?: number;
 }
 
 export class PythonReasoner {
   private readonly baseUrl: string;
-  private readonly token: string;
   private readonly timeoutMs: number;
 
   constructor(options: PythonReasonerOptions = {}) {
@@ -82,16 +80,7 @@ export class PythonReasoner {
       "http://127.0.0.1:8100"
     ).replace(/\/+$/, "");
 
-    this.token =
-      options.token ?? process.env.ONESHOT_INTERNAL_TOKEN ?? "";
-
     this.timeoutMs = options.timeoutMs ?? 60_000;
-
-    if (!this.token) {
-      throw new Error(
-        "ONESHOT_INTERNAL_TOKEN is required for PythonReasoner.",
-      );
-    }
   }
 
   async health(): Promise<boolean> {
@@ -116,7 +105,6 @@ export class PythonReasoner {
       headers: {
         accept: "application/json",
         "content-type": "application/json",
-        authorization: `Bearer ${this.token}`,
       },
       body: JSON.stringify(request),
       signal: AbortSignal.timeout(this.timeoutMs),
@@ -137,9 +125,8 @@ export class PythonReasoner {
 
 export function createPythonReasoner(): PythonReasoner | undefined {
   const url = process.env.PYTHON_REASONER_URL;
-  const token = process.env.ONESHOT_INTERNAL_TOKEN;
-  if (!url || !token) return undefined;
-  return new PythonReasoner({ baseUrl: url, token });
+  if (!url) return undefined;
+  return new PythonReasoner({ baseUrl: url });
 }
 
 export function assertReasoningRequest(

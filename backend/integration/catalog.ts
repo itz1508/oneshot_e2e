@@ -5,6 +5,9 @@ export interface IntegrationPackageSpec {
   packageVersion: string;
   factoryExport: string;
   apiKeyEnv: string;
+  modelEnv: string;
+  defaultModel: string;
+  bundled: boolean;
 }
 
 /**
@@ -16,11 +19,34 @@ const CATALOG: Record<string, IntegrationPackageSpec> = {
     id: "gemini",
     displayName: "Gemini",
     packageName: "@ai-sdk/google",
-    // Keep the first runtime-installed version aligned with the version already
-    // admitted by the current repository manifest. Updates are a separate task.
     packageVersion: "4.0.67",
     factoryExport: "createGoogleGenerativeAI",
     apiKeyEnv: "GOOGLE_GENERATIVE_AI_API_KEY",
+    modelEnv: "GEMINI_MODEL",
+    defaultModel: "gemini-2.5-flash",
+    bundled: true,
+  },
+  openai: {
+    id: "openai",
+    displayName: "OpenAI",
+    packageName: "@ai-sdk/openai",
+    packageVersion: "4.0.65",
+    factoryExport: "createOpenAI",
+    apiKeyEnv: "OPENAI_API_KEY",
+    modelEnv: "OPENAI_MODEL",
+    defaultModel: "gpt-5-mini",
+    bundled: false,
+  },
+  anthropic: {
+    id: "anthropic",
+    displayName: "Anthropic",
+    packageName: "@ai-sdk/anthropic",
+    packageVersion: "4.0.52",
+    factoryExport: "createAnthropic",
+    apiKeyEnv: "ANTHROPIC_API_KEY",
+    modelEnv: "ANTHROPIC_MODEL",
+    defaultModel: "claude-sonnet-4-5",
+    bundled: false,
   },
 };
 

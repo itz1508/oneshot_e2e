@@ -190,14 +190,9 @@ export async function startHttpServer(
   runQueue?: RunQueue,
   queueReady?: boolean,
 ): Promise<ReturnType<typeof createServer>> {
+  // The server binds to the host supplied by the deployment platform.
   const bindHost =
-    (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
-  const apiToken = (process.env.ONESHOT_API_TOKEN || "").trim();
-  if (bindHost !== "127.0.0.1" && bindHost !== "::1" && !apiToken) {
-    throw new Error(
-      `ROOT_CAUSE: non-loopback ONESHOT_BIND_HOST '${bindHost}' requires ONESHOT_API_TOKEN`,
-    );
-  }
+    (process.env.ONESHOT_BIND_HOST || "0.0.0.0").trim() || "0.0.0.0";
   const security = new HttpSecurity();
   const workspaceRoot = resolve(
     options.workspaceRoot ||

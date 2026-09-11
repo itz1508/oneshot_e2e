@@ -3,12 +3,15 @@
 This service owns no pipeline topology. It receives validated reasoning
 requests from the TypeScript backend, performs analysis, and returns a
 response matching the shared JSON schema in backend/schema/reasoning.
+
+The reasoner is an internal deployment component: it is reachable only
+through the deployment/network boundary and requires no user-configured
+authentication.
 """
 
 import os
-from secrets import compare_digest
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import FastAPI
 from pydantic import model_validator
 from jsonschema import ValidationError as ContractValidationError
 
@@ -37,40 +40,6 @@ class ContractReasoningRequest(ReasoningRequest):
         return value
 
 
-def verify_internal_token(
-    authorization: str | None = Header(default=None),
-) -> None:
-    expected = os.environ.get("ONESHOT_INTERNAL_TOKEN")
-
-    if not expected:
-        raise HTTPException(
-            status_code=500,
-            detail="ONESHOT_INTERNAL_TOKEN is not configured.",
-        )
-
-    if not authorization:
-        raise HTTPException(
-            status_code=401,
-            detail="Authorization required.",
-        )
-
-    prefix = "Bearer "
-
-    if not authorization.startswith(prefix):
-        raise HTTPException(
-            status_code=401,
-            detail="Bearer authorization required.",
-        )
-
-    supplied = authorization[len(prefix) :]
-
-    if not compare_digest(supplied.encode("utf-8"), expected.encode("utf-8")):
-        raise HTTPException(
-            status_code=403,
-            detail="Invalid internal token.",
-        )
-
-
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {
@@ -79,11 +48,7 @@ async def health() -> dict[str, str]:
     }
 
 
-@app.post(
-    "/v1/reason",
-    response_model=ReasoningResponse,
-    dependencies=[Depends(verify_internal_token)],
-)
+@app.post("/v1/reason", response_model=ReasoningResponse)
 async def run_reasoning(
     request: ContractReasoningRequest,
 ) -> ReasoningResponse:

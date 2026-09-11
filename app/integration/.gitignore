@@ -1,0 +1,6 @@
+/*
+!/.gitignore
+!/config/
+!/config/**
+!/gemini/
+!/gemini/**

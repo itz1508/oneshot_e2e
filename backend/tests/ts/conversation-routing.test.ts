@@ -13,8 +13,6 @@ import { AppendOnlyProcessingEventStore } from "../../task/event/event-store.js"
 import { FileArtifactStore } from "../../runtime/artifact-store.js";
 import { getSharedRedis } from "../../runtime/redis-connection.js";
 
-const AUTHORIZATION = { Authorization: "Bearer conversation-routing-test" };
-
 async function closeServer(server: Server): Promise<void> {
   server.closeAllConnections?.();
   await new Promise<void>((ok, fail) =>
@@ -29,7 +27,6 @@ function baseUrl(server: Server): string {
 }
 
 test("conversation message routing stores turns and rejects invalid runs", async () => {
-  const savedToken = process.env.ONESHOT_API_TOKEN;
   const temporaryRoot = await mkdtemp(join(tmpdir(), "oneshot-conversation-routing-"));
   const conversationsDir = join(temporaryRoot, "conversations");
   const runStateDir = join(temporaryRoot, "runs");
@@ -51,7 +48,6 @@ test("conversation message routing stores turns and rejects invalid runs", async
       new AppendOnlyProcessingEventStore(taskEventsDir),
     );
 
-    process.env.ONESHOT_API_TOKEN = "conversation-routing-test";
     server = await startHttpServer(
       {} as any,
       runs,
@@ -69,7 +65,7 @@ test("conversation message routing stores turns and rejects invalid runs", async
     // 1. Create a conversation
     const convRes = await fetch(`${base}/api/conversations`, {
       method: "POST",
-      headers: { ...AUTHORIZATION, "content-type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ message: "Initial prompt" }),
     });
     assert.equal(convRes.status, 201);
@@ -79,7 +75,7 @@ test("conversation message routing stores turns and rejects invalid runs", async
     // 2. Normal message without run_id is accepted and stored
     const normalRes = await fetch(`${base}/api/conversations/${conv.conversation_id}/messages`, {
       method: "POST",
-      headers: { ...AUTHORIZATION, "content-type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ message: "A normal chat message" }),
     });
     assert.equal(normalRes.status, 200);
@@ -90,7 +86,7 @@ test("conversation message routing stores turns and rejects invalid runs", async
     // 3. Message with invalid run_id is rejected (research-again requires valid run)
     const invalidRunRes = await fetch(`${base}/api/conversations/${conv.conversation_id}/messages`, {
       method: "POST",
-      headers: { ...AUTHORIZATION, "content-type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ message: "Test", run_id: "nonexistent-run-id", intent_kind: "research-again" }),
     });
     assert.equal(invalidRunRes.status, 404);
@@ -98,7 +94,7 @@ test("conversation message routing stores turns and rejects invalid runs", async
     // 4. research-again without a run_id is rejected
     const againNoRunRes = await fetch(`${base}/api/conversations/${conv.conversation_id}/messages`, {
       method: "POST",
-      headers: { ...AUTHORIZATION, "content-type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ message: "Research again please", intent_kind: "research-again" }),
     });
     assert.equal(againNoRunRes.status, 400);
@@ -106,21 +102,20 @@ test("conversation message routing stores turns and rejects invalid runs", async
     // 5. Unsupported intent_kind is rejected
     const unsupportedKindRes = await fetch(`${base}/api/conversations/${conv.conversation_id}/messages`, {
       method: "POST",
-      headers: { ...AUTHORIZATION, "content-type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ message: "Edit plan", intent_kind: "plan-edit" }),
     });
     assert.equal(unsupportedKindRes.status, 400);
 
-    // 6. Unauthenticated requests are rejected
-    const unauthRes = await fetch(`${base}/api/conversations/${conv.conversation_id}/messages`, {
+    // 6. Requests reach the endpoint without any OneShot credential
+    const postRes = await fetch(`${base}/api/conversations/${conv.conversation_id}/messages`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ message: "Unauthenticated" }),
     });
-    assert.equal(unauthRes.status, 401);
+    assert.notEqual(postRes.status, 401);
   } finally {
     if (server) await closeServer(server);
-    process.env.ONESHOT_API_TOKEN = savedToken;
     await rm(temporaryRoot, { recursive: true, force: true });
     await new Promise((r) => setTimeout(r, 250));
   }

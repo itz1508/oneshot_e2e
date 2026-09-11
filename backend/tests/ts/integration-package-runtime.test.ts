@@ -43,18 +43,21 @@ async function fakeGeminiInstall(root: string): Promise<string> {
   return target;
 }
 
-test("Gemini is a curated package install, not Core vendor code", () => {
-  const spec = integrationPackageSpec("gemini");
-  assert.equal(spec.packageName, "@ai-sdk/google");
-  assert.equal(spec.factoryExport, "createGoogleGenerativeAI");
+test("Gemini is bundled while other curated model packages remain on-demand", () => {
+  const gemini = integrationPackageSpec("gemini");
+  assert.equal(gemini.packageName, "@ai-sdk/google");
+  assert.equal(gemini.factoryExport, "createGoogleGenerativeAI");
+  assert.equal(gemini.bundled, true);
+  assert.equal(integrationPackageSpec("openai").bundled, false);
+  assert.equal(integrationPackageSpec("anthropic").bundled, false);
   assert.throws(() => integrationPackageSpec("../../arbitrary"), /unsupported integration/);
 });
 
-test("install command targets backend/integration/gemini and disables lifecycle scripts", async () => {
+test("install command targets app/integration/gemini and disables lifecycle scripts", async () => {
   const root = await mkdtemp(join(tmpdir(), "oneshot-integration-"));
   try {
     const target = integrationDirectory(root, "gemini");
-    assert.equal(target, join(root, "backend", "integration", "gemini"));
+    assert.equal(target, join(root, "app", "integration", "gemini"));
 
     const command = integrationInstallCommand(root, "gemini");
     assert.deepEqual(command.args, [

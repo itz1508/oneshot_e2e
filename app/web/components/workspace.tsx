@@ -77,9 +77,7 @@ export default function Workspace() {
     const busyRef = useRef(false);
     const [gateLoading, setGateLoading] = useState(false);
     const [error, setError] = useState("");
-    const [auth, setAuth] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
-    const [authKey, setAuthKey] = useState(0);
     const [newChat, setNewChat] = useState(false);
     const [integrationsOpen, setIntegrationsOpen] = useState(false);
     const [integrationsList, setIntegrationsList] = useState<any[]>([]);
@@ -263,7 +261,7 @@ export default function Workspace() {
                 });
         }
         return () => controller.abort();
-    }, [loadTree, authKey]);
+    }, [loadTree]);
 
     useEffect(() => {
         if (!runId) return;
@@ -387,7 +385,7 @@ export default function Workspace() {
             setStatus,
         );
         return () => controller.abort();
-    }, [runId, refreshKey, authKey, loadTree]);
+    }, [runId, refreshKey, loadTree]);
 
     useEffect(() => {
         if (!history) return;
@@ -859,15 +857,6 @@ export default function Workspace() {
                     >
                         <span className="btn-icon">＋</span>
                         <span>New Job</span>
-                    </button>
-                    <button
-                        type="button"
-                        className="icon-btn"
-                        onClick={() => setAuth(true)}
-                        title="Session access token"
-                        aria-label="Session access token"
-                    >
-                        ⌘
                     </button>
                 </div>
             </header>
@@ -2011,87 +2000,6 @@ export default function Workspace() {
                             </button>
                         </div>
                     </div>
-                </Modal>
-            )}
-
-
-            {/* Session Access Token Modal */}
-            {auth && (
-                <Modal
-                    title="Session Access Token"
-                    close={() => setAuth(false)}
-                >
-                    <form
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            const form = e.currentTarget;
-                            const input = form.elements.namedItem(
-                                "token",
-                            ) as HTMLInputElement;
-                            if (input.value.trim()) {
-                                sessionStorage.setItem(
-                                    "oneshot.accessToken",
-                                    input.value.trim(),
-                                );
-                            } else {
-                                sessionStorage.removeItem(
-                                    "oneshot.accessToken",
-                                );
-                            }
-                            setAuthKey((v) => v + 1);
-                            setAuth(false);
-                        }}
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "14px",
-                        }}
-                    >
-                        <p
-                            style={{
-                                fontSize: "12px",
-                                color: "var(--text-muted)",
-                            }}
-                        >
-                            Enter an optional Bearer token if the OneShot server
-                            has ONESHOT_API_TOKEN configured.
-                        </p>
-                        <input
-                            name="token"
-                            type="password"
-                            defaultValue={
-                                sessionStorage.getItem("oneshot.accessToken") ||
-                                ""
-                            }
-                            placeholder="API Access Token"
-                            style={{
-                                padding: "8px 10px",
-                                background: "var(--bg-input)",
-                                border: "1px solid var(--line-subtle)",
-                                borderRadius: "var(--radius-sm)",
-                                color: "var(--text-primary)",
-                                fontSize: "12px",
-                            }}
-                        />
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "flex-end",
-                                gap: "8px",
-                            }}
-                        >
-                            <button
-                                type="button"
-                                className="btn btn-secondary"
-                                onClick={() => setAuth(false)}
-                            >
-                                Cancel
-                            </button>
-                            <button type="submit" className="btn btn-primary">
-                                Save Token
-                            </button>
-                        </div>
-                    </form>
                 </Modal>
             )}
 

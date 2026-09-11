@@ -1,16 +1,15 @@
 import { cdp, evaluate, screenshot, startSession } from "./cdp-session.mjs";
 import { dumpEvidence, evidence, sleep, waitFor } from "./cdp-core.mjs";
-const TOKEN = process.env.ONESHOT_API_TOKEN || "";
 const checks = [];
 const check = (n, p, d = "") => { checks.push({ n, p: !!p, d }); console.log(`[check] ${p ? "✓" : "✗"} ${n}${d ? ` | ${d}` : ""}`); };
 const ev = async (expr) => await evaluate(expr);
-const api = async (path) => await evaluate(`fetch('${path}', { headers: { Authorization: 'Bearer ${TOKEN}' } }).then(async r => r.ok ? r.json() : { __error: r.status })`);
-const post = async (path, body) => await evaluate(`fetch('${path}', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ${TOKEN}' }, body: ${JSON.stringify(JSON.stringify(body))} }).then(async r => r.ok ? r.json() : { __error: r.status })`);
+const api = async (path) => await evaluate(`fetch('${path}').then(async r => r.ok ? r.json() : { __error: r.status })`);
+const post = async (path, body) => await evaluate(`fetch('${path}', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: ${JSON.stringify(JSON.stringify(body))} }).then(async r => r.ok ? r.json() : { __error: r.status })`);
 const state = async () => JSON.parse(await ev(`JSON.stringify({ runId: localStorage.getItem('oneshot.currentRunId'), readyLabel: document.getElementById('ready-label')?.textContent||'', hasResearchCard: !!document.getElementById('research-summary-card'), hasBuildCard: !!document.getElementById('build-review-card'), composerPlaceholder: document.querySelector('#message')?.placeholder||'', composerMode: document.querySelector('#message')?.dataset.mode||'', chatMessages: [...document.querySelectorAll('[data-testid^="chat-message-"]')].map(m => ({ tid: m.dataset.testid, text: m.innerText.slice(0,80) })) })`));
 
 try {
   await startSession();
-  await ev(`sessionStorage.setItem('oneshot.accessToken', ${JSON.stringify(TOKEN)}); localStorage.clear(); sessionStorage.removeItem('oneshot.currentRunId'); sessionStorage.removeItem('oneshot.currentConversationId');`);
+  await ev(`localStorage.clear(); sessionStorage.removeItem('oneshot.currentRunId'); sessionStorage.removeItem('oneshot.currentConversationId');`);
   await cdp.send("Page.reload");
   await waitFor("page load", async () => (await ev("document.readyState")) === "complete" ? true : undefined, { timeout: 20_000 });
   await waitFor("chat input", async () => (await ev("!!document.querySelector('#message')")) ? true : undefined, { timeout: 20_000 });

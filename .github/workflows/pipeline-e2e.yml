@@ -422,9 +422,6 @@ jobs:
   python-reasoner-tests:
     runs-on: ubuntu-latest
 
-    env:
-      ONESHOT_INTERNAL_TOKEN: test-internal-token
-
     steps:
       - uses: actions/checkout@v4
 

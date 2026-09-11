@@ -13,25 +13,22 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Query, Request, Response, Security, status
+from fastapi import Depends, FastAPI, Query, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from workspace_api.auth import Authenticator, Principal
+from workspace_api.auth import Principal
 from workspace_api.chat import ChatService
 from workspace_api.config import WorkspaceSettings, get_settings
 from workspace_api.database import Database
 from workspace_api.errors import ConflictError, NotFoundError, register_error_handlers
 from workspace_api.models import (
     AuditLog,
-    AvailabilityStatus,
     ChatMessage,
     ContextItem,
     Conversation,
     ConversationStatus,
-    CredentialStatus,
     ModelConfiguration,
     ModelHealthSnapshot,
     ModelProvider,
@@ -39,11 +36,8 @@ from workspace_api.models import (
     ProviderKind,
     Subscription,
     UsageEvent,
-    User,
     Workspace,
-    WorkspaceApiKey,
     WorkspaceMembership,
-    WorkspaceRole,
 )
 from workspace_api.observability import RequestContextMiddleware, configure_logging
 from workspace_api.rate_limit import (
@@ -62,7 +56,6 @@ from workspace_api.schemas import (
     ContextItemCreate,
     ContextItemRead,
     ErrorResponse,
-    LoginRequest,
     MembershipCreate,
     MembershipRead,
     ModelConfigurationCreate,
@@ -71,27 +64,16 @@ from workspace_api.schemas import (
     ProviderCredentialRead,
     ProviderCredentialRotate,
     ProviderRead,
-    RegisterRequest,
-    RegisterResponse,
     SubscriptionRead,
-    TokenResponse,
     UsageRead,
     UsageEventRead,
     UsageSummary,
     UserRead,
-    WorkspaceApiKeyCreate,
-    WorkspaceApiKeyIssued,
-    WorkspaceApiKeyRead,
     WorkspaceCreate,
     WorkspaceRead,
 )
-from workspace_api.security import (
-    ApiKeyService,
-    PasswordService,
-    SecretCipher,
-    TokenService,
-)
-from workspace_api.services import AuthService, CredentialService, WorkspaceService
+from workspace_api.security import SecretCipher
+from workspace_api.services import CredentialService, WorkspaceService
 from workspace_api.usage import UsageTracker, _period_end, _period_start
 
 
@@ -160,14 +142,9 @@ def create_app(
     settings = settings or get_settings()
     configure_logging(settings)
     database = database or Database(settings)
-    passwords = PasswordService()
-    tokens = TokenService(settings)
-    api_keys = ApiKeyService(settings)
     cipher = SecretCipher(settings)
-    authenticator = Authenticator(tokens, api_keys)
     workspace_service = WorkspaceService()
-    auth_service = AuthService(passwords)
-    credential_service = CredentialService(cipher, api_keys)
+    credential_service = CredentialService(cipher)
     usage = UsageTracker()
     model_router = model_router or ModelRouter(settings, cipher)
     chat_service = ChatService(settings, model_router, usage)
@@ -216,7 +193,7 @@ def create_app(
         allow_origins=settings.cors_origin_list,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "X-API-Key", "X-Request-ID"],
+        allow_headers=["Content-Type", "X-Request-ID"],
         expose_headers=[
             "X-Request-ID",
             "X-RateLimit-Limit",
@@ -238,18 +215,15 @@ def create_app(
 
     SessionDep = Annotated[Session, Depends(get_session)]
 
-    bearer_scheme = HTTPBearer(auto_error=False)
-    api_key_scheme = APIKeyHeader(name="X-API-Key", auto_error=False)
+    def get_principal() -> Principal:
+        """Resolve request attribution.
 
-    def get_principal(
-        request: Request,
-        session: SessionDep,
-        _bearer: Annotated[
-            HTTPAuthorizationCredentials | None, Security(bearer_scheme)
-        ] = None,
-        _api_key: Annotated[str | None, Security(api_key_scheme)] = None,
-    ) -> Principal:
-        return authenticator.authenticate(request, session)
+        The sidecar runs inside the OneShot deployment boundary and is reached
+        same-origin through the application server. No OneShot-issued credential
+        exists; requests are trusted at that boundary.
+        """
+
+        return Principal()
 
     PrincipalDep = Annotated[Principal, Depends(get_principal)]
 
@@ -257,90 +231,16 @@ def create_app(
         session: Session,
         principal: Principal,
         workspace_id: str,
-        minimum: WorkspaceRole = WorkspaceRole.VIEWER,
-        scope: str = "workspace:read",
     ) -> None:
-        if principal.api_key_id:
-            if principal.workspace_id != workspace_id:
-                from workspace_api.errors import AuthorizationError
+        """Validate the workspace reference for a boundary-trusted request."""
 
-                raise AuthorizationError("API key belongs to another workspace")
-            principal.require_scope(scope)
-            return
-        if not principal.user_id:
-            from workspace_api.errors import AuthenticationError
-
-            raise AuthenticationError()
-        workspace_service.require_role(
-            session, workspace_id, principal.user_id, minimum
-        )
-
-    def human_admin(session: Session, principal: Principal, workspace_id: str) -> str:
-        if not principal.user_id:
-            from workspace_api.errors import AuthorizationError
-
-            raise AuthorizationError("Human workspace administrator required")
-        workspace_service.require_role(
-            session, workspace_id, principal.user_id, WorkspaceRole.ADMIN
-        )
-        return principal.user_id
+        del principal
+        if not session.get(Workspace, workspace_id):
+            raise NotFoundError("workspace", workspace_id)
 
     @app.get("/health", tags=["system"])
     def health() -> dict[str, str]:
         return {"status": "ok", "service": "oneshot-workspace-api"}
-
-    @app.post(
-        f"{settings.api_prefix}/auth/register",
-        response_model=RegisterResponse,
-        status_code=status.HTTP_201_CREATED,
-        tags=["auth"],
-    )
-    def register(request: RegisterRequest, session: SessionDep) -> RegisterResponse:
-        user, workspace = auth_service.register(session, request)
-        ollama = session.scalar(
-            select(ModelProvider).where(ModelProvider.slug == "ollama-local")
-        )
-        if ollama:
-            session.add(
-                ModelConfiguration(
-                    workspace_id=workspace.id,
-                    provider_id=ollama.id,
-                    public_name="default",
-                    provider_model_id="gemma2:9b",
-                    is_default=True,
-                    priority=10,
-                    weight=1,
-                )
-            )
-        token, expires = tokens.create_access_token(user.id)
-        return RegisterResponse(
-            user=UserRead.model_validate(user),
-            workspace=WorkspaceRead.model_validate(workspace),
-            token=TokenResponse(access_token=token, expires_in=expires),
-        )
-
-    @app.post(
-        f"{settings.api_prefix}/auth/login",
-        response_model=TokenResponse,
-        tags=["auth"],
-    )
-    def login(request: LoginRequest, session: SessionDep) -> TokenResponse:
-        user = auth_service.authenticate(
-            session, str(request.email), request.password.get_secret_value()
-        )
-        token, expires = tokens.create_access_token(user.id)
-        return TokenResponse(access_token=token, expires_in=expires)
-
-    @app.get(f"{settings.api_prefix}/users/me", response_model=UserRead, tags=["auth"])
-    def me(principal: PrincipalDep, session: SessionDep) -> User:
-        if not principal.user_id:
-            from workspace_api.errors import AuthorizationError
-
-            raise AuthorizationError("A human user token is required")
-        user = session.get(User, principal.user_id)
-        if not user:
-            raise NotFoundError("user", principal.user_id)
-        return user
 
     @app.get(
         f"{settings.api_prefix}/workspaces",
@@ -348,15 +248,8 @@ def create_app(
         tags=["workspaces"],
     )
     def list_workspaces(principal: PrincipalDep, session: SessionDep):
-        if not principal.user_id:
-            workspace = session.get(Workspace, principal.workspace_id)
-            return [workspace] if workspace else []
-        return session.scalars(
-            select(Workspace)
-            .join(WorkspaceMembership)
-            .where(WorkspaceMembership.user_id == principal.user_id)
-            .order_by(Workspace.name)
-        ).all()
+        del principal
+        return session.scalars(select(Workspace).order_by(Workspace.name)).all()
 
     @app.post(
         f"{settings.api_prefix}/workspaces",
@@ -367,10 +260,6 @@ def create_app(
     def create_workspace(
         request: WorkspaceCreate, principal: PrincipalDep, session: SessionDep
     ) -> Workspace:
-        if not principal.user_id:
-            from workspace_api.errors import AuthorizationError
-
-            raise AuthorizationError("A human user token is required")
         return workspace_service.create(
             session, principal.user_id, request.name, request.slug
         )
@@ -397,7 +286,7 @@ def create_app(
     def get_subscription(
         workspace_id: str, principal: PrincipalDep, session: SessionDep
     ) -> Subscription:
-        authorize(session, principal, workspace_id, scope="usage:read")
+        authorize(session, principal, workspace_id)
         subscription = session.scalar(
             select(Subscription).where(Subscription.workspace_id == workspace_id)
         )
@@ -417,7 +306,8 @@ def create_app(
         principal: PrincipalDep,
         session: SessionDep,
     ) -> WorkspaceMembership:
-        actor = human_admin(session, principal, workspace_id)
+        authorize(session, principal, workspace_id)
+        actor = principal.user_id
         return workspace_service.add_member(
             session, workspace_id, actor, str(request.user_email), request.role
         )
@@ -459,7 +349,8 @@ def create_app(
         principal: PrincipalDep,
         session: SessionDep,
     ) -> ProviderCredential:
-        actor = human_admin(session, principal, workspace_id)
+        authorize(session, principal, workspace_id)
+        actor = principal.user_id
         credential = credential_service.create_provider_credential(
             session,
             workspace_id=workspace_id,
@@ -487,7 +378,7 @@ def create_app(
     def list_credentials(
         workspace_id: str, principal: PrincipalDep, session: SessionDep
     ):
-        human_admin(session, principal, workspace_id)
+        authorize(session, principal, workspace_id)
         return session.scalars(
             select(ProviderCredential)
             .where(ProviderCredential.workspace_id == workspace_id)
@@ -506,7 +397,8 @@ def create_app(
         principal: PrincipalDep,
         session: SessionDep,
     ) -> ProviderCredential:
-        actor = human_admin(session, principal, workspace_id)
+        authorize(session, principal, workspace_id)
+        actor = principal.user_id
         replacement = credential_service.rotate_provider_credential(
             session,
             workspace_id=workspace_id,
@@ -537,7 +429,8 @@ def create_app(
         principal: PrincipalDep,
         session: SessionDep,
     ) -> Response:
-        actor = human_admin(session, principal, workspace_id)
+        authorize(session, principal, workspace_id)
+        actor = principal.user_id
         credential_service.revoke_provider_credential(
             session, workspace_id, credential_id
         )
@@ -553,79 +446,6 @@ def create_app(
         return Response(status_code=204)
 
     @app.post(
-        f"{settings.api_prefix}/workspaces/{{workspace_id}}/api-keys",
-        response_model=WorkspaceApiKeyIssued,
-        status_code=status.HTTP_201_CREATED,
-        tags=["credentials"],
-    )
-    def create_api_key(
-        workspace_id: str,
-        request: WorkspaceApiKeyCreate,
-        principal: PrincipalDep,
-        session: SessionDep,
-    ) -> WorkspaceApiKeyIssued:
-        actor = human_admin(session, principal, workspace_id)
-        issued = credential_service.create_workspace_api_key(
-            session,
-            workspace_id=workspace_id,
-            user_id=actor,
-            name=request.name,
-            scopes=request.scopes,
-            expires_at=request.expires_at,
-        )
-        payload = WorkspaceApiKeyRead.model_validate(issued.record).model_dump()
-        return WorkspaceApiKeyIssued(**payload, secret=issued.secret)
-
-    @app.get(
-        f"{settings.api_prefix}/workspaces/{{workspace_id}}/api-keys",
-        response_model=list[WorkspaceApiKeyRead],
-        tags=["credentials"],
-    )
-    def list_api_keys(workspace_id: str, principal: PrincipalDep, session: SessionDep):
-        human_admin(session, principal, workspace_id)
-        return session.scalars(
-            select(WorkspaceApiKey)
-            .where(WorkspaceApiKey.workspace_id == workspace_id)
-            .order_by(WorkspaceApiKey.created_at.desc())
-        ).all()
-
-    @app.post(
-        f"{settings.api_prefix}/workspaces/{{workspace_id}}/api-keys/{{key_id}}/rotate",
-        response_model=WorkspaceApiKeyIssued,
-        tags=["credentials"],
-    )
-    def rotate_api_key(
-        workspace_id: str,
-        key_id: str,
-        principal: PrincipalDep,
-        session: SessionDep,
-    ) -> WorkspaceApiKeyIssued:
-        actor = human_admin(session, principal, workspace_id)
-        issued = credential_service.rotate_workspace_api_key(
-            session,
-            workspace_id=workspace_id,
-            user_id=actor,
-            key_id=key_id,
-        )
-        payload = WorkspaceApiKeyRead.model_validate(issued.record).model_dump()
-        return WorkspaceApiKeyIssued(**payload, secret=issued.secret)
-
-    @app.delete(
-        f"{settings.api_prefix}/workspaces/{{workspace_id}}/api-keys/{{key_id}}",
-        status_code=status.HTTP_204_NO_CONTENT,
-        tags=["credentials"],
-    )
-    def revoke_api_key(
-        workspace_id: str,
-        key_id: str,
-        principal: PrincipalDep,
-        session: SessionDep,
-    ) -> Response:
-        human_admin(session, principal, workspace_id)
-        credential_service.revoke_workspace_api_key(session, workspace_id, key_id)
-        return Response(status_code=204)
-
-    @app.post(
         f"{settings.api_prefix}/workspaces/{{workspace_id}}/models",
         response_model=ModelConfigurationRead,
         status_code=status.HTTP_201_CREATED,
@@ -637,7 +457,7 @@ def create_app(
         principal: PrincipalDep,
         session: SessionDep,
     ) -> ModelConfiguration:
-        human_admin(session, principal, workspace_id)
+        authorize(session, principal, workspace_id)
         provider = session.get(ModelProvider, request.provider_id)
         if not provider:
             raise NotFoundError("provider", request.provider_id)
@@ -647,7 +467,7 @@ def create_app(
                 not credential
                 or credential.workspace_id != workspace_id
                 or credential.provider_id != provider.id
-                or credential.status != CredentialStatus.ACTIVE
+                or credential.status != "active"
             ):
                 raise ConflictError("Credential is not active for this provider")
         if request.is_default:
@@ -673,7 +493,7 @@ def create_app(
         tags=["models"],
     )
     def list_models(workspace_id: str, principal: PrincipalDep, session: SessionDep):
-        authorize(session, principal, workspace_id, scope="models:read")
+        authorize(session, principal, workspace_id)
         return session.scalars(
             select(ModelConfiguration)
             .where(ModelConfiguration.workspace_id == workspace_id)
@@ -696,7 +516,7 @@ def create_app(
         principal: PrincipalDep,
         session: SessionDep,
     ) -> ModelConfiguration:
-        human_admin(session, principal, workspace_id)
+        authorize(session, principal, workspace_id)
         model = session.get(ModelConfiguration, model_id)
         if not model or model.workspace_id != workspace_id:
             raise NotFoundError("model configuration", model_id)
@@ -724,7 +544,7 @@ def create_app(
         principal: PrincipalDep,
         session: SessionDep,
     ) -> Conversation:
-        authorize(session, principal, workspace_id, WorkspaceRole.MEMBER, "chat:write")
+        authorize(session, principal, workspace_id)
         conversation = Conversation(
             workspace_id=workspace_id,
             created_by_user_id=principal.user_id,
@@ -742,7 +562,7 @@ def create_app(
     def list_conversations(
         workspace_id: str, principal: PrincipalDep, session: SessionDep
     ):
-        authorize(session, principal, workspace_id, scope="chat:read")
+        authorize(session, principal, workspace_id)
         return session.scalars(
             select(Conversation)
             .where(Conversation.workspace_id == workspace_id)
@@ -760,7 +580,7 @@ def create_app(
         principal: PrincipalDep,
         session: SessionDep,
     ):
-        authorize(session, principal, workspace_id, scope="chat:read")
+        authorize(session, principal, workspace_id)
         conversation = session.get(Conversation, conversation_id)
         if not conversation or conversation.workspace_id != workspace_id:
             raise NotFoundError("conversation", conversation_id)
@@ -782,7 +602,7 @@ def create_app(
         principal: PrincipalDep,
         session: SessionDep,
     ) -> ContextItem:
-        authorize(session, principal, workspace_id, WorkspaceRole.MEMBER, "chat:write")
+        authorize(session, principal, workspace_id)
         if body.conversation_id:
             conversation = session.get(Conversation, body.conversation_id)
             if not conversation or conversation.workspace_id != workspace_id:
@@ -804,7 +624,7 @@ def create_app(
         conversation_id: Annotated[str | None, Query()] = None,
         pinned: Annotated[bool | None, Query()] = None,
     ):
-        authorize(session, principal, workspace_id, scope="chat:read")
+        authorize(session, principal, workspace_id)
         statement = select(ContextItem).where(ContextItem.workspace_id == workspace_id)
         if conversation_id is not None:
             statement = statement.where(ContextItem.conversation_id == conversation_id)
@@ -823,7 +643,7 @@ def create_app(
         principal: PrincipalDep,
         session: SessionDep,
     ) -> Response:
-        authorize(session, principal, workspace_id, WorkspaceRole.MEMBER, "chat:write")
+        authorize(session, principal, workspace_id)
         item = session.get(ContextItem, context_id)
         if not item or item.workspace_id != workspace_id:
             raise NotFoundError("context item", context_id)
@@ -841,7 +661,7 @@ def create_app(
         principal: PrincipalDep,
         session: SessionDep,
     ) -> Response:
-        authorize(session, principal, workspace_id, WorkspaceRole.MEMBER, "chat:write")
+        authorize(session, principal, workspace_id)
         conversation = session.get(Conversation, conversation_id)
         if not conversation or conversation.workspace_id != workspace_id:
             raise NotFoundError("conversation", conversation_id)
@@ -860,7 +680,7 @@ def create_app(
         principal: PrincipalDep,
         session: SessionDep,
     ) -> ChatCompletionResponse:
-        authorize(session, principal, workspace_id, WorkspaceRole.MEMBER, "chat:write")
+        authorize(session, principal, workspace_id)
         result = await chat_service.complete(
             session,
             principal,
@@ -894,7 +714,7 @@ def create_app(
         start: Annotated[datetime | None, Query()] = None,
         end: Annotated[datetime | None, Query()] = None,
     ) -> UsageSummary:
-        authorize(session, principal, workspace_id, scope="usage:read")
+        authorize(session, principal, workspace_id)
         now = datetime.now(timezone.utc)
         period_start = start or _period_start(now)
         period_end = end or _period_end(now)
@@ -916,7 +736,7 @@ def create_app(
         limit: Annotated[int, Query(ge=1, le=500)] = 100,
         offset: Annotated[int, Query(ge=0)] = 0,
     ):
-        authorize(session, principal, workspace_id, scope="usage:read")
+        authorize(session, principal, workspace_id)
         return session.scalars(
             select(UsageEvent)
             .where(UsageEvent.workspace_id == workspace_id)

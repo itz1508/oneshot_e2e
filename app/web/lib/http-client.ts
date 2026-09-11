@@ -6,19 +6,13 @@ export class ApiError extends Error {
         super(message);
     }
 }
-export function authHeaders(): Headers {
-    const headers = new Headers();
-    const token = sessionStorage.getItem("oneshot.accessToken");
-    if (token) headers.set("Authorization", `Bearer ${token}`);
-    return headers;
-}
 export async function request<T>(
     path: string,
     body?: unknown,
     method = body === undefined ? "GET" : "POST",
     signal?: AbortSignal,
 ): Promise<T> {
-    const headers = authHeaders();
+    const headers = new Headers();
     headers.set("Accept", "application/json");
     if (body !== undefined) headers.set("Content-Type", "application/json");
     const response = await fetch(path, {

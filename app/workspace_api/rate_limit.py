@@ -12,7 +12,6 @@ Example::
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import time
 from dataclasses import dataclass
 from typing import Protocol
@@ -132,12 +131,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     @staticmethod
     def _key(request: Request) -> str:
-        credential = request.headers.get("X-API-Key") or request.headers.get(
-            "Authorization", ""
-        )
-        if credential:
-            digest = hashlib.sha256(credential.encode()).hexdigest()[:32]
-            return f"credential:{digest}"
+        """Rate-limit by client address; the boundary holds no credential."""
+
         host = request.client.host if request.client else "unknown"
         return f"ip:{host}"
 

@@ -20,12 +20,6 @@ services:
       REDIS_URL: ${REDIS_URL:?Set REDIS_URL to the external Render connection URL}
       ONESHOT_START_WORKER: "true"
 
-      # REQUIRED: the HTTP server refuses to bind 0.0.0.0 without an API token
-      # (backend/server/http-server.ts auth gate; unauthenticated requests get
-      # 401). Enter this token in the Web UI auth overlay on first visit.
-      # Override with your own value via the ONESHOT_API_TOKEN env var.
-      ONESHOT_API_TOKEN: ${ONESHOT_API_TOKEN:-43da785bb20cf57d5b205274f12b620a}
-
       # Research Provider (default: local Gemma via Ollama; alternatives:
       # gemini, featherless, sample)
       ONESHOT_RESEARCH_PROVIDER: ${ONESHOT_RESEARCH_PROVIDER:-ollama}
@@ -52,12 +46,10 @@ services:
     restart: unless-stopped
     
     # Health Check
-    # The auth gate returns 401 for unauthenticated /api/health (see
-    # ONESHOT_API_TOKEN above), so the check must send the token.
     healthcheck:
       test:
         - CMD-SHELL
-        - 'curl -sf -H "Authorization: Bearer $$ONESHOT_API_TOKEN" http://localhost:8787/api/health > /dev/null || exit 1'
+        - 'curl -sf http://localhost:8787/api/health > /dev/null || exit 1'
       interval: 30s
       timeout: 5s
       retries: 3

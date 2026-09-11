@@ -42,7 +42,7 @@ class FakeProvider:
 
 
 class WorkspaceApiTests(unittest.TestCase):
-    def test_full_auth_key_model_chat_usage_and_rotation_path(self) -> None:
+    def test_integration_credential_model_chat_usage_and_rotation_path(self) -> None:
         with tempfile.TemporaryDirectory(prefix="oneshot-workspace-test-") as temp:
             database_path = Path(temp) / "workspace.db"
             settings = WorkspaceSettings(
@@ -62,33 +62,14 @@ class WorkspaceApiTests(unittest.TestCase):
             app = create_app(settings, database=database, model_router=router)
 
             with TestClient(app) as client:
-                invalid = client.post(
-                    "/v1/auth/register",
-                    json={
-                        "email": "not-an-email",
-                        "password": "must-never-be-reflected",
-                        "display_name": "Owner",
-                        "workspace_name": "Research Lab",
-                    },
+                created_workspace = client.post(
+                    "/v1/workspaces",
+                    json={"name": "Research Lab"},
                 )
-                self.assertEqual(invalid.status_code, 422)
-                self.assertNotIn("must-never-be-reflected", invalid.text)
-                registered = client.post(
-                    "/v1/auth/register",
-                    json={
-                        "email": "owner@example.com",
-                        "password": "a-long-test-password",
-                        "display_name": "Owner",
-                        "workspace_name": "Research Lab",
-                    },
-                )
-                self.assertEqual(registered.status_code, 201, registered.text)
-                registration = registered.json()
-                workspace_id = registration["workspace"]["id"]
-                token = registration["token"]["access_token"]
-                headers = {"Authorization": f"Bearer {token}"}
+                self.assertEqual(created_workspace.status_code, 201, created_workspace.text)
+                workspace_id = created_workspace.json()["id"]
 
-                providers_resp = client.get("/v1/providers", headers=headers)
+                providers_resp = client.get("/v1/providers")
                 self.assertEqual(providers_resp.status_code, 200, providers_resp.text)
                 featherless_id = next(
                     item["id"]
@@ -98,7 +79,6 @@ class WorkspaceApiTests(unittest.TestCase):
 
                 created_credential = client.post(
                     f"/v1/workspaces/{workspace_id}/credentials",
-                    headers=headers,
                     json={
                         "provider_id": featherless_id,
                         "name": "primary",
@@ -111,7 +91,6 @@ class WorkspaceApiTests(unittest.TestCase):
 
                 created_model = client.post(
                     f"/v1/workspaces/{workspace_id}/models",
-                    headers=headers,
                     json={
                         "provider_id": featherless_id,
                         "credential_id": credential["id"],
@@ -125,7 +104,7 @@ class WorkspaceApiTests(unittest.TestCase):
 
                 completion = client.post(
                     f"/v1/workspaces/{workspace_id}/chat/completions",
-                    headers={**headers, "X-Request-ID": "workspace-test-request-1"},
+                    headers={"X-Request-ID": "workspace-test-request-1"},
                     json={
                         "model": "remote",
                         "messages": [
@@ -145,13 +124,11 @@ class WorkspaceApiTests(unittest.TestCase):
                 messages = client.get(
                     f"/v1/workspaces/{workspace_id}/conversations/"
                     f"{completed['conversation']['id']}/messages",
-                    headers=headers,
                 )
                 self.assertEqual([item["role"] for item in messages.json()], ["user", "assistant"])
 
                 context = client.post(
                     f"/v1/workspaces/{workspace_id}/context",
-                    headers=headers,
                     json={
                         "conversation_id": completed["conversation"]["id"],
                         "kind": "repository",
@@ -163,61 +140,29 @@ class WorkspaceApiTests(unittest.TestCase):
                 self.assertEqual(context.status_code, 201, context.text)
                 listed_context = client.get(
                     f"/v1/workspaces/{workspace_id}/context?pinned=true",
-                    headers=headers,
                 )
                 self.assertEqual(len(listed_context.json()), 1)
 
-                issued = client.post(
-                    f"/v1/workspaces/{workspace_id}/api-keys",
-                    headers=headers,
-                    json={
-                        "name": "automation",
-                        "scopes": ["usage:read", "chat:write", "chat:read"],
-                    },
-                )
-                self.assertEqual(issued.status_code, 201, issued.text)
-                issued_key = issued.json()
-                raw_key = issued_key["secret"]
-
                 usage = client.get(
                     f"/v1/workspaces/{workspace_id}/usage",
-                    headers={"X-API-Key": raw_key},
                 )
                 self.assertEqual(usage.status_code, 200, usage.text)
                 self.assertEqual(usage.json()["requests"], 1)
                 events = client.get(
                     f"/v1/workspaces/{workspace_id}/usage/events",
-                    headers={"X-API-Key": raw_key},
                 )
                 self.assertEqual(events.status_code, 200)
                 self.assertEqual(events.json()[0]["request_id"], "workspace-test-request-1")
 
-                rotated_key = client.post(
-                    f"/v1/workspaces/{workspace_id}/api-keys/{issued_key['id']}/rotate",
-                    headers=headers,
-                )
-                self.assertEqual(rotated_key.status_code, 200)
-                self.assertNotEqual(rotated_key.json()["secret"], raw_key)
-                rejected_old = client.get(
-                    f"/v1/workspaces/{workspace_id}/usage",
-                    headers={"X-API-Key": raw_key},
-                )
-                self.assertEqual(rejected_old.status_code, 401)
-                self.assertEqual(
-                    rejected_old.json()["error"]["code"],
-                    "AUTHENTICATION_REQUIRED",
-                )
-
                 rotated_credential = client.post(
                     f"/v1/workspaces/{workspace_id}/credentials/"
                     f"{credential['id']}/rotate",
-                    headers=headers,
                     json={"secret": "test-provider-secret-v2"},
                 )
                 self.assertEqual(rotated_credential.status_code, 200)
                 completion2 = client.post(
                     f"/v1/workspaces/{workspace_id}/chat/completions",
-                    headers={**headers, "X-Request-ID": "workspace-test-request-2"},
+                    headers={"X-Request-ID": "workspace-test-request-2"},
                     json={
                         "model": "remote",
                         "messages": [{"role": "user", "content": "Continue"}],
@@ -321,14 +266,12 @@ class WorkspaceApiTests(unittest.TestCase):
         self.assertEqual([item.allowed for item in decisions], [True, True, False])
         self.assertEqual(decisions[-1].remaining, 0)
 
-    def test_openapi_exposes_both_authentication_schemes(self) -> None:
+    def test_openapi_exposes_bearer_free_same_origin_contract(self) -> None:
         settings = WorkspaceSettings(
             environment="test", database_url="sqlite://", log_json=False
         )
         schema = create_app(settings).openapi()
-        schemes = schema["components"]["securitySchemes"]
-        self.assertEqual(schemes["HTTPBearer"]["scheme"], "bearer")
-        self.assertEqual(schemes["APIKeyHeader"]["name"], "X-API-Key")
+        self.assertNotIn("securitySchemes", schema["components"])
         self.assertIn("ErrorResponse", schema["components"]["schemas"])
 
 

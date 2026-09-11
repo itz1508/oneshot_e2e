@@ -1,12 +1,11 @@
 import { evaluate, screenshot, startSession } from "./cdp-session.mjs";
 import { sleep, waitFor } from "./cdp-core.mjs";
-const TOKEN = process.env.ONESHOT_API_TOKEN || "";
 const ev = async (expr) => await evaluate(expr);
 const setText = async (text) => await ev(`const input = document.querySelector('#message'); input.value = ${JSON.stringify(text)}; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus();`);
 
 try {
   await startSession();
-  await ev(`sessionStorage.setItem('oneshot.accessToken', ${JSON.stringify(TOKEN)}); localStorage.clear(); sessionStorage.removeItem('oneshot.currentRunId'); sessionStorage.removeItem('oneshot.currentConversationId'); location.reload();`);
+  await ev(`localStorage.clear(); sessionStorage.removeItem('oneshot.currentRunId'); sessionStorage.removeItem('oneshot.currentConversationId'); location.reload();`);
   await waitFor("page load", async () => (await ev("document.readyState")) === "complete" ? true : undefined, { timeout: 20_000 });
   await waitFor("chat input", async () => (await ev("!!document.querySelector('#message')")) ? true : undefined, { timeout: 20_000 });
   await setText('Run a deterministic proof that creates files in the sandbox');

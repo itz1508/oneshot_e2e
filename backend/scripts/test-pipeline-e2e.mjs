@@ -21,7 +21,6 @@
  */
 
 const API_URL = process.env.ONESHOT_API_URL ?? "http://127.0.0.1:8787";
-const API_TOKEN = process.env.ONESHOT_API_TOKEN ?? "";
 const POLL_INTERVAL_MS = 500;
 const RESEARCHER_TIMEOUT_MS = 120_000;
 const PIPELINE_TIMEOUT_MS = 300_000;
@@ -29,15 +28,12 @@ const PIPELINE_TIMEOUT_MS = 300_000;
 const FAULT_STAGE = process.env.PIPELINE_FAULT_STAGE?.trim() ?? "";
 const FAULT_MODE = process.env.PIPELINE_FAULT_MODE?.trim() ?? "";
 
-const AUTH = API_TOKEN ? { Authorization: `Bearer ${API_TOKEN}` } : {};
-
 async function requestJson(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       accept: "application/json",
       "content-type": "application/json",
-      ...AUTH,
       ...(options.headers ?? {}),
     },
   });

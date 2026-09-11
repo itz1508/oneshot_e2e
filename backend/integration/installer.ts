@@ -65,8 +65,8 @@ export async function installIntegration(
   const target = integrationDirectory(projectRoot, integrationId);
   await mkdir(target, { recursive: true });
 
-  // The integration folder is runtime package storage. It contains no
-  // OneShot-authored Gemini/OpenAI/etc implementation code.
+  // app/integration/<id> is runtime package storage. It contains no
+  // OneShot-authored vendor implementation code.
   await writeFile(
     join(target, "package.json"),
     JSON.stringify(
