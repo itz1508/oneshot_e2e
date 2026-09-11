@@ -41,7 +41,7 @@ try {
 
 // Stub deps: the run snapshot is already durably finalized (PASSED), so the
 // worker's idempotency guard in executeRunJob completes the job without a
-// provider or workflow runtime. Everything else — connection, enqueue,
+// workflow runtime. Everything else — connection, enqueue,
 // dequeue, contract validation, progress bridge — is the real code path.
 const deps = {
   runs: {
@@ -59,9 +59,6 @@ const deps = {
   },
   createRuntime: async () => {
     throw new Error("smoke stub: createRuntime() must not be reached");
-  },
-  resolveProvider: async () => {
-    throw new Error("smoke stub: resolveProvider() must not be reached");
   },
   projectRoot: process.cwd(),
 };

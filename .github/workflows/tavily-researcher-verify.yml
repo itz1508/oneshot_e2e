@@ -4,7 +4,7 @@ on:
   push:
     branches: [feature/tavily-researcher-evidence]
     paths:
-      - 'backend/role/researcher/**'
+      - 'backend/agents/researcher/**'
       - 'backend/tests/ts/tavily-researcher-evidence.test.ts'
       - 'app/requirements/**'
       - 'package.json'
@@ -13,7 +13,7 @@ on:
       - 'MANIFEST.sha256'
   pull_request:
     paths:
-      - 'backend/role/researcher/**'
+      - 'backend/agents/researcher/**'
       - 'backend/tests/ts/tavily-researcher-evidence.test.ts'
       - 'app/requirements/**'
       - 'package.json'

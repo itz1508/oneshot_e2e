@@ -17,7 +17,7 @@ await writeFile(resolve(target, 'notes/requirements.md'), 'Inventory list, stock
 process.env.ONESHOT_WORKSPACE_ROOT = target;
 const h = await harness(name, undefined, new HardenedProcessRunner());
 const intent = new IntentCollectionService(new ConversationStore(resolve('.runtime', name, 'conversations')));
-const server = await startHttpServer(h.runtime, h.runs, h.events, resolve('app/web/dist'), 0, h.task, intent, h.sandbox, { mode: 'test', provider: 'fixture' }, { workspaceRoot: target });
+const server = await startHttpServer(h.runtime, h.runs, h.events, resolve('app/web/dist'), 0, h.task, intent, h.sandbox, { mode: 'test', integration: 'fixture' }, { workspaceRoot: target });
 const address = server.address();
 const base = `http://127.0.0.1:${address.port}`;
 await writeFile(resolve('.runtime/next-smoke-server.json'), JSON.stringify({ base, name, target }));

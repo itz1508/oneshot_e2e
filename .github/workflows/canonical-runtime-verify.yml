@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/tmp-adk-researcher-node-test.yml'
+      - '.github/workflows/canonical-runtime-verify.yml'
       - 'backend/**'
       - 'backend/tests/ts/**'
       - 'app/fixtures/**'
@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 jobs:
-  dynamic-runtime:
+  canonical-runtime:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -55,4 +55,4 @@ jobs:
       - name: Verify committed source manifest
         run: python app/scripts/verify_manifest.py
 
-# scope: dynamic production runtime integration + complete backend TypeScript suite + full session response evidence
+# scope: native production runtime integration + complete backend TypeScript suite + full session response evidence

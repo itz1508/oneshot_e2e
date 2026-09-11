@@ -94,7 +94,7 @@ if ($Docker) {
             $resp = Invoke-RestMethod -Uri $HealthUrl -Headers $headers -TimeoutSec 2 -ErrorAction Stop
             if ($resp.status -eq "ok" -or $resp.workflow -eq "oneshot-canonical-workflow") {
                 $Healthy = $true
-                Write-Host "      Health check PASSED: mode=$($resp.mode), provider=$($resp.provider)" -ForegroundColor Green
+                Write-Host "      Health check PASSED: mode=$($resp.mode), integration=$($resp.integration)" -ForegroundColor Green
                 break
             }
         } catch {

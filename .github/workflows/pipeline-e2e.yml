@@ -24,6 +24,7 @@ jobs:
     env:
       REDIS_URL: redis://127.0.0.1:6379
       ONESHOT_MODE: sample
+      ONESHOT_RESEARCH_TEST_DRAFT_FILE: app/fixtures/research/pipeline-e2e-draft.json
 
     steps:
       - name: Checkout
@@ -104,6 +105,7 @@ jobs:
     env:
       REDIS_URL: redis://127.0.0.1:6379
       ONESHOT_MODE: sample
+      ONESHOT_RESEARCH_TEST_DRAFT_FILE: app/fixtures/research/pipeline-e2e-draft.json
       PIPELINE_FAULTS_ENABLED: "true"
       PIPELINE_FAULT_STAGE: planner
       PIPELINE_FAULT_MODE: fail-once
@@ -174,6 +176,7 @@ jobs:
     env:
       REDIS_URL: redis://127.0.0.1:6379
       ONESHOT_MODE: sample
+      ONESHOT_RESEARCH_TEST_DRAFT_FILE: app/fixtures/research/pipeline-e2e-draft.json
       PIPELINE_FAULTS_ENABLED: "true"
       PIPELINE_FAULT_STAGE: triple-validation
       PIPELINE_FAULT_MODE: fail-always
@@ -242,6 +245,7 @@ jobs:
     env:
       REDIS_URL: redis://127.0.0.1:6379
       ONESHOT_MODE: sample
+      ONESHOT_RESEARCH_TEST_DRAFT_FILE: app/fixtures/research/pipeline-e2e-draft.json
       # The recovery scripts poll /api/runs/:id/history every 500ms (2 requests
       # per poll), far exceeding the product default of 100 requests/15min.
       API_RATE_LIMIT_MAX: "100000"
@@ -304,6 +308,7 @@ jobs:
     env:
       REDIS_URL: redis://127.0.0.1:6379
       ONESHOT_MODE: sample
+      ONESHOT_RESEARCH_TEST_DRAFT_FILE: app/fixtures/research/pipeline-e2e-draft.json
       PIPELINE_FAULTS_ENABLED: "true"
       PIPELINE_FAULT_STAGE: evaluation
       PIPELINE_FAULT_MODE: crash-after-checkpoint
@@ -367,6 +372,7 @@ jobs:
     env:
       REDIS_URL: redis://127.0.0.1:6379
       ONESHOT_MODE: sample
+      ONESHOT_RESEARCH_TEST_DRAFT_FILE: app/fixtures/research/pipeline-e2e-draft.json
       PIPELINE_FAULTS_ENABLED: "true"
       PIPELINE_FAULTS: '[{"stage":"triple-validation","mode":"refine-once"},{"stage":"evaluation","mode":"crash-after-checkpoint","minIteration":1}]'
       # Recovery scripts poll history every 500ms; lift the API rate limit for CI.

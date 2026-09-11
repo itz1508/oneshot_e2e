@@ -2100,7 +2100,6 @@ summary:focus-visible {
     display: none;
   }
   .target-chip,
-  .provider-chip,
   .connection-pill,
   .readiness-bar {
     display: none;

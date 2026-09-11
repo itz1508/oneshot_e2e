@@ -127,7 +127,6 @@ function workspacePolicyError(res: ServerResponse, error: unknown): boolean {
 
 export interface RuntimeInfo {
   mode: string;
-  provider?: string;
   integration?: string;
   /** Whether the BullMQ run queue (Redis) is available. */
   queue?: boolean;
@@ -426,7 +425,7 @@ export async function startHttpServer(
         // ---------------------------------------------------------------
         if (req.method === "GET" && url.pathname === "/api/health") {
           const mode = runtimeInfo?.mode ?? "production";
-          const publicName = runtimeInfo?.integration ?? runtimeInfo?.provider ?? "none";
+          const publicName = runtimeInfo?.integration ?? "none";
           const pipelineReady = options.pipeline?.queueReady ?? false;
           const legacyReady = Boolean(runQueue && queueReady);
           const anyQueueReady = pipelineReady || legacyReady;
@@ -463,7 +462,6 @@ export async function startHttpServer(
             workflow: "oneshot-canonical-workflow",
             mode,
             integration: publicName,
-            provider: publicName,
             redis,
             queue,
             worker,
