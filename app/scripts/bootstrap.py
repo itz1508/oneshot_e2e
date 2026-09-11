@@ -13,24 +13,12 @@ def run(cmd):
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--skip-python", action="store_true")
-    p.add_argument("--with-adk", action="store_true")
     p.add_argument("--with-featherless", action="store_true")
     p.add_argument("--with-workspace-api", action="store_true")
     a = p.parse_args()
 
     if not a.skip_python:
         run([sys.executable, "-m", "pip", "install", "-r", "app/requirements/base.txt"])
-        if a.with_adk:
-            run(
-                [
-                    sys.executable,
-                    "-m",
-                    "pip",
-                    "install",
-                    "-r",
-                    "app/requirements/adk.txt",
-                ]
-            )
         if a.with_featherless:
             run(
                 [

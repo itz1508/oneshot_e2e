@@ -10,14 +10,14 @@ Expose read-only processing evidence around the canonical OneShot workflow. This
 - expose checkpoint metadata outside canonical artifacts
 - project current run state for the UI
 - produce audit views with ordering/conflict evidence
-- project the Google ADK Researcher provider subgraph
+- project the OneShot workflow graph
 - project authority → responsibility → Skill → Tool → capability → artifact traceability
 
 ## Tools
 
 - `project_run`
 - `audit_run`
-- `project_adk_graph`
+- `project_workflow_graph`
 - `project_authority_graph`
 
 ## Authority Boundary

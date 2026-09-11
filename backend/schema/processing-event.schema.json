@@ -7,7 +7,7 @@
     "event_id": {"type":"string","minLength":1},
     "sequence": {"type":"integer","minimum":1},
     "run_id": {"type":"string","minLength":1},
-    "scope": {"enum":["WORKFLOW","ADK","SANDBOX","SUPPORT"]},
+    "scope": {"enum":["WORKFLOW","SANDBOX","SUPPORT"]},
     "processor": {"type":"string","minLength":1},
     "execution_status": {"$ref":"urn:oneshot:schema:common:2#/$defs/execution_status"},
     "test_result": {"$ref":"urn:oneshot:schema:common:2#/$defs/test_result"},

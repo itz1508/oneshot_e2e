@@ -140,21 +140,7 @@ function requireOrdering(events, before, after) {
   }
 }
 
-async function ensureSampleProvider() {
-  const health = await requestJson("/api/health");
-  const activeId = normalize(health.provider);
-  if (activeId !== "<default>" && activeId !== "") return;
 
-  console.log("   Activating sample provider for E2E test...");
-  const providers = await requestJson("/api/providers");
-  const sample = providers?.providers?.find((p) => normalize(p.id) === "sample");
-  if (!sample) {
-    throw new Error(
-      "Sample provider is not available. Run the server with ONESHOT_MODE=sample for local E2E testing.",
-    );
-  }
-  await requestJson("/api/providers/sample/activate", { method: "POST", body: "{}" });
-}
 
 async function verifyHealth() {
   console.log("1. Checking backend health...");
@@ -506,7 +492,6 @@ async function main() {
   console.log(`API: ${API_URL}`);
   console.log("");
 
-  await ensureSampleProvider();
   await verifyHealth();
   const runId = await createRun();
   await waitForHumanGate(runId);

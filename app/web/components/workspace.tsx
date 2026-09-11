@@ -8,7 +8,6 @@ import type {
     Conversation,
     Edits,
     Mutation,
-    Provider,
     ResearchReview,
     Run,
     TreeNode,
@@ -78,16 +77,51 @@ export default function Workspace() {
     const busyRef = useRef(false);
     const [gateLoading, setGateLoading] = useState(false);
     const [error, setError] = useState("");
-    const [settings, setSettings] = useState(false);
     const [auth, setAuth] = useState(false);
-    const [providers, setProviders] = useState<Provider[]>([]);
-    const [activeProvider, setActiveProvider] = useState("");
-    const [providerBusy, setProviderBusy] = useState(false);
-    const [providerMessage, setProviderMessage] = useState("");
-    const providerLock = useRef(false);
     const [refreshKey, setRefreshKey] = useState(0);
     const [authKey, setAuthKey] = useState(0);
     const [newChat, setNewChat] = useState(false);
+    const [integrationsOpen, setIntegrationsOpen] = useState(false);
+    const [integrationsList, setIntegrationsList] = useState<any[]>([]);
+    const [integrationBusy, setIntegrationBusy] = useState(false);
+    const [integrationMsg, setIntegrationMsg] = useState("");
+
+    const loadIntegrations = useCallback(async () => {
+        try {
+            const res = await request<{ integrations: any[] }>("/api/integrations");
+            setIntegrationsList(res.integrations || []);
+        } catch {
+            // ignore
+        }
+    }, []);
+
+    const installIntegrationPkg = async (id: string) => {
+        setIntegrationBusy(true);
+        setIntegrationMsg("Installing package...");
+        try {
+            await request(`/api/integrations/${encodeURIComponent(id)}/install`, undefined, "POST");
+            await loadIntegrations();
+            setIntegrationMsg("Installed successfully.");
+        } catch (e: any) {
+            setIntegrationMsg(`Install failed: ${e.message || String(e)}`);
+        } finally {
+            setIntegrationBusy(false);
+        }
+    };
+
+    const configureIntegrationPkg = async (id: string, apiKey: string, model: string, baseURL?: string) => {
+        setIntegrationBusy(true);
+        setIntegrationMsg("Saving configuration...");
+        try {
+            await request(`/api/integrations/${encodeURIComponent(id)}/configure`, { apiKey, model, baseURL }, "POST");
+            await loadIntegrations();
+            setIntegrationMsg("Configured successfully.");
+        } catch (e: any) {
+            setIntegrationMsg(`Configuration failed: ${e.message || String(e)}`);
+        } finally {
+            setIntegrationBusy(false);
+        }
+    };
     const epoch = useRef(0);
     const input = useRef<HTMLTextAreaElement>(null);
     const bottom = useRef<HTMLDivElement>(null);
@@ -166,19 +200,6 @@ export default function Workspace() {
         }
     }, []);
 
-    const loadProviders = useCallback(async () => {
-        try {
-            const data = await request<{
-                providers: Provider[];
-                activeProvider: string;
-            }>("/api/providers");
-            setProviders(data.providers || []);
-            setActiveProvider(data.activeProvider || "");
-        } catch (cause) {
-            setProviderMessage(cause instanceof Error ? cause.message : "Provider catalog unavailable.");
-            throw cause;
-        }
-    }, []);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -216,7 +237,6 @@ export default function Workspace() {
             });
 
         void loadTree();
-        void loadProviders().catch(() => {});
 
         const cid = localStorage.getItem("oneshot.currentConversationId");
         if (cid) {
@@ -243,7 +263,7 @@ export default function Workspace() {
                 });
         }
         return () => controller.abort();
-    }, [loadTree, loadProviders, authKey]);
+    }, [loadTree, authKey]);
 
     useEffect(() => {
         if (!runId) return;
@@ -550,23 +570,9 @@ export default function Workspace() {
 
     const waiting =
         !!run && researchWaiting(run) && review?.status !== "approved";
-    const active = providers.find((p) => p.id === activeProvider);
 
     const progressPct = Math.round(STAGE_ORDER.filter(stage => stageState(run, stage) === "Completed").length / STAGE_ORDER.length * 100);
     const { score: intentScore, label: readyLabel } = readiness(run, conversation, build, waiting, status);
-
-    // Provider dot style
-    const providerClass = useMemo(() => {
-        const name = (
-            active?.displayName ||
-            activeProvider ||
-            ""
-        ).toLowerCase();
-        if (name.includes("anthropic") || name.includes("claude"))
-            return "anthropic";
-        if (name.includes("openai") || name.includes("gpt")) return "openai";
-        return "";
-    }, [active, activeProvider]);
 
     // Build Conversation Entries
     const entries: { key: string; time: string; content: ReactNode }[] = (
@@ -808,23 +814,6 @@ export default function Workspace() {
                 </div>
 
                 <div className="topbar-right">
-                    <button
-                        type="button"
-                        className="provider-chip"
-                        id="topbar-provider"
-                        title="Active LLM Provider"
-                        onClick={() => setSettings(true)}
-                    >
-                        <span className={`provider-dot ${providerClass}`} />
-                        <span
-                            className="provider-label"
-                            id="provider-name-display"
-                        >
-                            {active
-                                ? `${active.displayName} · ${active.runtime?.model || active.model || ""}`
-                                : "Provider"}
-                        </span>
-                    </button>
                     <div
                         className={`connection-pill ${status.toLowerCase()}`}
                         id="connection-pill"
@@ -846,6 +835,19 @@ export default function Workspace() {
                         title="Generate Run from Intent"
                     >
                         ⚡ Generate
+                    </button>
+                    <button
+                        type="button"
+                        className="topbar-btn"
+                        id="integrations-btn"
+                        title="Model Integrations"
+                        onClick={() => {
+                            setIntegrationsOpen(true);
+                            loadIntegrations();
+                        }}
+                    >
+                        <span className="btn-icon">＋</span>
+                        <span>Integration</span>
                     </button>
                     <button
                         type="button"
@@ -1282,16 +1284,6 @@ export default function Workspace() {
                                 }}
                             />
                             <div className="composer-controls">
-                                <button
-                                    type="button"
-                                    className="composer-provider-btn"
-                                    onClick={() => setSettings(true)}
-                                >
-                                    {active
-                                        ? `${active.displayName} · ${active.runtime?.model || active.model || ""}`
-                                        : "Configure Provider"}{" "}
-                                    ⌄
-                                </button>
                                 <span className="grow" />
                                 {conversation?.intent.ready_for_prompt &&
                                     !runId && (
@@ -1966,17 +1958,7 @@ export default function Workspace() {
                     >
                         <Icon kind="history" />
                     </button>
-                    <div className="rail-spacer" />
-                    <button
-                        type="button"
-                        className="rail-btn"
-                        id="settings-rail-btn"
-                        title="Provider Configuration"
-                        aria-label="Provider Configuration"
-                        onClick={() => setSettings(true)}
-                    >
-                        <Icon kind="settings" />
-                    </button>
+
                 </aside>
             </div>
 
@@ -2032,136 +2014,6 @@ export default function Workspace() {
                 </Modal>
             )}
 
-            {/* Provider Configuration Modal */}
-            {settings && (
-                <Modal
-                    title="Provider Configuration"
-                    close={() => setSettings(false)}
-                >
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "14px",
-                        }}
-                    >
-                        <p
-                            style={{
-                                fontSize: "12px",
-                                color: "var(--text-muted)",
-                            }}
-                        >
-                            Configure active model provider and runtime
-                            settings. Credentials are stored on the backend and never returned to the browser.
-                        </p>
-                        {providerMessage && <p role="status">{providerMessage}</p>}
-                        {!providers.length && <button type="button" disabled={providerBusy} onClick={() => void loadProviders().catch(() => {})}>Retry provider catalog</button>}
-                        <div
-                            style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "8px",
-                            }}
-                        >
-                            {providers.map((p) => {
-                                const isSelected = p.id === activeProvider;
-                                return (
-                                    <form
-                                        key={p.id}
-                                        onSubmit={async (event) => {
-                                            event.preventDefault();
-                                            if (providerLock.current) return;
-                                            providerLock.current = true;
-                                            const form = event.currentTarget;
-                                            const fields = new FormData(form);
-                                            const credential = form.elements.namedItem("credential") as HTMLInputElement | null;
-                                            setProviderBusy(true);
-                                            setProviderMessage("");
-                                            try {
-                                                const path = `/api/providers/${encodeURIComponent(p.id)}`;
-                                                if (credential?.value.trim()) {
-                                                    await request(`${path}/credential`, { value: credential.value.trim() }, "PUT");
-                                                    credential.value = "";
-                                                }
-                                                await request(path, {
-                                                    model: String(fields.get("model") || "").trim(),
-                                                    apiBase: String(fields.get("apiBase") || "").trim(),
-                                                }, "PUT");
-                                                const activated = await request<{ activeProvider: string }>(`${path}/activate`, {}, "POST");
-                                                setActiveProvider(activated.activeProvider);
-                                                await loadProviders();
-                                                setProviderMessage(`${p.displayName} saved and active.`);
-                                            } catch (cause) {
-                                                setProviderMessage(cause instanceof Error ? cause.message : "Provider configuration failed.");
-                                            } finally {
-                                                if (credential) credential.value = "";
-                                                providerLock.current = false;
-                                                setProviderBusy(false);
-                                            }
-                                        }}
-                                        style={{
-                                            padding: "10px 12px",
-                                            background: isSelected
-                                                ? "var(--bg-raised)"
-                                                : "var(--bg-surface)",
-                                            border: `1px solid ${isSelected ? "var(--accent-blue-border)" : "var(--line-subtle)"}`,
-                                            borderRadius: "var(--radius-sm)",
-                                            display: "flex",
-                                            flexWrap: "wrap",
-                                            gap: "10px",
-                                            alignItems: "center",
-                                            justifyContent: "space-between",
-                                        }}
-                                    >
-                                        <div>
-                                            <strong
-                                                style={{
-                                                    fontSize: "12px",
-                                                    color: "var(--text-primary)",
-                                                }}
-                                            >
-                                                {p.displayName}
-                                            </strong>
-                                            <span
-                                                className="block text-dim"
-                                                style={{ fontSize: "10.5px" }}
-                                            >
-                                                Model:{" "}
-                                                {p.runtime?.model ||
-                                                    p.model ||
-                                                    "default"}
-                                            </span>
-                                        </div>
-                                        <label>
-                                            Model
-                                            <input name="model" aria-label={`${p.displayName} model`} defaultValue={p.runtime?.model || p.model || ""} required disabled={providerBusy} />
-                                        </label>
-                                        <label>
-                                            API base URL
-                                            <input name="apiBase" type="url" aria-label={`${p.displayName} API base URL`} defaultValue={p.runtime?.apiBase || p.apiBaseUrl || ""} disabled={providerBusy} />
-                                        </label>
-                                        {p.credentialType !== "none" && <label>
-                                            Credential {p.configured ? "(leave blank to keep saved credential)" : ""}
-                                            <input name="credential" aria-label={`${p.displayName} credential`} type="password" autoComplete="off" disabled={providerBusy} />
-                                        </label>}
-                                        <button
-                                            type="submit"
-                                            disabled={providerBusy}
-                                            className={`btn ${isSelected ? "btn-primary" : "btn-secondary"}`}
-                                            style={{
-                                                height: "26px",
-                                                fontSize: "11px",
-                                            }}
-                                        >
-                                            {providerBusy ? "Saving…" : "Save and activate"}
-                                        </button>
-                                    </form>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </Modal>
-            )}
 
             {/* Session Access Token Modal */}
             {auth && (
@@ -2240,6 +2092,149 @@ export default function Workspace() {
                             </button>
                         </div>
                     </form>
+                </Modal>
+            )}
+
+            {/* Model Integrations Modal */}
+            {integrationsOpen && (
+                <Modal
+                    title="Model Integrations"
+                    close={() => setIntegrationsOpen(false)}
+                >
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                        <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                            Install and configure AI SDK model integrations into runtime package directories. Core consumes generic AI SDK models without bundling vendor SDKs.
+                        </p>
+                        {integrationsList.length === 0 ? (
+                            <div style={{ padding: "12px", textAlign: "center", color: "var(--text-muted)" }}>
+                                Loading integrations...
+                            </div>
+                        ) : (
+                            integrationsList.map((item) => (
+                                <div
+                                    key={item.id}
+                                    style={{
+                                        border: "1px solid var(--line-subtle)",
+                                        borderRadius: "var(--radius-md)",
+                                        padding: "14px",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "10px",
+                                    }}
+                                >
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <div>
+                                            <strong style={{ fontSize: "13px", color: "var(--text-primary)" }}>
+                                                {item.displayName}
+                                            </strong>
+                                            <span style={{ marginLeft: "8px", fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                                                {item.packageName}@{item.packageVersion}
+                                            </span>
+                                        </div>
+                                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                                            <span
+                                                style={{
+                                                    fontSize: "10.5px",
+                                                    padding: "2px 8px",
+                                                    borderRadius: "10px",
+                                                    background: item.installed ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
+                                                    color: item.installed ? "#10b981" : "#ef4444",
+                                                }}
+                                            >
+                                                {item.installed ? "Installed" : "Not Installed"}
+                                            </span>
+                                            {item.installed && (
+                                                <span
+                                                    style={{
+                                                        fontSize: "10.5px",
+                                                        padding: "2px 8px",
+                                                        borderRadius: "10px",
+                                                        background: item.configured ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
+                                                        color: item.configured ? "#10b981" : "#f59e0b",
+                                                    }}
+                                                >
+                                                    {item.configured ? "Configured" : "Needs API Key"}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {!item.installed ? (
+                                        <button
+                                            type="button"
+                                            className="btn btn-primary"
+                                            disabled={integrationBusy}
+                                            onClick={() => installIntegrationPkg(item.id)}
+                                            style={{ alignSelf: "flex-start" }}
+                                        >
+                                            ＋ Install {item.displayName}
+                                        </button>
+                                    ) : (
+                                        <form
+                                            onSubmit={(e) => {
+                                                e.preventDefault();
+                                                const form = e.currentTarget;
+                                                const keyInput = form.elements.namedItem("apiKey") as HTMLInputElement;
+                                                const modelInput = form.elements.namedItem("model") as HTMLInputElement;
+                                                configureIntegrationPkg(item.id, keyInput?.value || "", modelInput?.value || "");
+                                            }}
+                                            style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+                                        >
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                                <label style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
+                                                    API Key ({item.id === "gemini" ? "GOOGLE_GENERATIVE_AI_API_KEY" : "API Key"})
+                                                </label>
+                                                <input
+                                                    name="apiKey"
+                                                    type="password"
+                                                    placeholder={item.configured ? "•••••••••••• (configured)" : "Enter API Key"}
+                                                    style={{
+                                                        padding: "6px 8px",
+                                                        background: "var(--bg-input)",
+                                                        border: "1px solid var(--line-subtle)",
+                                                        borderRadius: "var(--radius-sm)",
+                                                        color: "var(--text-primary)",
+                                                        fontSize: "11.5px",
+                                                    }}
+                                                />
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                                <label style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
+                                                    Model Name
+                                                </label>
+                                                <input
+                                                    name="model"
+                                                    type="text"
+                                                    defaultValue={item.id === "gemini" ? "gemini-2.0-flash" : "default"}
+                                                    style={{
+                                                        padding: "6px 8px",
+                                                        background: "var(--bg-input)",
+                                                        border: "1px solid var(--line-subtle)",
+                                                        borderRadius: "var(--radius-sm)",
+                                                        color: "var(--text-primary)",
+                                                        fontSize: "11.5px",
+                                                    }}
+                                                />
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                className="btn btn-secondary"
+                                                disabled={integrationBusy}
+                                                style={{ alignSelf: "flex-start", marginTop: "4px" }}
+                                            >
+                                                Save Settings
+                                            </button>
+                                        </form>
+                                    )}
+                                </div>
+                            ))
+                        )}
+                        {integrationMsg && (
+                            <p style={{ fontSize: "11.5px", color: "var(--text-accent)" }}>
+                                {integrationMsg}
+                            </p>
+                        )}
+                    </div>
                 </Modal>
             )}
         </div>

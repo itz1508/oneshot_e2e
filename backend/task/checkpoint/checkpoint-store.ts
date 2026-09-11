@@ -31,7 +31,7 @@ function safeRunId(runId: string): string {
 
 /**
  * Per-run JSON checkpoint store.
- * Only writes on WORKFLOW-scope COMPLETE events — support and ADK events
+ * Only writes on WORKFLOW-scope COMPLETE events — support and sandbox events
  * do not update the canonical checkpoint.
  */
 export class CheckpointStore {

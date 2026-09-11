@@ -13,6 +13,6 @@
     "declaration": false,
     "sourceMap": false
   },
-  "include": ["app/bootstrap/readme.ts", "backend/**/*.ts", "app/web/cloud/**/*.ts"],
+  "include": ["backend/**/*.ts"],
   "exclude": ["dist/**", "node_modules/**"]
 }

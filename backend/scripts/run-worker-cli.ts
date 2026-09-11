@@ -21,14 +21,12 @@ import { FileArtifactStore } from "../runtime/artifact-store.js";
 import { AppendOnlyProcessingEventStore } from "../task/event/event-store.js";
 import { CheckpointStore } from "../task/checkpoint/checkpoint-store.js";
 import { TaskManagement } from "../task/task-management.js";
-import { ProviderManager } from "../../app/web/cloud/provider-manager.js";
 import { BullMQRunQueue, RUN_QUEUE_NAME, type RunQueueDeps } from "../runtime/queue.js";
 import {
   getRuntimePaths,
   ensureRuntimeDirectories,
 } from "../runtime/runtime-config.js";
 import { WorkflowRuntime } from "../runtime/workflow-runtime.js";
-import { createDynamicDependencyFactory } from "../workflow/adk/dynamic-dependencies.js";
 import { ResearcherWorkflow } from "../agents/researcher/workflow.js";
 import { PlannerWorkflow } from "../agents/planner/workflow.js";
 import { RefactorWorkflow } from "../agents/refactor/workflow.js";
@@ -84,10 +82,6 @@ async function main() {
   const contracts = contractsSkill.underlying as CanonicalContractSkill;
   await contracts.verifyStatic();
 
-  const providerManager = new ProviderManager({
-  projectRoot,
-  runtimePaths,
-});
   const deterministic = new DeterministicValidationRuntime(validationLanes);
   const sandbox = new SandboxService(
     contracts,
@@ -102,22 +96,32 @@ async function main() {
     runs,
     events,
     projectRoot,
-    resolveProvider: async (providerId, _ev, _runId, captured) =>
-      providerManager.resolveForRun(providerId, captured),
-    createRuntime: async (provider) => {
-      const bindDependencies = createDynamicDependencyFactory({
-        projectRoot,
-        events,
-        contracts,
-        sandbox,
-        triple: new TripleValidationWorkflow(deterministic, contracts),
-        provider,
-      });
+    createRuntime: async () => {
+      const triple = new TripleValidationWorkflow(deterministic, contracts);
+      const planner = new PlannerWorkflow(contracts);
+      const refactor = new RefactorWorkflow(contracts);
+      const gapper = new GapAnalysisWorkflow(contracts);
+      const evaluator = new EvaluationWorkflow(contracts);
+      const confirmation = new ConfirmationWorkflow(contracts);
+      const hash = new HashWorkflow(contracts);
+      const builder = new BuilderWorkflow(sandbox);
+      const researcher = new ResearcherWorkflow(contracts, undefined, projectRoot);
+
       return new WorkflowRuntime(
         events,
         runs,
         new FileArtifactStore(runtimePaths.runs),
-        bindDependencies,
+        async () => ({
+          researcher,
+          planner,
+          refactor,
+          gapper,
+          evaluator,
+          triple,
+          confirmation,
+          hash,
+          builder,
+        }),
       );
     },
   };

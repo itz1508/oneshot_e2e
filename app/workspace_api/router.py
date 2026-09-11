@@ -30,13 +30,14 @@ from workspace_api.models import (
     ModelProvider,
     ProviderKind,
 )
-from web.cloud.workspace.providers import (
+from workspace_api.clients import (
     AnthropicClient,
     GeminiClient,
     ModelRequest,
     ModelResult,
     OpenAICompatibleClient,
     ProviderClient,
+    ProviderMessage,
 )
 from workspace_api.security import SecretCipher
 

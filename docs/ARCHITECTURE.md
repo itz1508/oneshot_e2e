@@ -20,7 +20,7 @@ flowchart LR
     subgraph Node["Node backend (TypeScript, ESM)"]
         SRV["HTTP server, routing, security, path policy (backend/server)"]
         RT["Runtime state (backend/runtime): RunRepository · FileArtifactStore · BuildReviewService · PlanReviewService"]
-        WF["Workflow (backend/workflow): canonical transitions + ADK graph (SequentialAgent · LoopAgent · ParallelAgent)"]
+        WF["Workflow (backend/workflow): canonical transitions + native workflow graph"]
         AG["Agents (backend/agents): Researcher · Planner · Refactor · Gap Analysis · Evaluation · Builder"]
         PIP["Pipeline (backend/pipeline): stage queues · checkpoints · recovery · review confirmation"]
         SBX["Sandbox (backend/sandbox): HardenedProcessRunner · ContainerSandboxRunner"]
@@ -83,9 +83,9 @@ flowchart TD
     ART --> G1["🛑 HUMAN GATE 1 — Research Review<br/>edit sections · request more research · ACCEPT"]
     G1 -- "Accept" --> PL["2 · Planner (LLM) → audit_id"]
     PL --> RF["3 · Refactor (LLM) → same logical plan_id"]
-    RF --> GA["4 · Gap Analysis (LLM, ADK LoopAgent: fix → recheck → repeat) → gap_0 + plan_id"]
+    RF --> GA["4 · Gap Analysis (LLM, fix → recheck loop) → gap_0 + plan_id"]
     GA --> EV["5 · Evaluation (LLM) → plan_id"]
-    EV --> T{"Triple Validation — deterministic<br/>independent lanes (ADK ParallelAgent)"}
+    EV --> T{"Triple Validation — deterministic<br/>independent parallel lanes"}
     T -- "Schema, Fixture, Goal all VALID" --> CONF["CONFIRMED immutable package"]
     T -- "NOT_VALID (eligible)" --> REF["Refinement (up to 3 iterations)"] --> GA
     T -- "Terminal / iterations exhausted" --> F["FAILED"]

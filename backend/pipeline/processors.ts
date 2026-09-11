@@ -1,4 +1,5 @@
 import type { PipelineStage, StageProgress } from "./types.js";
+import type { ExecutionStatus } from "../contracts/schema/types.js";
 import type { PipelineContext, saveArtifact } from "./context.js";
 import {
   loadAudit,
@@ -8,7 +9,6 @@ import {
   loadHashProof,
   loadPlan,
   loadPrompt,
-  loadProvider,
   loadResearchBundle,
   loadTripleValidation,
 } from "./context.js";
@@ -22,7 +22,9 @@ import type { BuilderWorkflow } from "../agents/builder/workflow.js";
 import type { TripleValidationWorkflow } from "../workflow/triple-validation.js";
 import type { ConfirmationWorkflow } from "../workflow/confirmation.js";
 import type { HashWorkflow } from "../workflow/hash.js";
-import { ProviderManager } from "../../app/web/cloud/provider-manager.js";
+import { validationFeedback } from "../agents/gap-analysis/tool/validation-feedback.js";
+import type { GapFinding } from "../agents/gap-analysis/tool/coverage.js";
+
 import type { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 import type {
   PythonReasoner,
@@ -34,7 +36,6 @@ import { BuildReviewService } from "../runtime/build-review.js";
 
 export interface StageServices {
   events: ProcessingEventBus;
-  providerManager: ProviderManager;
   contracts: CanonicalContractSkill;
   planner: PlannerWorkflow;
   refactor: RefactorWorkflow;
@@ -50,6 +51,7 @@ export interface StageServices {
    * Python as a canary second opinion without letting it fail the pipeline.
    */
   pythonReasoner?: PythonReasoner;
+  projectRoot?: string;
 }
 
 const CANONICAL_NAME: Record<PipelineStage, string> = {
@@ -65,20 +67,21 @@ const CANONICAL_NAME: Record<PipelineStage, string> = {
   finalize: "Finalize",
 };
 
-export function emitStage(
+function emitStage(
   ctx: PipelineContext,
   services: StageServices,
   stage: PipelineStage,
-  state: "Running" | "Completed",
-  extra: Parameters<ProcessingEventBus["emit"]>[3] = {},
+  status: ExecutionStatus,
+  extra: Record<string, unknown> = {},
 ): void {
-  services.events.emit(ctx.runId, CANONICAL_NAME[stage], state, {
+  const processor = CANONICAL_NAME[stage];
+  services.events.emit(ctx.runId, processor, status, {
     scope: "WORKFLOW",
     ...extra,
   });
 }
 
-export async function reportProgress(
+async function reportProgress(
   progress: (value: StageProgress) => Promise<void> | void,
   stage: PipelineStage,
   percent: number,
@@ -106,12 +109,11 @@ export async function runResearcherStage(
   emitStage(ctx, services, "researcher", "Running");
 
   const prompt = await loadPrompt(ctx);
-  const captured = await loadProvider(ctx);
-  const provider = await services.providerManager.resolveForRun(
-    captured.id,
-    captured,
+  const researcher = new ResearcherWorkflow(
+    services.contracts,
+    undefined,
+    services.projectRoot,
   );
-  const researcher = new ResearcherWorkflow(provider, services.contracts);
   const bundle = await researcher.run(prompt, ctx.runId);
 
   const researchRevision = ctx.stageIteration ?? 0;
@@ -216,7 +218,27 @@ export async function runGapAnalysisStage(
 
   const bundle = await loadResearchBundle(ctx);
   const plan = await loadPlan(ctx);
-  const { plan: updatedPlan, gap } = await services.gapper.run(bundle, plan);
+
+  let seedFindings: GapFinding[] | undefined;
+  if ((ctx.stageIteration ?? 0) > 0) {
+    try {
+      const triple = await loadTripleValidation(ctx);
+      if (!triple.all_valid) {
+        const feedback = validationFeedback(bundle, plan, triple);
+        if (feedback.findings.length > 0) {
+          seedFindings = feedback.findings;
+        }
+      }
+    } catch {
+      // No triple validation artifact yet, proceed with standard inspect
+    }
+  }
+
+  const { plan: updatedPlan, gap } = await services.gapper.run(
+    bundle,
+    plan,
+    seedFindings,
+  );
 
   await services.saveArtifact(ctx, "plan", updatedPlan);
   await services.saveArtifact(ctx, "gap_analysis", gap);

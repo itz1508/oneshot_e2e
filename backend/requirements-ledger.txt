@@ -10,12 +10,12 @@ CANONICAL SOURCES:
   - schema/common.schema.json: validation_result (VALID/NOT_VALID), evidence_ref, root_cause, workflow_result (PASSED/ROOT_CAUSE)
   - Schema workflow: Prompt → Researcher → Planner → Refactor → Gap Analysis → Evaluation → Triple Validation → CONFIRMED → Builder → Hash → DONE
 
-RESPONSIBILITY: Minimal backend foundation for HTTP server, runtime/run management, canonical contracts, event/state handling, workflow orchestration, artifact persistence, Provider boundary, validation, hash verification
+RESPONSIBILITY: Minimal backend foundation for HTTP server, runtime/run management, canonical contracts, event/state handling, workflow orchestration, artifact persistence, Integration boundary, validation, hash verification
 
 CANONICAL_INPUT:
   - Prompt text from HTTP request
   - Plan ID from request or workflow context
-  - Provider configuration (researcher provider)
+  - Integration configuration (model integration)
 
 CANONICAL_OUTPUT:
   - Run state with events

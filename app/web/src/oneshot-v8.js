@@ -117,7 +117,7 @@ function setConnection(kind, detail = "") {
 async function checkHealth() {
     try {
         const data = await apiJson("/api/health");
-        const detail = [data.mode, data.provider].filter(Boolean).join(" · ");
+        const detail = data.mode || "";
         setConnection(data.status === "ok" ? "connected" : "degraded", detail);
     } catch (e) {
         setConnection("disconnected", e.message);

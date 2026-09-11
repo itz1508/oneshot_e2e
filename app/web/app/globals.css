@@ -427,43 +427,6 @@ summary:focus-visible {
   flex: 0 0 auto;
 }
 
-.provider-chip {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  height: 28px;
-  padding: 0 10px;
-  background: var(--bg-surface);
-  border: 1px solid var(--line-subtle);
-  border-radius: var(--radius-md);
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.provider-chip:hover {
-  background: var(--bg-hover);
-  border-color: var(--line-light);
-  color: var(--text-primary);
-}
-
-.provider-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent-blue);
-  box-shadow: 0 0 5px var(--accent-blue);
-}
-
-.provider-dot.anthropic {
-  background: var(--accent-emerald);
-  box-shadow: 0 0 5px var(--accent-emerald);
-}
-
-.provider-dot.openai {
-  background: var(--accent-purple);
-  box-shadow: 0 0 5px var(--accent-purple);
-}
 
 .connection-pill {
   display: flex;
@@ -1491,17 +1454,6 @@ summary:focus-visible {
   background: rgba(0, 0, 0, 0.1);
 }
 
-.composer-provider-btn {
-  font-size: 11px;
-  color: var(--text-muted);
-  padding: 3px 8px;
-  border-radius: var(--radius-xs);
-}
-
-.composer-provider-btn:hover {
-  color: var(--text-primary);
-  background: var(--bg-hover);
-}
 
 .composer-send {
   width: 28px;
@@ -2148,7 +2100,6 @@ summary:focus-visible {
     display: none;
   }
   .target-chip,
-  .provider-chip,
   .connection-pill,
   .readiness-bar {
     display: none;

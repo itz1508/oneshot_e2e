@@ -1,6 +1,5 @@
 annotated-types==0.7.0
 attrs==26.1.0
-google-adk==2.8.0
 jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
 litellm==1.99.0

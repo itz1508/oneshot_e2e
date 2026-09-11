@@ -23,7 +23,7 @@ export const CANONICAL_SKILL_TOOLS = [
 export const TASK_RUNTIME_SKILL_TOOLS = [
   "project_run",
   "audit_run",
-  "project_adk_graph",
+  "project_workflow_graph",
   "project_authority_graph",
 ] as const;
 
@@ -80,7 +80,7 @@ const BUILTIN_SKILLS: SkillDescriptor[] = [
       "processing event replay",
       "checkpoint projection",
       "audit projection",
-      "ADK provider graph projection",
+      "OneShot workflow graph projection",
     ],
     tools: TASK_RUNTIME_SKILL_TOOLS,
     runtime_type: "typescript",

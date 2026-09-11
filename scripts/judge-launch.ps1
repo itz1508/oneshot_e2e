@@ -110,7 +110,7 @@ while ((Get-Date) -lt $Deadline) {
         $resp = Invoke-RestMethod -Uri $HealthUrl -Headers $headers -TimeoutSec 2 -ErrorAction Stop
         if ($resp.status -eq "ok") {
             $Healthy = $true
-            Write-Host "Health check PASSED: mode=$($resp.mode), provider=$($resp.provider)"
+            Write-Host "Health check PASSED: mode=$($resp.mode), integration=$($resp.integration)"
             break
         }
     } catch {

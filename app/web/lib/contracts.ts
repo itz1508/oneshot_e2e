@@ -107,13 +107,3 @@ export type Mutation = {
     sha256?: string;
     previous_sha256?: string;
 };
-export type Provider = {
-    id: string;
-    displayName: string;
-    configured: boolean;
-    credentialType: string;
-    credentialSource: string;
-    model?: string;
-    runtime?: { model?: string; apiBase?: string };
-    apiBaseUrl?: string;
-};

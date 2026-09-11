@@ -12,7 +12,6 @@
     "oneshot": "node scripts/oneshot.mjs",
     "dev": "node --env-file=app/env/.env dist/backend/index.js",
     "dev:worker": "node --env-file=app/env/.env dist/backend/scripts/run-pipeline-worker.js",
-    "agent:review": "npm run build:backend && node dist/app/bootstrap/readme.js",
     "build": "tsc -p tsconfig.json && npm --prefix app/web run build",
     "start": "node dist/backend/index.js",
     "test": "npm run build:backend && tsc -p tsconfig.test.json && node --test --test-concurrency=1 --test-force-exit dist/backend/tests/ts/*.test.js",
@@ -38,10 +37,6 @@
     "test:pipeline:refinement-recovery": "node backend/scripts/test-pipeline-refinement-recovery.mjs"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.52",
-    "@ai-sdk/google": "^4.0.67",
-    "@ai-sdk/openai": "^4.0.65",
-    "@google/adk": "2.0.0",
     "ai": "^7.0.97",
     "ajv": "^8.20.0",
     "bullmq": "^6.3.4",
@@ -49,10 +44,7 @@
   },
   "overrides": {
     "@opentelemetry/core": "^2.8.0",
-    "adm-zip": "^0.6.0",
-    "gaxios": {
-      "uuid": "^11.1.1"
-    }
+    "adm-zip": "^0.6.0"
   },
   "devDependencies": {
     "@types/node": "file:app/vendor/npm/types-node-24.0.4.tgz",

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { harness, prompt } from "./harness.js";
 
-test("canonical runtime executes connected ADK nodes in workflow order", async () => {
+test("canonical runtime executes stages in workflow order", async () => {
   const h = await harness("agent-pipeline");
   const runId = "agent-pipeline-run";
   h.runs.create(runId);

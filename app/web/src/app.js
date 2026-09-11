@@ -7,7 +7,7 @@ import { createActiveRunPanel } from "/active-run-panel.js";
 import { workflowTraceStore } from "/workflow-trace.js";
 import { createWorkflowTracePanel } from "/workflow-trace-panel.js";
 import { buildTerminalMessage } from "/terminal-message.js";
-import { createProviderPanel } from "/providers-panel.js";
+
 const $ = (s) => document.querySelector(s),
     $$ = (s) => [...document.querySelectorAll(s)];
 import {
@@ -139,20 +139,7 @@ $("#auth-form").onsubmit = async (e) => {
 // --- Locked state-adaptive modules (semantic state, live lane, TODO hierarchy, visual settings) ---
 const atmosphere = createRunAtmosphere($("#ambient-particles"));
 const runPanel = createActiveRunPanel();
-const providerPanel = createProviderPanel({
-    apiFetch,
-    toast,
-    onChanged: async () => {
-        const response = await apiFetch("/api/health");
-        if (response.ok) {
-            const health = await response.json();
-            setConnection(
-                "connected",
-                [health.mode, health.provider].filter(Boolean).join(" · "),
-            );
-        }
-    },
-});
+
 const consoleUI = createConsoleInteractions({
     apiFetch,
     toast,
@@ -232,8 +219,7 @@ function normalizeConversation(c) {
 function openDrawer(name) {
     state.drawer = name;
     const t = name === "tasks",
-        c = name === "context",
-        p = name === "providers";
+        c = name === "context";
     $("#status-drawer").classList.toggle("open", name === "status");
     $("#status-button").classList.toggle("active", name === "status");
     $("#status-button").setAttribute(
@@ -242,21 +228,16 @@ function openDrawer(name) {
     );
     $("#tasks").classList.toggle("open", t);
     $("#context").classList.toggle("open", c);
-    $("#providers-drawer").classList.toggle("open", p);
     $("#tasks-button").classList.toggle("active", t);
     $("#context-button").classList.toggle("active", c);
-    $("#providers-button").classList.toggle("active", p);
-    $("#providers-button").setAttribute("aria-expanded", String(p));
     $("#app").classList.toggle("drawer-open", !!name);
     syncLayout();
 }
 function closeDrawers() {
-    providerPanel.clearSecrets();
     openDrawer(null);
 }
 $("#status-button").onclick = () =>
     state.drawer === "status" ? closeDrawers() : openDrawer("status");
-$("#provider-trigger").onclick = () => openDrawer("providers");
 document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeDrawers();
 });
@@ -293,8 +274,7 @@ $("#tasks-button").onclick = () =>
     state.drawer === "tasks" ? closeDrawers() : openDrawer("tasks");
 $("#context-button").onclick = () =>
     state.drawer === "context" ? closeDrawers() : openDrawer("context");
-$("#providers-button").onclick = () =>
-    state.drawer === "providers" ? closeDrawers() : openDrawer("providers");
+
 $$("[data-close]").forEach((b) => (b.onclick = closeDrawers));
 function syncSide() {
     state.side = !$("#app").classList.contains("sidebar-off");
@@ -1149,7 +1129,7 @@ async function bootstrap() {
         const h = await r.json();
         setConnection(
             "connected",
-            [h.mode, h.provider].filter(Boolean).join(" · "),
+            h.mode || "",
         );
     } catch (e) {
         if (!String(e).includes("Authentication"))
@@ -1177,7 +1157,6 @@ async function bootstrap() {
         }
     }
     await restoreRun();
-    await providerPanel.refreshAndRender();
     if (state.runId)
         setReadiness(
             0,

@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 
 from workspace_api.errors import QuotaExceededError
 from workspace_api.models import (
+    MessageRole,
     ModelConfiguration,
     ModelProvider,
     Subscription,
@@ -27,7 +28,7 @@ from workspace_api.models import (
     UsageEvent,
     UsageStatus,
 )
-from web.cloud.workspace.providers import ModelResult
+from workspace_api.clients import ModelResult
 
 
 def _period_start(now: datetime) -> datetime:

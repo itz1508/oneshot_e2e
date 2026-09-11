@@ -6,9 +6,9 @@ import { ProcessingEventBus } from "../../runtime/event-bus.js";
 test("authority trace resolves owner responsibility skill tool capability and artifacts", () => {
   const bus = new ProcessingEventBus();
   bus.emit("a1", "Researcher", "Running");
-  bus.emit("a1", "ADK:researcher-provider", "Running", { scope: "ADK" });
-  bus.emit("a1", "ADK:researcher-provider", "Completed", {
-    scope: "ADK",
+  bus.emit("a1", "Integration:model", "Running", { scope: "SUPPORT" });
+  bus.emit("a1", "Integration:model", "Completed", {
+    scope: "SUPPORT",
     artifact_id: "draft:1",
   });
   bus.emit("a1", "Researcher", "Completed", {
@@ -23,7 +23,7 @@ test("authority trace resolves owner responsibility skill tool capability and ar
   assert.equal(r?.skill, "researcher");
   assert.equal(r?.tool, "evidence-collector");
   assert.equal(r?.artifact_id, "researcher:1");
-  const a = g.nodes.find((n) => n.id === "ADK:researcher-provider");
-  assert.equal(a?.capability, "Google ADK");
+  const a = g.nodes.find((n) => n.id === "Integration:model");
+  assert.equal(a?.capability, "AI SDK Integration Model");
   assert.equal(a?.artifact_id, "draft:1");
 });

@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PlanReviewService } from "../../runtime/plan-review.js";
 import { FileArtifactStore } from "../../runtime/artifact-store.js";
-import { FixtureResearchProvider } from "../../../app/web/cloud/provider/fixture-provider.js";
+import { createFixtureResearchBundle } from "./fixture-helper.js";
 import { harness, prompt } from "./harness.js";
 import { startHttpServer } from "../../server/http-server.js";
 import { IntentCollectionService } from "../../intent/intent-collection.js";
@@ -18,7 +18,7 @@ test("review persists decisions and validates identities, empty edits and stale 
     const store = new FileArtifactStore(dir);
     const producer = new PlanReviewService(store);
     const consumer = new PlanReviewService(store);
-    const bundle = await new FixtureResearchProvider().research(prompt('review-unit'), 'review-unit');
+    const bundle = await createFixtureResearchBundle(prompt('review-unit'), 'review-unit');
     assert.equal(await producer.open('automatic', bundle), undefined);
     await producer.enable('review-unit');
     const draft = (await producer.open('review-unit', bundle))!;

@@ -31,7 +31,7 @@ const CATALOG: Record<
     responsibility: "research and evidence synthesis",
     skill: "researcher",
     tool: "evidence-collector",
-    capability: "ResearchProvider",
+    capability: "Researcher",
     input: "Prompt(id)",
     output: "Researcher(id)",
   },
@@ -57,10 +57,10 @@ const CATALOG: Record<
     authority: GapAnalysisAgent.id,
     owns: GapAnalysisAgent.owns,
     responsibility:
-      "identify/correct remaining plan gaps through ADK LoopAgent",
+      "identify/correct remaining plan gaps through native refinement loop",
     skill: "gap-analysis",
     tool: "coverage",
-    capability: "Google ADK LoopAgent",
+    capability: "Native Refinement Loop",
     input: "plan_id",
     output: "gap_0 + plan_id",
   },
@@ -78,7 +78,7 @@ const CATALOG: Record<
     responsibility: "deterministic schema proof",
     skill: "canonical-contracts",
     tool: "validate_schema",
-    capability: "ParallelAgent branch",
+    capability: "Parallel validator branch",
     input: "schema_id + plan_id",
     output: "VALID | NOT_VALID",
   },
@@ -87,7 +87,7 @@ const CATALOG: Record<
     responsibility: "deterministic fixture proof",
     skill: "canonical-contracts",
     tool: "run_fixture",
-    capability: "ParallelAgent branch",
+    capability: "Parallel validator branch",
     input: "fixture_id + plan_id",
     output: "VALID | NOT_VALID",
   },
@@ -96,7 +96,7 @@ const CATALOG: Record<
     responsibility: "deterministic goal proof",
     skill: "canonical-contracts",
     tool: "validate_references",
-    capability: "ParallelAgent branch",
+    capability: "Parallel validator branch",
     input: "goal_id + plan_id",
     output: "VALID | NOT_VALID",
   },
@@ -104,7 +104,7 @@ const CATALOG: Record<
     authority: "Validator",
     responsibility: "join independent Schema, Fixture, and Goal proofs",
     skill: "canonical-contracts",
-    capability: "Google ADK ParallelAgent + deterministic gate",
+    capability: "Parallel validators + deterministic gate",
     input: "Schema + Fixture + Goal validation results",
     output: "VALID | NOT_VALID",
   },
@@ -149,57 +149,14 @@ const CATALOG: Record<
     output: "PASSED | ROOT_CAUSE",
   },
 
-  // Researcher provider ADK subgraph. This remains distinct from the new
-  // top-level canonical ADK workflow authority.
-  "ADK:researcher-provider": {
+  // Optional Integration model invocation
+  "Integration:model": {
     authority: "Researcher",
-    responsibility: "provider invocation",
+    responsibility: "model capability invocation",
     skill: "researcher",
-    capability: "Google ADK",
+    capability: "AI SDK Integration Model",
     input: "Prompt(id) + evidence",
-    output: "research draft",
-  },
-  "ADK:cache": {
-    authority: "Researcher",
-    responsibility: "non-canonical draft acceleration",
-    capability: "Redis/in-memory cache",
-    input: "semantic research request",
-    output: "cached draft | miss",
-  },
-  "ADK:adk-runner": {
-    authority: "Researcher",
-    responsibility: "model-agent execution",
-    capability: "Google ADK LlmAgent/Runner",
-    input: "research request",
-    output: "model request",
-  },
-  "ADK:litellm": {
-    authority: "Researcher",
-    responsibility: "model adapter",
-    capability: "LiteLLM ollama_chat",
-    input: "ADK model request",
-    output: "Ollama request",
-  },
-  "ADK:ollama": {
-    authority: "Researcher",
-    responsibility: "local model serving",
-    capability: "Ollama",
-    input: "model request",
-    output: "Gemma inference",
-  },
-  "ADK:gemma2": {
-    authority: "Researcher",
-    responsibility: "local inference",
-    capability: "Gemma 2 9B",
-    input: "structured research request",
-    output: "structured response",
-  },
-  "ADK:research-draft": {
-    authority: "Researcher",
-    responsibility: "validated provider draft",
-    capability: "Pydantic structured output",
-    input: "model/cache result",
-    output: "research draft",
+    output: "structured draft",
   },
 
   // Sandbox execution is part of Builder's canonical execution responsibility.
@@ -248,7 +205,7 @@ export function projectAuthorityGraph(events: ProcessingEvent[] = []) {
     return {
       id,
       label: id
-        .replace(/^ADK:/, "ADK / ")
+        .replace(/^Integration:/, "Integration / ")
         .replace(/^ExternalSandbox:/, "Sandbox / "),
       ...catalog,
       state: (event?.execution_status ?? "Pending") as AuthorityNode["state"],
@@ -277,20 +234,8 @@ export function projectAuthorityGraph(events: ProcessingEvent[] = []) {
     ["ExternalSandbox:evidence", "ExternalSandbox:hash-verification"],
     ["ExternalSandbox:hash-verification", "Hash"],
     ["Hash", "Done"],
+    ["Researcher", "Integration:model"],
   ];
-
-  const researcherProvider = [
-    "ADK:researcher-provider",
-    "ADK:cache",
-    "ADK:adk-runner",
-    "ADK:litellm",
-    "ADK:ollama",
-    "ADK:gemma2",
-    "ADK:research-draft",
-  ];
-  for (let i = 0; i < researcherProvider.length - 1; i += 1) {
-    edges.push([researcherProvider[i], researcherProvider[i + 1]]);
-  }
 
   const unresolved = [...new Set(edges.flat().filter((id) => !ids.has(id)))];
 

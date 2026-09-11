@@ -12,19 +12,12 @@ Third-Party Software Notice
 Third-party software remains governed by its own upstream license terms.
 Those licenses do not apply to OneShot-owned material.
 
-1. Google ADK for TypeScript (@google/adk)
-   - Copyright Google LLC
-   - Licensed under the Apache License, Version 2.0
-   - Used by OneShot workflow orchestration.
-   - License copy:
-     app/legal/third-party/Google-ADK-Apache-2.0.txt
-
-2. LiteLLM (litellm)
+1. LiteLLM (litellm)
    - Copyright (c) BerriAI
    - Governed by its applicable upstream license.
    - Manifest: app/requirements/base.txt
 
-3. Redis Client (redis-py)
+2. Redis Client (redis-py)
    - Copyright (c) Redis Ltd.
    - Governed by its applicable upstream license.
    - Manifest: app/requirements/workspace-api.txt

@@ -14,9 +14,6 @@ import { ValidationLanePool } from "./validation/validation-lane-pool.js";
 import { DeterministicValidationRuntime } from "./validation/deterministic-validation.js";
 import { CanonicalContractSkill } from "./skills/canonical-contract-skill.js";
 import { createSkillSystem } from "./skills/bootstrap.js";
-import { ProviderManager } from "../app/web/cloud/provider-manager.js";
-import type { ResearchProvider } from "../app/web/cloud/provider.js";
-import { createDynamicDependencyFactory } from "./workflow/adk/dynamic-dependencies.js";
 import {
   BullMQRunQueue,
   executeRunJob,
@@ -98,8 +95,8 @@ events.observe((e) => {
 
 // --- Validation & Contracts (composed through the Reusable Skill subsystem) ---
 // Canonical contract operations keep their own bridge. Triple Validation has
-// three separate Python lanes; the ADK dynamic node starts all three runNode()
-// calls before awaiting Promise.all.
+// three separate Python lanes; the native WorkflowRuntime starts all three
+// in parallel via Promise.all.
 const bridge = new PythonBridge();
 const validationLanes = new ValidationLanePool();
 const skills = createSkillSystem();
@@ -119,21 +116,8 @@ if (!(contracts instanceof CanonicalContractSkill)) {
 }
 await contracts.verifyStatic();
 
-// --- Research Provider (web-managed selection via ProviderManager) ---
-const providerManager = new ProviderManager({
-  projectRoot,
-  events,
-  catalogPath: resolve(projectRoot, "app/web/cloud/providers.json"),
-  runtimePaths: runtimePaths,
-});
-
-
-// --- Runtime Info (mode + provider name for health endpoint / UI) ---
-const runtimeMode = providerManager.mode;
-// Resolve the public provider name from the ProviderManager, NOT the
-// implementation class name. Returns "<default>" when unconfigured.
-const activeProviderId = providerManager.runtimeConfig().activeProvider || "sample";
-const publicProviderName = providerManager.publicNameFor(activeProviderId);
+// --- Runtime Info (mode for health endpoint / UI) ---
+const runtimeMode = (process.env.ONESHOT_MODE || "standalone").trim() || "standalone";
 
 // --- Deterministic Triple Validation ---
 const deterministic = new DeterministicValidationRuntime(validationLanes);
@@ -150,8 +134,6 @@ const sandbox = new SandboxService(
 );
 
 // --- Agent workflow instances used by the per-stage pipeline ---
-// ResearcherWorkflow is created per-run inside the researcher stage because
-// provider/model selection is bound per job via ProviderManager.
 const artifactStore = new FileArtifactStore(runtimePaths.runs);
 const planner = new PlannerWorkflow(contracts);
 const refactor = new RefactorWorkflow(contracts);
@@ -165,7 +147,6 @@ const pythonReasoner = createPythonReasoner();
 
 const stageServices: StageServices = {
   events,
-  providerManager,
   contracts,
   planner,
   refactor,
@@ -179,19 +160,17 @@ const stageServices: StageServices = {
   pythonReasoner,
 };
 
-// --- Google ADK Dynamic Workflow Runtime (legacy inline fallback) ---
-// Kept so the server can still boot and run jobs in-process when Redis is
-// unavailable. The per-stage BullMQ pipeline is the primary execution path.
-const bindDependencies = createDynamicDependencyFactory({
-  projectRoot,
-  events,
-  contracts,
-  sandbox,
+// --- Native OneShot Workflow Runtime ---
+const bindDependencies = async () => ({
+  researcher: new ResearcherWorkflow(contracts, undefined, projectRoot),
+  planner,
+  refactor,
+  gapper,
+  evaluator,
   triple,
-  provider: {
-    ready: async () => ({ ready: false, provider: "<default>", models: [] }),
-    research: async () => { throw new Error("Per-run provider binding required"); },
-  },
+  confirmation,
+  hash,
+  builder,
 });
 const runtime = new WorkflowRuntime(
   events,
@@ -275,12 +254,12 @@ const queueDeps: RunQueueDeps = {
   runs,
   events,
   projectRoot,
-  resolveProvider: async (providerId, _ev, _runId, captured) =>
-    providerManager.resolveForRun(providerId, captured),
-  createRuntime: async (provider) =>
+  createRuntime: async () =>
     new WorkflowRuntime(
-      events, runs, artifactStore,
-      createDynamicDependencyFactory({ projectRoot, events, contracts, sandbox, triple, provider }),
+      events,
+      runs,
+      artifactStore,
+      bindDependencies,
     ),
 };
 const runQueue = new BullMQRunQueue(RUN_QUEUE_NAME, queueDeps, {
@@ -297,10 +276,9 @@ try {
   );
 }
 
-// --- Runtime Info (mode + provider name for health endpoint / UI) ---
+// --- Runtime Info (mode for health endpoint / UI) ---
 const runtimeInfo: RuntimeInfo = {
   mode: runtimeMode,
-  provider: publicProviderName,
   queue: queueReady || pipelineReady,
 };
 
@@ -366,7 +344,6 @@ const server = await startHttpServer(
       : undefined,
   },
   runQueue,
-  providerManager,
   queueReady,
 );
 
@@ -374,7 +351,7 @@ const address = server.address();
 const port =
   typeof address === "object" && address ? address.port : process.env.PORT;
 console.log(
-  `ONESHOT_SERVER_READY port=${port} mode=${runtimeInfo.mode} provider=${runtimeInfo.provider}`,
+  `ONESHOT_SERVER_READY port=${port} mode=${runtimeInfo.mode}`,
 );
 
 // --- Graceful shutdown ---
@@ -387,7 +364,6 @@ const shutdown = async () => {
     }
     try { await runQueue.close(); } catch { /* ignore */ }
 
-    providerManager.close();
     validationLanes.close();
     bridge.close();
     process.exit(0);

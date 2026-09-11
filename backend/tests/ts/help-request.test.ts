@@ -1,20 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";
-import type { ResearchProvider } from "../../../app/web/cloud/provider.js";
 import { WorkflowInformationRequiredError } from "../../core/information-required-error.js";
 import { harness, prompt } from "./harness.js";
 
-class NeedUserInfo implements ResearchProvider {
-  async ready() {
-    return {
-      ready: true,
-      provider: "test-need-user-info",
-      models: [],
-    };
-  }
+import type { StructuredResearchDraft } from "../../agents/researcher/structured-draft.js";
 
-  async research(_p: Prompt, runId: string): Promise<ResearchBundle> {
+class NeedUserInfo {
+  async generateDraft(_p: Prompt): Promise<StructuredResearchDraft> {
     throw new WorkflowInformationRequiredError(
       {
         issue: "Additional information required",
@@ -22,7 +15,7 @@ class NeedUserInfo implements ResearchProvider {
         actual: "Target environment was not supplied",
         evidence_ids: [],
         required_correction: "Ask user for target environment",
-        recheck_target: runId,
+        recheck_target: "run:need-help",
       },
       {
         request_id: "help:test",

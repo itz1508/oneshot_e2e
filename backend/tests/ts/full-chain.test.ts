@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { harness, prompt } from "./harness.js";
 
-test("full canonical ADK chain reaches DONE through Builder and sandbox integrity proof", async () => {
+test("full canonical workflow chain reaches DONE through Builder and sandbox integrity proof", async () => {
   const h = await harness("full-chain");
   const runId = "test-full-chain";
   h.runs.create(runId);

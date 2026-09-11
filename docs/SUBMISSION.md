@@ -27,10 +27,10 @@ Analysis, Evaluation, Builder — researches, plans, and validates it; two
 mandatory human gates (Research Review and Build Ready) keep you in control;
 and a cryptographic hash binds exactly what you approved to exactly what gets
 executed in a sandbox: the run only succeeds when `HASH == hash_sandbox`. It
-runs entirely on your machine: a Next.js UI served by a Node backend, Google
-ADK TypeScript orchestration (`SequentialAgent`, `LoopAgent`,
-`ParallelAgent`), BullMQ/Redis durable queues with an inline fallback,
-deterministic Python validators, and hardened process/container sandboxes.
+runs entirely on your machine: a Next.js UI served by a Node backend, a native
+durable workflow runtime (`backend/workflow` + `backend/runtime`), BullMQ/Redis
+durable queues with an inline fallback, deterministic Python validators, and
+hardened process/container sandboxes.
 
 **Who it's for.** (a) Developers and teams who want autonomous code
 generation they can audit and trust, not just watch; (b) teams adopting AI
@@ -75,7 +75,7 @@ reproduce the demo in minutes with `npm run demo`.
    form and the README.
 3. ⬜ GitHub → repo **About ⚙**: description "Human-gated, hash-verified
    autonomous build pipeline"; topics such as `ai-agents`, `llm`,
-   `human-in-the-loop`, `google-adk`, `bullmq`, `nextjs`. The license chip
+   `human-in-the-loop`, `bullmq`, `nextjs`. The license chip
    already displays.
 4. ⬜ Optional: uncheck **Settings → Template** so judges get a normal
    "Code" page instead of "Use this template".

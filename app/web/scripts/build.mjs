@@ -11,7 +11,6 @@ const files = [
     "task-management.js",
     "active-run-panel.js",
     "run-atmosphere.js",
-    "providers-panel.js",
     "console-interactions.js",
 ];
 for (const f of files) fs.copyFileSync(`src/${f}`, `dist/${f}`);

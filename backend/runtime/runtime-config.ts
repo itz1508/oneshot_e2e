@@ -40,7 +40,7 @@ export interface RuntimePaths {
   cache: string;
   uploads: string;
   qc: string;
-  /** `.runtime/config/` — non-secret runtime config (e.g. provider selections). */
+  /** `.runtime/config/` — non-secret runtime config directory. */
   config: string;
 }
 
