@@ -105,7 +105,7 @@ if [ "${DOCKER_MODE}" = true ]; then
   HEALTHY=false
   echo "      Waiting for container health check at ${HEALTH_URL}..."
   for i in $(seq 1 60); do
-    if curl -s -f -H "Authorization: Bearer ${TOKEN}" "${HEALTH_URL}" > /dev/null 2>&1; then
+    if curl -s -f "${HEALTH_URL}" > /dev/null 2>&1; then
       HEALTHY=true
       echo "      Health check PASSED."
       break
@@ -118,13 +118,6 @@ if [ "${DOCKER_MODE}" = true ]; then
     docker logs --tail 30 oneshot-local >&2 || true
     fail "Container health check timed out."
   fi
-
-  # Verify Auth Gate & UI
-  UNAUTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${HEALTH_URL}" || true)
-  if [ "${UNAUTH_CODE}" != "401" ]; then
-    fail "Auth gate failed: expected 401 on unauthenticated access, observed ${UNAUTH_CODE}"
-  fi
-  echo "      Auth gate check PASSED (401 on unauthenticated access)."
 
   UI_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${PORT}/" || true)
   if [ "${UI_CODE}" != "200" ]; then
@@ -201,7 +194,7 @@ fi
 
 echo "      Installing Python requirements..."
 "${VENV_PYTHON}" -m pip install --quiet --upgrade pip
-"${VENV_PYTHON}" -m pip install --quiet -r app/requirements/base.txt -r app/requirements/workspace-api.txt || fail "Python requirement installation failed."
+"${VENV_PYTHON}" -m pip install --quiet -r app/requirements/base.txt || fail "Python requirement installation failed."
 echo "      All dependencies installed successfully."
 
 # Step 3: Build

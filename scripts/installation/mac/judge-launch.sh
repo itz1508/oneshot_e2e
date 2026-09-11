@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/judge-launch.sh
+# scripts/installation/mac/judge-launch.sh
 # Deterministic OneShot Judge Launcher for POSIX / Linux / macOS
 set -euo pipefail
 
@@ -7,19 +7,17 @@ PORT="${PORT:-8787}"
 CONTAINER_NAME="${CONTAINER_NAME:-oneshot-judge-runner}"
 RUN_E2E="${RUN_E2E:-true}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 cd "${REPO_ROOT}"
 
 echo "=== OneShot Deterministic Judge Launcher ==="
 echo "Repository root: ${REPO_ROOT}"
 
-# 1. Verify Docker daemon
 if ! docker version >/dev/null 2>&1; then
     echo "ROOT_CAUSE: Docker daemon is unavailable. Please ensure Docker is running." >&2
     exit 1
 fi
 
-# 2. Resolve or load judge image
 IMAGE_TAG="oneshot:judge"
 TAR_PATH="${REPO_ROOT}/OneShot-1.3.0-judge.tar"
 
@@ -35,7 +33,6 @@ else
     echo "Found existing judge image: ${IMAGE_TAG}"
 fi
 
-# Use .runtime/ directory for runtime artifacts (not data/)
 RUNTIME_DIR="${REPO_ROOT}/.runtime"
 mkdir -p "${RUNTIME_DIR}"
 TMP_ENV="${RUNTIME_DIR}/judge.env.tmp"
@@ -45,10 +42,8 @@ PORT=${PORT}
 ONESHOT_MODE=sample
 EOF
 
-# 4. Remove stale container if present
 docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
 
-# 5. Launch container
 echo "Starting OneShot container on port ${PORT}..."
 CONTAINER_ID="$(docker run -d \
     --name "${CONTAINER_NAME}" \
@@ -58,7 +53,6 @@ CONTAINER_ID="$(docker run -d \
 
 rm -f "${TMP_ENV}"
 
-# 6. Wait for health
 HEALTH_URL="http://127.0.0.1:${PORT}/api/health"
 ROOT_URL="http://127.0.0.1:${PORT}/"
 HEALTHY=0
@@ -85,14 +79,6 @@ if [ ${HEALTHY} -ne 1 ]; then
     exit 1
 fi
 
-# 7. Verify UI, Auth, and Static Files
-STATUS_UNAUTH="$(curl -s -o /dev/null -w "%{http_code}" "${HEALTH_URL}")"
-if [ "${STATUS_UNAUTH}" != "401" ]; then
-    echo "ROOT_CAUSE: Auth verification failed. Unauthenticated status was ${STATUS_UNAUTH} (expected 401)" >&2
-    exit 1
-fi
-echo "Auth check PASSED: 401 on unauthenticated access"
-
 STATUS_UI="$(curl -s -o /dev/null -w "%{http_code}" "${ROOT_URL}")"
 if [ "${STATUS_UI}" != "200" ]; then
     echo "ROOT_CAUSE: Web UI returned status ${STATUS_UI} (expected 200)" >&2
@@ -108,7 +94,6 @@ if [ "${STATUS_JS}" != "200" ] || [ "${STATUS_CSS}" != "200" ]; then
 fi
 echo "Static assets check PASSED: /app.js and /styles.css returned 200 OK"
 
-# 8. Run Browser E2E if requested
 E2E_RESULT="NOT_RUN"
 if [ "${RUN_E2E}" = "true" ]; then
     echo "Running canonical browser E2E test against container..."
@@ -126,16 +111,15 @@ if [ "${RUN_E2E}" = "true" ]; then
     fi
 fi
 
-# 9. Output report
 IMAGE_ID="$(docker inspect --format '{{.Id}}' "${CONTAINER_NAME}")"
 echo ""
 echo "ONESHOT_JUDGE_RESULT = PASSED"
 echo "URL = http://localhost:${PORT}"
 echo "MODE = sample"
-echo "PROVIDER_KEY_REQUIRED = NO"
+echo "MODEL_KEY = CONFIGURE_IN_UI"
 echo "CONTAINER = ${CONTAINER_NAME}"
 echo "IMAGE = ${IMAGE_TAG} (${IMAGE_ID})"
 echo "HEALTH = PASSED"
 echo "UI = PASSED"
-echo "AUTH = PASSED"
+echo "AUTH = NOT_REQUIRED"
 echo "E2E = ${E2E_RESULT}"

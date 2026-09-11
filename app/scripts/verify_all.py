@@ -31,10 +31,11 @@ def main() -> None:
     if not (ROOT / "node_modules/.bin/tsc").exists() and not (
         ROOT / "node_modules/typescript/bin/tsc"
     ):
-        run(["npm", "ci", "--offline"])
+        run(["npm", "ci", "--offline", "--ignore-scripts"])
     run([py, "app/scripts/verify_dependencies.py", "--profile", "base"])
     run([py, "-m", "unittest", "discover", "-s", "backend/tests/python", "-v"])
-    run([py, "app/workspace_api/scripts/verify.py"])
+    # app/workspace_api is a legacy optional sidecar. It is intentionally not a
+    # production-runtime admission gate; verify it directly only when changing it.
     run(["npm", "run", "build"])
     compiled = sorted((ROOT / "dist/backend/tests/ts").glob("*.test.js"))
     if not compiled:

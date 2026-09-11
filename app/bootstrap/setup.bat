@@ -74,12 +74,6 @@ if %ERRORLEVEL% neq 0 (
     echo  ERROR: Core Python dependency installation failed.
     exit /b 1
 )
-
-pip install -q -r app/requirements/workspace-api.txt
-if %ERRORLEVEL% neq 0 (
-    echo  ERROR: Workspace API dependency installation failed.
-    exit /b 1
-)
 echo        Python deps installed
 
 REM ── Node dependencies ──────────────────────────────────────────
@@ -88,7 +82,16 @@ echo [4/6] Installing Node.js dependencies (offline from vendor)...
 call npm ci --offline --ignore-scripts --no-audit --no-fund >nul 2>&1
 if %ERRORLEVEL% neq 0 (
     echo        Retrying with network...
-    call npm install --no-audit --no-fund >nul 2>&1
+    call npm install --ignore-scripts --no-audit --no-fund >nul 2>&1
+)
+if %ERRORLEVEL% neq 0 (
+    echo  ERROR: Root Node dependency installation failed.
+    exit /b 1
+)
+call npm run integration:install:gemini
+if %ERRORLEVEL% neq 0 (
+    echo  ERROR: Bundled Gemini integration installation failed.
+    exit /b 1
 )
 call npm --prefix app/web install --no-audit --no-fund >nul 2>&1
 echo        Node deps installed

@@ -7,7 +7,7 @@ COPY package*.json tsconfig.json ./
 COPY app/vendor ./app/vendor
 COPY app/integration ./app/integration
 RUN npm install --ignore-scripts --no-audit --no-fund
-RUN npm install --prefix app/integration/gemini --ignore-scripts --no-audit --no-fund --package-lock=false
+RUN npm run integration:install:gemini
 
 # Copy backend source and compile
 COPY backend ./backend
@@ -57,7 +57,7 @@ COPY app/legal ./app/legal
 COPY docs/CANONICAL_WORKFLOW.md ./docs/CANONICAL_WORKFLOW.md
 COPY docs/license/LICENSE docs/license/NOTICE ./docs/license/
 
-# Python import roots: `validation` lives at backend/validation/python; `workspace_api` lives at app
+# Python import roots: validation lives at backend/validation/python; optional app packages live at app
 ENV PYTHONPATH=/app/backend/validation/python:/app/app
 
 # Create durable/evidence directories

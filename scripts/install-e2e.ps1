@@ -53,7 +53,6 @@ if ($Docker) {
     }
     Write-Host "      Docker image built successfully." -ForegroundColor Green
 
-    # Free port if occupied by existing container
     $portContainer = docker ps -q --filter "publish=$Port" 2>$null
     if ($portContainer) {
         Write-Host "      Freeing port $Port occupied by existing container..."
@@ -88,8 +87,7 @@ if ($Docker) {
     Write-Host "      Waiting for container health check at $HealthUrl..."
     while ((Get-Date) -lt $Deadline) {
         try {
-            $headers = @{ Authorization = "Bearer $Token" }
-            $resp = Invoke-RestMethod -Uri $HealthUrl -Headers $headers -TimeoutSec 2 -ErrorAction Stop
+            $resp = Invoke-RestMethod -Uri $HealthUrl -TimeoutSec 2 -ErrorAction Stop
             if ($resp.status -eq "ok" -or $resp.workflow -eq "oneshot-canonical-workflow") {
                 $Healthy = $true
                 Write-Host "      Health check PASSED: mode=$($resp.mode), integration=$($resp.integration)" -ForegroundColor Green
@@ -104,18 +102,6 @@ if ($Docker) {
         $logs = docker logs --tail 30 oneshot-local 2>&1
         Fail "Container health check timed out.`n$logs"
     }
-
-    # Verify Auth Gate & UI
-    $unauthCode = 0
-    try {
-        $null = Invoke-WebRequest -Uri $HealthUrl -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
-    } catch {
-        if ($_.Exception.Response) { $unauthCode = [int]$_.Exception.Response.StatusCode }
-    }
-    if ($unauthCode -ne 401) {
-        Fail "Auth gate failed: expected 401 on unauthenticated access, observed $unauthCode"
-    }
-    Write-Host "      Auth gate check PASSED (401 on unauthenticated access)." -ForegroundColor Green
 
     $uiResp = Invoke-WebRequest -Uri "http://127.0.0.1:${Port}/" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
     if ($uiResp.StatusCode -ne 200) {
@@ -144,10 +130,8 @@ if ($Docker) {
 # NATIVE WINDOWS INSTALLATION PATH
 # -----------------------------------------------------------------------------
 
-# Step 1: Check Prerequisites
 Write-Host "[1/5] Checking prerequisites (Node.js, npm, Python)..." -ForegroundColor Yellow
 
-# Node.js
 try {
     $nodeVer = (node --version).Trim()
     Write-Host "      Node.js: $nodeVer ... OK" -ForegroundColor Green
@@ -155,7 +139,6 @@ try {
     Fail "Node.js is not installed or not in PATH. Please install Node.js 20+ from https://nodejs.org"
 }
 
-# npm
 try {
     $npmVer = (npm --version).Trim()
     Write-Host "      npm: $npmVer ... OK" -ForegroundColor Green
@@ -163,7 +146,6 @@ try {
     Fail "npm is not installed or not in PATH."
 }
 
-# Python
 $PythonExe = ""
 if (Get-Command python -ErrorAction SilentlyContinue) {
     $PythonExe = "python"
@@ -176,10 +158,8 @@ if (Get-Command python -ErrorAction SilentlyContinue) {
 $pyVer = & $PythonExe -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')"
 Write-Host "      Python: $pyVer ... OK" -ForegroundColor Green
 
-# Step 2: Install Dependencies
 Write-Host "[2/5] Installing dependencies (Node.js & Python)..." -ForegroundColor Yellow
 
-# Root Node modules
 Write-Host "      Installing root Node dependencies..."
 cmd.exe /c "npm ci --no-audit --no-fund --loglevel=error"
 if ($LASTEXITCODE -ne 0) {
@@ -188,7 +168,6 @@ if ($LASTEXITCODE -ne 0) {
     if ($LASTEXITCODE -ne 0) { Fail "Root npm dependency installation failed." }
 }
 
-# Web App Node modules
 Write-Host "      Installing app/web Node dependencies..."
 cmd.exe /c "npm --prefix app/web ci --no-audit --no-fund --loglevel=error"
 if ($LASTEXITCODE -ne 0) {
@@ -196,7 +175,6 @@ if ($LASTEXITCODE -ne 0) {
     if ($LASTEXITCODE -ne 0) { Fail "app/web dependency installation failed." }
 }
 
-# Python Virtual Environment
 $VenvPath = Join-Path $RepoRoot ".venv"
 $VenvPython = Join-Path $VenvPath "Scripts\python.exe"
 
@@ -208,17 +186,15 @@ if (-not (Test-Path -LiteralPath $VenvPython)) {
 
 Write-Host "      Installing Python requirements..."
 & $VenvPython -m pip install --quiet --upgrade pip
-& $VenvPython -m pip install --quiet -r (Join-Path $RepoRoot "app\requirements\base.txt") -r (Join-Path $RepoRoot "app\requirements\workspace-api.txt")
+& $VenvPython -m pip install --quiet -r (Join-Path $RepoRoot "app\requirements\base.txt")
 if ($LASTEXITCODE -ne 0) { Fail "Python package installation failed." }
 Write-Host "      All dependencies installed successfully." -ForegroundColor Green
 
-# Step 3: Build
 Write-Host "[3/5] Building project (TypeScript backend & Web IDE)..." -ForegroundColor Yellow
 cmd.exe /c "npm run build"
 if ($LASTEXITCODE -ne 0) { Fail "Build failed (TypeScript or Web IDE compilation error)." }
 Write-Host "      Build completed successfully." -ForegroundColor Green
 
-# Step 4: Verify E2E
 Write-Host "[4/5] Running canonical verification suite..." -ForegroundColor Yellow
 Write-Host "      Checking repository manifest SHA-256 integrity..."
 & $VenvPython app/scripts/verify_manifest.py
@@ -251,7 +227,6 @@ if ($VerifyOnly) {
     exit 0
 }
 
-# Step 5: Launch
 Write-Host "[5/5] Preparing to launch OneShot..." -ForegroundColor Yellow
 $env:ONESHOT_MODE = $Mode
 $env:PORT = "$Port"

@@ -38,7 +38,7 @@ export function installNodeModules(offline = false) {
   try {
     const cmd = offline
       ? "npm ci --offline --ignore-scripts --no-audit --no-fund"
-      : "npm install --no-audit --no-fund";
+      : "npm install --ignore-scripts --no-audit --no-fund";
 
     execSync(cmd, { cwd: ROOT, stdio: "inherit" });
     pass("Node.js dependencies installed");
@@ -51,15 +51,25 @@ export function installNodeModules(offline = false) {
   }
 }
 
+export function installBundledIntegrations() {
+  log("Installing bundled Gemini integration...");
+  try {
+    execSync("npm run integration:install:gemini", {
+      cwd: ROOT,
+      stdio: "inherit",
+    });
+    pass("Bundled Gemini integration installed");
+    return true;
+  } catch (err) {
+    fail("Bundled Gemini integration installation failed", err.message);
+  }
+}
+
 export function installPythonDeps() {
   log("Installing Python dependencies...");
 
   try {
     execSync("pip install -q -r app/requirements/base.txt", {
-      cwd: ROOT,
-      stdio: "inherit",
-    });
-    execSync("pip install -q -r app/requirements/workspace-api.txt", {
       cwd: ROOT,
       stdio: "inherit",
     });
@@ -76,7 +86,10 @@ export function installPythonDeps() {
 export function runInstall(options = {}) {
   const { offline = false, python = true } = options;
 
-  installNodeModules(offline);
+  const nodeReady = installNodeModules(offline);
+  if (nodeReady) {
+    installBundledIntegrations();
+  }
 
   if (python) {
     installPythonDeps();

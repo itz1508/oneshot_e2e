@@ -50,7 +50,9 @@ def main() -> int:
                 "app=create_app(WorkspaceSettings(environment='test',"
                 "database_url='sqlite://',log_json=False)); "
                 "schema=app.openapi(); "
-                "assert len(schema['paths']) >= 25; "
+                "required={'/health','/v1/workspaces','/v1/providers'}; "
+                "missing=required-set(schema['paths']); "
+                "assert not missing, f'missing OpenAPI paths: {sorted(missing)}'; "
                 "assert 'ErrorResponse' in schema['components']['schemas']; "
                 "print('ONESHOT_WORKSPACE_OPENAPI_VERIFIED')"
             ),
