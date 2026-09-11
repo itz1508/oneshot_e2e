@@ -4,6 +4,80 @@ Mode: PRESERVE + CORRECT
 Date: 2026-09-07  
 Supersedes: `OneShot Web Application — Builder Source of Truth v2.0` and behavioral/layout assumptions in `oneshot_v7.html`
 ---
+0A. Rebuild Architecture Authority Corrections
+Date: 2026-09-11
+Scope: authority correction only. This section changes no runtime, contract, route, or
+schema by itself; it corrects what a future Builder must treat as current architecture.
+Where older text in this document, `CANONICAL_WORKFLOW.md`, or `ARCHITECTURE.md`
+conflicts with this section, this section wins.
+
+0A.1 Research is optional
+Superseded:
+```text
+Prompt
+→ mandatory Researcher
+→ Research Review
+→ Planner
+```
+Current authority:
+```text
+Conversation
+↓
+Research requested?
+├─ NO
+│   → normal Planner/workflow path
+│
+└─ YES
+    → Researcher
+    → Research Review
+    → Accept
+    → Planner
+```
+Locked:
+Research is optional.
+ResearchBundle is optional enrichment.
+ResearchBundle is NOT a universal Planner prerequisite.
+When Research does run, its existing rules are unchanged: Research completion is a hard
+stop, Planner must not start before explicit acceptance, and Research Again keeps the
+same run_id with prior Research retained as history.
+
+0A.2 Integration boundary (supersedes "Provider" as architectural authority)
+Locked:
+```text
+Integration
+├─ ModelIntegration
+└─ SearchIntegration
+```
+Integration != Researcher
+Integration != Planner
+Integration != Builder
+A provider is merely an implementation of:
+```text
+ModelIntegration
+```
+Tavily or equivalent search services are implementations of:
+```text
+SearchIntegration
+```
+Do not introduce:
+```text
+ProviderManager
+ResearchProvider
+provider.research()
+```
+
+0A.3 Conversation currency
+The rebuild requires conversation currency on intent-derived artifacts:
+```text
+conversation_id
+conversation_revision
+conversation_hash
+```
+Intent-derived artifacts must eventually be revision/hash-bound to the conversation
+state they were derived from. A stale artifact must not cross a workflow gate.
+This records the requirement as authority only; it is not implemented by this
+correction and must not be assumed to exist in the current runtime.
+---
 0. Authority and Source Precedence
 This document defines the current OneShot web application behavior, layout, runtime/UI boundaries, human gates, conversation behavior, Task Management, Job History, Explorer behavior, Build/Sandbox presentation, and implementation constraints.
 When sources disagree, use this precedence:
@@ -22,7 +96,7 @@ change stage ownership;
 insert or remove workflow stages;
 reinterpret an existing ID into another artifact;
 create a second run-level Job ID;
-start Planner before Research Review is explicitly accepted;
+start Planner before Research Review is explicitly accepted when Research was requested (Research itself is optional — §0A.1);
 start Builder before Build Ready is explicitly confirmed;
 silently reuse an invalidated confirmation hash;
 erase prior Job/run history because current work was superseded;
@@ -40,8 +114,13 @@ If an actual repository contract is missing, report the gap. Do not fill it with
 2. Canonical Workflow
 The accepted successful path remains:
 ```text
-User Prompt
+Conversation
    ↓
+Research requested?
+   ├─ NO ──→ normal Planner/workflow path (enter at step 2. Planner below)
+   │
+   └─ YES
+        ↓
 1. Researcher                      ← LLM #1
    ↓
 STOP — Research Review             ← HUMAN GATE #1
@@ -80,7 +159,7 @@ Post-build validation/hash check   ← DETERMINISTIC
         ↓
 DONE
 ```
-Normal successful accepted path = 6 LLM calls.
+Accepted path with Research requested = 6 LLM calls; without Research the run enters at Planner (Research and Research Review are skipped entirely — §0A.1).
 Research Again adds another Researcher call.  
 Deterministic validators and hash checks do not become LLM calls.
 No additional mandatory human gate may be inserted into the normal workflow.
@@ -454,6 +533,7 @@ does not invalidate or recreate the confirmation hash by itself.
 Normal chat is communication, not mutation authority.
 ---
 18. Research Review — Human Gate #1
+Applies only when Research was requested (Research is optional — §0A.1).
 Research completion is a hard stop.
 Required behavior:
 ```text
@@ -1096,7 +1176,7 @@ RIGHT
 current Job and Job History
 ```
 with narrow application rails on both sides.
-The human experience remains:
+The human experience remains (Research steps apply only when Research was requested — §0A.1):
 ```text
 Describe Intent
 → Research
