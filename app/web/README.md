@@ -1,10 +1,17 @@
 # OneShot Web Application
 
-Browser code lives under `src/`. Server-side provider integrations live under [`cloud/`](cloud/README.md) and are compiled by the root backend build. The frontend asset build does not copy cloud source or credentials into `dist/`.
+The canonical browser application is the Next.js/React UI in `app/`, `components/`, and `lib/`.
 
-The backend serves the built UI from `app/web/dist` and supplies the HTTP and SSE endpoints below.
+- `app/` owns the Next.js application shell and global styles.
+- `components/` owns the OneShot workspace and reusable UI components.
+- `lib/` owns browser contracts, API helpers, event streaming, and projections.
+- `cloud/` contains server-side provider integration code compiled by the root backend build; it is not copied into browser assets.
+- `scripts/export.mjs` exports the Next build into `dist/`.
+- `scripts/serve.mjs` serves `dist/` for the standalone web process.
 
-## Known OneShot browser contracts
+The backend also serves the built UI from `app/web/dist`.
+
+## Browser contracts
 
 - `GET /api/health`
 - `POST /api/conversations`
@@ -13,12 +20,13 @@ The backend serves the built UI from `app/web/dist` and supplies the HTTP and SS
 - `POST /api/conversations/:id/run`
 - `GET /api/runs/:id`
 - `GET /api/runs/:id/events` (SSE)
+- `GET /api/integrations`
+- `POST /api/integrations/:id/install`
+- `POST /api/integrations/:id/configure`
 - `GET /v1/workspace/tree?path=.&depth=3`
 - `GET /v1/workspace/file?path=...`
 
-The web app talks to the OneShot server same-origin; no OneShot-issued token, login, or credential is involved.
-
-Generate readiness is runtime-owned. Message text alone never enables Generate. Run Context is rendered only from context fields actually present in the real run snapshot.
+The web app talks to the OneShot server same-origin. Generate readiness is runtime-owned; message text alone never enables Generate.
 
 ## Commands
 
