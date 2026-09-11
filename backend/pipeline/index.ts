@@ -19,10 +19,10 @@ export {
   getProducerRedis,
 } from "./queue.js";
 
-export type { PipelineContext, CapturedProvider } from "./context.js";
+export type { PipelineContext, CapturedIntegration } from "./context.js";
 export {
   loadPrompt,
-  loadProvider,
+  loadIntegration,
   loadResearchBundle,
   loadPlan,
   loadAudit,

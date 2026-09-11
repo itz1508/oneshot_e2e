@@ -19,7 +19,63 @@ export interface GapFixResult {
   rootCause?: RootCause;
 }
 
-/** Deterministic Gap Analysis operations used by the ADK dynamic workflow. */
+function refsFor(plan: Plan, finding: GapFinding): string[] | undefined {
+  const step = finding.target_step_id
+    ? plan.steps.find(
+        (candidate) => candidate.step_id === finding.target_step_id,
+      )
+    : undefined;
+  if (!step) return undefined;
+  if (finding.affected_branch === "requirement") return step.requirement_refs;
+  if (finding.affected_branch === "goal") return step.goal_refs;
+  if (finding.affected_branch === "fixture") return step.fixture_refs;
+  return step.schema_refs;
+}
+
+function alreadySatisfied(plan: Plan, finding: GapFinding): boolean {
+  return refsFor(plan, finding)?.includes(finding.ref_id) ?? false;
+}
+
+function assertNoRegression(before: Plan, after: Plan): void {
+  if (before.plan_id !== after.plan_id) {
+    throw new Error("Gap Analysis changed logical plan_id");
+  }
+  if (after.revision < before.revision) {
+    throw new Error("Gap improvement reduced plan revision");
+  }
+  const afterSteps = new Map(after.steps.map((step) => [step.step_id, step]));
+  for (const previous of before.steps) {
+    const current = afterSteps.get(previous.step_id);
+    if (!current)
+      throw new Error(`Gap improvement removed step ${previous.step_id}`);
+    for (const field of [
+      "requirement_refs",
+      "goal_refs",
+      "fixture_refs",
+      "schema_refs",
+    ] as const) {
+      const currentRefs = new Set(current[field]);
+      for (const ref of previous[field]) {
+        if (!currentRefs.has(ref)) {
+          throw new Error(`Gap improvement regressed ${field}: ${ref}`);
+        }
+      }
+    }
+  }
+}
+
+function mergeFindings(
+  seed: GapFinding[],
+  detected: GapFinding[],
+): GapFinding[] {
+  const merged = new Map<string, GapFinding>();
+  for (const finding of [...seed, ...detected]) {
+    if (!merged.has(finding.key)) merged.set(finding.key, finding);
+  }
+  return [...merged.values()];
+}
+
+/** Deterministic Gap Analysis operations used by the OneShot workflow. */
 export class GapAnalysisWorkflow {
   constructor(private contracts: CanonicalContractSkill) {}
 
@@ -125,23 +181,33 @@ export class GapAnalysisWorkflow {
     return gap;
   }
 
-  /** Compatibility path for direct callers outside the canonical ADK runtime. */
+  /** Run deterministic Gap Analysis with optional validation feedback seed findings. */
   async run(
     bundle: ResearchBundle,
     input: Plan,
+    seedFindings?: GapFinding[],
   ): Promise<{ plan: Plan; gap: GapAnalysis }> {
     let plan = clone(input);
     const resolved: ResolvedGap[] = [];
+    let pending = (seedFindings ?? []).filter(
+      (finding) => !alreadySatisfied(plan, finding),
+    );
+    let iteration = 0;
 
     for (;;) {
-      const found = this.inspect(bundle, plan);
-      if (found.length === 0) {
+      const checked = this.inspect(bundle, plan);
+      pending = pending.filter((finding) => !alreadySatisfied(plan, finding));
+      const findings = mergeFindings(pending, checked);
+
+      if (findings.length === 0) {
         return { plan, gap: await this.finalize(plan, resolved) };
       }
 
-      const beforeKeys = new Set(found.map((g) => g.key));
-      const fixed = this.resolveOne(bundle, plan, found[0]);
+      const finding = findings[0];
+      const before = plan;
+      const fixed = this.resolveOne(bundle, plan, finding);
       plan = fixed.plan;
+      assertNoRegression(before, plan);
 
       if (fixed.rootCause) {
         return {
@@ -149,31 +215,16 @@ export class GapAnalysisWorkflow {
           gap: await this.finalize(plan, resolved, fixed.rootCause),
         };
       }
-      if (fixed.resolved) resolved.push(fixed.resolved);
-
-      const remaining = this.inspect(bundle, plan);
-      const afterKeys = new Set(remaining.map((g) => g.key));
-      const introducedNewGap = [...afterKeys].some(
-        (key) => !beforeKeys.has(key),
-      );
-      const progressed = afterKeys.size < beforeKeys.size && !introducedNewGap;
-
-      if (!progressed) {
-        return {
-          plan,
-          gap: await this.finalize(plan, resolved, {
-            issue: "Gap Analysis violated deterministic progress invariant",
-            expected:
-              "Each iteration removes at least one existing gap and introduces no new gap key",
-            actual: `before=${[...beforeKeys].join(",")}; after=${[
-              ...afterKeys,
-            ].join(",")}`,
-            evidence_ids: bundle.researcher.evidence.map((e) => e.evidence_id),
-            required_correction:
-              "Correct the deterministic gap target or provide the missing information",
-            recheck_target: plan.plan_id,
-          }),
-        };
+      if (!fixed.resolved) {
+        throw new Error(
+          `Gap Analysis produced no improvement for ${finding.key}`,
+        );
+      }
+      resolved.push(fixed.resolved);
+      pending = pending.filter((candidate) => candidate.key !== finding.key);
+      iteration += 1;
+      if (iteration > 256) {
+        throw new Error("Gap Analysis exceeded deterministic refinement bound");
       }
     }
   }

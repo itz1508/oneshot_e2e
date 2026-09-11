@@ -2,7 +2,6 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";
-import { clone } from "../../core/clone.js";
 
 function resolveDefaultFixture(): string {
   const p1 = resolve(
@@ -29,6 +28,10 @@ function rewrite(value: unknown, map: Map<string, string>): unknown {
   return value;
 }
 
+/**
+ * Test helper: loads complete-success-seed fixture and tailors IDs to test prompt/runId.
+ * Strictly for test suites only. NEVER used as a production Researcher fallback.
+ */
 export async function createFixtureResearchBundle(
   prompt: Prompt,
   runId: string,
@@ -50,7 +53,7 @@ export async function createFixtureResearchBundle(
     ["evidence:seed", `evidence:${runId}`],
     ["step:seed", `step:${runId}`],
   ]);
-  const out = rewrite(clone(seed), map) as ResearchBundle;
+  const out = rewrite(structuredClone(seed), map) as ResearchBundle;
   out.prompt = prompt;
   out.researcher.prompt_id = prompt.prompt_id;
   return out;

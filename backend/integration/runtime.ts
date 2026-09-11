@@ -126,3 +126,42 @@ export async function loadIntegrationModel(
 
   return (provider as (model: string) => unknown)(config.model);
 }
+
+export interface ActiveIntegrationModel {
+  id: string;
+  model: any;
+  source: string;
+  provenance: string;
+}
+
+export async function resolveActiveIntegrationModel(
+  projectRoot: string,
+  preferredId?: string,
+): Promise<ActiveIntegrationModel | undefined> {
+  try {
+    const statuses = await listIntegrationStatus(projectRoot);
+    const candidate = preferredId
+      ? statuses.find((s) => s.id === preferredId && s.installed && s.configured)
+      : statuses.find((s) => s.installed && s.configured);
+
+    if (!candidate) return undefined;
+
+    const defaultModel =
+      candidate.id === "gemini"
+        ? (process.env.GEMINI_MODEL || "gemini-2.0-flash")
+        : "default";
+
+    const model = await loadIntegrationModel(projectRoot, candidate.id, {
+      model: defaultModel,
+    });
+
+    return {
+      id: candidate.id,
+      model,
+      source: `integration:${candidate.id}`,
+      provenance: `${candidate.packageName}@${candidate.packageVersion}`,
+    };
+  } catch {
+    return undefined;
+  }
+}

@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PlanReviewService } from "../../runtime/plan-review.js";
 import { FileArtifactStore } from "../../runtime/artifact-store.js";
-import { createFixtureResearchBundle } from "../../agents/researcher/fixture.js";
+import { createFixtureResearchBundle } from "./fixture-helper.js";
 import { harness, prompt } from "./harness.js";
 import { startHttpServer } from "../../server/http-server.js";
 import { IntentCollectionService } from "../../intent/intent-collection.js";

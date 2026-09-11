@@ -99,7 +99,7 @@ approved. They match — DONE. Job history and the explorer show every
 artifact, event, and mutation."
 
 **4:05 — Architecture recap (~35 words).** "That is the architecture: six
-governed stages on Google's ADK runtime, durable Redis-backed queues,
+governed stages on the native durable workflow runtime, durable Redis-backed queues,
 deterministic Python validators, and a hash that binds approval to
 execution."
 

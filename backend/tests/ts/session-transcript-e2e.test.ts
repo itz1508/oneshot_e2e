@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
-import type { Prompt, ResearchBundle } from "../../contracts/schema/types.js";
+import type { Prompt } from "../../contracts/schema/types.js";
 import type { ProcessingEventBus } from "../../runtime/event-bus.js";
-import { createFixtureResearchBundle } from "../../agents/researcher/fixture.js";
+import type { StructuredResearchDraft } from "../../agents/researcher/structured-draft.js";
 import { ConversationStore } from "../../intent/conversation-store.js";
 import { IntentCollectionService } from "../../intent/intent-collection.js";
 import { PromptGenerator } from "../../intent/prompt-generator.js";
@@ -13,9 +13,39 @@ import { harness } from "./harness.js";
 class CapturingResearch {
   receivedPrompt?: Prompt;
 
-  async research(prompt: Prompt, runId: string): Promise<ResearchBundle> {
+  async generateDraft(prompt: Prompt): Promise<StructuredResearchDraft> {
     this.receivedPrompt = structuredClone(prompt);
-    return await createFixtureResearchBundle(prompt, runId);
+    return {
+      summary: prompt.intent || "media utility",
+      requirements: [
+        "Support MP4 container parsing and metadata extraction",
+        "Support MP3 audio stream parsing and ID3 tag inspection",
+      ],
+      dependencies: [
+        { description: "node:fs and node:buffer", required_by: [0, 1] },
+      ],
+      plan_steps: [
+        {
+          description: "Implement MP4 media parser",
+          responsibility: "Builder",
+          requirement_indexes: [0],
+        },
+        {
+          description: "Implement MP3 media parser",
+          responsibility: "Builder",
+          requirement_indexes: [1],
+        },
+      ],
+      success_meaning: "Both media formats are parsed and validated deterministically",
+      success_criteria: [
+        {
+          statement: "MP4 and MP3 parsing functions produce valid results",
+          measurement: "unit tests",
+          expected_result: "all tests pass",
+          requirement_indexes: [0, 1],
+        },
+      ],
+    };
   }
 }
 
@@ -31,8 +61,8 @@ async function waitForTerminal(base: string, runId: string): Promise<any> {
 }
 
 test("session start -> PromptGenerator -> Researcher -> canonical workflow -> final response emits full E2E transcript", async () => {
-  const provider = new CapturingResearch();
-  const h = await harness("session-transcript-e2e", provider);
+  const capability = new CapturingResearch();
+  const h = await harness("session-transcript-e2e", capability);
   const intent = new IntentCollectionService(new ConversationStore());
   const server = await startHttpServer(
     h.runtime,
@@ -84,16 +114,16 @@ test("session start -> PromptGenerator -> Researcher -> canonical workflow -> fi
     console.log(`SESSION_RUN_CREATED_JSON=${JSON.stringify(started)}`);
 
     const final = await waitForTerminal(base, started.run_id);
-    assert.ok(provider.receivedPrompt, "Researcher did not receive Prompt(id)");
+    assert.ok(capability.receivedPrompt, "Researcher did not receive Prompt(id)");
     console.log(
-      `RESEARCHER_RECEIVED_PROMPT_JSON=${JSON.stringify(provider.receivedPrompt)}`,
+      `RESEARCHER_RECEIVED_PROMPT_JSON=${JSON.stringify(capability.receivedPrompt)}`,
     );
 
     const expectedRunPrompt = new PromptGenerator().generate(
       conversation.intent,
       started.prompt_id,
     );
-    assert.deepEqual(provider.receivedPrompt, expectedRunPrompt);
+    assert.deepEqual(capability.receivedPrompt, expectedRunPrompt);
 
     const events = h.events.list(started.run_id);
     for (const event of events) {

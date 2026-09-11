@@ -11,8 +11,8 @@
  * workflow, and emits live progress into the shared ProcessingEventBus — which
  * fans out to in-process SSE subscribers and the durable event store.
  *
- * Provider binding happens PER RUN inside the worker, immediately before the
- * canonical workflow consumes the provider. Credentials never enter job
+ * Integration binding happens PER RUN inside the worker, immediately before the
+ * canonical workflow consumes the model. Credentials never enter job
  * payloads, Redis values, progress payloads, or event data.
  *
  * Single-process default: server and worker share the in-process event bus so
@@ -58,13 +58,12 @@ export const QUEUE_PREFIX = process.env.ONESHOT_QUEUE_PREFIX || "oneshot";
 
 /**
  * Versioned run-job payload contract (v1). Enqueued jobs MUST NOT carry secrets
- * — only run identity, the prompt, a non-secret provider selector, and a
- * timestamp. Provider binding + credential resolution happen PER RUN inside the
- * worker, never from the payload.
+ * — only run identity, the prompt, an optional non-secret integration/model selector, and a
+ * timestamp. Credential resolution happens server-side, never from the payload.
  */
 export const RUN_JOB_VERSION = 1 as const;
 
-export interface RunJobProviderV1 {
+export interface RunJobModelSelector {
   id: string;
   model?: string;
   configRevision?: number;
@@ -75,28 +74,27 @@ export interface RunJobV1 {
   version: 1;
   runId: string;
   prompt: Prompt;
-  provider?: RunJobProviderV1;
+  integration?: RunJobModelSelector;
   submittedAt: string;
 }
 
 /**
- * Queue envelope. Carries the v1 versioned payload; `providerId`/`revision` are
- * retained as a legacy (pre-v1) shape so a detached worker can drain jobs
- * enqueued before a rolling upgrade. Either shape is validated at the boundary.
+ * Queue envelope. Carries the v1 versioned payload; legacy fields are
+ * retained so a detached worker can drain jobs enqueued before rolling upgrade.
  */
 export interface RunJobData {
   /** Versioned payload marker. Absent = legacy pre-v1 job (back-compat). */
   version?: 1;
   runId: string;
   prompt: Prompt;
-  /** Legacy: provider id at enqueue time. v1: use `provider.id`. */
-  providerId?: string;
-  /** Legacy: provider config revision. v1: use `provider.configRevision`. */
-  revision?: number;
-  /** v1 structured provider block (non-secret selector). */
-  provider?: RunJobProviderV1;
-  /** v1: ISO timestamp the run was submitted. */
+  integration?: RunJobModelSelector;
   submittedAt?: string;
+  /** Legacy: selector id at enqueue time. */
+  providerId?: string;
+  /** Legacy: config revision. */
+  revision?: number;
+  /** Legacy: structured selector block. */
+  provider?: RunJobModelSelector;
 }
 
 const SECRET_FIELD_RE =
@@ -142,22 +140,23 @@ export function validateRunJobV1(data: unknown): {
         `unsupported payload version ${String(d.version)} (expected 1)`,
       );
     }
-    if (d.provider !== undefined && d.provider !== null) {
-      if (typeof d.provider !== "object") {
-        errors.push("provider must be an object");
+    const selector = d.integration ?? d.provider;
+    if (selector !== undefined && selector !== null) {
+      if (typeof selector !== "object") {
+        errors.push("integration selector must be an object");
       } else {
-        const p = d.provider as Record<string, unknown>;
+        const p = selector as Record<string, unknown>;
         if (typeof p.id !== "string" || !p.id) {
-          errors.push("provider.id must be a non-empty string");
+          errors.push("selector.id must be a non-empty string");
         }
         if (p.model !== undefined && typeof p.model !== "string") {
-          errors.push("provider.model must be a string");
+          errors.push("selector.model must be a string");
         }
         if (
           p.configRevision !== undefined &&
           typeof p.configRevision !== "number"
         ) {
-          errors.push("provider.configRevision must be a number");
+          errors.push("selector.configRevision must be a number");
         }
       }
     }
@@ -185,8 +184,8 @@ export interface RunQueue {
   addRun(job: {
     runId: string;
     prompt: Prompt;
-    providerId: string;
-    revision: number;
+    integrationId?: string;
+    revision?: number;
     model?: string;
     settings?: Record<string, unknown>;
   }): Promise<{ jobId: string }>;
@@ -210,15 +209,8 @@ export interface RunQueueJobCounts {
 export interface RunQueueDeps {
   runs: RunRepository;
   events: ProcessingEventBus;
-  /** Factory that builds a fresh WorkflowRuntime for a job (per-run binding). */
+  /** Factory that builds a fresh WorkflowRuntime for a job. */
   createRuntime: () => Promise<WorkflowRuntime>;
-  /** Resolves the provider for a given providerId (per-run binding). */
-  resolveProvider?: (
-    providerId: string,
-    events: ProcessingEventBus,
-    runId: string,
-    captured?: RunJobProviderV1,
-  ) => Promise<any>;
   projectRoot: string;
 }
 
@@ -270,8 +262,8 @@ function logQueueError(component: string, err: Error): void {
 /**
  * Concrete BullMQ-backed run queue.
  *
- * Enqueued job payloads contain only `runId`, `prompt`, `providerId`,
- * `revision` — never credentials and never provider responses.
+ * Enqueued job payloads contain only `runId`, `prompt`, `integration`,
+ * `revision` — never credentials.
  */
 export class BullMQRunQueue implements RunQueue {
   private readonly queue: Queue<RunJobData>;
@@ -389,7 +381,12 @@ export class BullMQRunQueue implements RunQueue {
       }
     });
 
-    // "stalled" = the worker's lock expired mid-run (slow/crashed worker). Do
+    // Suppress unhandled-rejection noise when Redis is unavailable.
+    this.queue.on("error", (err) => logQueueError("queue", err));
+    this.queueEvents.on("error", (err) => logQueueError("events", err));
+    this.worker.on("error", (err) => logQueueError("worker", err));
+
+    // Stalled-job audit. BullMQ moves a stalled job back to wait/delayed; we do
     // NOT finalize here — BullMQ re-delivers and executeRunJob's partial-recovery
     // guard decides (attempts=1, no silent restart from the beginning).
     this.queueEvents.on("stalled", (arg) => {
@@ -403,21 +400,22 @@ export class BullMQRunQueue implements RunQueue {
   async addRun(job: {
     runId: string;
     prompt: Prompt;
-    providerId: string;
-    revision: number;
+    integrationId?: string;
+    revision?: number;
     model?: string;
     settings?: Record<string, unknown>;
   }): Promise<{ jobId: string }> {
+    const selectorId = job.integrationId ?? "standalone";
     // Versioned v1 payload — no secrets. jobId = runId (BullMQ dedups by jobId,
     // so re-submitting the same runId never creates a duplicate queue entry).
     const payload: RunJobV1 = {
       version: RUN_JOB_VERSION,
       runId: job.runId,
       prompt: job.prompt,
-      provider: {
-        id: job.providerId,
+      integration: {
+        id: selectorId,
         ...(job.model ? { model: job.model } : {}),
-        configRevision: job.revision,
+        configRevision: job.revision ?? 0,
         ...(job.settings ? { settings: structuredClone(job.settings) } : {}),
       },
       submittedAt: new Date().toISOString(),
@@ -523,7 +521,7 @@ export { onRedisError };
  * here via `processRun`).
  *
  * Guarantees:
- *  - Provider binding happens per run, immediately before the workflow runs.
+ *  - Integration binding happens per run, immediately before the workflow runs.
  *  - No credential material is ever logged, emitted, or placed in progress.
  *  - Infrastructure failures are durably finalized as ROOT_CAUSE in
  *    RunRepository (never left dangling as "running" in BullMQ alone).
@@ -535,10 +533,13 @@ export async function executeRunJob(
 ): Promise<RunJobResult> {
   const data = job.data;
   const runId = typeof data.runId === "string" ? data.runId : "unknown";
-  // Provider selector from either the v1 (`provider.{id,configRevision}`) or
-  // legacy (`providerId`/`revision`) shape.
-  const providerId = data.provider?.id ?? data.providerId ?? "<default>";
-  const revision = data.provider?.configRevision ?? data.revision ?? 0;
+  // Boundary normalization: isolate legacy envelope fields into integration selector
+  const legacyData = data as unknown as Record<string, unknown>;
+  const legacyProvider = legacyData.provider as RunJobModelSelector | undefined;
+  const legacyProviderId = typeof legacyData.providerId === "string" ? legacyData.providerId : undefined;
+  const integration = data.integration ?? legacyProvider;
+  const integrationId = integration?.id ?? legacyProviderId ?? "<default>";
+  const revision = integration?.configRevision ?? (typeof legacyData.revision === "number" ? legacyData.revision : 0);
   const prompt = data.prompt;
 
   // The run snapshot is created by the HTTP layer; ensure it exists so a
@@ -617,42 +618,9 @@ export async function executeRunJob(
       return { runId, status: "failed" };
     }
 
-    // Optional integration/provider verification if configured for this run.
-    if (deps.resolveProvider) {
-      try {
-        await deps.resolveProvider(
-          providerId,
-          deps.events,
-          runId,
-          data.provider ?? { id: providerId, configRevision: data.revision },
-        );
-      } catch (err) {
-        const wrc =
-          err instanceof WorkflowRootCauseError ? err.rootCause : undefined;
-        const actual =
-          wrc?.actual ?? (err instanceof Error ? err.message : String(err));
-        const issue =
-          wrc?.issue ??
-          "Provider binding failed before the workflow could execute";
-        deps.events.emit(runId, "ResearcherBinding", "Completed", {
-          scope: "SUPPORT",
-          test_result: "Failed",
-          issue_type: "Root Cause",
-          message: firstLine(actual),
-        });
-        finalizeFailure(issue, actual);
-        return { runId, status: "failed" };
-      }
-    }
-
-    deps.events.emit(runId, "ResearcherBinding", "Completed", {
-      scope: "SUPPORT",
-      message: `Provider bound; credentials resolved server-side; ready for Researcher (requested=${providerId}, revision=${revision})`,
-    });
-
     deps.events.emit(runId, "RunWorker", "Running", {
       scope: "SUPPORT",
-      message: `Run dequeued for execution (provider=${providerId}, revision=${revision})`,
+      message: `Run dequeued for execution${integrationId ? ` (integration=${integrationId}, revision=${revision})` : ""}`,
     });
 
     const runtime = await deps.createRuntime();
@@ -667,8 +635,8 @@ export async function executeRunJob(
     });
     return { runId, status: result === "Passed" ? "completed" : "failed" };
   } catch (err) {
-    // Preserve the real root cause for any WorkflowRootCauseError (e.g. a
-    // provider/infrastructure failure) — never hide it behind a generic
+    // Preserve the real root cause for any WorkflowRootCauseError (e.g. an
+    // integration/infrastructure failure) — never hide it behind a generic
     // "Run worker failure" / BullMQ failure message.
     if (err instanceof WorkflowRootCauseError) {
       finalizeFailure(err.rootCause.issue, err.rootCause.actual);

@@ -103,7 +103,7 @@ export function createConsoleInteractions({ apiFetch, toast }) {
         const overview = document.querySelector("#status-overview");
         const states = new Map();
         for (const event of events)
-            if (event.scope !== "ADK") states.set(event.processor, event);
+            if (event.scope !== "SUPPORT") states.set(event.processor, event);
         overview.innerHTML = states.size
             ? [...states.values()]
                   .map(

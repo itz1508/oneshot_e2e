@@ -2,7 +2,7 @@ import type { ProcessingEvent } from "../contracts/schema/types.js";
 
 export type GraphNodeState = "Pending" | "Running" | "Completed" | "Failed";
 
-export interface AdkGraphNode {
+export interface WorkflowGraphNode {
   id: string;
   label: string;
   kind:
@@ -12,23 +12,19 @@ export interface AdkGraphNode {
     | "parallel"
     | "gate"
     | "boundary"
-    | "cache"
-    | "agent"
-    | "model-adapter"
-    | "model-server"
-    | "model"
+    | "integration"
     | "artifact";
   state: GraphNodeState;
   message?: string;
 }
 
-export interface AdkGraphEdge {
+export interface WorkflowGraphEdge {
   from: string;
   to: string;
   condition?: string;
 }
 
-interface NodeDefinition extends Omit<AdkGraphNode, "state" | "message"> {
+interface NodeDefinition extends Omit<WorkflowGraphNode, "state" | "message"> {
   processor?: string;
   inherit?: string;
 }
@@ -36,13 +32,7 @@ interface NodeDefinition extends Omit<AdkGraphNode, "state" | "message"> {
 const workflowDefs: NodeDefinition[] = [
   {
     id: "OneShotWorkflow",
-    label: "OneShot / Google ADK Workflow",
-    kind: "workflow",
-    processor: "Done",
-  },
-  {
-    id: "OneShotPipeline",
-    label: "OneShot Pipeline / dynamic node",
+    label: "OneShot Workflow",
     kind: "workflow",
     processor: "Done",
   },
@@ -56,27 +46,9 @@ const workflowDefs: NodeDefinition[] = [
   { id: "Refactor", label: "Refactor", kind: "stage", processor: "Refactor" },
   {
     id: "GapAnalysis",
-    label: "Gap Analysis / ctx.runNode loop",
-    kind: "workflow",
+    label: "Gap Analysis",
+    kind: "stage",
     processor: "GapAnalysis",
-  },
-  {
-    id: "GapAnalysisCheck",
-    label: "Gap Check",
-    kind: "stage",
-    inherit: "GapAnalysis",
-  },
-  {
-    id: "GapAnalysisFix",
-    label: "Gap Improve",
-    kind: "stage",
-    inherit: "GapAnalysis",
-  },
-  {
-    id: "GapAnalysisFinalize",
-    label: "Gap Finalize",
-    kind: "gate",
-    inherit: "GapAnalysis",
   },
   {
     id: "Evaluation",
@@ -86,7 +58,7 @@ const workflowDefs: NodeDefinition[] = [
   },
   {
     id: "TripleValidation",
-    label: "Triple Validation / dynamic parallel fan-out",
+    label: "Triple Validation",
     kind: "parallel",
     processor: "TripleValidation",
   },
@@ -125,81 +97,27 @@ const workflowDefs: NodeDefinition[] = [
   { id: "Done", label: "Done", kind: "gate", processor: "Done" },
 ];
 
-const providerDefs: NodeDefinition[] = [
-  {
-    id: "Researcher:boundary",
-    label: "Researcher Boundary",
-    kind: "boundary",
-    processor: "ResearcherStarted",
-  },
-  {
-    id: "Provider:cache",
-    label: "Research Draft Cache",
-    kind: "cache",
-    processor: "ADK:cache",
-  },
-  {
-    id: "Provider:runner",
-    label: "Google ADK Researcher Pipeline",
-    kind: "agent",
-    processor: "ADK:researcher-pipeline",
-  },
-  {
-    id: "Provider:distribution",
-    label: "Distribution Model",
-    kind: "model",
-    processor: "ADK:distribution-model",
-  },
-  {
-    id: "Provider:research",
-    label: "Research Model",
-    kind: "model",
-    processor: "ADK:research-model",
-  },
-  {
-    id: "Provider:synthesis",
-    label: "Synthesis Model",
-    kind: "model",
-    processor: "ADK:synthesis-model",
-  },
-  {
-    id: "Provider:research-draft",
-    label: "Structured Research Draft",
-    kind: "artifact",
-    processor: "ADK:research-draft",
-  },
-];
-
-export const ADK_GRAPH_EDGES: AdkGraphEdge[] = [
-  { from: "OneShotWorkflow", to: "OneShotPipeline", condition: "START" },
-  { from: "OneShotPipeline", to: "Researcher", condition: "ctx.runNode" },
+export const WORKFLOW_GRAPH_EDGES: WorkflowGraphEdge[] = [
+  { from: "OneShotWorkflow", to: "Researcher", condition: "START" },
   { from: "Researcher", to: "Planner" },
   { from: "Planner", to: "Refactor" },
   { from: "Refactor", to: "GapAnalysis" },
-  { from: "GapAnalysis", to: "GapAnalysisCheck", condition: "ctx.runNode" },
-  { from: "GapAnalysisCheck", to: "GapAnalysisFix", condition: "gap found" },
-  {
-    from: "GapAnalysisFix",
-    to: "GapAnalysisCheck",
-    condition: "fresh recheck",
-  },
-  { from: "GapAnalysisCheck", to: "GapAnalysisFinalize", condition: "gap_0" },
-  { from: "GapAnalysisFinalize", to: "Evaluation" },
+  { from: "GapAnalysis", to: "Evaluation" },
   { from: "Evaluation", to: "TripleValidation", condition: "Passed" },
   {
     from: "TripleValidation",
     to: "SchemaValidation",
-    condition: "parallel ctx.runNode",
+    condition: "parallel",
   },
   {
     from: "TripleValidation",
     to: "FixtureValidation",
-    condition: "parallel ctx.runNode",
+    condition: "parallel",
   },
   {
     from: "TripleValidation",
     to: "GoalValidation",
-    condition: "parallel ctx.runNode",
+    condition: "parallel",
   },
   {
     from: "SchemaValidation",
@@ -225,24 +143,6 @@ export const ADK_GRAPH_EDGES: AdkGraphEdge[] = [
   { from: "CreateHash", to: "Builder" },
   { from: "Builder", to: "Hash" },
   { from: "Hash", to: "Done", condition: "MATCH" },
-
-  // Researcher provider/model subgraph attached beneath the real Researcher node.
-  {
-    from: "Researcher",
-    to: "Provider:researcher",
-    condition: "provider binding",
-  },
-  { from: "Provider:researcher", to: "Provider:cache" },
-  {
-    from: "Provider:cache",
-    to: "Provider:research-draft",
-    condition: "cache hit",
-  },
-  { from: "Provider:cache", to: "Provider:runner", condition: "cache miss" },
-  { from: "Provider:runner", to: "Provider:distribution" },
-  { from: "Provider:distribution", to: "Provider:research" },
-  { from: "Provider:research", to: "Provider:synthesis" },
-  { from: "Provider:synthesis", to: "Provider:research-draft" },
 ];
 
 function rootState(latest: Map<string, ProcessingEvent>): GraphNodeState {
@@ -261,20 +161,38 @@ function rootState(latest: Map<string, ProcessingEvent>): GraphNodeState {
 }
 
 /**
- * Project the real dynamic @google/adk workflow plus the Researcher provider
- * subgraph. This API is projection-only; execution authority remains the
- * actual Workflow/node/ctx.runNode objects executed by WorkflowRuntime.
+ * Project the native OneShot workflow graph.
+ * This API is projection-only; execution authority is the native pipeline/runtime.
  */
-export function projectAdkGraph(events: ProcessingEvent[] = []) {
+export function projectWorkflowGraph(events: ProcessingEvent[] = []) {
   const latest = new Map<string, ProcessingEvent>();
   for (const event of events) latest.set(event.processor, event);
 
-  const defs = [...workflowDefs, ...providerDefs];
+  const integrationEvents = events.filter(
+    (e) => e.scope === "SUPPORT" && e.processor.startsWith("Integration:"),
+  );
+
+  const dynamicNodes: NodeDefinition[] = [];
+  const dynamicEdges: WorkflowGraphEdge[] = [];
+
+  if (integrationEvents.length > 0) {
+    const integrationNodeId = "Integration:active";
+    dynamicNodes.push({
+      id: integrationNodeId,
+      label: "Active Integration",
+      kind: "integration",
+      processor: integrationEvents[integrationEvents.length - 1].processor,
+    });
+    dynamicEdges.push({
+      from: "Researcher",
+      to: integrationNodeId,
+      condition: "model capability",
+    });
+  }
+
+  const defs = [...workflowDefs, ...dynamicNodes];
   const nodes = defs.map((definition) => {
-    if (
-      definition.id === "OneShotWorkflow" ||
-      definition.id === "OneShotPipeline"
-    ) {
+    if (definition.id === "OneShotWorkflow") {
       return {
         id: definition.id,
         label: definition.label,
@@ -295,23 +213,19 @@ export function projectAdkGraph(events: ProcessingEvent[] = []) {
   });
 
   return {
-    graph_id: "oneshot-adk-dynamic-workflow-v3",
+    graph_id: "oneshot-native-workflow-v1",
     authority: "projection-only",
-    execution_authority: "@google/adk",
+    execution_authority: "oneshot-native",
     root_agent: {
       id: "OneShotWorkflow",
       type: "Workflow",
     },
     workflow_agents: {
-      pipeline: "node+ctx.runNode",
-      gap_analysis: "dynamic ctx.runNode loop",
-      triple_validation: "Promise.all(ctx.runNode)",
-    },
-    provider_subgraph: {
-      attached_to: "Researcher",
-      root: "Provider:researcher",
+      pipeline: "native",
+      gap_analysis: "native refinement loop",
+      triple_validation: "Promise.all(parallel lanes)",
     },
     nodes,
-    edges: ADK_GRAPH_EDGES,
+    edges: [...WORKFLOW_GRAPH_EDGES, ...dynamicEdges],
   };
 }

@@ -37,13 +37,19 @@ import {
   type ConfirmPlanResult,
   type PlanReviewEdits,
 } from "../pipeline/index.js";
-import { projectAdkGraph } from "../graph/adk-graph.js";
+import { projectWorkflowGraph } from "../graph/workflow-graph.js";
 import { projectAuthorityGraph } from "../graph/authority-graph.js";
 import { projectIntentGraph } from "../graph/intent-graph.js";
 import type { IntentCollectionService } from "../intent/intent-collection.js";
 import type { SandboxService } from "../sandbox/sandbox-service.js";
 import { projectSandboxGraph } from "../sandbox/graph/sandbox-graph.js";
 import type { SandboxExecutionInput } from "../sandbox/types.js";
+import {
+  listIntegrationStatus,
+  installIntegration,
+  integrationPackageSpec,
+  integrationStatus,
+} from "../integration/index.js";
 import { HttpSecurity } from "./http-security.js";
 import {
   WorkspacePathDeniedError,
@@ -122,6 +128,7 @@ function workspacePolicyError(res: ServerResponse, error: unknown): boolean {
 export interface RuntimeInfo {
   mode: string;
   provider?: string;
+  integration?: string;
   /** Whether the BullMQ run queue (Redis) is available. */
   queue?: boolean;
 }
@@ -129,7 +136,7 @@ export interface RuntimeInfo {
 /**
  * Minimal interface for the per-stage BullMQ pipeline. When supplied, the HTTP
  * layer uses it for run submission and plan confirmation instead of the legacy
- * ADK single-queue runtime.
+ * single-queue runtime.
  */
 export interface PipelineApi {
   queueReady: boolean;
@@ -238,7 +245,7 @@ export async function startHttpServer(
       try {
         const ctx = { runId, runs, store: pipeline.store };
         await saveArtifact(ctx, "prompt", prompt);
-        await saveArtifact(ctx, "provider", selector);
+        await saveArtifact(ctx, "integration", selector);
         await runtime?.store?.save?.(runId, "execution-mode", {
           mode: "pipeline",
         });
@@ -261,13 +268,13 @@ export async function startHttpServer(
       }
     }
 
-    // Legacy ADK single-queue runtime (kept for tests and gradual migration).
+    // Legacy single-queue runtime (kept for tests and gradual migration).
     await runtime?.store?.save?.(runId, "execution-mode", { mode: "inline" });
     const job: RunJobV1 = {
       version: 1,
       runId,
       prompt,
-      provider: selector,
+      integration: selector,
       submittedAt: new Date().toISOString(),
     };
     if (legacyQueueReady) {
@@ -275,7 +282,7 @@ export async function startHttpServer(
         await runQueue.addRun({
           runId,
           prompt,
-          providerId: selector.id,
+          integrationId: selector.id,
           revision: selector.configRevision,
           model: selector.model,
           settings:
@@ -419,7 +426,7 @@ export async function startHttpServer(
         // ---------------------------------------------------------------
         if (req.method === "GET" && url.pathname === "/api/health") {
           const mode = runtimeInfo?.mode ?? "production";
-          const publicName = runtimeInfo?.provider ?? "none";
+          const publicName = runtimeInfo?.integration ?? runtimeInfo?.provider ?? "none";
           const pipelineReady = options.pipeline?.queueReady ?? false;
           const legacyReady = Boolean(runQueue && queueReady);
           const anyQueueReady = pipelineReady || legacyReady;
@@ -455,6 +462,7 @@ export async function startHttpServer(
             status,
             workflow: "oneshot-canonical-workflow",
             mode,
+            integration: publicName,
             provider: publicName,
             redis,
             queue,
@@ -479,7 +487,7 @@ export async function startHttpServer(
             task_management: Boolean(task),
             intent_collection: Boolean(intent),
             sandbox_service: Boolean(sandbox),
-            adk_graph: "oneshot-adk-researcher-v1",
+            workflow_graph: "oneshot-workflow-graph-v1",
             authority_graph: "oneshot-authority-trace-v1",
             sandbox_graph: "oneshot-sandbox-execution-v1",
           });
@@ -561,8 +569,8 @@ export async function startHttpServer(
         // ---------------------------------------------------------------
         // Static graphs (no run context)
         // ---------------------------------------------------------------
-        if (req.method === "GET" && url.pathname === "/api/graphs/adk") {
-          return json(res, 200, projectAdkGraph());
+        if (req.method === "GET" && (url.pathname === "/api/graphs/adk" || url.pathname === "/api/graphs/workflow")) {
+          return json(res, 200, projectWorkflowGraph());
         }
         if (req.method === "GET" && url.pathname === "/api/graphs/authority") {
           return json(res, 200, projectAuthorityGraph());
@@ -1093,14 +1101,14 @@ export async function startHttpServer(
           );
         }
 
-        // GET /api/runs/:id/adk-graph â€” ADK graph for a specific run
+        // GET /api/runs/:id/workflow-graph (also: /adk-graph for URL compatibility)
         const graphMatch = url.pathname.match(
-          /^\/api\/runs\/([^/]+)\/adk-graph$/,
+          /^\/api\/runs\/([^/]+)\/(workflow-graph|adk-graph)$/,
         );
         if (req.method === "GET" && graphMatch) {
           const r = runs.get(graphMatch[1]);
           if (!r) return json(res, 404, { error: "run not found" });
-          return json(res, 200, projectAdkGraph(events.list(graphMatch[1])));
+          return json(res, 200, projectWorkflowGraph(events.list(graphMatch[1])));
         }
 
         // GET /api/runs/:id/authority-graph â€” authority graph for a specific run
@@ -1232,7 +1240,7 @@ export async function startHttpServer(
           );
         }
 
-        // GET /api/runs/:id/events â€” SSE event stream
+        // GET /api/runs/:id/events — SSE event stream
         const eventMatch = url.pathname.match(/^\/api\/runs\/([^/]+)\/events$/);
         if (req.method === "GET" && eventMatch) {
           const runId = eventMatch[1];
@@ -1421,6 +1429,69 @@ export async function startHttpServer(
               return json(res, 200, { stored: clean, bytes: buf.length });
             }
             return json(res, 400, { error: "invalid upload name" });
+          } catch (e) {
+            return json(res, 500, {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        // ---------------------------------------------------------------
+        // Integrations (§ locked design [+] Gemini action)
+        // ---------------------------------------------------------------
+        if (req.method === "GET" && url.pathname === "/api/integrations") {
+          try {
+            const list = await listIntegrationStatus(workspaceRoot);
+            return json(res, 200, { integrations: list });
+          } catch (e) {
+            return json(res, 500, {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        const integrationInstallMatch = url.pathname.match(
+          /^\/api\/integrations\/([^/]+)\/install$/,
+        );
+        if (req.method === "POST" && integrationInstallMatch) {
+          const id = decodeURIComponent(integrationInstallMatch[1]);
+          try {
+            const result = await installIntegration(workspaceRoot, id);
+            return json(res, 200, result);
+          } catch (e) {
+            return json(res, 500, {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        const integrationConfigMatch = url.pathname.match(
+          /^\/api\/integrations\/([^/]+)\/configure$/,
+        );
+        if (req.method === "POST" && integrationConfigMatch) {
+          const id = decodeURIComponent(integrationConfigMatch[1]);
+          try {
+            const input = (await body(req)) as {
+              apiKey?: string;
+              model?: string;
+              baseURL?: string;
+            };
+            const spec = integrationPackageSpec(id);
+            if (input.apiKey && typeof input.apiKey === "string") {
+              process.env[spec.apiKeyEnv] = input.apiKey.trim();
+            }
+            if (input.model && typeof input.model === "string") {
+              if (id === "gemini") {
+                process.env.GEMINI_MODEL = input.model.trim();
+              }
+            }
+            if (input.baseURL && typeof input.baseURL === "string") {
+              if (id === "gemini") {
+                process.env.GEMINI_BASE_URL = input.baseURL.trim();
+              }
+            }
+            const status = await integrationStatus(workspaceRoot, spec);
+            return json(res, 200, status);
           } catch (e) {
             return json(res, 500, {
               error: e instanceof Error ? e.message : String(e),

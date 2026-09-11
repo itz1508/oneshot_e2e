@@ -19,7 +19,7 @@ export interface AgentPipelineBootstrapInput {
 
 /**
  * Register canonical Agent factories without activating them.
- * Activation is explicit and happens only when the ADK workflow reaches a Agent.
+ * Activation is explicit and happens only when the native workflow reaches an Agent.
  */
 export function createAgentPipeline(
   input: AgentPipelineBootstrapInput,
@@ -27,27 +27,10 @@ export function createAgentPipeline(
   const { projectRoot, events, contracts, sandbox } = input;
   const pipeline = new AgentPipeline(events);
 
-  pipeline.register("Researcher", async (runId) => {
-    events.emit(runId, "ResearcherStarted", "Running", {
-      scope: "SUPPORT",
-      message: "Researcher activation",
-    });
-
-    // Researcher does not require a fixed provider binding.
-    // It may inspect available Integration capabilities when needed,
-    // but the general path does not mandate a selected provider.
-    const researchProvider = undefined;
-
-    events.emit(runId, "ResearcherCompleted", "Completed", {
-      scope: "SUPPORT",
-      test_result: "Passed",
-      artifact_id: "researcher:no-binding",
-      message: "Researcher runs without mandatory provider binding",
-    });
-
+  pipeline.register("Researcher", async () => {
     return {
       agent_id: "Researcher" as const,
-      runtime: new ResearcherWorkflow(contracts, researchProvider),
+      runtime: new ResearcherWorkflow(contracts, undefined, projectRoot),
       deactivate: () => undefined,
     };
   });

@@ -35,8 +35,8 @@ type AnyAgentFactory = (
 /**
  * Explicit OneShot Agent activation/binding pipeline.
  *
- * Bootstrap registers factories only. A Agent is not runnable until the
- * canonical ADK stage explicitly activates it for the current run. This keeps
+ * Bootstrap registers factories only. An Agent is not runnable until the
+ * canonical workflow stage explicitly activates it for the current run. This keeps
  * Agent identity, dependency binding, and execution as separate responsibilities.
  */
 export class AgentPipeline {

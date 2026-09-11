@@ -9,7 +9,7 @@ import type {
 import { CanonicalContractSkill } from "../skills/canonical-contract-skill.js";
 import { DeterministicValidationRuntime } from "../validation/deterministic-validation.js";
 
-/** Deterministic Triple Validation operations used by the ADK workflow. */
+/** Deterministic Triple Validation operations used by the OneShot workflow. */
 export class TripleValidationWorkflow {
   constructor(
     private validation: DeterministicValidationRuntime,
@@ -116,7 +116,7 @@ export class TripleValidationWorkflow {
     return triple;
   }
 
-  /** Compatibility path for direct callers outside the canonical ADK runtime. */
+  /** Direct parallel triple validation run. */
   async run(bundle: ResearchBundle, plan: Plan): Promise<TripleValidation> {
     await this.assertRouting(bundle, plan);
     const [schemaValidation, fixtureValidation, goalValidation] =

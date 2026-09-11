@@ -12,6 +12,7 @@ import { PythonBridge } from "../../validation/python-bridge.js";
 import { ValidationLanePool } from "../../validation/validation-lane-pool.js";
 import { DeterministicValidationRuntime } from "../../validation/deterministic-validation.js";
 import { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";
+import { createFixtureResearchBundle } from "./fixture-helper.js";
 
 import { ResearcherWorkflow } from "../../agents/researcher/workflow.js";
 import { PlannerWorkflow } from "../../agents/planner/workflow.js";
@@ -78,7 +79,7 @@ export function prompt(runId: string): Prompt {
 
 export async function harness(
   name: string,
-  provider?: unknown,
+  capability?: unknown,
   sandboxRunner: SandboxRunner = new DeterministicTestSandboxRunner(),
 ) {
   const taskStore = new AppendOnlyProcessingEventStore(
@@ -98,8 +99,8 @@ export async function harness(
     task.onEvent(e, runs.require(e.run_id));
   });
 
-  if (provider && typeof (provider as any).attachEvents === "function") {
-    (provider as any).attachEvents(events);
+  if (capability && typeof (capability as any).attachEvents === "function") {
+    (capability as any).attachEvents(events);
   }
 
   const bridge = new PythonBridge();
@@ -114,7 +115,14 @@ export async function harness(
   };
 
   const validation = new DeterministicValidationRuntime(validationLanes);
-  const researcher = new ResearcherWorkflow(contracts, provider);
+  const researcher = capability
+    ? new ResearcherWorkflow(contracts, capability)
+    : ({
+        run: async (prompt: Prompt, runId: string) =>
+          createFixtureResearchBundle(prompt, runId),
+        execute: async (prompt: Prompt, runId: string) =>
+          createFixtureResearchBundle(prompt, runId),
+      } as unknown as ResearcherWorkflow);
   const planner = new PlannerWorkflow(contracts);
   const refactor = new RefactorWorkflow(contracts);
   const gapper = new GapAnalysisWorkflow(contracts);
@@ -132,8 +140,8 @@ export async function harness(
   );
   const builder = new BuilderWorkflow(sandbox);
 
-  // Kept only for legacy unit tests of the superseded registry itself. The
-  // production/test WorkflowRuntime below executes through ADK dynamic nodes.
+  // Kept only for legacy unit tests of the AgentPipeline registry itself.
+  // The production/test WorkflowRuntime below executes through the native pipeline.
   const pipeline = new AgentPipeline(events);
   pipeline.register("Researcher", () => ({ agent_id: "Researcher", runtime: researcher }));
   pipeline.register("Planner", () => ({ agent_id: "Planner", runtime: planner }));
@@ -182,7 +190,7 @@ export async function harness(
     store,
     runtime,
     close() {
-      (provider as any)?.close?.();
+      (capability as any)?.close?.();
       bridge.close();
     },
   };

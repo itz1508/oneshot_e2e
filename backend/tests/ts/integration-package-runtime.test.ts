@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, writeFile, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -11,6 +11,10 @@ import {
   loadIntegrationModel,
   loadIntegrationPackage,
 } from "../../integration/runtime.js";
+import { ResearcherWorkflow } from "../../agents/researcher/workflow.js";
+import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
+import { PythonBridge } from "../../validation/python-bridge.js";
+import { CanonicalContractSkill } from "../../skills/canonical-contract-skill.js";
 
 async function fakeGeminiInstall(root: string): Promise<string> {
   const target = integrationDirectory(root, "gemini");
@@ -109,4 +113,92 @@ test("status is derived from actual folder contents", async () => {
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("ResearcherWorkflow fails with ROOT_CAUSE when no model capability is present (no fake fallback)", async () => {
+  const bridge = new PythonBridge();
+  const contracts = new CanonicalContractSkill(bridge);
+  try {
+    const researcher = new ResearcherWorkflow(contracts);
+    await assert.rejects(
+      async () => {
+        await researcher.execute(
+          {
+            prompt_id: "prompt:test",
+            intent: "Custom prompt that must not return static fixture",
+            requested_outcome: "code",
+            context: [{ context_id: "ctx:1", statement: "test" }],
+            research_direction: ["requirements"],
+          },
+          "run:test-no-model",
+        );
+      },
+      (err: any) => {
+        assert.ok(err instanceof WorkflowRootCauseError);
+        assert.equal(err.rootCause.issue, "RESEARCH_CAPABILITY_UNAVAILABLE");
+        return true;
+      },
+    );
+  } finally {
+    bridge.close();
+  }
+});
+
+test("ResearcherWorkflow accepts generic model draft capability and Researcher builds ResearchBundle", async () => {
+  const bridge = new PythonBridge();
+  const contracts = new CanonicalContractSkill(bridge);
+  try {
+    const capability = {
+      model: {},
+      source: "integration:test",
+      provenance: "test@1.0.0",
+      generateDraft: async () => ({
+        summary: "Custom dynamic draft",
+        requirements: ["Req 1: Parse input", "Req 2: Emit output"],
+        dependencies: [{ description: "test dep", required_by: [0, 1] }],
+        plan_steps: [
+          { description: "Step 1", responsibility: "Builder", requirement_indexes: [0] },
+          { description: "Step 2", responsibility: "Builder", requirement_indexes: [1] },
+        ],
+        success_meaning: "All criteria pass",
+        success_criteria: [
+          {
+            statement: "Criterion 1",
+            measurement: "assert",
+            expected_result: "pass",
+            requirement_indexes: [0, 1],
+          },
+        ],
+      }),
+    };
+    const researcher = new ResearcherWorkflow(contracts, capability);
+    const bundle = await researcher.execute(
+      {
+        prompt_id: "prompt:custom",
+        intent: "Custom model test",
+        requested_outcome: "code",
+        context: [{ context_id: "ctx:1", statement: "test" }],
+        research_direction: ["requirements"],
+      },
+      "run:test-custom-model",
+    );
+
+    assert.ok(bundle);
+    assert.equal(bundle.researcher.researcher_id, "researcher:run:test-custom-model");
+    assert.equal(bundle.plan.requirements.length, 2);
+    assert.equal(bundle.plan.requirements[0].statement, "Req 1: Parse input");
+    assert.equal(bundle.researcher.evidence[0].source, "integration:test");
+  } finally {
+    bridge.close();
+  }
+});
+
+test("Root package.json does not require vendor SDKs", async () => {
+  const rootPackageJson = JSON.parse(
+    await readFile(join(process.cwd(), "package.json"), "utf8"),
+  );
+  assert.equal(rootPackageJson.dependencies?.["@ai-sdk/google"], undefined);
+  assert.equal(rootPackageJson.dependencies?.["@ai-sdk/openai"], undefined);
+  assert.equal(rootPackageJson.dependencies?.["@ai-sdk/anthropic"], undefined);
+  assert.ok(rootPackageJson.dependencies?.["ai"], "ai package should remain at root");
 });

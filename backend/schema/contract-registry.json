@@ -170,7 +170,7 @@
       "version": "2",
       "artifact_type": "processing-event",
       "schema_path": "schema/processing-event.schema.json",
-      "schema_digest": "66176e27d845fd21cc1d87926d98feb588edbf696e11ddf4f02d38baabef4dc8",
+      "schema_digest": "7b0f753c5bf044e78a6dd0fdbb0fcf881ed4871157266c0d4a46f27c097d783e",
       "producer": "OneShotEventProjection",
       "consumers": [
         "RunSnapshot",

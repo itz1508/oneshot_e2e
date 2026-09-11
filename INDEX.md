@@ -195,10 +195,9 @@ Standalone workspace service, models, authentication, and API checks.
 Bootstrap, packaging tools, fixtures, dependency requirements, and bundled assets.
 
 <details>
-<summary>Browse 31 files</summary>
+<summary>Browse 30 files</summary>
 
 - [app/bootstrap/demo.mjs](app/bootstrap/demo.mjs)
-- [app/bootstrap/readme.ts](app/bootstrap/readme.ts)
 - [app/bootstrap/setup.bat](app/bootstrap/setup.bat)
 - [app/bootstrap/setup.sh](app/bootstrap/setup.sh)
 - [app/deploy/docker/Dockerfile.sandbox](app/deploy/docker/Dockerfile.sandbox)

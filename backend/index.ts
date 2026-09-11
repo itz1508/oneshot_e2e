@@ -14,7 +14,6 @@ import { ValidationLanePool } from "./validation/validation-lane-pool.js";
 import { DeterministicValidationRuntime } from "./validation/deterministic-validation.js";
 import { CanonicalContractSkill } from "./skills/canonical-contract-skill.js";
 import { createSkillSystem } from "./skills/bootstrap.js";
-import { createDynamicDependencyFactory } from "./workflow/adk/dynamic-dependencies.js";
 import {
   BullMQRunQueue,
   executeRunJob,
@@ -96,8 +95,8 @@ events.observe((e) => {
 
 // --- Validation & Contracts (composed through the Reusable Skill subsystem) ---
 // Canonical contract operations keep their own bridge. Triple Validation has
-// three separate Python lanes; the ADK dynamic node starts all three runNode()
-// calls before awaiting Promise.all.
+// three separate Python lanes; the native WorkflowRuntime starts all three
+// in parallel via Promise.all.
 const bridge = new PythonBridge();
 const validationLanes = new ValidationLanePool();
 const skills = createSkillSystem();
@@ -161,15 +160,17 @@ const stageServices: StageServices = {
   pythonReasoner,
 };
 
-// --- Google ADK Dynamic Workflow Runtime (legacy inline fallback) ---
-// Kept so the server can still boot and run jobs in-process when Redis is
-// unavailable. The per-stage BullMQ pipeline is the primary execution path.
-const bindDependencies = createDynamicDependencyFactory({
-  projectRoot,
-  events,
-  contracts,
-  sandbox,
+// --- Native OneShot Workflow Runtime ---
+const bindDependencies = async () => ({
+  researcher: new ResearcherWorkflow(contracts, undefined, projectRoot),
+  planner,
+  refactor,
+  gapper,
+  evaluator,
   triple,
+  confirmation,
+  hash,
+  builder,
 });
 const runtime = new WorkflowRuntime(
   events,
@@ -255,8 +256,10 @@ const queueDeps: RunQueueDeps = {
   projectRoot,
   createRuntime: async () =>
     new WorkflowRuntime(
-      events, runs, artifactStore,
-      createDynamicDependencyFactory({ projectRoot, events, contracts, sandbox, triple }),
+      events,
+      runs,
+      artifactStore,
+      bindDependencies,
     ),
 };
 const runQueue = new BullMQRunQueue(RUN_QUEUE_NAME, queueDeps, {
@@ -348,7 +351,7 @@ const address = server.address();
 const port =
   typeof address === "object" && address ? address.port : process.env.PORT;
 console.log(
-  `ONESHOT_SERVER_READY port=${port} mode=${runtimeInfo.mode} provider=${runtimeInfo.provider}`,
+  `ONESHOT_SERVER_READY port=${port} mode=${runtimeInfo.mode}`,
 );
 
 // --- Graceful shutdown ---
