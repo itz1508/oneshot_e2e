@@ -67,11 +67,21 @@ Key boundaries:
   to the client.
 - Sandbox admission checks, workspace path policy, and authentication are
   enforced server-side before any target-workspace access.
+- Rebuild authority (2026-09-11): the Integration boundary supersedes
+  "Provider" as architectural authority — `Integration = ModelIntegration +
+  SearchIntegration`, and Integration is not the Researcher, Planner, or
+  Builder. A provider is merely an implementation of `ModelIntegration`;
+  the adapters under `app/web/cloud` are such implementations, and Tavily is
+  an implementation of `SearchIntegration`. Do not introduce
+  `ProviderManager`, `ResearchProvider`, or `provider.research()` (see the
+  [source of truth §0A](ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v3.md)).
 
 ## 2. Canonical workflow
 
-Six LLM stages, two mandatory human gates, three deterministic validators,
-and one hash-bound build handoff.
+Six LLM stages (the Researcher stage and its Research Review gate apply only
+when Research was requested — Research is optional, see the source of truth
+§0A.1), up to two human gates, three deterministic validators, and one
+hash-bound build handoff.
 
 ```mermaid
 flowchart TD
@@ -82,6 +92,7 @@ flowchart TD
     R --> ART["plan_id · schema_id · fixture_id · goal_id · validation_id"]
     ART --> G1["🛑 HUMAN GATE 1 — Research Review<br/>edit sections · request more research · ACCEPT"]
     G1 -- "Accept" --> PL["2 · Planner (LLM) → audit_id"]
+    P -- "Research not requested (optional path)" --> PL
     PL --> RF["3 · Refactor (LLM) → same logical plan_id"]
     RF --> GA["4 · Gap Analysis (LLM, fix → recheck loop) → gap_0 + plan_id"]
     GA --> EV["5 · Evaluation (LLM) → plan_id"]

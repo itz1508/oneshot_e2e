@@ -10,6 +10,7 @@ import {
   integrationStatus,
   loadIntegrationModel,
   loadIntegrationPackage,
+  resolveActiveIntegrationModel,
 } from "../../integration/runtime.js";
 import { ResearcherWorkflow } from "../../agents/researcher/workflow.js";
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
@@ -204,4 +205,56 @@ test("Root package.json does not require vendor SDKs", async () => {
   assert.equal(rootPackageJson.dependencies?.["@ai-sdk/openai"], undefined);
   assert.equal(rootPackageJson.dependencies?.["@ai-sdk/anthropic"], undefined);
   assert.ok(rootPackageJson.dependencies?.["ai"], "ai package should remain at root");
+});
+
+test("active model resolution honors configure-endpoint env bindings", async () => {
+  const root = await mkdtemp(join(tmpdir(), "oneshot-integration-"));
+  const previous = {
+    key: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+    model: process.env.GEMINI_MODEL,
+    baseURL: process.env.GEMINI_BASE_URL,
+  };
+  try {
+    await fakeGeminiInstall(root);
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY = "env-key";
+    process.env.GEMINI_MODEL = "gemini-env-model";
+    process.env.GEMINI_BASE_URL = "https://proxy.invalid/v1";
+
+    const active = await resolveActiveIntegrationModel(root);
+    assert.ok(active, "installed and configured integration must resolve");
+    assert.equal(active.id, "gemini");
+    const model = active.model as {
+      model: string;
+      options: { apiKey: string; baseURL?: string };
+    };
+    assert.equal(model.model, "gemini-env-model");
+    assert.equal(model.options.apiKey, "env-key");
+    assert.equal(model.options.baseURL, "https://proxy.invalid/v1");
+
+    // An unset base URL must not leak an empty string into provider options.
+    delete process.env.GEMINI_BASE_URL;
+    const withoutBaseURL = await resolveActiveIntegrationModel(root);
+    assert.ok(withoutBaseURL);
+    const model2 = withoutBaseURL.model as {
+      options: { baseURL?: string };
+    };
+    assert.equal(model2.options.baseURL, undefined);
+  } finally {
+    if (previous.key === undefined) {
+      delete process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    } else {
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY = previous.key;
+    }
+    if (previous.model === undefined) {
+      delete process.env.GEMINI_MODEL;
+    } else {
+      process.env.GEMINI_MODEL = previous.model;
+    }
+    if (previous.baseURL === undefined) {
+      delete process.env.GEMINI_BASE_URL;
+    } else {
+      process.env.GEMINI_BASE_URL = previous.baseURL;
+    }
+    await rm(root, { recursive: true, force: true });
+  }
 });

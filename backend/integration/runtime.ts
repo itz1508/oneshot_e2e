@@ -150,8 +150,16 @@ export async function resolveActiveIntegrationModel(
 
     const spec = integrationPackageSpec(candidate.id);
     const modelName = (process.env[spec.modelEnv] || spec.defaultModel).trim();
+
+    // Honor the base URL saved through the configure endpoint so
+    // self-hosted/proxied endpoints are used at runtime.
+    const baseURL = spec.baseURLEnv
+      ? (process.env[spec.baseURLEnv] || "").trim()
+      : "";
+
     const model = await loadIntegrationModel(projectRoot, candidate.id, {
       model: modelName,
+      ...(baseURL ? { baseURL } : {}),
     });
 
     return {

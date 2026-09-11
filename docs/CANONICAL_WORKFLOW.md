@@ -11,16 +11,32 @@ package-bound Confirm Build before Builder (see the reconciliation table and
 `backend/tests/ts/build-review.test.ts`). [WORKFLOW_TREE](WORKFLOW_TREE) maps
 current code.
 
+Research is optional (authority correction, 2026-09-11): the workflow begins at
+`Prompt_id` and branches on whether Research was requested. When it was not, the
+run enters directly at Planner — ResearchBundle is optional enrichment, not a
+universal Planner prerequisite. When Research was requested, the Researcher →
+Research Review → explicit acceptance path below is unchanged. See
+[ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v3.md §0A](ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v3.md)
+for the full authority statement, including the Integration boundary
+(`Integration = ModelIntegration + SearchIntegration`; Integration is not the
+Researcher, Planner, or Builder) and the conversation-currency requirement
+(`conversation_id`, `conversation_revision`, `conversation_hash` — stale
+artifacts must not cross a workflow gate).
+
 ```text
 Prompt_id
-→ Researcher
-→ Researcher(id)
-   ├── plan_id
-   ├── schema_id
-   ├── fixture_id
-   ├── goal_id
-   └── validation_id
-→ STOP: Research Review → explicit acceptance
+→ Research requested?
+   ├─ NO
+   │   → Planner (normal workflow path; ResearchBundle not required)
+   └─ YES
+       → Researcher
+       → Researcher(id)
+          ├── plan_id
+          ├── schema_id
+          ├── fixture_id
+          ├── goal_id
+          └── validation_id
+       → STOP: Research Review → explicit acceptance
 → Planner
 → audit_id
 → Refactor
@@ -45,7 +61,7 @@ Prompt_id
 
 ## Ownership
 
-- Researcher owns `Researcher(id)`, `plan_id`, `schema_id`, `fixture_id`, `goal_id`, and `validation_id`.
+- Researcher owns `Researcher(id)`, `plan_id`, `schema_id`, `fixture_id`, `goal_id`, and `validation_id` (applies only when Research was requested — Research is optional).
 - Planner consumes `plan_id` and produces `audit_id`.
 - Refactor consumes `plan_id + audit_id` and returns the same logical `plan_id` with revision evidence.
 - Gap Analysis closes identified gaps and returns `gap_0 + plan_id` after a fresh recheck.

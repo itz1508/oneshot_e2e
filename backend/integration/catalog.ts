@@ -5,6 +5,7 @@ export interface IntegrationPackageSpec {
   packageVersion: string;
   factoryExport: string;
   apiKeyEnv: string;
+  baseURLEnv?: string;
   modelEnv: string;
   defaultModel: string;
   bundled: boolean;
@@ -22,6 +23,7 @@ const CATALOG: Record<string, IntegrationPackageSpec> = {
     packageVersion: "4.0.67",
     factoryExport: "createGoogleGenerativeAI",
     apiKeyEnv: "GOOGLE_GENERATIVE_AI_API_KEY",
+    baseURLEnv: "GEMINI_BASE_URL",
     modelEnv: "GEMINI_MODEL",
     defaultModel: "gemini-2.5-flash",
     bundled: true,
