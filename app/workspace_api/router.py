@@ -24,7 +24,6 @@ from workspace_api.config import WorkspaceSettings
 from workspace_api.errors import NotFoundError, ProviderError
 from workspace_api.models import (
     AvailabilityStatus,
-    CredentialStatus,
     ModelConfiguration,
     ModelHealthSnapshot,
     ModelProvider,

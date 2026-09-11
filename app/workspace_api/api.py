@@ -31,7 +31,6 @@ from workspace_api.models import (
     ContextItem,
     Conversation,
     ConversationStatus,
-    CredentialStatus,
     ModelConfiguration,
     ModelHealthSnapshot,
     ModelProvider,
@@ -41,7 +40,6 @@ from workspace_api.models import (
     UsageEvent,
     User,
     Workspace,
-    WorkspaceApiKey,
     WorkspaceMembership,
     WorkspaceRole,
 )
@@ -79,19 +77,15 @@ from workspace_api.schemas import (
     UsageEventRead,
     UsageSummary,
     UserRead,
-    WorkspaceApiKeyCreate,
-    WorkspaceApiKeyIssued,
-    WorkspaceApiKeyRead,
     WorkspaceCreate,
     WorkspaceRead,
 )
 from workspace_api.security import (
-    ApiKeyService,
     PasswordService,
     SecretCipher,
     TokenService,
 )
-from workspace_api.services import AuthService, CredentialService, WorkspaceService
+from workspace_api.services import AuthService
 from workspace_api.usage import UsageTracker, _period_end, _period_start
 
 

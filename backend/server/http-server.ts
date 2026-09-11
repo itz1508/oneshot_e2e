@@ -193,7 +193,7 @@ export async function startHttpServer(
   const bindHost =
     (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
   const apiToken = (process.env.ONESHOT_API_TOKEN || "").trim();
-  if (bindHost !== "127.0.0.1" && bindHost !== "::1" && !apiToken) {
+  if (bindHost !== "127.0.0.1" && bindHost !== "::1") {
     throw new Error(
       `ROOT_CAUSE: non-loopback ONESHOT_BIND_HOST '${bindHost}' requires ONESHOT_API_TOKEN`,
     );

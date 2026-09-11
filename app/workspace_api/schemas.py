@@ -22,7 +22,6 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr
 from workspace_api.models import (
     AvailabilityStatus,
     ConversationStatus,
-    CredentialStatus,
     MessageRole,
     ProviderKind,
     SubscriptionStatus,

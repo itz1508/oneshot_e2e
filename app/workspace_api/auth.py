@@ -20,12 +20,10 @@ from sqlalchemy.orm import Session
 
 from workspace_api.errors import AuthenticationError, AuthorizationError
 from workspace_api.models import (
-    CredentialStatus,
     User,
     UserStatus,
-    WorkspaceApiKey,
 )
-from workspace_api.security import ApiKeyService, TokenService
+from workspace_api.security import TokenService
 
 
 @dataclass(frozen=True, slots=True)

@@ -44,9 +44,6 @@ class WorkspaceSettings(BaseSettings):
     jwt_secret: SecretStr = SecretStr("development-only-jwt-secret-change-me-now")
     jwt_algorithm: Literal["HS256", "HS384", "HS512"] = "HS256"
     access_token_ttl_minutes: int = Field(default=30, ge=5, le=1440)
-    api_key_pepper: SecretStr = SecretStr(
-        "development-only-api-key-pepper-change-me-now"
-    )
     encryption_keys: SecretStr = SecretStr("")
 
     cors_origins: str = "http://localhost:8787,http://localhost:3000"
@@ -72,8 +69,6 @@ class WorkspaceSettings(BaseSettings):
         problems: list[str] = []
         if self.jwt_secret.get_secret_value().startswith("development-only"):
             problems.append("ONESHOT_WORKSPACE_JWT_SECRET")
-        if self.api_key_pepper.get_secret_value().startswith("development-only"):
-            problems.append("ONESHOT_WORKSPACE_API_KEY_PEPPER")
         if not self.encryption_keys.get_secret_value().strip():
             problems.append("ONESHOT_WORKSPACE_ENCRYPTION_KEYS")
         if problems:

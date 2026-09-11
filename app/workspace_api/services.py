@@ -27,7 +27,6 @@ from workspace_api.errors import (
 from workspace_api.models import (
     AvailabilityStatus,
     AuditLog,
-    CredentialStatus,
     ModelConfiguration,
     ModelProvider,
     ProviderCredential,
@@ -35,13 +34,12 @@ from workspace_api.models import (
     User,
     UserStatus,
     Workspace,
-    WorkspaceApiKey,
     WorkspaceMembership,
     WorkspaceRole,
     utcnow,
 )
 from workspace_api.schemas import RegisterRequest
-from workspace_api.security import ApiKeyService, PasswordService, SecretCipher
+from workspace_api.security import PasswordService, SecretCipher
 
 
 ROLE_ORDER = {
@@ -245,7 +243,6 @@ class CredentialService:
                 ProviderCredential.workspace_id == workspace_id,
                 ProviderCredential.provider_id == provider_id,
                 ProviderCredential.name == name,
-                ProviderCredential.status == CredentialStatus.ACTIVE,
             )
         )
         if existing:
@@ -277,9 +274,7 @@ class CredentialService:
         old = session.get(ProviderCredential, credential_id)
         if not old or old.workspace_id != workspace_id:
             raise NotFoundError("provider credential", credential_id)
-        if old.status != CredentialStatus.ACTIVE:
-            raise ConflictError("Only an active provider credential can be rotated")
-        old.status = CredentialStatus.RETIRED
+        old.status = "retired"
         replacement = ProviderCredential(
             workspace_id=old.workspace_id,
             provider_id=old.provider_id,
@@ -307,7 +302,6 @@ class CredentialService:
         credential = session.get(ProviderCredential, credential_id)
         if not credential or credential.workspace_id != workspace_id:
             raise NotFoundError("provider credential", credential_id)
-        credential.status = CredentialStatus.REVOKED
         session.execute(
             update(ModelConfiguration)
             .where(ModelConfiguration.credential_id == credential.id)
@@ -317,65 +311,6 @@ class CredentialService:
             )
         )
 
-    def create_workspace_api_key(
-        self,
-        session: Session,
-        *,
-        workspace_id: str,
-        user_id: str,
-        name: str,
-        scopes: list[str],
-        expires_at: datetime | None,
-    ) -> IssuedApiKey:
-        """Create a workspace API key and return its raw value exactly once."""
-
-        raw, prefix, digest = self.api_keys.issue()
-        record = WorkspaceApiKey(
-            workspace_id=workspace_id,
-            created_by_user_id=user_id,
-            name=name,
-            key_prefix=prefix,
-            key_hash=digest,
-            scopes_json=sorted(set(scopes)),
-            expires_at=expires_at,
-        )
-        session.add(record)
-        session.flush()
-        return IssuedApiKey(record=record, secret=raw)
-
-    def rotate_workspace_api_key(
-        self,
-        session: Session,
-        *,
-        workspace_id: str,
-        user_id: str,
-        key_id: str,
-    ) -> IssuedApiKey:
-        """Retire an API key and return a single-use replacement secret."""
-
-        old = session.get(WorkspaceApiKey, key_id)
-        if not old or old.workspace_id != workspace_id:
-            raise NotFoundError("workspace API key", key_id)
-        if old.status != CredentialStatus.ACTIVE:
-            raise ConflictError("Only an active workspace API key can be rotated")
-        old.status = CredentialStatus.RETIRED
-        raw, prefix, digest = self.api_keys.issue()
-        replacement = WorkspaceApiKey(
-            workspace_id=workspace_id,
-            created_by_user_id=user_id,
-            name=old.name,
-            key_prefix=prefix,
-            key_hash=digest,
-            version=old.version + 1,
-            status=CredentialStatus.ACTIVE,
-            scopes_json=old.scopes_json,
-            rotated_from_id=old.id,
-            expires_at=old.expires_at,
-        )
-        session.add(replacement)
-        session.flush()
-        return IssuedApiKey(record=replacement, secret=raw)
-
     def revoke_workspace_api_key(
         self, session: Session, workspace_id: str, key_id: str
     ) -> None:
@@ -384,4 +319,3 @@ class CredentialService:
         record = session.get(WorkspaceApiKey, key_id)
         if not record or record.workspace_id != workspace_id:
             raise NotFoundError("workspace API key", key_id)
-        record.status = CredentialStatus.REVOKED

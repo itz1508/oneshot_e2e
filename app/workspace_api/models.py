@@ -96,12 +96,6 @@ class AvailabilityStatus(str, enum.Enum):
     UNAVAILABLE = "unavailable"
 
 
-class CredentialStatus(str, enum.Enum):
-    ACTIVE = "active"
-    RETIRED = "retired"
-    REVOKED = "revoked"
-
-
 class ConversationStatus(str, enum.Enum):
     ACTIVE = "active"
     ARCHIVED = "archived"
@@ -499,9 +493,6 @@ class UsageEvent(Base):
     user_id: Mapped[str | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    api_key_id: Mapped[str | None] = mapped_column(
-        ForeignKey("workspace_api_keys.id", ondelete="SET NULL"), nullable=True
-    )
     conversation_id: Mapped[str | None] = mapped_column(
         ForeignKey("conversations.id", ondelete="SET NULL"), nullable=True
     )
@@ -539,9 +530,6 @@ class AuditLog(Base):
     )
     actor_user_id: Mapped[str | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
-    )
-    actor_api_key_id: Mapped[str | None] = mapped_column(
-        ForeignKey("workspace_api_keys.id", ondelete="SET NULL"), nullable=True
     )
     action: Mapped[str] = mapped_column(String(120), index=True)
     target_type: Mapped[str] = mapped_column(String(80))
