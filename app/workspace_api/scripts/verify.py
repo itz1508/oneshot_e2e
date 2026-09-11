@@ -50,7 +50,9 @@ def main() -> int:
                 "app=create_app(WorkspaceSettings(environment='test',"
                 "database_url='sqlite://',log_json=False)); "
                 "schema=app.openapi(); "
-                "assert len(schema['paths']) >= 25; "
+                # Auth removal (register/login/users.me/api-keys) reduced the
+                # surface to 19 paths; the floor tracks the current contract.
+                "assert len(schema['paths']) >= 19; "
                 "assert 'ErrorResponse' in schema['components']['schemas']; "
                 "print('ONESHOT_WORKSPACE_OPENAPI_VERIFIED')"
             ),
