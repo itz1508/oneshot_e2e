@@ -37,7 +37,6 @@ const state = {
     seen: new Set(),
     source: null,
     eventAbort: null,
-    authToken: sessionStorage.getItem("oneshot.accessToken") || "",
     drawer: null,
     side: false,
     top: true,
@@ -83,59 +82,20 @@ function setConnection(kind, detail = "") {
             connecting: "Connecting",
             reconnecting: "Reconnecting",
             disconnected: "Runtime unavailable",
-            auth: "Authentication required",
         }[kind] || kind;
     $("#runtime-label").textContent = detail ? `${label} · ${detail}` : label;
     $("#rail-status").className = `rail-status ${kind}`;
 }
 function headers(extra = {}) {
-    const h = { ...extra };
-    if (state.authToken) h.Authorization = `Bearer ${state.authToken}`;
-    return h;
+    return { ...extra };
 }
 async function apiFetch(url, options = {}) {
-    const r = await fetch(url, {
+    return fetch(url, {
         credentials: "same-origin",
         ...options,
         headers: headers(options.headers || {}),
     });
-    if (r.status === 401) {
-        setConnection("auth");
-        showAuth();
-        throw new Error("Authentication required");
-    }
-    if (r.status === 403 && !state.authToken) {
-        setConnection("auth", "session mutation rejected");
-        showAuth(
-            "Cookie-authenticated mutation was rejected. Enter the local OneShot access token or use the existing session login flow.",
-        );
-        throw new Error("Authentication/CSRF required");
-    }
-    return r;
 }
-function showAuth(msg = "") {
-    $("#auth-error").textContent = msg;
-    $("#auth-overlay").classList.add("open");
-    setTimeout(() => $("#auth-token").focus(), 0);
-}
-function hideAuth() {
-    $("#auth-overlay").classList.remove("open");
-    $("#auth-error").textContent = "";
-}
-$("#auth-cancel").onclick = hideAuth;
-$("#auth-form").onsubmit = async (e) => {
-    e.preventDefault();
-    const token = $("#auth-token").value.trim();
-    if (!token) {
-        $("#auth-error").textContent = "Enter the local OneShot access token.";
-        return;
-    }
-    state.authToken = token;
-    sessionStorage.setItem("oneshot.accessToken", token);
-    $("#auth-token").value = "";
-    hideAuth();
-    await bootstrap();
-};
 // --- Locked state-adaptive modules (semantic state, live lane, TODO hierarchy, visual settings) ---
 const atmosphere = createRunAtmosphere($("#ambient-particles"));
 const runPanel = createActiveRunPanel();
@@ -632,63 +592,8 @@ function connectNativeEvents() {
         setConnection("reconnecting", "event stream");
     };
 }
-async function connectBearerEvents() {
-    closeEvents();
-    const controller = new AbortController();
-    state.eventAbort = controller;
-    let delay = 900;
-    while (
-        !controller.signal.aborted &&
-        !state.run?.events?.some(isTerminalEvent)
-    ) {
-        try {
-            setConnection("connecting", "event stream");
-            const r = await apiFetch(
-                `/api/runs/${encodeURIComponent(state.runId)}/events`,
-                {
-                    headers: { Accept: "text/event-stream" },
-                    signal: controller.signal,
-                },
-            );
-            if (!r.ok) throw new Error(`Event stream failed: ${r.status}`);
-            if (!r.body) throw new Error("Event stream body unavailable");
-            setConnection("connected");
-            delay = 900;
-            const reader = r.body.getReader(),
-                decoder = new TextDecoder();
-            let buffer = "";
-            while (!controller.signal.aborted) {
-                const { value, done } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                buffer = buffer.replace(/\r\n/g, "\n");
-                let i;
-                while ((i = buffer.indexOf("\n\n")) >= 0) {
-                    const block = buffer.slice(0, i);
-                    buffer = buffer.slice(i + 2);
-                    const data = block
-                        .split("\n")
-                        .filter((x) => x.startsWith("data:"))
-                        .map((x) => x.slice(5).trimStart())
-                        .join("\n");
-                    if (data) await applyEvent(JSON.parse(data));
-                }
-            }
-        } catch (e) {
-            if (
-                controller.signal.aborted ||
-                state.run?.events?.some(isTerminalEvent)
-            )
-                break;
-            if (String(e).includes("Authentication")) break;
-            setConnection("reconnecting", "event stream");
-            await new Promise((r) => setTimeout(r, delay));
-            delay = Math.min(5000, Math.round(delay * 1.7));
-        }
-    }
-}
 function connectEvents() {
-    state.authToken ? void connectBearerEvents() : connectNativeEvents();
+    void connectNativeEvents();
 }
 
 async function submitMessage() {

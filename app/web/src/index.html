@@ -113,15 +113,7 @@
   </div>
 </div>
 
-<div class="auth-overlay" id="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-  <form class="auth-card" id="auth-form">
-    <h2 id="auth-title">Authentication required</h2>
-    <p>Enter the local OneShot access token. It is stored only for this browser tab.</p>
-    <input id="auth-token" type="password" autocomplete="off" placeholder="ONESHOT_API_TOKEN">
-    <div id="auth-error"></div>
-    <div class="auth-actions"><button type="button" id="auth-cancel">Cancel</button><button type="submit" class="primary">Authenticate</button></div>
-  </form>
-</div>
+<div class="auth-overlay" id="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title" hidden></div>
 <dialog id="file-preview" aria-labelledby="preview-title"><header><h2 id="preview-title">File preview</h2><button id="preview-copy">Copy</button><button data-preview-close aria-label="Close file preview">×</button></header><pre id="preview-content" tabindex="0"></pre></dialog>
 <aside class="settings-popover" id="settings-popover" role="dialog" aria-label="Visual Settings" hidden></aside>
 <div id="toast" role="status" aria-live="polite"></div>

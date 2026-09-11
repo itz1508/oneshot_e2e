@@ -6,8 +6,6 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { startHttpServer } from "../../server/http-server.js";
 
-const AUTHORIZATION = { Authorization: "Bearer workspace-endpoint-test" };
-
 async function closeServer(server: Server): Promise<void> {
   server.closeAllConnections?.();
   await new Promise<void>((ok, fail) =>
@@ -37,7 +35,6 @@ function baseUrl(server: Server): string {
 }
 
 test("workspace tree and info endpoints return real structure", async () => {
-  const savedToken = process.env.ONESHOT_API_TOKEN;
   const temporaryRoot = await mkdtemp(join(tmpdir(), "oneshot-workspace-endpoints-"));
   const workspaceRoot = join(temporaryRoot, "workspace");
   let server: Server | undefined;
@@ -49,11 +46,10 @@ test("workspace tree and info endpoints return real structure", async () => {
     await writeFile(join(workspaceRoot, "src", "index.ts"), "export const x = 1;\n", "utf8");
     await writeFile(join(workspaceRoot, "package.json"), '{"name":"test"}\n', "utf8");
 
-    process.env.ONESHOT_API_TOKEN = "workspace-endpoint-test";
     server = await launch(workspaceRoot);
     const base = baseUrl(server);
 
-    const treeRes = await fetch(`${base}/api/workspace/tree`, { headers: AUTHORIZATION });
+    const treeRes = await fetch(`${base}/api/workspace/tree`);
     assert.equal(treeRes.status, 200, "tree endpoint should return 200");
     const tree = (await treeRes.json()) as { root: string; path: string; depth: number | null; nodes: any[] };
     assert.equal(tree.root, ".", "root should be '.' (relative workspace root)");
@@ -68,7 +64,7 @@ test("workspace tree and info endpoints return real structure", async () => {
     assert.ok(srcDir.children?.length === 1, "src should have 1 child (index.ts)");
     assert.equal(srcDir.children[0].name, "index.ts", "src child should be index.ts");
 
-    const infoRes = await fetch(`${base}/api/workspace/info`, { headers: AUTHORIZATION });
+    const infoRes = await fetch(`${base}/api/workspace/info`);
     assert.equal(infoRes.status, 200, "info endpoint should return 200");
     const info = (await infoRes.json()) as {
       root: string;
@@ -87,23 +83,16 @@ test("workspace tree and info endpoints return real structure", async () => {
     assert.ok(typeof info.digest === "string" && info.digest.length === 64, "digest should be sha256 hex");
     assert.ok(typeof info.created_at === "string" && !isNaN(Date.parse(info.created_at)), "created_at should be ISO string");
 
-    const unauthRes = await fetch(`${base}/api/workspace/tree`);
-    assert.equal(unauthRes.status, 401, "unauthenticated request should return 401");
-    const unauthInfo = await fetch(`${base}/api/workspace/info`);
-    assert.equal(unauthInfo.status, 401, "unauthenticated info request should return 401");
-
     await closeServer(server);
     server = undefined;
   } finally {
     if (server) await closeServer(server);
-    process.env.ONESHOT_API_TOKEN = savedToken;
     await rm(temporaryRoot, { recursive: true, force: true });
     await new Promise((r) => setTimeout(r, 250));
   }
 });
 
 test("workspace tree respects deny list and traversal guards", async () => {
-  const savedToken = process.env.ONESHOT_API_TOKEN;
   const temporaryRoot = await mkdtemp(join(tmpdir(), "oneshot-workspace-deny-"));
   const workspaceRoot = join(temporaryRoot, "workspace");
   let server: Server | undefined;
@@ -113,11 +102,10 @@ test("workspace tree respects deny list and traversal guards", async () => {
     await writeFile(join(workspaceRoot, ".env"), "SECRET=value\n", "utf8");
     await writeFile(join(workspaceRoot, "allowed.txt"), "visible\n", "utf8");
 
-    process.env.ONESHOT_API_TOKEN = "workspace-endpoint-test";
     server = await launch(workspaceRoot);
     const base = baseUrl(server);
 
-    const treeRes = await fetch(`${base}/v1/workspace/tree`, { headers: AUTHORIZATION });
+    const treeRes = await fetch(`${base}/v1/workspace/tree`);
     assert.equal(treeRes.status, 200);
     const tree = (await treeRes.json()) as { nodes: any[] };
 
@@ -130,7 +118,6 @@ test("workspace tree respects deny list and traversal guards", async () => {
     server = undefined;
   } finally {
     if (server) await closeServer(server);
-    process.env.ONESHOT_API_TOKEN = savedToken;
     await rm(temporaryRoot, { recursive: true, force: true });
     await new Promise((r) => setTimeout(r, 250));
   }

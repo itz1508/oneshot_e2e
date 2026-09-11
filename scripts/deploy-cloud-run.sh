@@ -52,8 +52,7 @@ gcloud run deploy "$SERVICE" \
   --service-account "$RUNTIME_SA" \
   --no-allow-unauthenticated \
   --no-cpu-throttling \
-  --set-env-vars="ONESHOT_MODE=production,ONESHOT_BIND_HOST=0.0.0.0,ONESHOT_RESEARCH_PROVIDER=${ONESHOT_RESEARCH_PROVIDER},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=global,GOOGLE_GENAI_USE_VERTEXAI=True,GEMINI_DISTRIBUTION_MODEL=gemini-3.5-flash-lite,GEMINI_RESEARCH_MODEL=gemini-3.6-flash,GEMINI_SYNTHESIS_MODEL=gemini-3.7-flash" \
-  --set-secrets="ONESHOT_API_TOKEN=${SECRET_NAME}:latest"
+  --set-env-vars="ONESHOT_MODE=production,ONESHOT_BIND_HOST=0.0.0.0,ONESHOT_RESEARCH_PROVIDER=${ONESHOT_RESEARCH_PROVIDER},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=global,GOOGLE_GENAI_USE_VERTEXAI=True,GEMINI_DISTRIBUTION_MODEL=gemini-3.5-flash-lite,GEMINI_RESEARCH_MODEL=gemini-3.6-flash,GEMINI_SYNTHESIS_MODEL=gemini-3.7-flash"
 
 # Proof-mode constraint only. Current local file stores are not multi-instance durable.
 gcloud run services update "$SERVICE" \

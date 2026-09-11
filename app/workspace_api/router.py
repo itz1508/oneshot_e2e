@@ -158,7 +158,7 @@ class ModelRouter:
         expires_at = credential.expires_at
         if expires_at and expires_at.tzinfo is None:
             expires_at = expires_at.replace(tzinfo=timezone.utc)
-        if credential.status != CredentialStatus.ACTIVE or (
+        if credential.status != "active" or (
             expires_at and expires_at <= now
         ):
             raise ProviderError(

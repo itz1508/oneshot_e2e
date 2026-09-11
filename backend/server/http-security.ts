@@ -9,7 +9,6 @@ export class HttpSecurity {
   );
   private max = Math.max(1, Number(process.env.API_RATE_LIMIT_MAX || 100));
   private origin = process.env.CORS_ORIGIN || "http://localhost:8787";
-  private token = (process.env.ONESHOT_API_TOKEN || "").trim();
   headers(res: ServerResponse) {
     res.setHeader("x-content-type-options", "nosniff");
     res.setHeader("x-frame-options", "DENY");
@@ -24,7 +23,7 @@ export class HttpSecurity {
     );
     res.setHeader("access-control-allow-origin", this.origin);
     res.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
-    res.setHeader("access-control-allow-headers", "Content-Type,Authorization");
+    res.setHeader("access-control-allow-headers", "Content-Type");
     res.setHeader("vary", "Origin");
   }
   allowed(req: IncomingMessage, res: ServerResponse) {
@@ -59,13 +58,6 @@ export class HttpSecurity {
           "content-type": "application/json; charset=utf-8",
         });
         res.end(JSON.stringify({ error: "rate limit exceeded" }));
-        return false;
-      }
-      if (this.token && req.headers.authorization !== `Bearer ${this.token}`) {
-        res.writeHead(401, {
-          "content-type": "application/json; charset=utf-8",
-        });
-        res.end(JSON.stringify({ error: "unauthorized" }));
         return false;
       }
     }

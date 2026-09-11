@@ -66,7 +66,6 @@ if ($Docker) {
         docker rm -f oneshot-local | Out-Null
     }
 
-    $Token = [System.Guid]::NewGuid().ToString("N")
     Write-Host "[3/4] Launching container and verifying health..." -ForegroundColor Yellow
     $containerId = docker run -d `
         --name oneshot-local `
@@ -74,7 +73,6 @@ if ($Docker) {
         -e ONESHOT_MODE=$Mode `
         -e ONESHOT_BIND_HOST=0.0.0.0 `
         -e PORT=$Port `
-        -e ONESHOT_API_TOKEN=$Token `
         -e API_RATE_LIMIT_WINDOW_MS=1000 `
         -e API_RATE_LIMIT_MAX=10000 `
         -e ONESHOT_QUEUE_READY_TIMEOUT=1000 `

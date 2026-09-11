@@ -97,7 +97,6 @@ const bindHost =
 const probeHost =
     bindHost === "0.0.0.0" ? "127.0.0.1" : bindHost === "::" ? "::1" : bindHost;
 const probeAddress = probeHost.includes(":") ? `[${probeHost}]` : probeHost;
-const apiToken = (process.env.ONESHOT_API_TOKEN || "").trim();
 const child = spawn("node", ["dist/backend/index.js"], {
     cwd: ROOT,
     stdio: ["ignore", "pipe", "pipe"],
@@ -153,11 +152,6 @@ child.stdout.on("data", async (data) => {
         try {
             const res = await fetch(
                 `http://${probeAddress}:${port}/api/health`,
-                {
-                    headers: apiToken
-                        ? { Authorization: `Bearer ${apiToken}` }
-                        : undefined,
-                },
             );
             if (!res.ok) {
                 throw new Error(

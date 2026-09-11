@@ -16,7 +16,7 @@ The backend serves the built UI from `app/web/dist` and supplies the HTTP and SS
 - `GET /v1/workspace/tree?path=.&depth=3`
 - `GET /v1/workspace/file?path=...`
 
-Authentication supports same-origin browser sessions and an optional `ONESHOT_API_TOKEN` Bearer token stored only in `sessionStorage`. No login/csrf endpoint is invented.
+The web app talks to the OneShot server same-origin; no OneShot-issued token, login, or credential is involved.
 
 Generate readiness is runtime-owned. Message text alone never enables Generate. Run Context is rendered only from context fields actually present in the real run snapshot.
 

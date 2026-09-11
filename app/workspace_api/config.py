@@ -41,9 +41,6 @@ class WorkspaceSettings(BaseSettings):
     database_echo: bool = False
     auto_create_schema: bool = True
 
-    jwt_secret: SecretStr = SecretStr("development-only-jwt-secret-change-me-now")
-    jwt_algorithm: Literal["HS256", "HS384", "HS512"] = "HS256"
-    access_token_ttl_minutes: int = Field(default=30, ge=5, le=1440)
     encryption_keys: SecretStr = SecretStr("")
 
     cors_origins: str = "http://localhost:8787,http://localhost:3000"
@@ -67,8 +64,6 @@ class WorkspaceSettings(BaseSettings):
         if self.environment != "production":
             return self
         problems: list[str] = []
-        if self.jwt_secret.get_secret_value().startswith("development-only"):
-            problems.append("ONESHOT_WORKSPACE_JWT_SECRET")
         if not self.encryption_keys.get_secret_value().strip():
             problems.append("ONESHOT_WORKSPACE_ENCRYPTION_KEYS")
         if problems:
@@ -96,7 +91,9 @@ class WorkspaceSettings(BaseSettings):
         ]
         if configured:
             return configured
-        digest = hashlib.sha256(self.jwt_secret.get_secret_value().encode()).digest()
+        digest = hashlib.sha256(
+            f"oneshot-test-only:{self.environment}".encode()
+        ).digest()
         return [base64.urlsafe_b64encode(digest).decode()]
 
 

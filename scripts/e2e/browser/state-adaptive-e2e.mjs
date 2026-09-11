@@ -3,7 +3,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { launchBrowser, waitFor, sleep, TOKEN, BASE, ROOT } from "./cdp-core.mjs";
+import { launchBrowser, waitFor, sleep, BASE, ROOT } from "./cdp-core.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SHOTS = join(ROOT, "dist", "e2e-evidence", "screenshots-state-adaptive");
@@ -85,7 +85,6 @@ async function measure() {
   })())`));
 }
 const INJECT = `(function(){
-  try { sessionStorage.setItem('oneshot.accessToken', ${JSON.stringify(TOKEN)}); } catch(e){}
   try {
     if (!sessionStorage.getItem('sa.freshRunDone')) {
       ['oneshot.currentRunId','oneshot.currentConversationId','oneshot.currentPromptId','oneshot.operator.v3'].forEach(function(k){ localStorage.removeItem(k); });
@@ -301,7 +300,7 @@ let planFromRuntime = null;
 try {
   const planName = snap?.artifacts?.["plan.gap"] ? "plan.gap" : snap?.artifacts?.["plan.researcher"] ? "plan.researcher" : null;
   if (planName && results.run_id) {
-    const r = await fetch(`${BASE}/api/runs/${encodeURIComponent(results.run_id)}/artifacts/${encodeURIComponent(planName)}`, { headers: { authorization: `Bearer ${TOKEN}` } });
+    const r = await fetch(`${BASE}/api/runs/${encodeURIComponent(results.run_id)}/artifacts/${encodeURIComponent(planName)}`);
     if (r.ok) planFromRuntime = JSON.parse(await r.text());
   }
 } catch {}

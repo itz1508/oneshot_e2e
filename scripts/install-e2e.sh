@@ -85,8 +85,6 @@ if [ "${DOCKER_MODE}" = true ]; then
     docker rm -f oneshot-local > /dev/null 2>&1 || true
   fi
 
-  TOKEN=$(python3 -c "import secrets; print(secrets.token_hex(16))" 2>/dev/null || python -c "import secrets; print(secrets.token_hex(16))" 2>/dev/null || od -vN 16 -An -tx1 /dev/urandom | tr -d ' \n' 2>/dev/null || date +%s%N | md5sum | cut -d' ' -f1)
-
   echo "[3/4] Launching container and verifying health..."
   CONTAINER_ID=$(docker run -d \
     --name oneshot-local \
@@ -94,7 +92,6 @@ if [ "${DOCKER_MODE}" = true ]; then
     -e ONESHOT_MODE="${MODE}" \
     -e ONESHOT_BIND_HOST=0.0.0.0 \
     -e PORT="${PORT}" \
-    -e ONESHOT_API_TOKEN="${TOKEN}" \
     -e API_RATE_LIMIT_WINDOW_MS=1000 \
     -e API_RATE_LIMIT_MAX=10000 \
     -e ONESHOT_QUEUE_READY_TIMEOUT=1000 \

@@ -1,16 +1,10 @@
-import os
-
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.models import ReasoningRequest, ReasoningResponse
 
-TOKEN = "test-internal-token"
-os.environ["ONESHOT_INTERNAL_TOKEN"] = TOKEN
-
 client = TestClient(app)
-AUTH_HEADERS = {"authorization": f"Bearer {TOKEN}"}
 
 
 def test_health():
@@ -28,7 +22,7 @@ def test_reason_rejects_wire_contract_mismatch(changes):
     payload = {"run_id": "test", "task": "critic", "goal": "test",
                "constraints": [], "evidence": []}
     payload.update(changes)
-    assert client.post("/v1/reason", json=payload, headers=AUTH_HEADERS).status_code == 422
+    assert client.post("/v1/reason", json=payload).status_code == 422
 
 
 @pytest.mark.parametrize("field", ["constraints", "evidence"])
@@ -36,15 +30,7 @@ def test_reason_rejects_missing_required_collection(field):
     payload = {"run_id": "test", "task": "critic", "goal": "test",
                "constraints": [], "evidence": []}
     del payload[field]
-    assert client.post("/v1/reason", json=payload, headers=AUTH_HEADERS).status_code == 422
-
-
-def test_unicode_invalid_token_is_rejected_without_crashing():
-    from app.main import verify_internal_token
-    from fastapi import HTTPException
-    with pytest.raises(HTTPException) as error:
-        verify_internal_token("Bearer \u00e9")
-    assert error.value.status_code == 403
+    assert client.post("/v1/reason", json=payload).status_code == 422
 
 
 def test_reason_accepts_valid_request_and_returns_valid_response():
@@ -78,7 +64,6 @@ def test_reason_accepts_valid_request_and_returns_valid_response():
     response = client.post(
         "/v1/reason",
         json=payload,
-        headers=AUTH_HEADERS,
     )
     assert response.status_code == 200
 
@@ -93,7 +78,8 @@ def test_reason_accepts_valid_request_and_returns_valid_response():
     ReasoningResponse.model_validate(body)
 
 
-def test_reason_rejects_missing_authorization():
+def test_reason_accepts_request_without_authorization_header():
+    """The reasoner is an internal deployment component with no credential."""
     payload = {
         "run_id": "run_123",
         "task": "evaluation",
@@ -103,7 +89,8 @@ def test_reason_rejects_missing_authorization():
     }
 
     response = client.post("/v1/reason", json=payload)
-    assert response.status_code == 401
+    assert response.status_code != 401
+    assert response.status_code != 403
 
 
 def test_reason_rejects_invalid_task():
@@ -118,7 +105,6 @@ def test_reason_rejects_invalid_task():
     response = client.post(
         "/v1/reason",
         json=payload,
-        headers=AUTH_HEADERS,
     )
     assert response.status_code == 422
 

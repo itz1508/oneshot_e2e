@@ -1,8 +1,8 @@
 """Relational data model for the OneShot AI Workspace control plane.
 
 The schema is PostgreSQL-compatible while remaining executable on SQLite for
-local development. Secrets are never stored in plaintext: provider credentials
-contain encrypted ciphertext and workspace API keys contain keyed hashes.
+local development. Secrets are never stored in plaintext: vendor Integration
+credentials contain encrypted ciphertext.
 
 Example::
 
@@ -159,8 +159,8 @@ class Workspace(TimestampMixin, Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     name: Mapped[str] = mapped_column(String(160))
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True)
-    owner_user_id: Mapped[str] = mapped_column(
-        ForeignKey("users.id", ondelete="RESTRICT"), index=True
+    owner_user_id: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     settings_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
@@ -270,49 +270,9 @@ class ProviderCredential(TimestampMixin, Base):
     encrypted_secret: Mapped[str] = mapped_column(Text)
     secret_prefix: Mapped[str] = mapped_column(String(20))
     version: Mapped[int] = mapped_column(Integer, default=1)
-    status: Mapped[CredentialStatus] = mapped_column(
-        enum_type(CredentialStatus, "credential_status"),
-        default=CredentialStatus.ACTIVE,
-    )
+    status: Mapped[str] = mapped_column(String(20), default="active")
     rotated_from_id: Mapped[str | None] = mapped_column(
         ForeignKey("provider_credentials.id", ondelete="SET NULL"), nullable=True
-    )
-    expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    last_used_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-
-
-class WorkspaceApiKey(TimestampMixin, Base):
-    """Workspace bearer key stored only as an HMAC digest."""
-
-    __tablename__ = "workspace_api_keys"
-    __table_args__ = (
-        UniqueConstraint(
-            "workspace_id", "name", "version", name="uq_workspace_api_key_version"
-        ),
-    )
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
-    workspace_id: Mapped[str] = mapped_column(
-        ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
-    )
-    created_by_user_id: Mapped[str] = mapped_column(
-        ForeignKey("users.id", ondelete="RESTRICT")
-    )
-    name: Mapped[str] = mapped_column(String(100))
-    key_prefix: Mapped[str] = mapped_column(String(20), index=True)
-    key_hash: Mapped[str] = mapped_column(String(64), unique=True)
-    version: Mapped[int] = mapped_column(Integer, default=1)
-    status: Mapped[CredentialStatus] = mapped_column(
-        enum_type(CredentialStatus, "workspace_api_key_status"),
-        default=CredentialStatus.ACTIVE,
-    )
-    scopes_json: Mapped[list[str]] = mapped_column(JSON, default=list)
-    rotated_from_id: Mapped[str | None] = mapped_column(
-        ForeignKey("workspace_api_keys.id", ondelete="SET NULL"), nullable=True
     )
     expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

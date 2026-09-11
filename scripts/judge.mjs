@@ -168,7 +168,6 @@ const bindHost =
   (process.env.ONESHOT_BIND_HOST || "127.0.0.1").trim() || "127.0.0.1";
 const probeHost =
   bindHost === "0.0.0.0" ? "127.0.0.1" : bindHost === "::" ? "::1" : bindHost;
-const apiToken = (process.env.ONESHOT_API_TOKEN || "").trim();
 
 const child = spawn("node", [join("dist", "backend", "index.js")], {
   cwd: ROOT,
@@ -217,9 +216,6 @@ const pollHealth = (targetPort, timeoutMs = 30000) => {
           host: probeHost,
           port: targetPort,
           path: "/api/health",
-          headers: apiToken
-            ? { Authorization: `Bearer ${apiToken}` }
-            : undefined,
         },
         (res) => {
           let body = "";
@@ -274,9 +270,6 @@ setTimeout(async () => {
               host: probeHost,
               port,
               path,
-              headers: apiToken
-                ? { Authorization: `Bearer ${apiToken}` }
-                : undefined,
             },
             (r) => resolve(r.statusCode === 200),
           )

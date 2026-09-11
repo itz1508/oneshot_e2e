@@ -20,13 +20,11 @@ import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 
 const API_URL = process.env.ONESHOT_API_URL ?? "http://127.0.0.1:8787";
-const API_TOKEN = process.env.ONESHOT_API_TOKEN ?? "";
 const POLL_INTERVAL_MS = 500;
 const RESEARCHER_TIMEOUT_MS = 120_000;
 const CRASH_TIMEOUT_MS = 60_000;
 const PIPELINE_TIMEOUT_MS = 300_000;
 
-const AUTH = API_TOKEN ? { Authorization: `Bearer ${API_TOKEN}` } : {};
 const projectRoot = process.env.ONESHOT_ROOT || process.cwd();
 const workerScript = resolve(
   projectRoot,
@@ -40,7 +38,6 @@ async function requestJson(path, options = {}) {
     headers: {
       accept: "application/json",
       "content-type": "application/json",
-      ...AUTH,
       ...(options.headers ?? {}),
     },
   });

@@ -17,8 +17,6 @@ const envObj = Object.fromEntries(
     return m ? [m[1], m[2].trim()] : null;
   }).filter(Boolean),
 );
-const TOKEN = envObj.ONESHOT_API_TOKEN;
-if (!TOKEN) throw new Error("ONESHOT_API_TOKEN missing from app/env/.env");
 
 const evidence = { started_at: new Date().toISOString(), asserts: [], steps: [], console_errors: [], run_events_decoded: [] };
 let PASSED = true;
@@ -44,9 +42,8 @@ await cdp.open();
 await cdp.send("Page.enable"); await cdp.send("Runtime.enable"); await cdp.send("Log.enable");
 cdp.on("Runtime.consoleAPICalled", (p) => { const t = (p.args ?? []).map((a) => a.value ?? a.description ?? "").join(" ").slice(0, 400); if (p.type === "error") evidence.console_errors.push({ at: new Date().toISOString(), text: t }); });
 cdp.on("Log.entryAdded", (p) => { if (p.entry?.level === "error") evidence.console_errors.push({ at: new Date().toISOString(), text: String(p.entry?.text ?? "").slice(0, 400) }); });
-// inject real auth token + recorder, navigate
+// inject request recorder, navigate
 const INJECT = `(function(){
-  try { sessionStorage.setItem('oneshot.accessToken', ${JSON.stringify(TOKEN)}); } catch(e){}
   if (window.__abinstalled) return; window.__abinstalled = true;
   // Fresh run keys on this navigation (single-pass driver). Layout keys (operator/rail) are kept
   // so a later reload can verify position/size persistence.
@@ -224,7 +221,7 @@ record({ action: "UI LAYOUT persistence after reload", expected: "operator x-pos
 evidence.product_console_errors = evidence.console_errors.length;
 // Browser-context negative path: server rejects traversal / secret access (never normalized to success)
 const neg = JSON.parse(await ev(`(async function(){
-  const t=async (u)=>{ try { const r=await fetch(u,{headers:{Authorization:'Bearer ${TOKEN}'}}); return r.status; } catch(_){ return -1; } };
+  const t=async (u)=>{ try { const r=await fetch(u); return r.status; } catch(_){ return -1; } };
   return JSON.stringify({ traversal: await t('/v1/workspace/file?path='+encodeURIComponent('../outside.txt')),
                           secret:   await t('/v1/workspace/file?path='+encodeURIComponent('.env')) });
 })()`));

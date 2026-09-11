@@ -1,4 +1,4 @@
-import { ApiError, authHeaders } from "./http-client";
+import { ApiError } from "./http-client";
 // Reconnects the existing SSE endpoint, never polls run state. An abort closes
 // both the reader and retry wait when switching conversations or unmounting.
 export async function streamEvents(
@@ -11,7 +11,7 @@ export async function streamEvents(
         delay = 900;
     while (!signal.aborted) {
         try {
-            const headers = authHeaders();
+            const headers = new Headers();
             headers.set("Accept", "text/event-stream");
             if (lastId) headers.set("Last-Event-ID", lastId);
             const response = await fetch(path, {
@@ -56,10 +56,6 @@ export async function streamEvents(
             }
         } catch (error) {
             if (signal.aborted) return;
-            if (error instanceof ApiError && error.status === 401) {
-                onStatus("Authentication required");
-                return;
-            }
         }
         if (signal.aborted) return;
         onStatus("Reconnecting");

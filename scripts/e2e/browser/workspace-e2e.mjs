@@ -1,10 +1,8 @@
 // Scoped workspace E2E: verify the app now renders the real repo tree from the runtime.
-import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(here, "..", "..", "..");
-const TOKEN = Object.fromEntries(readFileSync(join(ROOT, "app", "env", ".env"), "utf8").split(/\r?\n/).map((l) => { const m = l.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/); return m ? [m[1], m[2].trim()] : null; }).filter(Boolean)).ONESHOT_API_TOKEN;
 
 const list = await (await fetch("http://127.0.0.1:9222/json/list")).json();
 const page = list.find((t) => t.type === "page");
@@ -17,7 +15,6 @@ const ev = async (x) => (await send("Runtime.evaluate", { expression: x, returnB
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const inject = `(function(){
-  try { sessionStorage.setItem('oneshot.accessToken', ${JSON.stringify(TOKEN)}); } catch(e){}
   if (window.__wsreset) return; window.__wsreset = true;
   try { if(!sessionStorage.getItem('__wsOnce')){ sessionStorage.setItem('__wsOnce','1'); ['oneshot.currentRunId','oneshot.currentConversationId','oneshot.currentPromptId'].forEach(function(k){localStorage.removeItem(k);}); } } catch(e){}
 })();`;

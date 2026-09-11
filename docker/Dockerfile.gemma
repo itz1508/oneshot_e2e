@@ -92,7 +92,6 @@ ENV ONESHOT_BIND_HOST=0.0.0.0
 ENV PORT=8787
 ENV NODE_ENV=production
 ENV ONESHOT_MODE=production
-ENV ONESHOT_API_TOKEN=
 
 # Research Provider - default to local Gemma via Ollama (user can override)
 ENV ONESHOT_RESEARCH_PROVIDER=ollama
