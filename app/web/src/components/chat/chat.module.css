@@ -51,11 +51,13 @@
   background: var(--raised);
   color: var(--text);
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .assistant {
   composes: message;
   color: #d5d5d5;
+  overflow-wrap: anywhere;
 }
 
 .empty {

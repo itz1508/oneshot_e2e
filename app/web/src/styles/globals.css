@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
   --bg: #202020;
@@ -16,7 +24,7 @@
   --faint: #666;
   --green: #77b889;
   --blue: #8ab4f8;
-  --sidebar-w: 252px;
+  --sidebar-w: 268px;
   --drawer-w: 390px;
   --thread-w: 760px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -32,8 +40,13 @@ body {
   overflow: hidden;
   background: var(--bg);
   color: var(--text);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  font-variant-ligatures: none;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 button,
