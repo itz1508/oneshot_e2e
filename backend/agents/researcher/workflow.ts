@@ -13,7 +13,7 @@ import {
   ResearchEvidenceCollector,
   type GatheredEvidence,
 } from "./tool/evidence/collector.js";
-import { resolveActiveIntegrationModel } from "../../integration/runtime.js";
+import { resolveCapabilityModel } from "../../integration/runtime.js";
 
 const RESEARCHER_SYSTEM_PROMPT = `You are the OneShot Researcher agent.
 Your responsibility is to analyze the user prompt and gathered evidence to produce a structured research draft.
@@ -126,8 +126,12 @@ export class ResearcherWorkflow {
         modelSource = "model:ai-sdk";
         modelProvenance = "ai-sdk-language-model";
       } else {
-        // Inspect active runtime integration (e.g. backend/integration/gemini)
-        const active = await resolveActiveIntegrationModel(this.projectRoot);
+        // Request the model.execute capability; the runtime resolves an
+        // applicable *enabled* integration — no implicit provider winner.
+        const active = await resolveCapabilityModel(
+          this.projectRoot,
+          "model.execute",
+        );
         if (active) {
           activeModel = active.model;
           modelSource = active.source;
@@ -157,7 +161,7 @@ export class ResearcherWorkflow {
           actual: "No research integration is installed or configured",
           evidence_ids: [],
           required_correction:
-            "Install and configure Gemini under backend/integration/gemini or supply research requirements",
+            "Install and configure Gemini under app/integration/gemini or supply research requirements",
           recheck_target: runId,
         });
       }

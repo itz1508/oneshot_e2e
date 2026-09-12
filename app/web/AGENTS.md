@@ -1,9 +1,20 @@
-<!-- BEGIN:nextjs-agent-rules -->
+# app/web Agent Guidance
 
-# This is NOT the Next.js you know
+This is the OneShot browser UI. It is a Next.js Pages Router application that
+exports to static HTML and is served by the Node backend.
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+- Source lives under `src/`.
+- Pages Router: `src/pages/`.
+- Global styles: `src/styles/globals.css`.
+- Feature CSS modules: `src/components/<feature>/<feature>.module.css`.
+- HTTP client: `src/lib/http-client.ts`, events: `src/lib/event-stream.ts`.
+- API projections: `src/lib/contracts.ts` and `src/lib/projections.ts`.
+- Public API surface re-exported from `src/lib/api.ts`.
 
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+Build commands:
+- `npm run typecheck`
+- `npm run build` (static export into `dist/`)
+- `npm run preview` (serve `dist/` and proxy `/api`, `/v1`)
 
-<!-- END:nextjs-agent-rules -->
+Do not introduce App Router `app/`. Do not add browser login/session UI; auth
+is handled by backend security.

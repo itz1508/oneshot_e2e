@@ -37,7 +37,10 @@ function run(command: string, args: string[], cwd: string): Promise<void> {
     const child = spawn(command, args, {
       cwd,
       env: process.env,
-      shell: false,
+      // Windows refuses to spawn .cmd shims without a shell (EINVAL).
+      // Args are fully backend-controlled (fixed package@version, safe path),
+      // so enabling the shell on win32 introduces no injection surface.
+      shell: process.platform === "win32",
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stderr = "";

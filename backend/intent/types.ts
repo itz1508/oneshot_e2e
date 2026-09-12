@@ -1,4 +1,5 @@
 import type { Prompt, RootCause } from "../contracts/schema/types.js";
+import type { ConversationMemory, ConversationTurn } from "../memory/types.js";
 
 /** A single classified statement extracted from user input. */
 export interface IntentStatement {
@@ -25,20 +26,13 @@ export interface IntentState {
   ready_for_prompt: boolean;
 }
 
-/** A single user message in a conversation. */
-export interface ConversationTurn {
-  turn_id: string;
-  turn_number: number;
-  user_message: string;
-  created_at: string;
-}
-
 /** Full persisted conversation snapshot. */
 export interface ConversationSnapshot {
   conversation_id: string;
   session_id: string;
   turns: ConversationTurn[];
   intent: IntentState;
+  memory: ConversationMemory;
   created_at: string;
   updated_at: string;
 }

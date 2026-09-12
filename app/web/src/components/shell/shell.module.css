@@ -1,0 +1,291 @@
+.shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* LEFT SIDEBAR */
+.sidebar {
+  position: relative;
+  width: var(--sidebar-w);
+  flex: 0 0 var(--sidebar-w);
+  display: flex;
+  flex-direction: column;
+  padding: 10px 9px;
+  background: var(--sidebar);
+  border-right: 1px solid rgba(255, 255, 255, 0.035);
+  z-index: 20;
+}
+
+.sidebarHead {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 7px;
+}
+
+.brand {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.iconBtn {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #a3a3a3;
+}
+
+.iconBtn:hover {
+  background: var(--hover);
+  color: #fff;
+}
+
+.collapse {
+  margin-left: auto;
+  font-size: 11px;
+}
+
+.navAction {
+  width: 100%;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #d9d9d9;
+  text-align: left;
+  font-size: 13px;
+}
+
+.navAction:hover {
+  background: var(--hover);
+}
+
+.navSymbol {
+  width: 18px;
+  text-align: center;
+  color: #aaa;
+  font-size: 15px;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  margin-top: 11px;
+  padding: 0 10px;
+  color: #777;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.sectionMeta {
+  margin-left: auto;
+  color: #5f5f5f;
+  font-weight: 500;
+}
+
+.integrations {
+  display: grid;
+  gap: 1px;
+}
+
+.integrationRow {
+  min-height: 34px;
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 0 7px 0 10px;
+  border-radius: 8px;
+}
+
+.integrationRow:hover {
+  background: var(--hover);
+}
+
+.providerDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.dotGemini {
+  background: linear-gradient(135deg, #4285f4, #9b72cb 50%, #ea4335);
+}
+
+.dotOpenai {
+  background: #10a37f;
+}
+
+.dotNebius {
+  background: linear-gradient(135deg, #75a7ff, #8b5cf6);
+}
+
+.dotGeneric {
+  background: #8d8d8d;
+}
+
+.integrationName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: #c8c8c8;
+}
+
+.integrationAdd {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #858585;
+  font-size: 15px;
+}
+
+.integrationRow:hover .integrationAdd {
+  color: #d8d8d8;
+}
+
+.integrationAdd:hover {
+  background: #393939;
+  color: #fff;
+}
+
+.history {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin-top: 5px;
+  padding-right: 2px;
+}
+
+.historyGroup {
+  margin-bottom: 8px;
+}
+
+.historyLabel {
+  height: 25px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  color: #626262;
+  font-size: 9px;
+}
+
+.historyItem {
+  width: 100%;
+  min-height: 34px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #c8c8c8;
+  text-align: left;
+}
+
+.historyItem:hover,
+.historyItemActive {
+  background: var(--hover);
+}
+
+.historyItemActive {
+  color: #f1f1f1;
+}
+
+.historyName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.historyTime {
+  font-size: 8px;
+  color: #666;
+}
+
+.memoryStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 9px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.memoryDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.memoryStatus strong {
+  display: block;
+  font-size: 9px;
+  font-weight: 600;
+  color: #9a9a9a;
+}
+
+.memoryStatus small {
+  display: block;
+  margin-top: 2px;
+  font-size: 8px;
+  color: #606060;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+  font-size: 12px;
+  color: #cfcfcf;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #dedede;
+  color: #171717;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+/* MAIN */
+.main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #212121;
+}

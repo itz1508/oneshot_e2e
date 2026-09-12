@@ -1,5 +1,6 @@
 import type { Prompt } from "../../../../contracts/schema/types.js";
-import { TavilyPythonRunner, type TavilyRunner } from "./bridge.js";
+import { resolveCapabilityProvider } from "../../../../integration/runtime.js";
+import type { TavilyRunner, TavilyRequest } from "./bridge.js";
 
 export interface TavilyEvidence {
   source: string;
@@ -8,35 +9,6 @@ export interface TavilyEvidence {
 }
 
 type TavilyMode = "off" | "search" | "search-extract" | "research-stream";
-
-type SearchResult = {
-  title?: string;
-  url?: string;
-  content?: string;
-  score?: number;
-};
-
-type SearchResponse = {
-  answer?: string;
-  results?: SearchResult[];
-  request_id?: string;
-};
-
-type ExtractResult = {
-  url?: string;
-  raw_content?: string;
-};
-
-type ExtractResponse = {
-  results?: ExtractResult[];
-  failed_results?: unknown[];
-  request_id?: string;
-};
-
-type ResearchStreamResponse = {
-  report?: string;
-  progress?: Array<Record<string, unknown>>;
-};
 
 function positiveInt(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
@@ -55,7 +27,7 @@ function modeFromEnvironment(): TavilyMode {
   ) {
     return configured;
   }
-  return (process.env.TAVILY_API_KEY || "").trim() ? "search-extract" : "off";
+  return "search-extract";
 }
 
 function compactQuery(prompt: Prompt): string {
@@ -69,49 +41,149 @@ function compactQuery(prompt: Prompt): string {
 
 function clip(value: unknown): string {
   const max = positiveInt(process.env.ONESHOT_TAVILY_MAX_EVIDENCE_BYTES, 12000);
-  return typeof value === "string" ? value.slice(0, max) : "";
+  return typeof value === "string" ? value.slice(0, max).trim() : "";
 }
 
+/**
+ * Unified Tavily evidence collector executing through the generic
+ * integration runtime via the resolved "web.search" capability (@tavily/core),
+ * with optional runner override for deterministic unit test doubles.
+ */
 export class TavilyEvidenceCollector {
   constructor(
     private projectRoot: string,
-    private runner: TavilyRunner = new TavilyPythonRunner(projectRoot),
+    private runner?: TavilyRunner,
   ) {}
 
   async collect(prompt: Prompt): Promise<TavilyEvidence[]> {
     const mode = modeFromEnvironment();
     if (mode === "off") return [];
-    if (!(process.env.TAVILY_API_KEY || "").trim()) {
-      throw new Error(
-        `TAVILY_API_KEY is required when ONESHOT_TAVILY_MODE=${mode}`,
-      );
-    }
 
     const query = compactQuery(prompt);
     if (!query) return [];
 
-    if (mode === "research-stream") {
-      const model = (process.env.TAVILY_RESEARCH_MODEL || "mini").trim();
-      if (!new Set(["mini", "pro", "auto"]).has(model)) {
-        throw new Error(`unsupported TAVILY_RESEARCH_MODEL: ${model}`);
+    // Path A: Test runner double supplied explicitly
+    if (this.runner) {
+      if (!(process.env.TAVILY_API_KEY || "").trim()) return [];
+
+      if (mode === "research-stream") {
+        const model = (process.env.TAVILY_RESEARCH_MODEL || "mini").trim();
+        const response = await this.runner.run<{ report?: string }>({
+          op: "research_stream",
+          query,
+          model: model as "mini" | "pro" | "auto",
+          citation_format: "numbered",
+        });
+        const report = clip(response.report);
+        return report
+          ? [
+              {
+                source: `tavily:research:${prompt.prompt_id}`,
+                statement: report,
+                provenance: `tavily-research-stream:${model}`,
+              },
+            ]
+          : [];
       }
-      const response = await this.runner.run<ResearchStreamResponse>({
-        op: "research_stream",
+
+      const searchDepth =
+        (process.env.TAVILY_SEARCH_DEPTH || "advanced").trim() === "basic"
+          ? "basic"
+          : "advanced";
+      const maxResults = Math.min(
+        20,
+        positiveInt(process.env.TAVILY_MAX_RESULTS, 5),
+      );
+      const search = await this.runner.run<{
+        answer?: string;
+        results?: Array<{ title?: string; url?: string; content?: string }>;
+        request_id?: string;
+      }>({
+        op: "search",
         query,
-        model: model as "mini" | "pro" | "auto",
-        citation_format: "numbered",
+        include_answer: "advanced",
+        search_depth: searchDepth,
+        max_results: maxResults,
       });
-      const report = clip(response.report);
-      return report
-        ? [
-            {
-              source: `tavily:research:${prompt.prompt_id}`,
-              statement: report,
-              provenance: `tavily-research-stream:${model}`,
-            },
-          ]
-        : [];
+
+      const evidence: TavilyEvidence[] = [];
+      const requestId = search.request_id || "unknown";
+      const answer = clip(search.answer);
+      if (answer) {
+        evidence.push({
+          source: `tavily:answer:${requestId}`,
+          statement: answer,
+          provenance: `tavily-search-answer:${requestId}`,
+        });
+      }
+
+      for (const result of search.results || []) {
+        const url = typeof result.url === "string" ? result.url.trim() : "";
+        const content = clip(result.content);
+        const title = typeof result.title === "string" ? result.title.trim() : "";
+        const statement = [title, content].filter(Boolean).join("\n").trim();
+        if (!url || !statement) continue;
+        evidence.push({
+          source: url,
+          statement,
+          provenance: `tavily-search:${requestId}:${url}`,
+        });
+      }
+
+      if (mode === "search-extract") {
+        const extractTopN = Math.min(
+          20,
+          positiveInt(process.env.TAVILY_EXTRACT_TOP_N, 3),
+        );
+        const urls = (search.results || [])
+          .map((r) => r.url)
+          .filter((u): u is string => typeof u === "string" && u.length > 0)
+          .slice(0, extractTopN);
+
+        if (urls.length) {
+          const extract = await this.runner.run<{
+            results?: Array<{ url?: string; raw_content?: string }>;
+            request_id?: string;
+          }>({
+            op: "extract",
+            urls,
+            query,
+            extract_depth:
+              (process.env.TAVILY_EXTRACT_DEPTH || "basic").trim() === "advanced"
+                ? "advanced"
+                : "basic",
+            format: "markdown",
+          });
+          const extractRequestId = extract.request_id || requestId;
+          for (const item of extract.results || []) {
+            const url = typeof item.url === "string" ? item.url.trim() : "";
+            const content = clip(item.raw_content);
+            if (!url || !content) continue;
+            evidence.push({
+              source: `tavily-extract:${url}`,
+              statement: content,
+              provenance: `tavily-extract:${extractRequestId}:${url}`,
+            });
+          }
+        }
+      }
+
+      return evidence;
     }
+
+    // Path B: Production runtime via generic web.search capability
+    const active = await resolveCapabilityProvider(
+      this.projectRoot,
+      "web.search",
+    );
+    if (!active || active.id !== "tavily" || !active.provider) {
+      return [];
+    }
+
+    const client = active.provider as {
+      search: (q: string, opts?: Record<string, unknown>) => Promise<any>;
+      extract?: (urls: string[], opts?: Record<string, unknown>) => Promise<any>;
+    };
 
     const searchDepth =
       (process.env.TAVILY_SEARCH_DEPTH || "advanced").trim() === "basic"
@@ -121,71 +193,67 @@ export class TavilyEvidenceCollector {
       20,
       positiveInt(process.env.TAVILY_MAX_RESULTS, 5),
     );
-    const search = await this.runner.run<SearchResponse>({
-      op: "search",
-      query,
-      include_answer: "advanced",
-      search_depth: searchDepth,
-      max_results: maxResults,
+
+    const search = await client.search(query, {
+      searchDepth,
+      maxResults,
+      includeAnswer: true,
     });
 
     const evidence: TavilyEvidence[] = [];
-    const requestId = search.request_id || "unknown";
-    const answer = clip(search.answer);
+    const answer = clip(search?.answer);
     if (answer) {
       evidence.push({
-        source: `tavily:answer:${requestId}`,
+        source: `tavily:answer:${prompt.prompt_id}`,
         statement: answer,
-        provenance: `tavily-search-answer:${requestId}`,
+        provenance: `tavily-search-answer:${prompt.prompt_id}`,
       });
     }
 
-    const results = Array.isArray(search.results) ? search.results : [];
+    const results = Array.isArray(search?.results) ? search.results : [];
     for (const result of results) {
-      const url = typeof result.url === "string" ? result.url : "";
+      const url = typeof result.url === "string" ? result.url.trim() : "";
       const content = clip(result.content);
-      if (!url || !content) continue;
+      const title = typeof result.title === "string" ? result.title.trim() : "";
+      const statement = [title, content].filter(Boolean).join("\n").trim();
+      if (!url || !statement) continue;
       evidence.push({
         source: url,
-        statement: [result.title, content].filter(Boolean).join("\n"),
-        provenance: `tavily-search:${requestId}:${url}`,
+        statement,
+        provenance: `tavily-search:${url}`,
       });
     }
 
-    if (mode !== "search-extract") return evidence;
+    if (mode === "search-extract" && typeof client.extract === "function") {
+      const extractTopN = Math.min(
+        20,
+        positiveInt(process.env.TAVILY_EXTRACT_TOP_N, 3),
+      );
+      const urls = results
+        .map((r: any) => (typeof r.url === "string" ? r.url.trim() : ""))
+        .filter((u: string): u is string => u.length > 0)
+        .slice(0, extractTopN);
 
-    const extractTopN = Math.min(
-      20,
-      positiveInt(process.env.TAVILY_EXTRACT_TOP_N, 3),
-    );
-    const urls = results
-      .map((result) => result.url)
-      .filter((url): url is string => typeof url === "string" && url.length > 0)
-      .slice(0, extractTopN);
-    if (!urls.length) return evidence;
-
-    const extract = await this.runner.run<ExtractResponse>({
-      op: "extract",
-      urls,
-      query,
-      extract_depth:
-        (process.env.TAVILY_EXTRACT_DEPTH || "basic").trim() === "advanced"
-          ? "advanced"
-          : "basic",
-      format: "markdown",
-    });
-    const extractRequestId = extract.request_id || requestId;
-    for (const result of Array.isArray(extract.results)
-      ? extract.results
-      : []) {
-      const url = typeof result.url === "string" ? result.url : "";
-      const content = clip(result.raw_content);
-      if (!url || !content) continue;
-      evidence.push({
-        source: `tavily-extract:${url}`,
-        statement: content,
-        provenance: `tavily-extract:${extractRequestId}:${url}`,
-      });
+      if (urls.length) {
+        try {
+          const extract = await client.extract(urls);
+          for (const item of Array.isArray(extract?.results)
+            ? extract.results
+            : []) {
+            const url = typeof item.url === "string" ? item.url.trim() : "";
+            const content = clip(item.rawContent || item.raw_content);
+            if (!url || !content) continue;
+            evidence.push({
+              source: `tavily-extract:${url}`,
+              statement: content,
+              provenance: `tavily-extract:${url}`,
+            });
+          }
+        } catch (e) {
+          const detail = e instanceof Error ? e.message : String(e);
+          console.warn(`[Researcher:Tavily] optional extract error: ${detail}`);
+        }
+      }
     }
 
     return evidence;

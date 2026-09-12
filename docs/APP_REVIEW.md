@@ -1,6 +1,6 @@
 # App review
 
-Review the current application using the [installation instructions](../README.md). The production interface is built from [app/web/app](../app/web/app/) and [app/web/components](../app/web/components/), and served by the OneShot backend.
+Review the current application using the [installation instructions](../README.md). The production interface is built from [app/web/src/pages](../app/web/src/pages/) and [app/web/src/components](../app/web/src/components/), and served by the OneShot backend.
 
 ## Live walkthrough
 

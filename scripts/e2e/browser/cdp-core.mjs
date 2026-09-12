@@ -84,6 +84,16 @@ export class CDP {
       }, 120_000);
     });
   }
+  close() {
+    try {
+      this.ws.close();
+    } catch {}
+    if (this.proc) {
+      try {
+        this.proc.kill("SIGKILL");
+      } catch {}
+    }
+  }
 }
 
 export async function waitFor(name, fn, opts = {}) {
@@ -117,7 +127,7 @@ export async function launchBrowser() {
       "--headless=new",
       "--disable-gpu",
       `--remote-debugging-port=${CDP_PORT}`,
-      `--user-data-dir=${join(ROOT, "data", "browser-profile")}`,
+      `--user-data-dir=${process.env.ONESHOT_E2E_PROFILE || join(ROOT, "data", "browser-profile")}`,
       "--no-first-run",
       "--no-default-browser-check",
       "--window-size=1680,1050",
@@ -140,5 +150,7 @@ export async function launchBrowser() {
     ws.addEventListener("open", ok, { once: true });
     ws.addEventListener("error", err, { once: true });
   });
-  return new CDP(ws);
+  const cdp = new CDP(ws);
+  cdp.proc = proc;
+  return cdp;
 }

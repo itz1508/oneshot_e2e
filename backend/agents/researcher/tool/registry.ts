@@ -18,7 +18,7 @@ export function researcherTools(
           expected: "Active integration model or research capability",
           actual: "No research capability is available",
           evidence_ids: [],
-          required_correction: "Configure an integration under backend/integration/gemini or supply research requirements",
+          required_correction: "Configure an integration under app/integration/gemini or supply research requirements",
           recheck_target: runId,
         });
       }

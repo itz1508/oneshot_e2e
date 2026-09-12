@@ -49,8 +49,17 @@ import {
   installIntegration,
   integrationPackageSpec,
   integrationStatus,
+  configureIntegration,
+  configureIntegrationSecret,
+  removeIntegrationSecret,
+  enableIntegration,
+  disableIntegration,
+  uninstallIntegration,
+  IntegrationEnableError,
+  testIntegrationConnection,
 } from "../integration/index.js";
 import { HttpSecurity } from "./http-security.js";
+import { handleConversationMemoryRoutes } from "./routes/conversation-memory-routes.js";
 import {
   WorkspacePathDeniedError,
   WorkspacePathPolicy,
@@ -586,6 +595,15 @@ export async function startHttpServer(
           );
           return json(res, 201, c);
         }
+
+        // Memory/list routes
+        const handled = await handleConversationMemoryRoutes(
+          req,
+          res,
+          url,
+          intent,
+        );
+        if (handled) return;
 
         // POST /api/conversations/:id/messages â€” add a turn
         const convMsg = url.pathname.match(
@@ -1468,22 +1486,117 @@ export async function startHttpServer(
               apiKey?: string;
               model?: string;
               baseURL?: string;
+              removeKey?: boolean;
             };
             const spec = integrationPackageSpec(id);
-            if (input.apiKey && typeof input.apiKey === "string") {
+            if (input.removeKey) {
+              // Credential removal is a separate, explicit lifecycle action.
+              await removeIntegrationSecret(workspaceRoot, spec.id);
+              delete process.env[spec.apiKeyEnv];
+            } else if (input.apiKey && typeof input.apiKey === "string") {
+              // Write-only server-side secret persistence; never echoed back.
+              await configureIntegrationSecret(
+                workspaceRoot,
+                spec.id,
+                input.apiKey,
+              );
+              // Mirror into the process environment for existing tool seams
+              // (e.g. the Tavily evidence collector) that read env directly.
+              // The secret store remains the durable authority.
               process.env[spec.apiKeyEnv] = input.apiKey.trim();
             }
-            if (input.model && typeof input.model === "string") {
-              if (id === "gemini") {
-                process.env.GEMINI_MODEL = input.model.trim();
-              }
-            }
-            if (input.baseURL && typeof input.baseURL === "string") {
-              if (id === "gemini") {
-                process.env.GEMINI_BASE_URL = input.baseURL.trim();
-              }
-            }
+            await configureIntegration(workspaceRoot, spec.id, {
+              model: typeof input.model === "string" ? input.model : undefined,
+              baseURL:
+                typeof input.baseURL === "string" ? input.baseURL : undefined,
+            });
             const status = await integrationStatus(workspaceRoot, spec);
+            return json(res, 200, status);
+          } catch (e) {
+            return json(res, 500, {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        // ---------------------------------------------------------------
+        // Integration test connection (real backend network probe)
+        // ---------------------------------------------------------------
+        const integrationTestMatch = url.pathname.match(
+          /^\/api\/integrations\/([^/]+)\/test$/,
+        );
+        if (req.method === "POST" && integrationTestMatch) {
+          const id = decodeURIComponent(integrationTestMatch[1]);
+          try {
+            const input = (await body(req)) as {
+              apiKey?: string;
+              model?: string;
+              baseURL?: string;
+            };
+            const result = await testIntegrationConnection(
+              workspaceRoot,
+              id,
+              input,
+            );
+            // The request succeeded; the *test outcome* is carried in status.
+            return json(res, 200, result);
+          } catch (e) {
+            return json(res, 500, {
+              ok: false,
+              status: "unreachable",
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        // ---------------------------------------------------------------
+        // Integration enable / disable / uninstall lifecycle
+        // ---------------------------------------------------------------
+        const integrationEnableMatch = url.pathname.match(
+          /^\/api\/integrations\/([^/]+)\/enable$/,
+        );
+        if (req.method === "POST" && integrationEnableMatch) {
+          const id = decodeURIComponent(integrationEnableMatch[1]);
+          try {
+            const status = await enableIntegration(workspaceRoot, id);
+            return json(res, 200, status);
+          } catch (e) {
+            if (e instanceof IntegrationEnableError) {
+              return json(res, 409, { error: e.message, state: e.state });
+            }
+            return json(res, 500, {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        const integrationDisableMatch = url.pathname.match(
+          /^\/api\/integrations\/([^/]+)\/disable$/,
+        );
+        if (req.method === "POST" && integrationDisableMatch) {
+          const id = decodeURIComponent(integrationDisableMatch[1]);
+          try {
+            const status = await disableIntegration(workspaceRoot, id);
+            return json(res, 200, status);
+          } catch (e) {
+            return json(res, 500, {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        const integrationUninstallMatch = url.pathname.match(
+          /^\/api\/integrations\/([^/]+)\/uninstall$/,
+        );
+        if (req.method === "POST" && integrationUninstallMatch) {
+          const id = decodeURIComponent(integrationUninstallMatch[1]);
+          try {
+            const input = (await body(req).catch(() => ({}))) as {
+              removeCredentials?: boolean;
+            };
+            const status = await uninstallIntegration(workspaceRoot, id, {
+              removeCredentials: input.removeCredentials === true,
+            });
             return json(res, 200, status);
           } catch (e) {
             return json(res, 500, {

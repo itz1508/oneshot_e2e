@@ -3,56 +3,36 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const root = path.resolve(__dirname, "../dist");
-
-const port = Number(process.env.PORT || 8080);
-const backendTarget =
-    process.env.ONESHOT_BACKEND_TARGET || "http://127.0.0.1:8787";
+const root = fileURLToPath(new URL("../dist", import.meta.url));
+const target = process.env.ONESHOT_BACKEND_TARGET || "http://127.0.0.1:8787";
+const port = Number(process.env.PORT || 3000);
 
 const app = express();
-app.disable("x-powered-by");
 
 app.use(
+    "/api",
     createProxyMiddleware({
-        pathFilter: ["/api", "/api/**", "/v1", "/v1/**"],
-        target: backendTarget,
+        target,
         changeOrigin: true,
-        timeout: 0,
-        proxyTimeout: 0,
-        on: {
-            error: (err, _req, res) => {
-                if (!res.headersSent) {
-                    res.writeHead(502, { "Content-Type": "application/json" });
-                    res.end(
-                        JSON.stringify({
-                            error: `Backend unavailable (${err.message})`,
-                        }),
-                    );
-                }
-            },
-        },
+        logLevel: "silent",
     }),
 );
 
 app.use(
-    express.static(root, {
-        index: "index.html",
-        maxAge: "1h",
-        etag: true,
+    "/v1",
+    createProxyMiddleware({
+        target,
+        changeOrigin: true,
+        logLevel: "silent",
     }),
 );
 
-app.use((request, response, _next) => {
-    if (request.path.startsWith("/api") || request.path.startsWith("/v1")) {
-        return response.status(502).json({ error: "Backend unavailable" });
-    }
-    if (!request.accepts("html")) return response.status(404).end();
-    response.sendFile(path.join(root, "index.html"));
+app.use(express.static(root, { fallthrough: true }));
+
+app.get("*", (_req, res) => {
+    res.sendFile(path.join(root, "index.html"));
 });
 
-app.listen(port, "0.0.0.0", () => {
-    console.log(`OneShot Console: http://localhost:${port}`);
-    console.log(`OneShot Backend: ${backendTarget}`);
+app.listen(port, () => {
+    console.log(`OneShot frontend preview listening on http://127.0.0.1:${port}`);
 });

@@ -1,0 +1,413 @@
+/* Ellipsis button (lives in the chat minibar) */
+.ellipsis {
+  width: 34px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.ellipsis:hover,
+.ellipsis[aria-expanded="true"] {
+  background: #292929;
+}
+
+.ellipsis span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #777;
+}
+
+.ellipsis:hover span,
+.ellipsis[aria-expanded="true"] span {
+  background: #c8c8c8;
+}
+
+/* Review popover */
+.review {
+  position: absolute;
+  top: 34px;
+  right: 14px;
+  z-index: 40;
+  width: min(480px, calc(100vw - 32px));
+  max-height: min(620px, calc(100vh - 72px));
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: #191919;
+  box-shadow: 0 20px 54px rgba(0, 0, 0, 0.42);
+  overflow: hidden;
+}
+
+.reviewHead {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.reviewHeading {
+  min-width: 0;
+  flex: 1;
+}
+
+.reviewHeading strong {
+  display: block;
+  color: #d7d7d7;
+  font-size: 11px;
+  font-weight: 620;
+}
+
+.reviewHeading small {
+  display: block;
+  margin-top: 2px;
+  color: #626262;
+  font-size: 8px;
+}
+
+/* Fixed intent switch */
+.fixedIntentControl {
+  flex: 0 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  user-select: none;
+}
+
+.fixedIntentLabel {
+  color: #686868;
+  font-size: 8px;
+  font-weight: 560;
+}
+
+.fixedIntentControl input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fixedIntentSwitch {
+  position: relative;
+  width: 50px;
+  height: 23px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  background: #252525;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.fixedIntentKnob {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 21px;
+  height: 17px;
+  border-radius: 999px;
+  background: #3a3a3a;
+  transition:
+    transform 0.17s var(--ease),
+    background 0.17s ease;
+}
+
+.fixedIntentOff,
+.fixedIntentOn {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  font-size: 7px;
+  font-weight: 650;
+  color: #6f6f6f;
+}
+
+.fixedIntentControl input:not(:checked) + .fixedIntentSwitch .fixedIntentOff {
+  color: #c4c4c4;
+}
+
+.fixedIntentControl input:checked + .fixedIntentSwitch {
+  background: #223027;
+  border-color: rgba(119, 184, 137, 0.24);
+}
+
+.fixedIntentControl input:checked + .fixedIntentSwitch .fixedIntentKnob {
+  transform: translateX(25px);
+  background: #31513b;
+}
+
+.fixedIntentControl input:checked + .fixedIntentSwitch .fixedIntentOn {
+  color: #b9d8c1;
+}
+
+/* Review body */
+.reviewBody {
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+}
+
+.reviewLabel {
+  padding: 6px 7px;
+  color: #5e5e5e;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.rawGroup {
+  margin-bottom: 8px;
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9px;
+  background: #171717;
+}
+
+.groupHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 27px;
+  padding: 0 6px;
+  color: #777;
+  font-size: 8px;
+}
+
+.groupHead span:last-child {
+  margin-left: auto;
+  color: #585858;
+}
+
+/* Raw record fragment */
+.fragment {
+  position: relative;
+  width: 100%;
+  min-height: 44px;
+  display: block;
+  padding: 7px 52px 7px 7px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  text-align: left;
+}
+
+.fragment:hover {
+  background: #222;
+}
+
+.fragment strong {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #c8c8c8;
+  font-size: 9.5px;
+  font-weight: 560;
+}
+
+.fragment small {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #616161;
+  font-size: 8px;
+}
+
+.fragment time {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #555;
+  font-size: 8px;
+}
+
+/* Fixed intent summary section */
+.summarySection {
+  position: relative;
+  margin-bottom: 7px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 9px;
+  background: #1d1d1d;
+}
+
+.summaryHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.summaryHead strong {
+  color: #cfcfcf;
+  font-size: 10px;
+  font-weight: 620;
+}
+
+.summaryHead span {
+  margin-left: auto;
+  color: #5e5e5e;
+  font-size: 8px;
+}
+
+.summarySection p {
+  margin: 0;
+  color: #777;
+  font-size: 9px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Per-content actions */
+.contentActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.contentAction {
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  background: transparent;
+  color: #686868;
+  font-size: 8px;
+}
+
+.contentAction:hover {
+  background: #292929;
+  border-color: rgba(255, 255, 255, 0.11);
+  color: #d0d0d0;
+}
+
+/* Detail drawer: absent from layout when closed */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 120;
+  width: min(420px, 94vw);
+  display: flex;
+  flex-direction: column;
+  background: #151515;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: -20px 0 50px rgba(0, 0, 0, 0.34);
+  animation: drawerIn 0.19s var(--ease);
+}
+
+@keyframes drawerIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.drawerScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 119;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.drawerHead {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.drawerHeading {
+  flex: 1;
+  min-width: 0;
+}
+
+.drawerHeading strong {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #ddd;
+  font-size: 11px;
+  font-weight: 620;
+}
+
+.drawerHeading small {
+  display: block;
+  margin-top: 2px;
+  color: #606060;
+  font-size: 8px;
+}
+
+.drawerClose {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #787878;
+  font-size: 16px;
+}
+
+.drawerClose:hover {
+  background: #252525;
+  color: #fff;
+}
+
+.drawerBody {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+}
+
+.drawerCopy {
+  padding: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  background: #1a1a1a;
+}
+
+.drawerKicker {
+  margin-bottom: 7px;
+  color: #666;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.drawerText {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #b2b2b2;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.drawerActions {
+  display: flex;
+  gap: 6px;
+  margin-top: 11px;
+}

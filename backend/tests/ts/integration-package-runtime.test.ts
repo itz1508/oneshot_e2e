@@ -10,8 +10,9 @@ import {
   integrationStatus,
   loadIntegrationModel,
   loadIntegrationPackage,
-  resolveActiveIntegrationModel,
+  resolveCapabilityModel,
 } from "../../integration/runtime.js";
+import { updateIntegrationState } from "../../integration/persistence.js";
 import { ResearcherWorkflow } from "../../agents/researcher/workflow.js";
 import { WorkflowRootCauseError } from "../../core/root-cause-error.js";
 import { PythonBridge } from "../../validation/python-bridge.js";
@@ -122,8 +123,11 @@ test("status is derived from actual folder contents", async () => {
 test("ResearcherWorkflow fails with ROOT_CAUSE when no model capability is present (no fake fallback)", async () => {
   const bridge = new PythonBridge();
   const contracts = new CanonicalContractSkill(bridge);
+  // Isolated project root: the "no model capability present" premise must hold
+  // even when this machine has enabled integrations under app/integration/config.
+  const isolatedRoot = await mkdtemp(join(tmpdir(), "oneshot-no-model-"));
   try {
-    const researcher = new ResearcherWorkflow(contracts);
+    const researcher = new ResearcherWorkflow(contracts, undefined, isolatedRoot);
     await assert.rejects(
       async () => {
         await researcher.execute(
@@ -145,6 +149,7 @@ test("ResearcherWorkflow fails with ROOT_CAUSE when no model capability is prese
     );
   } finally {
     bridge.close();
+    await rm(isolatedRoot, { recursive: true, force: true });
   }
 });
 
@@ -207,7 +212,7 @@ test("Root package.json does not require vendor SDKs", async () => {
   assert.ok(rootPackageJson.dependencies?.["ai"], "ai package should remain at root");
 });
 
-test("active model resolution honors configure-endpoint env bindings", async () => {
+test("capability resolution honors stored config and env bindings", async () => {
   const root = await mkdtemp(join(tmpdir(), "oneshot-integration-"));
   const previous = {
     key: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
@@ -220,8 +225,17 @@ test("active model resolution honors configure-endpoint env bindings", async () 
     process.env.GEMINI_MODEL = "gemini-env-model";
     process.env.GEMINI_BASE_URL = "https://proxy.invalid/v1";
 
-    const active = await resolveActiveIntegrationModel(root);
-    assert.ok(active, "installed and configured integration must resolve");
+    // Not enabled -> capability resolution must NOT pick it up.
+    const disabled = await resolveCapabilityModel(root, "model.execute");
+    assert.equal(disabled, undefined);
+
+    await updateIntegrationState(root, "gemini", (current) => ({
+      ...current,
+      enabled: true,
+    }));
+
+    const active = await resolveCapabilityModel(root, "model.execute");
+    assert.ok(active, "enabled and configured integration must resolve");
     assert.equal(active.id, "gemini");
     const model = active.model as {
       model: string;
@@ -233,12 +247,16 @@ test("active model resolution honors configure-endpoint env bindings", async () 
 
     // An unset base URL must not leak an empty string into provider options.
     delete process.env.GEMINI_BASE_URL;
-    const withoutBaseURL = await resolveActiveIntegrationModel(root);
+    const withoutBaseURL = await resolveCapabilityModel(root, "model.execute");
     assert.ok(withoutBaseURL);
     const model2 = withoutBaseURL.model as {
       options: { baseURL?: string };
     };
     assert.equal(model2.options.baseURL, undefined);
+
+    // A capability the integration does not advertise must not resolve.
+    const wrongCapability = await resolveCapabilityModel(root, "web.search");
+    assert.equal(wrongCapability, undefined);
   } finally {
     if (previous.key === undefined) {
       delete process.env.GOOGLE_GENERATIVE_AI_API_KEY;

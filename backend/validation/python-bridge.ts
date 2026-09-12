@@ -33,6 +33,8 @@ export class PythonBridge {
       cwd: projectRoot,
       env: {
         ...process.env,
+        PYTHONIOENCODING: "utf-8",
+        PYTHONUTF8: "1",
         PYTHONPATH: pythonPath(),
       },
       stdio: ["pipe", "pipe", "pipe"],

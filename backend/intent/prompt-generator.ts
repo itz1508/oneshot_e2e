@@ -13,12 +13,18 @@ function unique(values: string[]): string[] {
  * remains owned by the Researcher Agent/Skill and is not copied here.
  */
 export class PromptGenerator {
-  generate(intent: IntentState, promptId: string): Prompt {
+  generate(
+    intent: IntentState,
+    promptId: string,
+    projectedContext?: string[],
+  ): Prompt {
     if (!intent.ready_for_prompt || !intent.goal || !intent.requested_outcome) {
       throw new Error(
         `Intent ${intent.intent_id} is not ready for Prompt(id) generation`,
       );
     }
+
+    const context = projectedContext ?? intent.context;
 
     const researchDirection = unique([
       `Establish the exact behavior required by this job-specific goal: ${intent.goal}`,
@@ -39,7 +45,7 @@ export class PromptGenerator {
       prompt_id: promptId,
       intent: intent.goal,
       requested_outcome: intent.requested_outcome,
-      context: intent.context.map((statement, index) => ({
+      context: context.map((statement, index) => ({
         context_id: `intent-context:${intent.intent_id}:${index + 1}`,
         statement,
       })),

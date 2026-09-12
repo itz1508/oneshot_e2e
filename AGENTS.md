@@ -58,10 +58,9 @@ Consult other technologies only when the task involves them.
 
 | Area | Implementation and navigation |
 | --- | --- |
-| Production web UI | `app/web/app/` routes; `app/web/components/` workspace, review cards, file browser, dialogs, icons |
-| Browser data access | `app/web/lib/api.ts` public exports; HTTP client, event stream, contracts, and projections beside it |
-| Legacy/reference console | `app/web/src/`; retained HTML/CSS/JS and associated tests, not the Next.js production entrypoint |
-| Provider integration | `app/web/cloud/`; manager, runtime config, secret store, adapters, and Python workers |
+| Production web UI | `app/web/src/pages/` routes; `app/web/src/components/` chat, history, review gates, dialogs |
+| Browser data access | `app/web/src/lib/api.ts` public exports; HTTP client, event stream, contracts, and projections beside it |
+| Provider integration | `backend/integration/` runtime and `app/integration/` packages; catalog, probe, persistence, and adapters |
 | Server entry and configuration | `backend/index.ts`, `backend/environment.ts`, `backend/python-runtime.ts` |
 | HTTP and workspace access | `backend/server/`; routing, response helpers, workspace inspection, security, path policy |
 | Per-stage pipeline | `backend/pipeline/`; processors, workers, queues, checkpoints, transitions, review confirmation, stage scope |
@@ -80,7 +79,7 @@ Consult other technologies only when the task involves them.
 
 ### Frontend boundary
 
-The production build is Next.js App Router → static export → `app/web/dist/`,
+The production build is Next.js Pages Router → static export → `app/web/dist/`,
 served by the existing Node backend. Follow [app/web/AGENTS.md](app/web/AGENTS.md)
 and read relevant installed Next.js guides before changing frontend code.
 

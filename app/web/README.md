@@ -1,40 +1,31 @@
-# OneShot Web Application
+# OneShot Frontend
 
-The canonical browser application is the Next.js/React UI in `app/`, `components/`, and `lib/`.
+Next.js Pages Router static-export application for the OneShot web UI.
 
-- `app/` owns the Next.js application shell and global styles.
-- `components/` owns the OneShot workspace and reusable UI components.
-- `lib/` owns browser contracts, API helpers, event streaming, and projections.
-- `cloud/` contains server-side provider integration code compiled by the root backend build; it is not copied into browser assets.
-- `scripts/export.mjs` exports the Next build into `dist/`.
-- `scripts/serve.mjs` serves `dist/` for the standalone web process.
-
-The backend also serves the built UI from `app/web/dist`.
-
-## Browser contracts
-
-- `GET /api/health`
-- `POST /api/conversations`
-- `POST /api/conversations/:id/messages`
-- `POST /api/conversations/:id/prompt`
-- `POST /api/conversations/:id/run`
-- `GET /api/runs/:id`
-- `GET /api/runs/:id/events` (SSE)
-- `GET /api/integrations`
-- `POST /api/integrations/:id/install`
-- `POST /api/integrations/:id/configure`
-- `GET /v1/workspace/tree?path=.&depth=3`
-- `GET /v1/workspace/file?path=...`
-
-The web app talks to the OneShot server same-origin. Generate readiness is runtime-owned; message text alone never enables Generate.
-
-## Commands
+## Development
 
 ```bash
 npm install
-npm run typecheck
-npm run lint
-npm test
-npm run build
-npm start
+npm run dev
 ```
+
+Dev server runs on port 5173 and uses Next.js rewrites to proxy `/api` and
+`/v1` to the backend when `ONESHOT_BACKEND_TARGET` is set.
+
+## Production build
+
+```bash
+npm run build
+```
+
+Produces `dist/` with inlined scripts externalized to `dist/_next/static/bootstrap/`
+for the existing `script-src 'self'` CSP.
+
+## Preview
+
+```bash
+npm run preview
+```
+
+Serves `dist/` and proxies `/api` and `/v1` to the backend (default
+`http://127.0.0.1:8787`).

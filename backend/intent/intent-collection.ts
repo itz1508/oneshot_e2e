@@ -1,15 +1,18 @@
 import { randomUUID } from "node:crypto";
 import type { Prompt, RootCause } from "../contracts/schema/types.js";
+import type { ConversationTurn } from "../memory/types.js";
 import type {
   ConversationSnapshot,
-  ConversationTurn,
   HelpRequest,
   IntentState,
   IntentStatement,
   PromptCreationResult,
 } from "./types.js";
 import { ConversationStore } from "./conversation-store.js";
+import type { ConversationListItem } from "./conversation-store.js";
 import { PromptGenerator } from "./prompt-generator.js";
+import { MemoryService } from "../memory/memory-service.js";
+import { projectConversationContext } from "../memory/memory-projection.js";
 
 // ---------------------------------------------------------------------------
 // Semantic intent extraction — recognizes natural user requests and derives
@@ -134,6 +137,8 @@ function statement(
  *  - No automatic retry/fix loops — asks the smallest targeted question.
  */
 export class IntentCollectionService {
+  private memoryService = new MemoryService();
+
   constructor(
     private store: ConversationStore,
     private promptGenerator = new PromptGenerator(),
@@ -163,6 +168,7 @@ export class IntentCollectionService {
       session_id,
       turns: [],
       intent,
+      memory: MemoryService.normalize(undefined),
       created_at: now,
       updated_at: now,
     };
@@ -184,6 +190,19 @@ export class IntentCollectionService {
 
     snap.turns.push(turn);
     snap.intent = this.merge(snap.intent, turn);
+    const typeIds: IntentStatement["kind"][] = [
+      ...new Set(
+        snap.intent.statements
+          .filter((s) => s.source_turn_ids.includes(turn.turn_id))
+          .map((s) => s.kind),
+      ),
+    ];
+    snap.memory = this.memoryService.recordTurn(
+      snap.memory,
+      snap.conversation_id,
+      turn,
+      typeIds,
+    );
     snap.updated_at = turn.created_at;
     return this.store.save(snap);
   }
@@ -191,6 +210,22 @@ export class IntentCollectionService {
   /** Get a conversation snapshot, if it exists. */
   get(conversationId: string): ConversationSnapshot | undefined {
     return this.store.get(conversationId);
+  }
+
+  /** Toggle fixed-intent summarization for a conversation. */
+  setFixedIntent(
+    conversationId: string,
+    enabled: boolean,
+  ): ConversationSnapshot {
+    const snap = this.store.require(conversationId);
+    snap.memory = this.memoryService.setFixedIntent(snap.memory, enabled);
+    snap.updated_at = new Date().toISOString();
+    return this.store.save(snap);
+  }
+
+  /** List conversations for the sidebar. */
+  listConversations(): ConversationListItem[] {
+    return this.store.list();
   }
 
   /**
@@ -223,7 +258,12 @@ export class IntentCollectionService {
       };
     }
 
-    const prompt = this.promptGenerator.generate(intent, promptId);
+    const projectedContext = projectConversationContext(snap);
+    const prompt = this.promptGenerator.generate(
+      intent,
+      promptId,
+      projectedContext,
+    );
     return { result: "Passed", prompt, intent };
   }
 
