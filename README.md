@@ -19,14 +19,21 @@ Repository:
 - https://github.com/itz1508/oneshot_e2e
 - Local URL: http://localhost:8787
 
-1. Overview:
-Detect the operating system. Use Docker if the user requests it, otherwise use the native installer.
-2. Source:
+# Detect the operating system. Use Docker if the user requests it, otherwise use the native installer.
+
+#  1. Create virtual environment
+   python -m venv venv
+# Activate virtual environment
+On macOS/Linux:
+   source venv/bin/activate
+On Windows:
+   venv\Scripts\activate
+
+#  2. Source:
 Clone the repository into a new directory and enter it: 
  git clone https://github.com/itz1508/oneshot_e2e.git oneshot
-   -  cd oneshot
-   -  If already working in this repository, use the current checkout.
-Preserve existing files and changes.
+ cd oneshot
+   -  If already working in this repository, use the current checkout.Preserve existing files and changes.
 
 3. Check and Install 
 Missing prerequisites:
@@ -61,21 +68,16 @@ For Docker:
 
  Before the Docker installer, check for an existing oneshot-local container and containers publishing port 8787. The installer removes these containers. Do not remove existing user data without approval.
 
-5. If installation fails, inspect the first error, diagnose its cause,
-   apply a focused fix, and retry. Do not bypass verification, overwrite
-   user work, or report success while a required check is failing.
+5. If installation fails, inspect the first error, diagnose its cause,  apply a focused fix, and retry. Do not bypass verification, overwrite,  user work, or report success while a required check is failing.
 
-6. Confirm the server is listening and the web page responds at the local
-   URL. Keep the application running. The installers default to sample
-   mode; report that mode accurately. Docker startup checks do not prove
-   the full native verification suite passed.
+6. Confirm the server is listening and the web page responds at the local URL. Keep the application running. The installers default to sample mode; report that mode accurately. Docker startup checks do not provethe full native verification suite passed.
 
 7. Finish with only:
-   Status: RUNNING or BLOCKED
-   URL: the verified local URL, or unavailable
-   Mode: the actual mode
-   Verification: checks that actually passed
-   Blocker: only if unresolved
+Status: RUNNING or BLOCKED
+URL: the verified local URL, or unavailable
+Mode: the actual mode
+Verification: checks that actually passed
+Blocker: only if unresolved
 ```
 
 [Source repository](https://github.com/itz1508/oneshot_e2e) · [Download ZIP](https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip)
