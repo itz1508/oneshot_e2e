@@ -49,7 +49,12 @@ import {
   installIntegration,
   integrationPackageSpec,
   integrationStatus,
+  resolveIntegrationBaseURL,
 } from "../integration/index.js";
+import {
+  probeLiveModels,
+  resolveProviderConfiguration,
+} from "../integration/provider-discovery.js";
 import { HttpSecurity } from "./http-security.js";
 import {
   WorkspacePathDeniedError,
@@ -57,6 +62,13 @@ import {
   WorkspacePathTraversalError,
   isSensitiveWorkspacePath,
 } from "./workspace-path-policy.js";
+import { handleSkillRoutes } from "./skill-handlers.js";
+import {
+  InMemorySkillActivationStore,
+  SkillConversationActivationGate,
+} from "../skills/conversation-activation.js";
+import { createCosmosSkill } from "../skills/cosmos/index.js";
+import type { SkillActivationGate, SkillRuntimeBinding } from "../skills/types.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -200,6 +212,20 @@ export async function startHttpServer(
       process.cwd(),
   );
   const workspacePolicy = await WorkspacePathPolicy.create(workspaceRoot);
+
+  // Opt-in skill activation (P7.8). Skills are inactive by default.
+  const activationStore = new InMemorySkillActivationStore();
+  const skillGate: SkillActivationGate = new SkillConversationActivationGate(activationStore);
+  const skillRegistry = new Map<string, SkillRuntimeBinding>();
+  skillRegistry.set(
+    "strands-cosmos",
+    createCosmosSkill({
+      reasonerUrl: process.env.COSMOS_REASONER_URL,
+      generatorModel: process.env.COSMOS_GENERATOR_MODEL,
+      visionModel: process.env.COSMOS_VISION_MODEL,
+      enabledGroups: ["vision", "generate"],
+    }),
+  );
 
   async function submitRun(
     runId: string,
@@ -483,6 +509,65 @@ export async function startHttpServer(
             workflow_graph: "oneshot-workflow-graph-v1",
             authority_graph: "oneshot-authority-trace-v1",
             sandbox_graph: "oneshot-sandbox-execution-v1",
+          });
+        }
+
+        // ---------------------------------------------------------------
+        // Readiness (configuration and subsystem operational readiness)
+        // ---------------------------------------------------------------
+        if (req.method === "GET" && (url.pathname === "/api/ready" || url.pathname === "/ready")) {
+          const repoReady = Boolean(runs);
+          const runtimeReady = Boolean(runtime);
+          const ready = repoReady && runtimeReady;
+          return json(res, ready ? 200 : 503, {
+            status: ready ? "ready" : "not-ready",
+            workflow: "oneshot-canonical-workflow",
+            contracts: true,
+            repository: repoReady,
+            runtime: runtimeReady,
+          });
+        }
+
+        // ---------------------------------------------------------------
+        // Integration Health (safe probe of Provider, Tavily, and Redis)
+        // ---------------------------------------------------------------
+        if (req.method === "GET" && url.pathname === "/api/health/integrations") {
+          const provConfig = resolveProviderConfiguration();
+          let modelsProbe: "pass" | "fail" | "not-configured" = "not-configured";
+          if (provConfig.baseUrl && provConfig.apiKey) {
+            try {
+              const models = await probeLiveModels(provConfig.baseUrl, provConfig.apiKey);
+              modelsProbe = models.length > 0 ? "pass" : "fail";
+            } catch {
+              modelsProbe = "fail";
+            }
+          }
+
+          const tavilyConfigured = Boolean((process.env.TAVILY_API_KEY || "").trim());
+          const pipelineReady = options.pipeline?.queueReady ?? false;
+          const legacyReady = Boolean(runQueue && queueReady);
+          const redisAvailable = pipelineReady || legacyReady;
+          const executionMode = redisAvailable ? "queued" : "standalone";
+          const overallStatus = modelsProbe === "pass" && redisAvailable ? "ok" : "degraded";
+
+          return json(res, 200, {
+            status: overallStatus,
+            backend: "ready",
+            provider: {
+              configured: provConfig.apiKeyPresent,
+              provider: provConfig.provider,
+              modelsProbe,
+              invocation: "not-tested",
+            },
+            tavily: {
+              configured: tavilyConfigured,
+              status: tavilyConfigured ? "configured" : "disabled",
+            },
+            redis: {
+              configured: Boolean(process.env.REDIS_URL || process.env.EXTERNAL_RENDER_REDIS_URL),
+              status: redisAvailable ? "ok" : "unavailable",
+            },
+            executionMode,
           });
         }
 
@@ -1474,14 +1559,14 @@ export async function startHttpServer(
               process.env[spec.apiKeyEnv] = input.apiKey.trim();
             }
             if (input.model && typeof input.model === "string") {
-              if (id === "gemini") {
-                process.env.GEMINI_MODEL = input.model.trim();
+              if (spec.modelEnv) {
+                process.env[spec.modelEnv] = input.model.trim();
               }
             }
-            if (input.baseURL && typeof input.baseURL === "string") {
-              if (id === "gemini") {
-                process.env.GEMINI_BASE_URL = input.baseURL.trim();
-              }
+            // Bare-key configuration: when no base URL is given, fall back to the
+            // curated per-provider default; validate any provided URL first.
+            if (spec.baseURLEnv) {
+              process.env[spec.baseURLEnv] = resolveIntegrationBaseURL(id, input.baseURL);
             }
             const status = await integrationStatus(workspaceRoot, spec);
             return json(res, 200, status);
@@ -1490,6 +1575,17 @@ export async function startHttpServer(
               error: e instanceof Error ? e.message : String(e),
             });
           }
+        }
+
+        // ---------------------------------------------------------------
+        // Skill activation routes (P7.8)
+        // ---------------------------------------------------------------
+        if (url.pathname.startsWith("/api/skills")) {
+          const handled = await handleSkillRoutes(req, res, url, {
+            gate: skillGate,
+            registry: skillRegistry,
+          });
+          if (handled) return;
         }
 
         // ---------------------------------------------------------------

@@ -34,6 +34,7 @@ export class PythonBridge {
       env: {
         ...process.env,
         PYTHONPATH: pythonPath(),
+        PYTHONIOENCODING: "utf-8",
       },
       stdio: ["pipe", "pipe", "pipe"],
     });

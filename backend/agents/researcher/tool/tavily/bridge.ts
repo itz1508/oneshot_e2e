@@ -54,7 +54,7 @@ export class TavilyPythonRunner implements TavilyRunner {
     return await new Promise<T>((resolvePromise, reject) => {
       const child = spawn(this.python, [script], {
         cwd: this.projectRoot,
-        env: process.env,
+        env: { ...process.env, PYTHONIOENCODING: "utf-8" },
         stdio: ["pipe", "pipe", "pipe"],
       });
       let stdout = "";

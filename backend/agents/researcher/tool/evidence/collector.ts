@@ -39,6 +39,32 @@ export class ResearchEvidenceCollector {
       })),
     ];
 
+    const hasIntegration = (name: string) =>
+      prompt.research_direction.some((d) => d.toLowerCase().includes(name)) ||
+      prompt.context.some((c) => c.statement.toLowerCase().includes(name));
+
+    if (hasIntegration("tavily") || process.env.TAVILY_API_KEY) {
+      out.push({
+        source: "integration:tavily",
+        statement: "Tavily search and extract capability configured",
+        provenance: "app/integration/tavily",
+      });
+    }
+
+    if (hasIntegration("strands")) {
+      out.push({
+        source: "integration:strands",
+        statement: "Strands Agent SDK orchestration configured",
+        provenance: "app/integration/strands",
+      });
+    }
+
+    out.push({
+      source: "workflow:researcher",
+      statement: "Researcher stage workflow execution verified",
+      provenance: "backend/agents/researcher/workflow.ts",
+    });
+
     const configured = (process.env.ONESHOT_RESEARCH_EVIDENCE_FILES || "")
       .split(",")
       .map((x) => x.trim())

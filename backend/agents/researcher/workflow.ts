@@ -14,6 +14,16 @@ import {
   type GatheredEvidence,
 } from "./tool/evidence/collector.js";
 import { resolveActiveIntegrationModel } from "../../integration/runtime.js";
+import { StrandsResearcherAgent } from "./strands-researcher-agent.js";
+import { OpenAIModel } from "../../../app/integration/strands/src/index.js";
+import {
+  type FactListener,
+  createEvidenceRecorder,
+} from "./strands-tools.js";
+import {
+  probeLiveModels,
+  resolveProviderConfiguration,
+} from "../../integration/provider-discovery.js";
 
 const RESEARCHER_SYSTEM_PROMPT = `You are the OneShot Researcher agent.
 Your responsibility is to analyze the user prompt and gathered evidence to produce a structured research draft.
@@ -50,6 +60,61 @@ export function parseStructuredDraft(text: string): StructuredResearchDraft {
   }
 }
 
+export async function createConfiguredStrandsModel(
+  onFact?: FactListener,
+): Promise<OpenAIModel | undefined> {
+  const config = resolveProviderConfiguration();
+  if (!config.baseUrl || !config.apiKey) return undefined;
+
+  onFact?.({
+    type: "providerResolved",
+    timestamp: new Date().toISOString(),
+    stage: "Integration:Discovery",
+    source: "Environment",
+    operation: "endpointConfigured",
+    metadata: { endpointUrl: config.baseUrl, provider: config.provider },
+  });
+
+  onFact?.({
+    type: "credentialResolved",
+    timestamp: new Date().toISOString(),
+    stage: "Integration:Security",
+    source: "environment",
+    operation: "maskSecret",
+    metadata: { credentialLength: config.apiKey.length, masked: "***" },
+  });
+
+  const discoveredModels = await probeLiveModels(config.baseUrl, config.apiKey);
+  if (!discoveredModels.length) {
+    throw new Error(`No models returned by ${config.baseUrl}/models`);
+  }
+
+  const requestedModel = config.requestedModelId;
+  const selected = requestedModel
+    ? (discoveredModels.find((m) => m.id === requestedModel) || discoveredModels[0])
+    : discoveredModels[0];
+
+  if (!selected) {
+    throw new Error(`Requested model "${requestedModel}" was not returned by ${config.baseUrl}/models`);
+  }
+
+  onFact?.({
+    type: "modelResolved",
+    timestamp: new Date().toISOString(),
+    stage: "Integration:Model",
+    source: "probeLiveModels",
+    operation: "modelSelected",
+    metadata: { modelId: selected.id },
+  });
+
+  return new OpenAIModel({
+    api: "chat",
+    apiKey: config.apiKey,
+    clientConfig: { baseURL: config.baseUrl },
+    modelId: selected.id,
+  });
+}
+
 export class ResearcherWorkflow {
   readonly agent = ResearcherAgent;
   private projectRoot: string;
@@ -68,7 +133,12 @@ export class ResearcherWorkflow {
     return this.run(prompt, runId);
   }
 
-  async run(prompt: Prompt, runId: string): Promise<ResearchBundle> {
+  async run(
+    prompt: Prompt,
+    runId: string,
+    modelOverride?: unknown,
+    onFact?: FactListener,
+  ): Promise<ResearchBundle> {
     await this.contracts.validate("urn:oneshot:schema:prompt:2", prompt);
 
     // 1. Gather repository & user prompt evidence
@@ -107,8 +177,49 @@ export class ResearcherWorkflow {
       draft = await (this.modelCapability as any)(prompt, gathered);
       modelSource = "capability:function";
       modelProvenance = "custom-function";
+    } else if (
+      this.modelCapability instanceof OpenAIModel ||
+      (this.modelCapability as any)?._isStrands ||
+      ((this.modelCapability as any)?.modelId && typeof (this.modelCapability as any)?.invoke === "function") ||
+      modelOverride instanceof OpenAIModel ||
+      ((modelOverride as any)?.modelId && typeof (modelOverride as any)?.invoke === "function")
+    ) {
+      // Case D: Strands Agent execution with official tools & structured output
+      const strandsModel = (modelOverride || this.modelCapability) as OpenAIModel;
+      const recorder = createEvidenceRecorder();
+      const strandsAgent = new StrandsResearcherAgent(
+        strandsModel,
+        this.projectRoot,
+        process.env.TAVILY_API_KEY,
+        onFact,
+        recorder,
+      );
+      const evidenceText = gathered.map((e) => `[${e.source}] ${e.statement}`).join("\n");
+      const promptText = `User Intent: ${prompt.intent}\nRequested Outcome: ${prompt.requested_outcome}\nContext:\n${evidenceText}`;
+      draft = await strandsAgent.runResearch(promptText);
+      gathered.push(...recorder.list());
+      modelSource = `strands:${strandsModel.modelId || "openai-model"}`;
+      modelProvenance = "strands-sdk";
     } else {
-      // Case D: Generic AI SDK model provided or resolved from active integration
+      // Case E: Auto-configure live Strands model from environment if configured
+      const envStrandsModel = await createConfiguredStrandsModel(onFact);
+      if (envStrandsModel) {
+        const recorder = createEvidenceRecorder();
+        const strandsAgent = new StrandsResearcherAgent(
+          envStrandsModel,
+          this.projectRoot,
+          process.env.TAVILY_API_KEY,
+          onFact,
+          recorder,
+        );
+        const evidenceText = gathered.map((e) => `[${e.source}] ${e.statement}`).join("\n");
+        const promptText = `User Intent: ${prompt.intent}\nRequested Outcome: ${prompt.requested_outcome}\nContext:\n${evidenceText}`;
+        draft = await strandsAgent.runResearch(promptText);
+        gathered.push(...recorder.list());
+        modelSource = `strands:${envStrandsModel.modelId || "openai-model"}`;
+        modelProvenance = "strands-sdk";
+      } else {
+        // Case F: Generic AI SDK model provided or resolved from active integration
       let activeModel: any;
       if (
         this.modelCapability &&
@@ -162,6 +273,7 @@ export class ResearcherWorkflow {
         });
       }
     }
+  }
 
     // 3. Researcher interprets and validates structured draft and constructs ResearchBundle
     const bundle = await buildResearchBundle({
@@ -174,8 +286,22 @@ export class ResearcherWorkflow {
       modelProvenance,
     });
 
+    onFact?.({
+      type: "researchBundleBuilt",
+      timestamp: new Date().toISOString(),
+      stage: "Researcher",
+      source: "buildResearchBundle",
+      operation: "canonicalBundleConstructed",
+      metadata: {
+        planId: bundle.plan.plan_id,
+        researcherId: bundle.researcher.researcher_id,
+        evidenceCount: bundle.researcher.evidence.length,
+      },
+    });
+
     // 4. Validate produced bundle against canonical schemas
     const checks: [string, unknown][] = [
+      ["urn:oneshot:schema:research_bundle:2", bundle],
       ["urn:oneshot:schema:researcher:2", bundle.researcher],
       ["urn:oneshot:schema:plan:2", bundle.plan],
       ["urn:oneshot:schema:schema-artifact:2", bundle.schema_artifact],
@@ -184,6 +310,33 @@ export class ResearcherWorkflow {
       ["urn:oneshot:schema:validation:2", bundle.validation],
     ];
     for (const [id, v] of checks) await this.contracts.validate(id, v);
+
+    onFact?.({
+      type: "researchBundleValidated",
+      timestamp: new Date().toISOString(),
+      stage: "Researcher",
+      source: "contracts.validate",
+      operation: "canonicalValidationComplete",
+      metadata: { schemasVerified: checks.map(([id]) => id) },
+    });
+
+    onFact?.({
+      type: "researcherCompleted",
+      timestamp: new Date().toISOString(),
+      stage: "Researcher",
+      source: "ResearcherWorkflow",
+      operation: "Researcher.completedResult",
+      metadata: { runId, promptId: prompt.prompt_id },
+    });
+
+    onFact?.({
+      type: "researchReviewReceived",
+      timestamp: new Date().toISOString(),
+      stage: "ResearchReview",
+      source: "ResearchReview.input",
+      operation: "humanReviewGateReady",
+      metadata: { runId, gate: "Human Review 01" },
+    });
 
     return bundle;
   }

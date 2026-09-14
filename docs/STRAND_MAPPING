@@ -1,0 +1,445 @@
+I now have the **complete, verified Strands TS API** from the installed `@strands-agents/sdk@1.17.0` package. I have everything needed to produce an accurate mapping. Here are the verified signatures I'll build on:
+
+- `Agent`: `new Agent({model, tools, systemPrompt, hooks, sessionManager})`, `await agent.invoke(prompt, {structuredOutputSchema}) → AgentResult`, `agent.stream(prompt) → AsyncGenerator<AgentStreamEvent, AgentResult>` (TS streaming is `agent.stream()`, **not** `stream_async`)
+- `VercelModel` (`@strands-agents/sdk/models/vercel`): `new VercelModel({ provider: LanguageModelV3 })` — wraps **any** Vercel AI SDK model
+- `tool({ name, description, inputSchema: z.object, callback })` (zod-based)
+- `SessionManager` + `FileStorage` (both exported from main index) — file-based session snapshots
+- `Graph` / `Swarm` multi-agent; `ToolList` allows `Agent`-as-tool
+- Hooks: `BeforeToolCallEvent`, `AfterModelCallEvent`, etc. via `agent.addHook(Event, fn)`
+
+I'm in plan mode, so this is an analysis/mapping deliverable (no edits). Here is the full mapping.
+
+---
+
+# OneShot → Strands Agents Mapping
+
+## ⚠️ First: Correcting the GIVEN premises (verified against the actual codebase)
+
+A mapping built on wrong premises would mislead you, so I must correct three factual errors in the prompt before mapping:
+
+| Prompt's "GIVEN" claim | Actual OneShot (verified on disk at `d:\oneshot_e2e`) | Source |
+|---|---|---|
+| Workflow `CHAT → INTENT → GENERATOR → PLANNER → RESEARCHER → REFACTOR → BUILD → VALIDATE` | `Prompt → Researcher → ①Research Review → Planner → Refactor → GapAnalysis → Evaluation → TripleValidation(Schema+Fixture+Goal) → Confirmation → Hash → ②Build Ready → Builder → Finalize`. **No "GENERATOR" stage exists; Researcher is FIRST (before Planner).** | `backend/workflow/graph.json`, `backend/workflow/canonical-transition.ts`, `docs/WORKFLOW_TREE` |
+| Providers `OpenAI, Gemini, Bedrock, Tavily` | Model providers: **gemini, openai, anthropic** (via Vercel AI SDK). Tavily is a **search** provider (not a model). **Bedrock is NOT a OneShot provider** — it's a *Strands* model adapter. | `backend/integration/catalog.ts:27` |
+| Session/context `MongoDB + localStorage` | **No MongoDB anywhere.** Server state = `.runtime/run-state/<runId>.json` (`RunRepository`) + `.runtime/runs/<runId>/*.json` (`FileArtifactStore`) + `.runtime/task-events/` (event store). localStorage is browser-only and explicitly NOT the source of truth. | `backend/runtime/run-repository.ts`, `backend/runtime/artifact-store.ts`, AGENTS.md |
+
+**Second critical fact**: Strands is **already a dependency** (`@strands-agents/sdk@^1.17.0` in `package.json:42`) but is **imported nowhere** in `backend/` source — `from "@strands-agents/sdk"` returns zero hits in application code. And `backend/workflow/adk/` (which AGENTS.md referenced) **does not exist on disk**. So Strands integration is *declared and planned, not built*.
+
+**Third critical fact**: The approved refactor plan (`docs/Refactor_plan.md`) explicitly mandates the **adapter pattern** — Non-goals L28: *"No migration to a different framework (Strands is introduced only as an adapter, not a replacement)"*; L310: *"No Strands SDK in the browser."* Plan status is `REVIEW_REQUIRED` / not authorized. This mapping respects that constraint.
+
+---
+
+## Architecture
+
+### Keep OneShot structure or adopt Strands structure?
+
+**Keep OneShot's structure. Use Strands as an adapter at the single model boundary.** Here is the decisive architectural fact that governs everything below:
+
+> **OneShot is NOT an agent-loop system. It is a deterministic pipeline with exactly ONE LLM call.** I verified this directly:
+> - `generateText` (the only model call) appears in **exactly one file**: `backend/agents/researcher/workflow.ts:3,144`.
+> - Planner (`planner/workflow.ts`), Refactor, Evaluation, GapAnalysis are **deterministic** (coverage analysis, audit application, plan evaluation — no model).
+> - TripleValidation runs **deterministic Python validation** (`triple-validation.ts`).
+> - Confirmation/Hash are **deterministic** (assembly + SHA-256).
+> - Builder runs a **hardened sandbox** (`BuilderWorkflow` → `SandboxService`), not a model.
+>
+> Strands is an **agent loop** (model → tool → context → repeat) plus multi-agent orchestration. So a 1:1 mapping is wrong: only the Researcher maps to a Strands `Agent`; the other 9 stages are deterministic processors that must NOT become agents (doing so would inject nondeterminism where AGENTS.md mandates deterministic validation — a hard invariant).
+
+### Minimum changes to be Strands-compatible?
+
+The linchpin is Strands' **`VercelModel` adapter** (`@strands-agents/sdk/models/vercel`), verified from the installed package's type defs:
+
+```ts
+// node_modules/@strands-agents/sdk/dist/src/models/vercel.d.ts (verbatim doc example)
+import { VercelModel } from '@strands-agents/sdk/models/vercel'
+const agent = new Agent({ model: new VercelModel({ provider: bedrock('...') }) })
+for await (const event of agent.stream('Hello!')) { ... }
+```
+
+`VercelModel` wraps **any** `@ai-sdk/provider` `LanguageModelV3`. OneShot's `resolveActiveIntegrationModel()` (`backend/integration/runtime.ts:139`) **already returns** a `LanguageModelV3` (the output of `@ai-sdk/google|openai|anthropic`'s `factory(opts)(model)`). So the bridge is:
+
+```ts
+new VercelModel({ provider: active.model })   // active.model is already a LanguageModelV3
+```
+
+**Zero provider reimplementation.** The minimum change is: in the Researcher, optionally wrap the existing resolved model in `VercelModel` and call it via a Strands `Agent` instead of `generateText`. Everything else stays.
+
+---
+
+## Stage 1: Single-Agent vs Multi-Agent
+
+The prompt offers Option A (one Agent, 8 tools) and Option B (8 chained Agents). **Both are wrong for OneShot**, for the same root reason: 7 of 8 stages are deterministic and must not gain an LLM call.
+
+| Option | What it implies | Verdict for OneShot |
+|---|---|---|
+| A — One Agent with 8 tools (INTENT/GENERATOR/etc. as tools) | An LLM agent *decides* which stage-tool to call next. | ❌ **Breaks determinism.** OneShot's stage order is fixed (`canonical-transition.ts`), with two human gates and a SHA-256 hash proof. Letting a model choose the next "stage tool" would make the workflow nondeterministic and destroy the hash-equality guarantee (`hash.ts`). The "8 stages" are also wrong (real workflow has ~10 stages, no GENERATOR). |
+| B — 8 Agents chained (each stage an Agent) | Each stage = an LLM agent. | ❌ **Adds 7 spurious LLM calls.** Planner/Refactor/Evaluation/GapAnalysis/TripleValidation/Confirmation/Hash are deterministic by design. Wrapping them in Strands `Agent`s would call a model where none should exist, violating "deterministic validation" and "do not fabricate progress" invariants. Also, Strands `Graph` nodes are agents — but OneShot's deterministic nodes aren't agents. |
+| **C (correct, not listed)** — **One Strands `Agent` for the ONE model-driven stage (Researcher); deterministic pipeline unchanged.** | Strands adapts the model boundary only. | ✅ **Matches the approved plan** ("Strands as adapter, not replacement"). Reuses `resolveActiveIntegrationModel()` via `VercelModel`. Keeps `backend/pipeline/` + `backend/workflow/` as the orchestrator. |
+
+**Recommendation: Option C.** Use Strands `Agent` *only* for the Researcher's draft generation. The canonical transition table (`canonical-transition.ts`) remains the single source of truth for stage movement; Strands is never the orchestrator.
+
+If a *future* requirement adds more LLM stages, each would become its own Strands `Agent` (still not tools, still not a Graph — because the deterministic gating/hash logic must stay in OneShot's pipeline).
+
+---
+
+## Stage 2: Provider Registration
+
+The prompt asks how to make `new Agent({ model: getModelForProvider(process.env.ACTIVE_PROVIDER) })` work for OpenAI/Gemini/Bedrock. The answer exploits that OneShot **already solved provider-agnostic model resolution** — Strands just wraps the result.
+
+```ts
+// NEW FILE: backend/agents/researcher/strands-adapter.ts
+import { Agent } from "@strands-agents/sdk";
+import { VercelModel } from "@strands-agents/sdk/models/vercel";
+import { resolveActiveIntegrationModel } from "../../integration/runtime.js";
+import { RESEARCHER_SYSTEM_PROMPT } from "./workflow.js";
+
+/**
+ * Strands adapter for the Researcher's single model-driven step.
+ * Reuses OneShot's existing provider-agnostic model resolution — Strands
+ * only wraps the already-instantiated LanguageModelV3 in VercelModel.
+ *
+ * @param preferredId  the run's captured integration id (per-run binding)
+ */
+export async function createResearcherAgent(
+  projectRoot: string,
+  preferredId?: string,
+): Promise<Agent> {
+  // active.model is a LanguageModelV3 from @ai-sdk/google|openai|anthropic
+  const active = await resolveActiveIntegrationModel(projectRoot, preferredId);
+  if (!active) {
+    throw new Error("RESEARCH_CAPABILITY_UNAVAILABLE");
+  }
+  return new Agent({
+    model: new VercelModel({ provider: active.model as any }),
+    systemPrompt: RESEARCHER_SYSTEM_PROMPT,
+    // No tools by default — OneShot gathers evidence deterministically before
+    // the model call (ResearchEvidenceCollector), so the Researcher is a
+    // single-turn structured-output call, NOT a tool-calling agent loop.
+  });
+}
+```
+
+**How it works for each provider** (no per-provider code needed):
+- `gemini` → `resolveActiveIntegrationModel` loads `@ai-sdk/google`'s `createGoogleGenerativeAI` factory, returns the model → `VercelModel` wraps it.
+- `openai` → same, via `@ai-sdk/openai`'s `createOpenAI`.
+- `anthropic` → same, via `@ai-sdk/anthropic`'s `createAnthropic`.
+- `bedrock` → **not a OneShot provider**; if ever added, it would be a new catalog entry pointing at `@ai-sdk/amazon-bedrock` (still a `LanguageModelV3` → still wraps in `VercelModel`). Strands' *own* `BedrockModel` (`@strands-agents/sdk/models/bedrock`) is an alternative, but using it would bypass OneShot's catalog/installer/credential model — not recommended.
+
+**Runtime registration is already dynamic**: `resolveActiveIntegrationModel` reads env + checks `app/integration/<id>/node_modules` at call time. No static provider registration needed.
+
+> ⚠️ **Integration risk to verify first**: Strands peer-depends on `@ai-sdk/provider@^3.0.0`; OneShot uses `@ai-sdk/*@4.0.x` (which bring a newer `@ai-sdk/provider`). The `LanguageModelV3` interface is stable across these, but you must confirm npm hoists a single compatible `@ai-sdk/provider`. Run `npm ls @ai-sdk/provider` after adding the import. Also: Strands requires `zod` as a peer dep (`^4.1.12`), which OneShot's root `package.json` does **not** currently list — add it if you use `tool()` or `structuredOutputSchema`.
+
+---
+
+## Stage 3: Tool Registration
+
+OneShot's Researcher does **not** use model-driven tool calling today — it gathers evidence *deterministically* (`ResearchEvidenceCollector.collect`, `researcher/workflow.ts:75`) before the single model call. So **for the minimum adapter, register NO Strands tools.** The Researcher Agent is a single-turn structured-output call.
+
+If you later want model-driven tool calls (e.g. let the model decide to search Tavily mid-research), wrap OneShot's existing Tavily adapter (`app/integration/tavily/src/index.ts`) as a Strands `tool`:
+
+```ts
+// NEW FILE (optional, only if model-driven tool calling is desired)
+// backend/agents/researcher/strands-tools.ts
+import { tool } from "@strands-agents/sdk";
+import { z } from "zod";
+import { tavilySearch } from "../../../app/integration/tavily/src/index.js";
+
+export function createTavilySearchTool() {
+  return tool({
+    name: "tavily_search",
+    description: "Search the web for research evidence. Use for current/external facts.",
+    inputSchema: z.object({
+      query: z.string(),
+      maxResults: z.number().optional().default(5),
+    }),
+    callback: async ({ query, maxResults }) => {
+      // Credential invariant preserved: key read server-side, sent only to api.tavily.com
+      const apiKey = process.env.TAVILY_API_KEY;
+      if (!apiKey) throw new Error("TAVILY_API_KEY not configured");
+      return tavilySearch(query, { apiKey, maxResults });
+    },
+  });
+}
+
+// Dynamic registration based on config:
+export function getResearcherTools(): Tool[] {
+  const tools = [];
+  if (process.env.TAVILY_API_KEY) tools.push(createTavilySearchTool());
+  // future: code-execution tool would wrap OneShot's governed SandboxService,
+  //   NOT Strands' PosixShellSandbox (which lacks OneShot's network/resource policy)
+  return tools;
+}
+```
+
+```ts
+const agent = new Agent({
+  model: new VercelModel({ provider: active.model }),
+  systemPrompt: RESEARCHER_SYSTEM_PROMPT,
+  tools: getResearcherTools(),   // [] by default → single-turn; populated → agent loop
+});
+```
+
+**Code-execution tool caveat**: Strands ships `PosixShellSandbox` (`index.d.ts:72`). OneShot's `SandboxService` is **hardened** (network policy `DENY_ALL`, memory/CPU/PID limits, env allowlist, max-bytes-written — `app/env/.env.example:92-104`). Do **not** replace OneShot's sandbox with Strands' — wrap `SandboxService.execute` as a Strands `tool` if a code-execution tool is needed, preserving the hardening.
+
+---
+
+## Stage 4: Context Persistence
+
+**There is no MongoDB in OneShot** (corrected above). Both OneShot and Strands are **file-based**, so they coexist naturally — no data-store migration is needed.
+
+| Concern | OneShot today | Strands equivalent |
+|---|---|---|
+| Run lifecycle + artifacts + events | `RunRepository` (`.runtime/run-state/`) + `FileArtifactStore` (`.runtime/runs/`) + event store (`.runtime/task-events/`) | **Keep as-is.** This is pipeline state, not agent conversation state. |
+| Agent conversation history (messages, for resume) | N/A (Researcher is single-turn) | `SessionManager` + `FileStorage` (`.strands/sessions/...`) |
+
+For the minimum adapter, the Researcher is a **single-turn** call (one user message → one assistant draft). Strands `SessionManager` adds resume/checkpoint of the *agent conversation*, which is trivial for a single turn and **not required**. The run-level persistence stays OneShot's `RunRepository`. So:
+
+```ts
+// MINIMUM: no SessionManager — Researcher is single-turn; run state is OneShot's RunRepository.
+const agent = await createResearcherAgent(projectRoot, preferredId);
+const result = await agent.invoke(promptText, { structuredOutputSchema: DraftSchema });
+// result.structuredOutput is the validated draft → feed to buildResearchBundle(...) (unchanged)
+```
+
+If you later want Strands to snapshot the agent conversation (e.g. for a multi-turn researcher), use the built-in file storage — **not** a MongoDB adapter (Strands has no MongoDB store; it ships `FileStorage`, S3, and test stores):
+
+```ts
+// OPTIONAL: only if multi-turn researcher with resume is desired
+import { SessionManager, FileStorage } from "@strands-agents/sdk";
+
+const session = new SessionManager({
+  sessionId: `researcher:${runId}`,
+  storage: { snapshot: new FileStorage() },   // file-based, mirrors OneShot's .runtime approach
+  saveLatestOn: "invocation",
+});
+const agent = new Agent({ model, systemPrompt, sessionManager: session });
+// On reconnect: session.restoreSnapshot({ target: agent }) loads prior conversation.
+```
+
+**Hooks needed for OneShot integration** (so Strands agent events project onto OneShot's SSE/event bus):
+```ts
+import { AfterModelCallEvent, BeforeToolCallEvent } from "@strands-agents/sdk";
+
+agent.addHook(AfterModelCallEvent, (e) => {
+  // Forward into OneShot's ProcessingEventBus so the existing SSE channel works unchanged
+  events.emit(runId, "Researcher", "Running", { scope: "SUPPORT", message: "model call completed" });
+});
+```
+
+---
+
+## Stage 5: Streaming
+
+**Current mechanism**: SSE (`GET /api/runs/:id/events`, `http-server.ts:1258-1305`), payload = `ProcessingEvent` (workflow stage events, **not** model tokens). The model call itself is non-streaming (`generateText`, `workflow.ts:144`). Strands TS streaming is **`agent.stream()`** (an `AsyncGenerator<AgentStreamEvent, AgentResult>`), **not** `stream_async` (that's the Python SDK).
+
+Adapter that pipes Strands stream → OneShot's existing SSE channel (provider-agnostic by construction — `VercelModel` normalizes all providers):
+
+```ts
+// NEW FILE (optional UX enhancement): backend/agents/researcher/strands-streaming.ts
+import { Agent } from "@strands-agents/sdk";
+import type { ProcessingEventBus } from "../../runtime/event-bus.js";
+
+export async function streamResearcherDraft(
+  agent: Agent,
+  promptText: string,
+  runId: string,
+  events: ProcessingEventBus,
+): Promise<string> {
+  let text = "";
+  // agent.stream() yields AgentStreamEvent; the generator's return value is the AgentResult
+  const gen = agent.stream(promptText);
+  while (true) {
+    const { value, done } = await gen.next();
+    if (done) {
+      // gen return value is AgentResult; use its text/structuredOutput
+      const result = value as any;
+      return text || result?.toString?.() || "";
+    }
+    const event = value as any;
+    // Forward text deltas to OneShot's existing SSE channel as SUPPORT events
+    // (do NOT mutate ProcessingEvent schema — use existing {scope,processor,message})
+    if (event.type === "modelStreamUpdateEvent" && event.event?.delta?.type === "textDelta") {
+      const delta = event.event.delta.text;
+      text += delta;
+      events.emit(runId, "ResearcherStream", "Running", {
+        scope: "SUPPORT",
+        message: delta,   // incremental token; frontend displays, ignores for state transitions
+      });
+    }
+  }
+}
+```
+
+**What changes for provider-agnostic streaming? Nothing extra.** `agent.stream()` is provider-agnostic because `VercelModel` implements Strands' `Model.stream()` for every Vercel provider. The SSE channel is already provider-agnostic (stage events, no provider fields). **Guardrail**: do not add provider/token fields to the locked `ProcessingEvent` schema (`processing-event.schema.json`; the frontend dedups on `event_id`). Emit tokens as `SUPPORT`-scoped events with `processor: "ResearcherStream"` using the existing `message` field.
+
+---
+
+## Stage 6: Provider Selection → Strands Model Selection
+
+**Switching OpenAI ↔ Gemini with Strands = the same one-line selection seam from before, plus the `VercelModel` wrap.** Because `resolveActiveIntegrationModel(projectRoot, preferredId)` already returns a `LanguageModelV3` for whichever provider is installed+configured, and `VercelModel` wraps any `LanguageModelV3`, switching providers requires **zero Strands-specific code**:
+
+```ts
+// Same preferredId plumbing from the prior analysis; Strands just consumes the result.
+const active = await resolveActiveIntegrationModel(projectRoot, preferredId); // "openai" or "gemini"
+const agent = new Agent({ model: new VercelModel({ provider: active.model }) });
+```
+
+**At runtime config → register only active provider?** OneShot already does this implicitly: only providers with a package installed in `app/integration/<id>/node_modules` **and** an API key set are `installed && configured` (`runtime.ts:38-59`). `resolveActiveIntegrationModel` picks the first such (or the `preferredId`). No "register all providers" step. To add Bedrock later, add a catalog entry in `backend/integration/catalog.ts` pointing at `@ai-sdk/amazon-bedrock` — the Strands `VercelModel` wrap keeps working.
+
+---
+
+## Implementation Checklist
+
+**Can we use Strands agents directly?**
+Yes — `@strands-agents/sdk@1.17.0` is already installed and is a clean ESM package (`main: dist/src/index.js`). But you can use it **only at the Researcher model boundary** (Option C), not as the workflow orchestrator (the approved plan forbids migration, and the deterministic stages must not become agents).
+
+**Do we need a wrapper?**
+Yes — a thin adapter (`backend/agents/researcher/strands-adapter.ts`) that calls OneShot's existing `resolveActiveIntegrationModel` and wraps the result in `VercelModel`. ~30 lines. The wrapper, not Strands, owns the OneShot contract invariants (canonical types, evidence, provenance).
+
+**What OneShot files change?** (minimum, Option C, no streaming/tools)
+| File | Change |
+|---|---|
+| `package.json` | Add `"zod"` dependency (peer dep of Strands `tool`/`structuredOutputSchema`). Verify `@ai-sdk/provider` hoist. |
+| `backend/agents/researcher/workflow.ts` | In Case E, *optionally* route through `createResearcherAgent()` + `agent.invoke(prompt, {structuredOutputSchema})` instead of `generateText`. Keep Cases A–D (test drafts, custom capabilities) untouched. |
+| (none others required) | The pipeline, transitions, gates, hash, sandbox, SSE, RunRepository all stay unchanged. |
+
+**What new files for Strands integration?**
+| File | Purpose | Size |
+|---|---|---|
+| `backend/agents/researcher/strands-adapter.ts` | `createResearcherAgent(projectRoot, preferredId)` — `VercelModel` wrap | ~30 lines |
+| `backend/agents/researcher/strands-draft-schema.ts` (optional) | Zod schema mirroring `StructuredResearchDraft` for `structuredOutputSchema` (replaces manual `parseStructuredDraft`) | ~25 lines |
+| `backend/agents/researcher/strands-tools.ts` (optional) | Tavily-as-Strands-tool — **only if** adopting model-driven tool calling (not minimum) | ~30 lines |
+| `backend/agents/researcher/strands-streaming.ts` (optional) | `agent.stream()` → SSE forwarding — **only if** token streaming wanted (not minimum) | ~30 lines |
+| `backend/tests/ts/researcher-strands-adapter.test.ts` | Parity test: Strands adapter produces same `ResearchBundle` shape as the `generateText` path | ~60 lines |
+
+**Estimated effort**
+- **Minimum (Option C, no streaming/tools): ~4 hours** — adapter + zod schema + parity test + `npm ls @ai-sdk/provider` verification. Gated behind the existing Case A–E fallback, so it's additive.
+- **With structured output (replace `parseStructuredDraft`): +2 hours** — define zod schema, validate parity, handle Strands' auto-retry-on-validation-error.
+- **With token streaming to SSE: +3 hours** — stream adapter + frontend display + event-bus invariants test.
+- **With model-driven Tavily tool calling: +1 day** — changes Researcher from deterministic-gather to agent-loop; requires rethinking evidence provenance and the `buildResearchBundle` contract. **Not recommended for MVP** (breaks the deterministic-evidence invariant).
+- **Total realistic for the safe minimum: ~1 day** including tests and the peer-dep verification.
+
+**Risk Assessment**
+
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| `@ai-sdk/provider` peer-dep version conflict (Strands `^3.0.0` vs `@ai-sdk/*@4.x`) | Medium | Blocks import | Verify with `npm ls @ai-sdk/provider` before coding; if mismatched, pin a compatible version or use Strands' own `OpenAIModel`/`BedrockModel` (loses OneShot catalog reuse). |
+| `zod` not in OneShot deps → `tool`/`structuredOutputSchema` fail | High (if used) | Build error | Add `zod` to root `package.json` (Strands peer dep). The minimum adapter (no tools, no structured output) needs no zod. |
+| Strands `Agent` adds nondeterminism to deterministic stages | — | — | **Not applicable** — we only adapt the Researcher (the one LLM stage). Don't wrap deterministic stages. |
+| `AgentResult.structuredOutput` shape ≠ `parseStructuredDraft` output | Medium | ResearchBundle mismatch | Parity test (`researcher-strands-adapter.test.ts`) asserting identical `ResearchBundle` for a fixed draft; keep `parseStructuredDraft` as fallback. |
+| Strands in the browser | — | — | Forbidden by plan (L310). Adapter is server-side only (`backend/agents/researcher/`). The Next.js static export (`app/web/scripts/export.mjs`) must not import Strands. Verify the build doesn't tree-shake Strands into the browser bundle. |
+| Token streaming mutates `ProcessingEvent` schema | Medium | Frontend dedup/contract break | Emit tokens as `SUPPORT`-scoped `ResearcherStream` events with existing `message` field; never add provider/token fields to `ProcessingEvent`. Add a `test_schemas.py` assertion. |
+| Replacing `SandboxService` with Strands `PosixShellSandbox` | — | — | **Do not.** OneShot's sandbox is hardened (network/CPU/mem/PID limits). Strands' sandbox lacks that. Wrap `SandboxService` as a Strands `tool` if needed. |
+| Strands `Graph`/`Swarm` used as the workflow orchestrator | — | — | **Do not.** Breaks deterministic transitions + human gates + hash proof. The plan forbids it. Keep `canonical-transition.ts` as the orchestrator. |
+
+**Can we run both (OneShot native + Strands) temporarily?**
+Yes — trivially. The Strands adapter sits **inside** Researcher Case E (`workflow.ts:111-136`), which already has Cases A–D (test draft, custom capability, function, direct model). Add a Case F ("Strands agent via VercelModel") gated by an env flag (e.g. `ONESHOT_RESEARCH_USE_STRANDS=1`), defaulting off. Both paths produce the same `ResearchBundle` (the boundary that feeds `buildResearchBundle` is unchanged), so the rest of the pipeline is identical. Run them side-by-side and diff `ResearchBundle` outputs for parity (exactly the plan's "Runtime parity drift → run old and new paths side-by-side with diff", `Refactor_plan.md:318`).
+
+**Fallback plan if Strands doesn't fit?**
+The adapter is additive and behind a flag, so fallback = set `ONESHOT_RESEARCH_USE_STRANDS=0` (or remove the one Case F block). The existing `generateText` path remains fully intact. `git revert` of the adapter commit restores the pre-Strands state — no other files depend on it.
+
+---
+
+# SECOND PROMPT (Code-focused) — Before/After
+
+## Before: current Researcher model call (`backend/agents/researcher/workflow.ts:111-164`, Case D/E)
+
+```ts
+      } else {
+        // Case D: Generic AI SDK model provided or resolved from active integration
+        let activeModel: any;
+        if (this.modelCapability && typeof (this.modelCapability as any).model === "object") {
+          activeModel = (this.modelCapability as any).model;
+          modelSource = (this.modelCapability as any).source || "model:direct";
+          modelProvenance = (this.modelCapability as any).provenance || "ai-sdk";
+        } else if (this.modelCapability && typeof (this.modelCapability as any).doGenerate === "function") {
+          activeModel = this.modelCapability;
+          modelSource = "model:ai-sdk";
+          modelProvenance = "ai-sdk-language-model";
+        } else {
+          // Inspect active runtime integration (e.g. backend/integration/gemini)
+          const active = await resolveActiveIntegrationModel(this.projectRoot);
+          if (active) {
+            activeModel = active.model;
+            modelSource = active.source;
+            modelProvenance = active.provenance;
+          }
+        }
+
+        if (activeModel) {
+          const evidenceText = gathered.map((e) => `[${e.source}] ${e.statement}`).join("\n");
+          const promptText = `User Intent: ${prompt.intent}\nRequested Outcome: ${prompt.requested_outcome}\nContext:\n${evidenceText}`;
+
+          const result = await generateText({
+            model: activeModel,
+            system: RESEARCHER_SYSTEM_PROMPT,
+            prompt: promptText,
+          });
+
+          draft = parseStructuredDraft(result.text);   // manual JSON parse + ``` cleanup
+        } else {
+          throw new WorkflowRootCauseError({ issue: "RESEARCH_CAPABILITY_UNAVAILABLE", ... });
+        }
+      }
+```
+
+## After: same stage via Strands adapter (Option C, additive, behind a flag)
+
+```ts
+      } else {
+        let activeModel: any;
+        // … Cases D model-resolution unchanged …
+
+        if (activeModel) {
+          const evidenceText = gathered.map((e) => `[${e.source}] ${e.statement}`).join("\n");
+          const promptText = `User Intent: ${prompt.intent}\nRequested Outcome: ${prompt.requested_outcome}\nContext:\n${evidenceText}`;
+
+          if (process.env.ONESHOT_RESEARCH_USE_STRANDS === "1") {
+            // Case F: Strands Agent adapter — wraps the SAME LanguageModelV3 in VercelModel.
+            // Structured output replaces manual parseStructuredDraft; Strands auto-retries
+            // on validation errors. buildResearchBundle(...) downstream is unchanged.
+            const agent = new Agent({
+              model: new VercelModel({ provider: activeModel }),
+              systemPrompt: RESEARCHER_SYSTEM_PROMPT,
+            });
+            const result = await agent.invoke(promptText, {
+              structuredOutputSchema: StructuredResearchDraftSchema,  // zod schema
+            });
+            draft = result.structuredOutput as StructuredResearchDraft;
+            modelSource = `strands:${modelSource}`;
+          } else {
+            // Original path (unchanged)
+            const result = await generateText({ model: activeModel, system: RESEARCHER_SYSTEM_PROMPT, prompt: promptText });
+            draft = parseStructuredDraft(result.text);
+          }
+        } else {
+          throw new WorkflowRootCauseError({ issue: "RESEARCH_CAPABILITY_UNAVAILABLE", ... });
+        }
+      }
+```
+
+### Differences highlighted
+
+| Aspect | Before (`generateText`) | After (Strands `Agent` via `VercelModel`) |
+|---|---|---|
+| Model object | `activeModel` (LanguageModelV3) passed directly to `generateText` | Same `activeModel` wrapped in `new VercelModel({ provider: activeModel })` — **no new provider code** |
+| Output parsing | `parseStructuredDraft(result.text)` — manual JSON parse + ```` ``` ```` cleanup + error → `RESEARCH_MODEL_OUTPUT_INVALID_JSON` | `result.structuredOutput` — zod-validated object; Strands **auto-retries on validation errors** |
+| Provider switch | `resolveActiveIntegrationModel(projectRoot, preferredId)` (unchanged) | Identical — Strands adds no provider-specific code |
+| Streaming | None (`generateText` is batch) | `agent.stream(prompt)` → `AsyncIterable<AgentStreamEvent>` available if wanted |
+| Tools | None (deterministic evidence gather) | Optionally `tools: [tavilySearchTool]` for model-driven search (not minimum) |
+| Downstream | `buildResearchBundle({ draft, gathered, modelSource, modelProvenance })` — **unchanged** | Identical — the `ResearchBundle` boundary is the contract; Strands stays inside the Researcher |
+| Feature flag | — | `ONESHOT_RESEARCH_USE_STRANDS=1` (default off → both paths coexist) |
+
+---
+
+## Summary of what I did and what you should know
+
+I mapped OneShot to Strands by **verifying both sides against reality** rather than the prompt's premises:
+
+1. **Corrected three false premises** in the "GIVEN": the real workflow (no GENERATOR; Researcher is first; ~10 stages with 2 human gates), the real providers (gemini/openai/anthropic + Tavily-search; no Bedrock in OneShot), and the real storage (`.runtime/` JSON files; no MongoDB).
+2. **Verified the actual Strands TS API** from the installed `@strands-agents/sdk@1.17.0` (not guessed): `Agent`/`invoke`/`stream`/`tool`/`VercelModel`/`SessionManager`/`FileStorage`/`Graph`/`Swarm` — TS streaming is `agent.stream()`, not `stream_async` (Python).
+3. **Found that Strands is declared but unused** in the codebase, and that the approved refactor plan (`docs/Refactor_plan.md`, status `REVIEW_REQUIRED`) mandates Strands as an **adapter, not a replacement**.
+4. **Identified the linchpin**: Strands' `VercelModel` wraps any `LanguageModelV3` — and OneShot's `resolveActiveIntegrationModel()` already returns `LanguageModelV3` objects from `@ai-sdk/google|openai|anthropic`. So the bridge is `new VercelModel({ provider: active.model })` — **zero provider reimplementation**.
+5. **Recommended Option C** (one Strands `Agent` for the single LLM stage — the Researcher; deterministic pipeline unchanged) over the prompt's Options A/B, because 7 of 8 OneShot stages are deterministic and must not gain LLM calls (AGENTS.md deterministic-validation invariant).
+6. **Flagged the two concrete integration risks**: `@ai-sdk/provider` peer-dep version hoist (Strands wants `^3.0.0`; `@ai-sdk/*@4.x` bring newer) — verify with `npm ls @ai-sdk/provider`; and `zod` is a Strands peer dep not currently in OneShot's `package.json`.
+
+**Bottom line**: OneShot is a deterministic pipeline with one LLM call, not an agent loop. The correct Strands mapping is a thin, additive, flag-gated adapter at the Researcher boundary (~30 lines + a zod schema + a parity test, ~1 day), reusing OneShot's existing provider-agnostic model resolution. Strands `Graph`/`Swarm` and replacing the deterministic stages or the sandbox are explicitly out of scope (forbidden by the approved plan and by OneShot's determinism invariants). If you toggle to Act mode, I can implement the Option-C adapter behind `ONESHOT_RESEARCH_USE_STRANDS`, add the zod schema + parity test, and verify the `@ai-sdk/provider` hoist before committing.

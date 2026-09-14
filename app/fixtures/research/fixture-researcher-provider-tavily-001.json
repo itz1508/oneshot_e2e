@@ -1,0 +1,58 @@
+{
+  "id": "fixture:researcher:provider-tavily:001",
+  "goalIds": [
+    "goal:researcher:provider-capability"
+  ],
+  "inputRefs": [
+    "prompt:researcher-provider-discovery",
+    "integration:tavily",
+    "integration:strands",
+    "workflow:researcher"
+  ],
+  "planAssertions": [
+    {
+      "id": "researcher-bundle-required",
+      "kind": "REQUIRED_RECORD_PRESENT",
+      "subjectId": "researchBundle",
+      "expectedPlannerReview": "PASSED",
+      "expectedRoute": "Researcher",
+      "expectedAdmission": "Valid",
+      "evidenceSourceIds": [
+        "workflow:researcher"
+      ]
+    },
+    {
+      "id": "researcher-tavily-dependency",
+      "kind": "DEPENDENCY_RESOLVED",
+      "subjectId": "integration:tavily",
+      "expectedPlannerReview": "PASSED",
+      "expectedRoute": "Researcher",
+      "expectedAdmission": "Valid",
+      "evidenceSourceIds": [
+        "integration:tavily"
+      ]
+    },
+    {
+      "id": "researcher-strands-dependency",
+      "kind": "DEPENDENCY_RESOLVED",
+      "subjectId": "integration:strands",
+      "expectedPlannerReview": "PASSED",
+      "expectedRoute": "Researcher",
+      "expectedAdmission": "Valid",
+      "evidenceSourceIds": [
+        "integration:strands"
+      ]
+    },
+    {
+      "id": "researcher-review-route",
+      "kind": "ROUTE_EXPECTED",
+      "subjectId": "researcher",
+      "expectedPlannerReview": "PASSED",
+      "expectedRoute": "Researcher",
+      "expectedAdmission": "Valid",
+      "evidenceSourceIds": [
+        "workflow:researcher"
+      ]
+    }
+  ]
+}

@@ -131,11 +131,14 @@
     {"artifact": "hash_sandbox", "from": "Builder", "to": "Finalize"},
     {"artifact": "build_result", "from": "Builder", "to": "Finalize"},
     {"artifact": "hash_proof", "from": "Hash", "to": "Finalize"},
-    {"artifact": "verified_HASH", "from": "Finalize", "to": "Done"}
+    {"artifact": "verified_HASH", "from": "Finalize", "to": "Done"},
+    {"artifact": "research_bundle", "from": "Researcher.completedResult", "to": "ResearchReview.input"}
   ],
   "nodes": [
     {"id": "Prompt", "kind": "source"},
     {"id": "Researcher", "kind": "processor"},
+    {"id": "Researcher.completedResult", "kind": "gate"},
+    {"id": "ResearchReview.input", "kind": "gate"},
     {"id": "Planner", "kind": "processor"},
     {"id": "Refactor", "kind": "processor"},
     {"id": "GapAnalysis", "kind": "processor"},

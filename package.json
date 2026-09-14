@@ -38,10 +38,15 @@
     "test:pipeline:refinement-recovery": "node backend/scripts/test-pipeline-refinement-recovery.mjs"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@strands-agents/sdk": "^1.17.0",
+    "@tavily/core": "^0.7.11",
     "ai": "^7.0.97",
     "ajv": "^8.20.0",
     "bullmq": "^6.3.4",
-    "ioredis": "^6.0.0"
+    "ioredis": "^6.0.0",
+    "openai": "^6.49.0",
+    "strands-agents-mcp-server": "^0.0.1"
   },
   "overrides": {
     "@opentelemetry/core": "^2.8.0",

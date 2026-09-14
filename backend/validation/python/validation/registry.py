@@ -6,6 +6,8 @@ PRODUCER_CONSUMERS = {
     "build-review-action": ("BuildReviewUI", ["BuildReviewService"]),
     "common": ("ContractSystem", ["AllContracts"]),
     "prompt": ("Prompt", ["Researcher"]),
+    "research-bundle": ("Researcher", ["ResearchReview", "Planner"]),
+    "research_bundle": ("Researcher", ["ResearchReview", "Planner"]),
     "researcher": ("Researcher", ["Planner", "TripleValidation"]),
     "plan": (
         "Researcher",

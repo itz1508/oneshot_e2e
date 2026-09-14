@@ -190,6 +190,18 @@
       ]
     },
     {
+      "contract_id": "urn:oneshot:schema:research_bundle:2",
+      "version": "2",
+      "artifact_type": "research-bundle",
+      "schema_path": "schema/research-bundle.schema.json",
+      "schema_digest": "44ccd186443c0b3869c880670e42017eacfb77f38a9b776ba3c7a64d0d718373",
+      "producer": "Researcher",
+      "consumers": [
+        "ResearchReview",
+        "Planner"
+      ]
+    },
+    {
       "contract_id": "urn:oneshot:schema:researcher:2",
       "version": "2",
       "artifact_type": "researcher",

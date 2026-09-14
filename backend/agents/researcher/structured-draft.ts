@@ -271,6 +271,7 @@ export async function buildResearchBundle(
   };
 
   return {
+    prompt_id: prompt.prompt_id,
     prompt,
     researcher: {
       researcher_id: researcherId,

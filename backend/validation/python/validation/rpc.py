@@ -2,6 +2,13 @@ from __future__ import annotations
 import json, sys, traceback
 from .cli import handle
 
+if sys.platform == "win32":
+    try:
+        sys.stdin.reconfigure(encoding="utf-8")
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 
 def main() -> None:
     for line in sys.stdin:
