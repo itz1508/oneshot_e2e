@@ -1,4 +1,4 @@
-import { cp, mkdir, rename, access, readdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, rename, access, readdir, readFile, writeFile, rm } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -6,11 +6,9 @@ import path from "node:path";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const output = path.resolve(root, "out");
 const target = path.resolve(root, "dist");
-const backup = path.resolve(
-    root,
-    "../../.runtime/frontend-builds",
-    String(Date.now()),
-);
+const backupRoot = path.resolve(root, "../../.runtime/frontend-builds");
+const BACKUP_RETENTION = 3;
+const backup = path.join(backupRoot, String(Date.now()));
 if (
     path.dirname(target) !== path.resolve(root) ||
     !backup.startsWith(path.resolve(root, "../../.runtime") + path.sep)
@@ -66,6 +64,30 @@ if (existing) {
     await rename(target, backup);
 }
 await cp(output, target, { recursive: true });
+// Retain only the newest BACKUP_RETENTION snapshots so the backup directory
+// does not grow without bound across builds. Snapshot names are timestamp
+// strings of equal length, so lexicographic order is numeric order. Pruning
+// is best-effort and must never fail the export.
+try {
+    const snapshots = (
+        await readdir(backupRoot, { withFileTypes: true })
+    )
+        .filter((entry) => entry.isDirectory() && /^\d+$/.test(entry.name))
+        .map((entry) => entry.name)
+        .sort();
+    const stale = snapshots.slice(
+        0,
+        Math.max(0, snapshots.length - BACKUP_RETENTION),
+    );
+    for (const name of stale) {
+        await rm(path.join(backupRoot, name), {
+            recursive: true,
+            force: true,
+        });
+    }
+} catch {
+    /* best-effort pruning */
+}
 console.log(
-    "Next.js static export published to frontend/web/dist; previous output retained under .runtime/frontend-builds.",
+    `Next.js static export published to frontend/web/dist; previous output retained under .runtime/frontend-builds (newest ${BACKUP_RETENTION} snapshots kept).`,
 );
