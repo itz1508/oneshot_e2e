@@ -48,4 +48,7 @@ pnpm-workspace.yaml
 app/web/.next/
 app/web/out/
 app/web/*.tsbuildinfo
+frontend/web/.next/
+frontend/web/out/
+frontend/web/*.tsbuildinfo
 .devswarm-temp/

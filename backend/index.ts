@@ -283,8 +283,13 @@ const runtimeInfo: RuntimeInfo = {
 };
 
 // --- HTTP Server ---
-const webDistPath = resolve(projectRoot, "app/web/dist");
-const uiRoot = existsSync(webDistPath) ? webDistPath : resolve(projectRoot, "ui");
+const webDistPath = resolve(projectRoot, "frontend/web/dist");
+const legacyWebDistPath = resolve(projectRoot, "app/web/dist");
+const uiRoot = existsSync(webDistPath)
+  ? webDistPath
+  : existsSync(legacyWebDistPath)
+    ? legacyWebDistPath
+    : resolve(projectRoot, "ui");
 const workspaceRoot = resolve(
   process.env.ONESHOT_WORKSPACE_ROOT || projectRoot,
 );

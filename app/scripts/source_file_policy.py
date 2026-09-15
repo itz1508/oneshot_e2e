@@ -50,9 +50,9 @@ def source_path_is_forbidden(relative_path: str | PurePosixPath) -> bool:
 
     lowered = tuple(part.lower() for part in parts)
     # Next.js build output and incremental compiler state are not source files.
-    if lowered[:2] == ("app", "web") and len(lowered) >= 3:
+    if len(lowered) >= 3 and lowered[:2] in {("app", "web"), ("frontend", "web")}:
         if lowered[2] in {".next", "out"} or lowered == (
-            "app",
+            lowered[0],
             "web",
             "tsconfig.tsbuildinfo",
         ):

@@ -26,9 +26,10 @@ const ROOT = resolve(import.meta.dirname, "..", "..");
 
 const APPROVED_DIRECTORIES = new Set([
   // Product directories
-  "backend",
   "app",
+  "backend",
   "docs",
+  "frontend",
   "scripts",
   "docker",
 
