@@ -5,7 +5,15 @@ import {
   createEvidenceRecorder,
 } from "../../agents/researcher/strands-tools.js";
 
-test("Tavily Live Search & Extract Verification", async () => {
+test("Tavily Live Search & Extract Verification", async (t) => {
+  // Gap 11 guard: ordinary `npm test` must never call paid/external providers.
+  // Live Tavily calls are opt-in via RUN_LIVE_TAVILY_TESTS=true.
+  const liveEnabled = process.env.RUN_LIVE_TAVILY_TESTS === "true";
+  if (!liveEnabled) {
+    t.skip("Live Tavily test skipped: set RUN_LIVE_TAVILY_TESTS=true to enable live Tavily calls");
+    return;
+  }
+
   const apiKey = (process.env.TAVILY_API_KEY || "").trim();
   assert.ok(
     apiKey.length > 0,

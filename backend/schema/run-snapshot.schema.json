@@ -13,7 +13,8 @@
     "artifacts":{"type":"object","additionalProperties":{"type":"string"}},
     "hash_proof":{"$ref":"urn:oneshot:schema:hash-proof:2"},
     "root_cause":{"$ref":"urn:oneshot:schema:common:2#/$defs/root_cause"},
-    "help_request":{"type":"object"}
+    "help_request":{"type":"object"},
+    "route_snapshot":{"type":"object","additionalProperties":true}
   },
   "required":["run_id","pipeline_status","events","artifacts"],
   "allOf":[

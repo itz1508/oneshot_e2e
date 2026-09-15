@@ -70,9 +70,21 @@ export const KNOWN_PROVIDERS: Record<string, ProviderDefinition> = {
     requiresApiKey: false,
     endpointCandidates: [
       {
-        id: "ollama-default",
-        url: "http://localhost:11434/v1",
-        label: "Local Host (11434)",
+        id: "ollama-127",
+        url: "http://127.0.0.1:11434",
+        label: "Local Host 127.0.0.1 (11434)",
+        source: "official",
+      },
+      {
+        id: "ollama-localhost",
+        url: "http://localhost:11434",
+        label: "Local Host localhost (11434)",
+        source: "official",
+      },
+      {
+        id: "ollama-docker",
+        url: "http://host.docker.internal:11434",
+        label: "Docker Host (11434)",
         source: "official",
       },
     ],

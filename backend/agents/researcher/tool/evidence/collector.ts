@@ -1,7 +1,13 @@
 import { readFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import type { Prompt } from "../../../../contracts/schema/types.js";
+import {
+  decideResearchPolicy,
+  EvidenceProvenance,
+  resolveRequestedResearchMode,
+} from "../../../../integration/research/policy.js";
 import { TavilyEvidenceCollector } from "../tavily/evidence.js";
+import type { TavilyRunner } from "../tavily/bridge.js";
 
 export interface GatheredEvidence {
   source: string;
@@ -21,8 +27,12 @@ function envTrue(name: string): boolean {
 export class ResearchEvidenceCollector {
   private tavily: TavilyEvidenceCollector;
 
-  constructor(private projectRoot: string) {
-    this.tavily = new TavilyEvidenceCollector(projectRoot);
+  constructor(
+    private projectRoot: string,
+    /** Test seam (M12): inject a fake Tavily runner instead of the Python worker. */
+    tavilyRunner?: TavilyRunner,
+  ) {
+    this.tavily = new TavilyEvidenceCollector(projectRoot, tavilyRunner);
   }
 
   async collect(prompt: Prompt): Promise<GatheredEvidence[]> {
@@ -30,12 +40,12 @@ export class ResearchEvidenceCollector {
       {
         source: `prompt:${prompt.prompt_id}`,
         statement: `Intent: ${prompt.intent}\nRequested outcome: ${prompt.requested_outcome}`,
-        provenance: "user-prompt",
+        provenance: EvidenceProvenance.USER_PROMPT,
       },
       ...prompt.context.map((c) => ({
         source: `prompt-context:${c.context_id}`,
         statement: c.statement,
-        provenance: "user-prompt-context",
+        provenance: EvidenceProvenance.USER_PROMPT_CONTEXT,
       })),
     ];
 
@@ -43,7 +53,23 @@ export class ResearchEvidenceCollector {
       prompt.research_direction.some((d) => d.toLowerCase().includes(name)) ||
       prompt.context.some((c) => c.statement.toLowerCase().includes(name));
 
-    if (hasIntegration("tavily") || process.env.TAVILY_API_KEY) {
+    // OneShot research policy (M12) decides whether an external adapter may
+    // run at all. `external` fails closed when Tavily is unavailable; the
+    // decision (including a hybrid degrade) is itself recorded as evidence.
+    const decision = decideResearchPolicy({
+      requested: resolveRequestedResearchMode(),
+      externalConfigured: Boolean((process.env.TAVILY_API_KEY || "").trim()),
+    });
+    out.push({
+      source: "oneshot:research-policy",
+      statement: `Research mode '${decision.mode}': ${decision.reason}`,
+      provenance: EvidenceProvenance.RESEARCH_POLICY,
+    });
+
+    if (
+      decision.externalAllowed &&
+      (hasIntegration("tavily") || process.env.TAVILY_API_KEY)
+    ) {
       out.push({
         source: "integration:tavily",
         statement: "Tavily search and extract capability configured",
@@ -89,8 +115,14 @@ export class ResearchEvidenceCollector {
       out.push({
         source: `file:${relative(this.projectRoot, p)}`,
         statement: raw.slice(0, max),
-        provenance: p,
+        provenance: EvidenceProvenance.WORKSPACE_FILE,
       });
+    }
+
+    if (!decision.externalAllowed) {
+      // Policy denied the external leg entirely — the Tavily adapter is never
+      // invoked, so local-only mode makes zero Tavily requests (M12 gate).
+      return out;
     }
 
     try {

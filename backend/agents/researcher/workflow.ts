@@ -24,6 +24,18 @@ import {
   probeLiveModels,
   resolveProviderConfiguration,
 } from "../../integration/provider-discovery.js";
+import {
+  researcherExecutionRequirements,
+  type ExecutionRequirements,
+} from "./execution-requirements.js";
+import type { ResearchMode } from "../../integration/core/policy.js";
+import {
+  EvidenceProvenance,
+  resolveRequestedResearchMode,
+} from "../../integration/research/policy.js";
+import { FakeRuntime, buildFakeRoute } from "../../integration/runtime/fake-runtime.js";
+import type { AgentRuntime, RuntimeInvocation } from "../../integration/runtime/types.js";
+import type { ResolvedExecutionRoute } from "../../integration/core/route.js";
 
 const RESEARCHER_SYSTEM_PROMPT = `You are the OneShot Researcher agent.
 Your responsibility is to analyze the user prompt and gathered evidence to produce a structured research draft.
@@ -129,6 +141,24 @@ export class ResearcherWorkflow {
     this.collector = new ResearchEvidenceCollector(this.projectRoot);
   }
 
+  /**
+   * Describe what this Researcher workflow demands from the execution layer
+   * (M3). Pure descriptor: no credentials, no concrete provider/model. The
+   * deterministic router (M7) consumes this to produce a ResolvedExecutionRoute.
+   * This method does NOT change `run()` behavior.
+   */
+  executionRequirements(): ExecutionRequirements {
+    return researcherExecutionRequirements(this.defaultResearchMode());
+  }
+
+  private defaultResearchMode(): ResearchMode {
+    // M12: delegated to the OneShot research policy, which centralizes the
+    // mode resolution (explicit ONESHOT_RESEARCH_MODE wins; otherwise derived
+    // from Tavily availability exactly as before). The policy router may
+    // still choose local-only/disabled regardless.
+    return resolveRequestedResearchMode();
+  }
+
   async execute(prompt: Prompt, runId: string): Promise<ResearchBundle> {
     return this.run(prompt, runId);
   }
@@ -153,7 +183,25 @@ export class ResearcherWorkflow {
     const testDraftFile = (
       process.env.ONESHOT_RESEARCH_TEST_DRAFT_FILE || ""
     ).trim();
-    if (testDraftFile) {
+    // Case 0: Fake runtime (M4 neutrality proof). Env-gated; reuses all
+    // downstream bundle-building + canonical validation. Does not change any
+    // other case when the flag is off.
+    if (process.env.ONESHOT_RESEARCH_FAKE_RUNTIME === "true") {
+      const route = buildFakeRoute(runId);
+      const evidenceText = gathered
+        .map((e) => `[${e.source}] ${e.statement}`)
+        .join("\n");
+      const promptText = `User Intent: ${prompt.intent}\nRequested Outcome: ${prompt.requested_outcome}\nContext:\n${evidenceText}`;
+      const result = await new FakeRuntime().invoke({
+        route,
+        promptText,
+        systemPrompt: RESEARCHER_SYSTEM_PROMPT,
+      });
+      draft = (result.structured ?? parseStructuredDraft(result.content)) as StructuredResearchDraft;
+      gathered.push(...result.evidence);
+      modelSource = "fake-runtime";
+      modelProvenance = "fake-runtime";
+    } else if (testDraftFile) {
       const p = resolve(this.projectRoot, testDraftFile);
       const raw = await readFile(p, "utf8");
       draft = JSON.parse(raw);
@@ -276,6 +324,33 @@ export class ResearcherWorkflow {
   }
 
     // 3. Researcher interprets and validates structured draft and constructs ResearchBundle
+    return this.finalizeBundle(
+      prompt,
+      runId,
+      draft,
+      gathered,
+      modelSource,
+      modelProvenance,
+      onFact,
+    );
+  }
+
+  /**
+   * Shared tail of `run()` and `runWithRuntime()`: build the canonical
+   * ResearchBundle from a draft + gathered evidence, validate it against the
+   * canonical schemas, emit the review-gate facts, and return it. Extracted
+   * (M9) so the Strands-adapter path produces an equivalent bundle without
+   * duplicating the validation/transition contract.
+   */
+  private async finalizeBundle(
+    prompt: Prompt,
+    runId: string,
+    draft: StructuredResearchDraft,
+    gathered: GatheredEvidence[],
+    modelSource: string,
+    modelProvenance: string,
+    onFact?: FactListener,
+  ): Promise<ResearchBundle> {
     const bundle = await buildResearchBundle({
       projectRoot: this.projectRoot,
       prompt,
@@ -299,7 +374,6 @@ export class ResearcherWorkflow {
       },
     });
 
-    // 4. Validate produced bundle against canonical schemas
     const checks: [string, unknown][] = [
       ["urn:oneshot:schema:research_bundle:2", bundle],
       ["urn:oneshot:schema:researcher:2", bundle.researcher],
@@ -339,5 +413,66 @@ export class ResearcherWorkflow {
     });
 
     return bundle;
+  }
+
+  /**
+   * Run the Researcher through a resolved-route runtime adapter (M9). The
+   * runtime consumes a non-secret `ResolvedExecutionRoute` + invocation and
+   * returns a normalized result; this method reuses the same canonical
+   * bundle-building + validation as `run()`, so the produced ResearchBundle is
+   * equivalent (same contracts, evidence classes, validation, transitions).
+   * Credentials are supplied by the caller (M11 CredentialReference); the
+   * route itself carries none.
+   */
+  async runWithRuntime(
+    prompt: Prompt,
+    runId: string,
+    runtime: AgentRuntime,
+    route: ResolvedExecutionRoute,
+    onFact?: FactListener,
+    credentialRef?: import("../../security/credential-reference.js").CredentialReference,
+  ): Promise<ResearchBundle> {
+    await this.contracts.validate("urn:oneshot:schema:prompt:2", prompt);
+
+    const gathered = await this.collector.collect(prompt);
+    const evidenceText = gathered
+      .map((e) => `[${e.source}] ${e.statement}`)
+      .join("\n");
+    const promptText = `User Intent: ${prompt.intent}\nRequested Outcome: ${prompt.requested_outcome}\nContext:\n${evidenceText}`;
+
+    const invocation: RuntimeInvocation = {
+      route,
+      promptText,
+      systemPrompt: RESEARCHER_SYSTEM_PROMPT,
+      credentialRef,
+    };
+    const result = await runtime.invoke(invocation);
+    const draft =
+      (result.structured as StructuredResearchDraft | undefined) ??
+      parseStructuredDraft(result.content);
+    for (const e of result.evidence) {
+      gathered.push({
+        source: e.source,
+        statement: e.statement,
+        provenance: e.provenance,
+      });
+    }
+    // M12: the model's own synthesis is separately-provenanced evidence — it
+    // is NOT workspace evidence and can never satisfy a Tavily assertion.
+    gathered.push({
+      source: `synthesis:${runtime.runtimeId}`,
+      statement: `Provider synthesis recorded from runtime '${runtime.runtimeId}' (structured draft validated).`,
+      provenance: EvidenceProvenance.PROVIDER_SYNTHESIS,
+    });
+
+    return this.finalizeBundle(
+      prompt,
+      runId,
+      draft,
+      gathered,
+      `runtime:${runtime.runtimeId}`,
+      `runtime:${runtime.runtimeId}`,
+      onFact,
+    );
   }
 }

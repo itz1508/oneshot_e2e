@@ -128,7 +128,30 @@ test("Researcher provider capability vertical slice: FIXED VALIDATION CASE & FIX
     };
 
     const researcher = new ResearcherWorkflow(h.contracts, async () => sampleDraft);
-    const researchBundle: ResearchBundle = await researcher.run(prompt, runId);
+
+    // M12: this validation case is specifically about Tavily capability, so
+    // its research policy is explicitly 'external' with Tavily operations OFF
+    // (ONESHOT_TAVILY_MODE=off) — the integration is recorded as evidence with
+    // ZERO external calls, preserving the ordinary-test external-call-free rule.
+    const researchBundle: ResearchBundle = await (async () => {
+      const envKeys = [
+        "ONESHOT_RESEARCH_MODE",
+        "TAVILY_API_KEY",
+        "ONESHOT_TAVILY_MODE",
+      ] as const;
+      const before = envKeys.map((k) => [k, process.env[k]] as const);
+      process.env.ONESHOT_RESEARCH_MODE = "external";
+      process.env.TAVILY_API_KEY = "test-key-not-a-secret";
+      process.env.ONESHOT_TAVILY_MODE = "off";
+      try {
+        return await researcher.run(prompt, runId);
+      } finally {
+        for (const [k, v] of before) {
+          if (v === undefined) delete process.env[k];
+          else process.env[k] = v;
+        }
+      }
+    })();
 
     // 1. Evaluate all 8 assertions of validation-case:researcher:provider-tavily:001
     const graph = JSON.parse(await readFile(resolve("backend/workflow/graph.json"), "utf8"));

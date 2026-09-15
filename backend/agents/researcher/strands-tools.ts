@@ -3,6 +3,7 @@ import { realpath, readFile } from "node:fs/promises";
 import { resolve, isAbsolute, relative } from "node:path";
 import { FunctionTool } from "../../../app/integration/strands/src/index.js";
 import { tavilySearch, tavilyExtract } from "../../../app/integration/tavily/src/index.js";
+import { toStrandsFunctionTool, type OneShotToolDefinition } from "./tool/neutral-tool-converter.js";
 
 export interface EvidenceItem {
   source: string;
@@ -237,4 +238,17 @@ export function createTavilyResearchTool(
       }
     },
   });
+}
+
+export { toStrandsFunctionTool, type OneShotToolDefinition } from "./tool/neutral-tool-converter.js";
+
+/**
+ * Build Strands `FunctionTool`s from neutral `OneShotToolDefinition`s (M9).
+ * Lets the Researcher describe tools provider-agnostically; the conversion to
+ * Strands `FunctionTool` happens here, preserving the validation contract.
+ */
+export function createToolsFromNeutral(
+  defs: readonly OneShotToolDefinition[],
+): FunctionTool[] {
+  return defs.map(toStrandsFunctionTool);
 }

@@ -1,4 +1,5 @@
 import type { Prompt } from "../../../../contracts/schema/types.js";
+import { EvidenceProvenance } from "../../../../integration/research/policy.js";
 import { TavilyPythonRunner, type TavilyRunner } from "./bridge.js";
 
 export interface TavilyEvidence {
@@ -107,7 +108,7 @@ export class TavilyEvidenceCollector {
             {
               source: `tavily:research:${prompt.prompt_id}`,
               statement: report,
-              provenance: `tavily-research-stream:${model}`,
+              provenance: `${EvidenceProvenance.TAVILY_RESEARCH_STREAM}:${model}`,
             },
           ]
         : [];
@@ -136,7 +137,7 @@ export class TavilyEvidenceCollector {
       evidence.push({
         source: `tavily:answer:${requestId}`,
         statement: answer,
-        provenance: `tavily-search-answer:${requestId}`,
+        provenance: `${EvidenceProvenance.TAVILY_SEARCH}-answer:${requestId}`,
       });
     }
 
@@ -148,7 +149,7 @@ export class TavilyEvidenceCollector {
       evidence.push({
         source: url,
         statement: [result.title, content].filter(Boolean).join("\n"),
-        provenance: `tavily-search:${requestId}:${url}`,
+        provenance: `${EvidenceProvenance.TAVILY_SEARCH}:${requestId}:${url}`,
       });
     }
 
@@ -184,7 +185,7 @@ export class TavilyEvidenceCollector {
       evidence.push({
         source: `tavily-extract:${url}`,
         statement: content,
-        provenance: `tavily-extract:${extractRequestId}:${url}`,
+        provenance: `${EvidenceProvenance.TAVILY_EXTRACT}:${extractRequestId}:${url}`,
       });
     }
 

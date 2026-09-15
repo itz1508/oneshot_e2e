@@ -218,7 +218,7 @@
       "version": "2",
       "artifact_type": "run-snapshot",
       "schema_path": "schema/run-snapshot.schema.json",
-      "schema_digest": "71c41155fa104e0a1b6345ec5bed3015ed40940346f9fd4f3dd6f5902adb5138",
+      "schema_digest": "89db2e3e8830ec4ac0c63a9f98ee7c97b6f81dd94a1ff748fa2f347e1736cd4b",
       "producer": "OneShotAPI",
       "consumers": [
         "SSE",

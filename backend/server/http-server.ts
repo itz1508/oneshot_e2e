@@ -56,6 +56,9 @@ import {
   resolveProviderConfiguration,
 } from "../integration/provider-discovery.js";
 import { HttpSecurity } from "./http-security.js";
+import { detectDeploymentPosture } from "../security/deployment-posture.js";
+import { createCredentialPolicy } from "../security/credential-policy.js";
+import { UnauthenticatedContextProvider } from "../security/authentication-context.js";
 import {
   WorkspacePathDeniedError,
   WorkspacePathPolicy,
@@ -63,6 +66,8 @@ import {
   isSensitiveWorkspacePath,
 } from "./workspace-path-policy.js";
 import { handleSkillRoutes } from "./skill-handlers.js";
+import { handleResearcherRoutes } from "./researcher-handlers.js";
+import { getResearcherContext } from "./researcher-context.js";
 import {
   InMemorySkillActivationStore,
   SkillConversationActivationGate,
@@ -181,6 +186,8 @@ export interface HttpServerOptions {
   pipeline?: PipelineApi;
   /** Target workspace service for explicit project selection and upload materialization. */
   targetWorkspace?: import("../runtime/target-workspace.js").TargetWorkspaceService;
+  /** M13: Researcher workflow for the HTTP vertical slice. */
+  researcher?: import("../agents/researcher/workflow.js").ResearcherWorkflow;
 }
 
 export async function startHttpServer(
@@ -205,6 +212,23 @@ export async function startHttpServer(
   // The server binds to the host supplied by the deployment platform.
   const bindHost =
     (process.env.ONESHOT_BIND_HOST || "0.0.0.0").trim() || "0.0.0.0";
+  // M11: construct the credential policy at startup so M13 handlers can
+  // consult it. M11 adds NO credential-management HTTP endpoints. Public
+  // unauthenticated mode gets a SOFT general warning here; credential
+  // management itself fails closed inside the policy (not at bind time), so
+  // deployment flexibility is preserved.
+  const deploymentPosture = detectDeploymentPosture();
+  const credentialPolicy = createCredentialPolicy(
+    deploymentPosture,
+    new UnauthenticatedContextProvider(),
+  );
+  if (credentialPolicy.isPublicUnauthed()) {
+    console.warn(
+      `OneShot: public unauthenticated bind (${deploymentPosture.bindHost}); ` +
+        `credential management is disabled. Set ONESHOT_BIND_HOST=127.0.0.1 ` +
+        `or ONESHOT_REQUIRE_AUTH=true to enable credential configuration.`,
+    );
+  }
   const security = new HttpSecurity();
   const workspaceRoot = resolve(
     options.workspaceRoot ||
@@ -518,13 +542,21 @@ export async function startHttpServer(
         if (req.method === "GET" && (url.pathname === "/api/ready" || url.pathname === "/ready")) {
           const repoReady = Boolean(runs);
           const runtimeReady = Boolean(runtime);
-          const ready = repoReady && runtimeReady;
+          // M19: ONESHOT_REQUIRE_REDIS — readiness fails rather than silently
+          // switching to standalone when Redis is required but unavailable.
+          const requireRedis = process.env.ONESHOT_REQUIRE_REDIS === "true";
+          const redisReady = !requireRedis || Boolean(
+            options.pipeline?.queueReady || (runQueue && queueReady),
+          );
+          const ready = repoReady && runtimeReady && redisReady;
           return json(res, ready ? 200 : 503, {
             status: ready ? "ready" : "not-ready",
             workflow: "oneshot-canonical-workflow",
             contracts: true,
             repository: repoReady,
             runtime: runtimeReady,
+            redis: redisReady,
+            requireRedis,
           });
         }
 
@@ -1203,6 +1235,40 @@ export async function startHttpServer(
           );
         }
 
+        // ---------------------------------------------------------------
+        // Researcher vertical slice (M13)
+        // ---------------------------------------------------------------
+        // Only parse the body for researcher-specific POST routes to avoid
+        // consuming the stream before the existing review handler can read it.
+        const isResearcherPostRoute =
+          req.method === "POST" && (
+            url.pathname === "/api/providers/test" ||
+            url.pathname === "/api/providers/discover-models" ||
+            url.pathname === "/api/researcher/run"
+          );
+        if (isResearcherPostRoute) {
+          if (!options.researcher) {
+            // Without a researcher workflow, return 501 for researcher-specific routes.
+            if (url.pathname === "/api/providers/test" ||
+                url.pathname === "/api/providers/discover-models" ||
+                url.pathname === "/api/researcher/run") {
+              return json(res, 501, { error: "researcher API not configured" });
+            }
+          } else {
+            const researcherCtx = getResearcherContext({
+              runs, events,
+              store: runtime.store,
+              researcher: options.researcher,
+              credentialPolicy,
+            });
+            const inputData = await body(req);
+            const handled = await handleResearcherRoutes(
+              req, res, url, inputData, researcherCtx,
+            );
+            if (handled) return;
+          }
+        }
+
         const reviewMatch = url.pathname.match(
           /^\/api\/runs\/([A-Za-z0-9:_-]+)\/review$/,
         );
@@ -1210,6 +1276,21 @@ export async function startHttpServer(
           const runId = reviewMatch[1];
           const snapshot = runs.get(runId);
           if (!snapshot) return json(res, 404, { error: "run not found" });
+
+          // M13: if this run has a route_snapshot, it's a Researcher run —
+          // delegate to the researcher review handler instead of plan review.
+          if (req.method === "POST" && snapshot.route_snapshot && options.researcher) {
+            const researcherCtx = getResearcherContext({
+              runs, events,
+              store: runtime.store,
+              researcher: options.researcher,
+              credentialPolicy,
+            });
+            const reviewBody = await body(req);
+            await handleResearcherRoutes(req, res, url, reviewBody, researcherCtx);
+            return;
+          }
+
           try {
             if (req.method === "GET") {
               const review = await runtime.review.get(runId);

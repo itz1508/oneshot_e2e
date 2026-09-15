@@ -1,0 +1,219 @@
+diff --git a/backend/agents/researcher/strands-tools.ts b/backend/agents/researcher/strands-tools.ts
+index 6360d3dd..5d99b890 100644
+--- a/backend/agents/researcher/strands-tools.ts
++++ b/backend/agents/researcher/strands-tools.ts
+@@ -3,6 +3,7 @@ import { realpath, readFile } from "node:fs/promises";
+ import { resolve, isAbsolute, relative } from "node:path";
+ import { FunctionTool } from "../../../app/integration/strands/src/index.js";
+ import { tavilySearch, tavilyExtract } from "../../../app/integration/tavily/src/index.js";
++import { toStrandsFunctionTool, type OneShotToolDefinition } from "./tool/neutral-tool-converter.js";
+ 
+ export interface EvidenceItem {
+   source: string;
+@@ -238,3 +239,16 @@ export function createTavilyResearchTool(
+     },
+   });
+ }
++
++export { toStrandsFunctionTool, type OneShotToolDefinition } from "./tool/neutral-tool-converter.js";
++
++/**
++ * Build Strands `FunctionTool`s from neutral `OneShotToolDefinition`s (M9).
++ * Lets the Researcher describe tools provider-agnostically; the conversion to
++ * Strands `FunctionTool` happens here, preserving the validation contract.
++ */
++export function createToolsFromNeutral(
++  defs: readonly OneShotToolDefinition[],
++): FunctionTool[] {
++  return defs.map(toStrandsFunctionTool);
++}
+diff --git a/backend/agents/researcher/workflow.ts b/backend/agents/researcher/workflow.ts
+index 52369478..f6fa968e 100644
+--- a/backend/agents/researcher/workflow.ts
++++ b/backend/agents/researcher/workflow.ts
+@@ -24,6 +24,14 @@ import {
+   probeLiveModels,
+   resolveProviderConfiguration,
+ } from "../../integration/provider-discovery.js";
++import {
++  researcherExecutionRequirements,
++  type ExecutionRequirements,
++} from "./execution-requirements.js";
++import type { ResearchMode } from "../../integration/core/policy.js";
++import { FakeRuntime, buildFakeRoute } from "../../integration/runtime/fake-runtime.js";
++import type { AgentRuntime, RuntimeInvocation } from "../../integration/runtime/types.js";
++import type { ResolvedExecutionRoute } from "../../integration/core/route.js";
+ 
+ const RESEARCHER_SYSTEM_PROMPT = `You are the OneShot Researcher agent.
+ Your responsibility is to analyze the user prompt and gathered evidence to produce a structured research draft.
+@@ -129,6 +137,23 @@ export class ResearcherWorkflow {
+     this.collector = new ResearchEvidenceCollector(this.projectRoot);
+   }
+ 
++  /**
++   * Describe what this Researcher workflow demands from the execution layer
++   * (M3). Pure descriptor: no credentials, no concrete provider/model. The
++   * deterministic router (M7) consumes this to produce a ResolvedExecutionRoute.
++   * This method does NOT change `run()` behavior.
++   */
++  executionRequirements(): ExecutionRequirements {
++    return researcherExecutionRequirements(this.defaultResearchMode());
++  }
++
++  private defaultResearchMode(): ResearchMode {
++    // Declare whether external research (Tavily) is available. The policy
++    // router (M12) may still choose local-only/disabled regardless.
++    const hasTavily = Boolean((process.env.TAVILY_API_KEY || "").trim());
++    return hasTavily ? "external" : "disabled";
++  }
++
+   async execute(prompt: Prompt, runId: string): Promise<ResearchBundle> {
+     return this.run(prompt, runId);
+   }
+@@ -153,7 +178,25 @@ export class ResearcherWorkflow {
+     const testDraftFile = (
+       process.env.ONESHOT_RESEARCH_TEST_DRAFT_FILE || ""
+     ).trim();
+-    if (testDraftFile) {
++    // Case 0: Fake runtime (M4 neutrality proof). Env-gated; reuses all
++    // downstream bundle-building + canonical validation. Does not change any
++    // other case when the flag is off.
++    if (process.env.ONESHOT_RESEARCH_FAKE_RUNTIME === "true") {
++      const route = buildFakeRoute(runId);
++      const evidenceText = gathered
++        .map((e) => `[${e.source}] ${e.statement}`)
++        .join("\n");
++      const promptText = `User Intent: ${prompt.intent}\nRequested Outcome: ${prompt.requested_outcome}\nContext:\n${evidenceText}`;
++      const result = await new FakeRuntime().invoke({
++        route,
++        promptText,
++        systemPrompt: RESEARCHER_SYSTEM_PROMPT,
++      });
++      draft = (result.structured ?? parseStructuredDraft(result.content)) as StructuredResearchDraft;
++      gathered.push(...result.evidence);
++      modelSource = "fake-runtime";
++      modelProvenance = "fake-runtime";
++    } else if (testDraftFile) {
+       const p = resolve(this.projectRoot, testDraftFile);
+       const raw = await readFile(p, "utf8");
+       draft = JSON.parse(raw);
+@@ -276,6 +319,33 @@ export class ResearcherWorkflow {
+   }
+ 
+     // 3. Researcher interprets and validates structured draft and constructs ResearchBundle
++    return this.finalizeBundle(
++      prompt,
++      runId,
++      draft,
++      gathered,
++      modelSource,
++      modelProvenance,
++      onFact,
++    );
++  }
++
++  /**
++   * Shared tail of `run()` and `runWithRuntime()`: build the canonical
++   * ResearchBundle from a draft + gathered evidence, validate it against the
++   * canonical schemas, emit the review-gate facts, and return it. Extracted
++   * (M9) so the Strands-adapter path produces an equivalent bundle without
++   * duplicating the validation/transition contract.
++   */
++  private async finalizeBundle(
++    prompt: Prompt,
++    runId: string,
++    draft: StructuredResearchDraft,
++    gathered: GatheredEvidence[],
++    modelSource: string,
++    modelProvenance: string,
++    onFact?: FactListener,
++  ): Promise<ResearchBundle> {
+     const bundle = await buildResearchBundle({
+       projectRoot: this.projectRoot,
+       prompt,
+@@ -299,7 +369,6 @@ export class ResearcherWorkflow {
+       },
+     });
+ 
+-    // 4. Validate produced bundle against canonical schemas
+     const checks: [string, unknown][] = [
+       ["urn:oneshot:schema:research_bundle:2", bundle],
+       ["urn:oneshot:schema:researcher:2", bundle.researcher],
+@@ -340,4 +409,56 @@ export class ResearcherWorkflow {
+ 
+     return bundle;
+   }
++
++  /**
++   * Run the Researcher through a resolved-route runtime adapter (M9). The
++   * runtime consumes a non-secret `ResolvedExecutionRoute` + invocation and
++   * returns a normalized result; this method reuses the same canonical
++   * bundle-building + validation as `run()`, so the produced ResearchBundle is
++   * equivalent (same contracts, evidence classes, validation, transitions).
++   * Credentials are supplied by the caller (M11 CredentialReference); the
++   * route itself carries none.
++   */
++  async runWithRuntime(
++    prompt: Prompt,
++    runId: string,
++    runtime: AgentRuntime,
++    route: ResolvedExecutionRoute,
++    onFact?: FactListener,
++  ): Promise<ResearchBundle> {
++    await this.contracts.validate("urn:oneshot:schema:prompt:2", prompt);
++
++    const gathered = await this.collector.collect(prompt);
++    const evidenceText = gathered
++      .map((e) => `[${e.source}] ${e.statement}`)
++      .join("\n");
++    const promptText = `User Intent: ${prompt.intent}\nRequested Outcome: ${prompt.requested_outcome}\nContext:\n${evidenceText}`;
++
++    const invocation: RuntimeInvocation = {
++      route,
++      promptText,
++      systemPrompt: RESEARCHER_SYSTEM_PROMPT,
++    };
++    const result = await runtime.invoke(invocation);
++    const draft =
++      (result.structured as StructuredResearchDraft | undefined) ??
++      parseStructuredDraft(result.content);
++    for (const e of result.evidence) {
++      gathered.push({
++        source: e.source,
++        statement: e.statement,
++        provenance: e.provenance,
++      });
++    }
++
++    return this.finalizeBundle(
++      prompt,
++      runId,
++      draft,
++      gathered,
++      `runtime:${runtime.runtimeId}`,
++      `runtime:${runtime.runtimeId}`,
++      onFact,
++    );
++  }
+ }
+diff --git a/backend/tests/ts/tavily-researcher-live.test.ts b/backend/tests/ts/tavily-researcher-live.test.ts
+index 4295350a..9e3a4b5a 100644
+--- a/backend/tests/ts/tavily-researcher-live.test.ts
++++ b/backend/tests/ts/tavily-researcher-live.test.ts
+@@ -5,7 +5,15 @@ import {
+   createEvidenceRecorder,
+ } from "../../agents/researcher/strands-tools.js";
+ 
+-test("Tavily Live Search & Extract Verification", async () => {
++test("Tavily Live Search & Extract Verification", async (t) => {
++  // Gap 11 guard: ordinary `npm test` must never call paid/external providers.
++  // Live Tavily calls are opt-in via RUN_LIVE_TAVILY_TESTS=true.
++  const liveEnabled = process.env.RUN_LIVE_TAVILY_TESTS === "true";
++  if (!liveEnabled) {
++    t.skip("Live Tavily test skipped: set RUN_LIVE_TAVILY_TESTS=true to enable live Tavily calls");
++    return;
++  }
++
+   const apiKey = (process.env.TAVILY_API_KEY || "").trim();
+   assert.ok(
+     apiKey.length > 0,
