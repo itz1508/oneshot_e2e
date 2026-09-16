@@ -1,6 +1,12 @@
 import type { Redis } from "ioredis";
-import { pipelineQueue, stageJobId } from "./queue.js";
-import type { ConfirmPlanInput, ConfirmPlanResult } from "./types.js";
+import type { Queue } from "bullmq";
+import { stageJobId } from "./queue.js";
+import type {
+  ConfirmPlanInput,
+  ConfirmPlanResult,
+  StageJobData,
+  PipelineStage,
+} from "./types.js";
 import { PipelineIdempotency } from "./idempotency.js";
 import { loadResearchBundle, saveArtifact } from "./context.js";
 import {
@@ -13,11 +19,15 @@ import { getCurrentResearchRevision } from "./stage-scope.js";
 export async function confirmPlan({
   runId,
   redis,
+  queue,
   history,
   edits,
   store,
   runs,
-}: ConfirmPlanInput & { redis: Redis }): Promise<ConfirmPlanResult> {
+}: ConfirmPlanInput & {
+  redis: Redis;
+  queue: Queue<StageJobData, unknown, PipelineStage>;
+}): Promise<ConfirmPlanResult> {
   const idempotency = new PipelineIdempotency(redis);
 
   /*
@@ -101,7 +111,7 @@ export async function confirmPlan({
 
   try {
     const plannerJobId = stageJobId(runId, "planner");
-    await pipelineQueue.add(
+    await queue.add(
       "planner",
       // Planner is a run-level stage; it always executes at iteration 0.
       { version: 2, runId, stage: "planner", iteration: 0 },

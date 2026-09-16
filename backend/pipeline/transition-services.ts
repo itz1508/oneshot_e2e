@@ -1,4 +1,5 @@
 import type { Redis } from "ioredis";
+import type { Queue } from "bullmq";
 import type { RootCause, HashProof } from "../contracts/schema/types.js";
 import type { ProcessingEventBus } from "../runtime/event-bus.js";
 import type { ArtifactStore } from "../runtime/artifact-store.js";
@@ -10,8 +11,8 @@ import {
 import type { TransitionServices } from "./apply-transition.js";
 import type { PipelineHistory } from "./history.js";
 import type { PipelineIssue } from "./stage-outcome.js";
+import type { StageJobData, PipelineStage } from "./types.js";
 import { loadHashProof } from "./context.js";
-import { pipelineQueue } from "./queue.js";
 
 export interface TransitionServicesInput {
   runs: RunRepository;
@@ -19,6 +20,7 @@ export interface TransitionServicesInput {
   events: ProcessingEventBus;
   redis: Redis;
   history?: PipelineHistory;
+  queue: Queue<StageJobData, unknown, PipelineStage>;
 }
 
 export interface TransitionServicesHandle {
@@ -75,7 +77,7 @@ function adaptRedisClient(redis: Redis): RedisCheckpointClient {
 export function createTransitionServices(
   input: TransitionServicesInput,
 ): TransitionServicesHandle {
-  const { runs, store, events, redis, history } = input;
+  const { runs, store, events, redis, history, queue } = input;
 
   const checkpoints = new PipelineCheckpoints(adaptRedisClient(redis));
 
@@ -173,7 +175,7 @@ export function createTransitionServices(
      * The BullMQ queue is structurally compatible; the deterministic
      * (runId, iteration, stage) job ID keeps repeated enqueues idempotent.
      */
-    queue: pipelineQueue as unknown as TransitionServices["queue"],
+    queue: queue as unknown as TransitionServices["queue"],
     checkpoints,
     waitForHuman,
     waitForBuild: async (runId) => {

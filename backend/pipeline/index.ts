@@ -10,11 +10,10 @@ export type {
 } from "./types.js";
 
 export {
-  pipelineQueue,
+  createPipelineQueue,
   PIPELINE_QUEUE,
   stageJobId,
   enqueueStage,
-  closePipelineQueue,
   getSharedRedis,
   getProducerRedis,
 } from "./queue.js";

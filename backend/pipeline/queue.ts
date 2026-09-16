@@ -1,42 +1,45 @@
 import { Queue } from "bullmq";
-import {
-  getProducerRedis,
-  getSharedRedis,
-} from "../runtime/redis-connection.js";
+import { getProducerRedis } from "../runtime/redis-connection.js";
 import type { PipelineStage, StageJobData } from "./types.js";
 import { PipelineHistory } from "./history.js";
 
 export const PIPELINE_QUEUE = "oneshot-pipeline";
 
 /**
- * Singleton BullMQ queue for the per-stage OneShot pipeline. Jobs carry only
- * `{ runId }`; all durable state lives in `RunRepository` + `ArtifactStore`.
+ * Create a BullMQ queue for the per-stage OneShot pipeline.
+ *
+ * This is a factory rather than a singleton so the backend can decide at
+ * startup whether Redis is reachable before opening a persistent connection.
+ * Jobs carry only `{ runId }`; all durable state lives in `RunRepository` +
+ * `ArtifactStore`.
  */
-export const pipelineQueue = new Queue<StageJobData, unknown, PipelineStage>(
-  PIPELINE_QUEUE,
-  {
-    connection: getProducerRedis(),
+export function createPipelineQueue(): Queue<StageJobData, unknown, PipelineStage> {
+  return new Queue<StageJobData, unknown, PipelineStage>(
+    PIPELINE_QUEUE,
+    {
+      connection: getProducerRedis(),
 
-    defaultJobOptions: {
-      attempts: 3,
+      defaultJobOptions: {
+        attempts: 3,
 
-      backoff: {
-        type: "exponential",
-        delay: 2000,
-      },
+        backoff: {
+          type: "exponential",
+          delay: 2000,
+        },
 
-      removeOnComplete: {
-        age: 60 * 60 * 24,
-        count: 2000,
-      },
+        removeOnComplete: {
+          age: 60 * 60 * 24,
+          count: 2000,
+        },
 
-      removeOnFail: {
-        age: 60 * 60 * 24 * 7,
-        count: 5000,
+        removeOnFail: {
+          age: 60 * 60 * 24 * 7,
+          count: 5000,
+        },
       },
     },
-  },
-);
+  );
+}
 
 export function stageJobId(
   runId: string,
@@ -50,12 +53,13 @@ export function stageJobId(
  * Enqueue the named stage for a run. Returns the BullMQ job id.
  */
 export async function enqueueStage(
+  queue: Queue<StageJobData, unknown, PipelineStage>,
   runId: string,
   stage: PipelineStage,
   history?: PipelineHistory,
   iteration = 0,
 ): Promise<string> {
-  const job = await pipelineQueue.add(
+  const job = await queue.add(
     stage,
     { version: 2, runId, stage, iteration },
     { jobId: stageJobId(runId, stage, iteration) },
@@ -71,8 +75,4 @@ export async function enqueueStage(
   return jobId;
 }
 
-export async function closePipelineQueue(): Promise<void> {
-  await pipelineQueue.close();
-}
-
-export { getSharedRedis, getProducerRedis };
+export { getSharedRedis, getProducerRedis } from "../runtime/redis-connection.js";

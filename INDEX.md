@@ -2,6 +2,8 @@
 
 A navigable inventory of the files in this repository. Select a section, then expand its file list. Generated build output and local runtime data are not listed.
 
+The canonical frontend is `frontend/web`. `app/web/` is legacy/reference, retained only as the fallback UI root in `backend/index.ts`.
+
 [Back to README](README.md)
 
 ## Sections
@@ -9,8 +11,9 @@ A navigable inventory of the files in this repository. Select a section, then ex
 | Section | What is available | Files |
 | --- | --- | ---: |
 | [Root and repository guidance](#root-and-repository-guidance) | Project entrypoints, package manifests, configuration, and contributor guidance. | 13 |
-| [Web application](#web-application) | Next.js routes, components, browser API clients, and web build scripts. | 29 |
-| [Reference console](#reference-console) | Retained HTML, CSS, and JavaScript console files. | 19 |
+| [Web application](#web-application) | Canonical `frontend/web`: Next.js routes, components, browser API clients, tests, and build scripts. | 66 |
+| [Legacy web application](#legacy-web-application) | Pre-migration `app/web` Next.js UI, retained only as the legacy fallback UI root; not the build target. | 29 |
+| [Reference console](#reference-console) | Legacy `app/web/src` retained HTML, CSS, and JavaScript console files. | 19 |
 | [Workspace API](#workspace-api) | Standalone workspace service, models, authentication, and API checks. | 20 |
 | [Application support](#application-support) | Bootstrap, packaging tools, fixtures, dependency requirements, and bundled assets. | 29 |
 | [Workflow agents](#workflow-agents) | Agent operating instructions, workflows, and agent-owned tools. | 29 |
@@ -20,7 +23,7 @@ A navigable inventory of the files in this repository. Select a section, then ex
 | [Skills and sandbox](#skills-and-sandbox) | Reusable skill bindings and governed execution services. | 37 |
 | [Python backend service](#python-backend-service) | Standalone Python service and its own package, container, and tests. | 12 |
 | [Backend support](#backend-support) | Intent, task management, graph projections, integration runtime, shared utilities, and backend entrypoints. | 35 |
-| [Tests and browser checks](#tests-and-browser-checks) | Backend/frontend test suites and browser automation scripts. | 87 |
+| [Tests and browser checks](#tests-and-browser-checks) | Backend test suites, legacy `app/web` tests, and browser automation scripts. | 87 |
 | [Launchers and operations](#launchers-and-operations) | Installers, bootstrap, deployment, health probes, and repository maintenance. | 31 |
 | [Containers](#containers) | Dockerfiles, Compose configurations, and container documentation. | 7 |
 | [Documentation and evidence](#documentation-and-evidence) | Product requirements, workflow documents, handoffs, notices, and recorded evidence. | 14 |
@@ -51,7 +54,83 @@ Project entrypoints, package manifests, configuration, and contributor guidance.
 
 ## Web application
 
-Next.js routes, components, browser API clients, and web build scripts.
+Canonical `frontend/web`: Next.js App Router routes, components, browser API clients, tests, and web build scripts.
+
+<details>
+<summary>Browse 66 files</summary>
+
+- [frontend/web/.gitignore](frontend/web/.gitignore)
+- [frontend/web/app/chat/%5BconversationId%5D/page.tsx](frontend/web/app/chat/%5BconversationId%5D/page.tsx)
+- [frontend/web/app/chat/page.tsx](frontend/web/app/chat/page.tsx)
+- [frontend/web/app/globals.css](frontend/web/app/globals.css)
+- [frontend/web/app/layout.tsx](frontend/web/app/layout.tsx)
+- [frontend/web/app/page.tsx](frontend/web/app/page.tsx)
+- [frontend/web/app/providers/%5BproviderId%5D/page.tsx](frontend/web/app/providers/%5BproviderId%5D/page.tsx)
+- [frontend/web/app/providers/new/page.tsx](frontend/web/app/providers/new/page.tsx)
+- [frontend/web/app/providers/page.tsx](frontend/web/app/providers/page.tsx)
+- [frontend/web/declarations.d.ts](frontend/web/declarations.d.ts)
+- [frontend/web/next-env.d.ts](frontend/web/next-env.d.ts)
+- [frontend/web/next.config.mjs](frontend/web/next.config.mjs)
+- [frontend/web/package-lock.json](frontend/web/package-lock.json)
+- [frontend/web/package.json](frontend/web/package.json)
+- [frontend/web/postcss.config.mjs](frontend/web/postcss.config.mjs)
+- [frontend/web/public/favicon.ico](frontend/web/public/favicon.ico)
+- [frontend/web/public/favicon.png](frontend/web/public/favicon.png)
+- [frontend/web/scripts/build.mjs](frontend/web/scripts/build.mjs)
+- [frontend/web/scripts/check.mjs](frontend/web/scripts/check.mjs)
+- [frontend/web/scripts/export.mjs](frontend/web/scripts/export.mjs)
+- [frontend/web/scripts/serve.mjs](frontend/web/scripts/serve.mjs)
+- [frontend/web/src/api/client.ts](frontend/web/src/api/client.ts)
+- [frontend/web/src/api/providers.ts](frontend/web/src/api/providers.ts)
+- [frontend/web/src/api/types/models.ts](frontend/web/src/api/types/models.ts)
+- [frontend/web/src/api/types/providers.ts](frontend/web/src/api/types/providers.ts)
+- [frontend/web/src/components/IntegrationsDrawer.tsx](frontend/web/src/components/IntegrationsDrawer.tsx)
+- [frontend/web/src/components/file-browser.tsx](frontend/web/src/components/file-browser.tsx)
+- [frontend/web/src/components/icon.tsx](frontend/web/src/components/icon.tsx)
+- [frontend/web/src/components/modal.tsx](frontend/web/src/components/modal.tsx)
+- [frontend/web/src/components/review-cards.tsx](frontend/web/src/components/review-cards.tsx)
+- [frontend/web/src/components/skill-panel.tsx](frontend/web/src/components/skill-panel.tsx)
+- [frontend/web/src/components/skill-toggle.tsx](frontend/web/src/components/skill-toggle.tsx)
+- [frontend/web/src/components/workspace.tsx](frontend/web/src/components/workspace.tsx)
+- [frontend/web/src/console/active-run-panel.js](frontend/web/src/console/active-run-panel.js)
+- [frontend/web/src/console/app.js](frontend/web/src/console/app.js)
+- [frontend/web/src/console/console-interactions.js](frontend/web/src/console/console-interactions.js)
+- [frontend/web/src/console/human-gates.js](frontend/web/src/console/human-gates.js)
+- [frontend/web/src/console/job-history.js](frontend/web/src/console/job-history.js)
+- [frontend/web/src/console/live-activity.js](frontend/web/src/console/live-activity.js)
+- [frontend/web/src/console/oneshot-v8.js](frontend/web/src/console/oneshot-v8.js)
+- [frontend/web/src/console/run-atmosphere.js](frontend/web/src/console/run-atmosphere.js)
+- [frontend/web/src/console/runtime-view-state.js](frontend/web/src/console/runtime-view-state.js)
+- [frontend/web/src/console/task-management.js](frontend/web/src/console/task-management.js)
+- [frontend/web/src/console/terminal-message.js](frontend/web/src/console/terminal-message.js)
+- [frontend/web/src/console/visual-settings.js](frontend/web/src/console/visual-settings.js)
+- [frontend/web/src/console/workflow-trace-panel.js](frontend/web/src/console/workflow-trace-panel.js)
+- [frontend/web/src/console/workflow-trace.js](frontend/web/src/console/workflow-trace.js)
+- [frontend/web/src/lib/api.ts](frontend/web/src/lib/api.ts)
+- [frontend/web/src/lib/contracts.ts](frontend/web/src/lib/contracts.ts)
+- [frontend/web/src/lib/event-stream.ts](frontend/web/src/lib/event-stream.ts)
+- [frontend/web/src/lib/http-client.ts](frontend/web/src/lib/http-client.ts)
+- [frontend/web/src/lib/projections.ts](frontend/web/src/lib/projections.ts)
+- [frontend/web/src/lib/skills.ts](frontend/web/src/lib/skills.ts)
+- [frontend/web/src/lib/utils.ts](frontend/web/src/lib/utils.ts)
+- [frontend/web/tests/console-interactions.test.mjs](frontend/web/tests/console-interactions.test.mjs)
+- [frontend/web/tests/fixtures/console/index.html](frontend/web/tests/fixtures/console/index.html)
+- [frontend/web/tests/fixtures/console/styles.css](frontend/web/tests/fixtures/console/styles.css)
+- [frontend/web/tests/human-gates.test.mjs](frontend/web/tests/human-gates.test.mjs)
+- [frontend/web/tests/live-activity.test.mjs](frontend/web/tests/live-activity.test.mjs)
+- [frontend/web/tests/next-projections.test.mjs](frontend/web/tests/next-projections.test.mjs)
+- [frontend/web/tests/review-cards-react.test.mjs](frontend/web/tests/review-cards-react.test.mjs)
+- [frontend/web/tests/source.test.mjs](frontend/web/tests/source.test.mjs)
+- [frontend/web/tests/task-management.test.mjs](frontend/web/tests/task-management.test.mjs)
+- [frontend/web/tests/visual-settings.test.mjs](frontend/web/tests/visual-settings.test.mjs)
+- [frontend/web/tests/workflow-observability.test.mjs](frontend/web/tests/workflow-observability.test.mjs)
+- [frontend/web/tsconfig.json](frontend/web/tsconfig.json)
+
+</details>
+
+## Legacy web application
+
+Pre-migration `app/web` Next.js UI, retained only as the legacy fallback UI root; not the build target.
 
 <details>
 <summary>Browse 29 files</summary>
@@ -463,7 +542,7 @@ Intent, task management, graph projections, integration runtime, shared utilitie
 
 ## Tests and browser checks
 
-Backend/frontend test suites and browser automation scripts.
+Backend test suites, legacy `app/web` tests, and browser automation scripts. Canonical `frontend/web` tests are listed with the Web application section above.
 
 <details>
 <summary>Browse 87 files</summary>

@@ -58,10 +58,11 @@ Consult other technologies only when the task involves them.
 
 | Area | Implementation and navigation |
 | --- | --- |
-| Production web UI | `app/web/app/` routes; `app/web/components/` workspace, review cards, file browser, dialogs, icons |
-| Browser data access | `app/web/lib/api.ts` public exports; HTTP client, event stream, contracts, and projections beside it |
+| Canonical frontend | `frontend/web/app/` routes (`chat`, `providers`); `frontend/web/src/components/` workspace, review cards, file browser, integrations drawer, skill panels |
+| Browser data access | `frontend/web/src/lib/api.ts` public exports; HTTP client, event stream, contracts, and projections beside it; typed API clients in `frontend/web/src/api/` |
+| Legacy web application | `app/web/`; pre-migration Next.js UI retained only as the legacy UI root fallback in `backend/index.ts`. Not the `build:ui` target; do not add features here |
 | Legacy/reference console | `app/web/src/`; retained HTML/CSS/JS and associated tests, not the Next.js production entrypoint |
-| Provider integration | `app/web/cloud/`; manager, runtime config, secret store, adapters, and Python workers |
+| Provider and runtime integration | `backend/integration/` provider/runtime/research registries, routing, capability probes; SDK-owned packages in `app/integration/` (strands, tavily, gemini) |
 | Server entry and configuration | `backend/index.ts`, `backend/environment.ts`, `backend/python-runtime.ts` |
 | HTTP and workspace access | `backend/server/`; routing, response helpers, workspace inspection, security, path policy |
 | Per-stage pipeline | `backend/pipeline/`; processors, workers, queues, checkpoints, transitions, review confirmation, stage scope |
@@ -76,17 +77,59 @@ Consult other technologies only when the task involves them.
 | Bootstrap and packaging | `scripts/`, `app/bootstrap/`, `app/scripts/`; shared CLI colors in `scripts/lib/` |
 | Deployment | `docker/`, `app/deploy/`, cloud deployment/preflight/verification scripts in `scripts/` |
 | Fixtures and dependencies | `app/fixtures/`, `app/requirements/`, `app/vendor/`; local environment in `app/env/` |
-| Checks | `backend/tests/`, `app/web/tests/`, `app/workspace_api/tests/`, `scripts/e2e/browser/`, `.github/workflows/` |
+| Checks | `backend/tests/`, `frontend/web/tests/`, `app/workspace_api/tests/`, `scripts/e2e/browser/`, `.github/workflows/` |
 
 ### Frontend boundary
 
-The production build is Next.js App Router → static export → `app/web/dist/`,
-served by the existing Node backend. Follow [app/web/AGENTS.md](app/web/AGENTS.md)
-and read relevant installed Next.js guides before changing frontend code.
+The canonical frontend is `frontend/web`. The production build is
+Next.js App Router → static export → `frontend/web/dist/`, served by the
+existing Node backend. `backend/index.ts` retains `app/web/dist/` only as a
+legacy fallback UI root; `app/web/` is legacy/reference and must not receive
+new features. Read relevant installed Next.js guides before changing
+frontend code.
 
-`app/web/scripts/export.mjs` publishes the export and externalizes trusted
-bootstrap scripts for the existing CSP. Preserve this build path and CSP.
-Do not edit `app/web/.next/`, `app/web/out/`, or `app/web/dist/` as source.
+`frontend/web/scripts/export.mjs` publishes the export and externalizes
+trusted bootstrap scripts for the existing CSP. Preserve this build path and
+CSP. Do not edit `frontend/web/.next/`, `frontend/web/out/`, or
+`frontend/web/dist/` as source.
+
+### Root dependency ownership
+
+Dependency ownership is proven by actual importers (see the audit in this
+repository's history); do not move packages between manifests without it.
+
+- `@strands-agents/sdk` and `openai` are intentionally installed at the
+  repository root. `app/integration/strands` is a source-imported package
+  (it ships no `node_modules`), so its SDK imports resolve through the root
+  install; its own `package.json` documents the intended versions. Do not
+  move them into the integration package merely for symmetry.
+- `@modelcontextprotocol/sdk` must stay at the root: it is a non-optional
+  peer dependency of `@strands-agents/sdk`, which re-exports `McpClient`
+  from its root entry, so ESM evaluation of the SDK barrel imports
+  `./mcp/config.node.js` and fails with `ERR_MODULE_NOT_FOUND` when the
+  package is absent.
+- `@tavily/core` resolves through the root install for the compiled
+  `dist/app/integration/tavily/src/index.js` tree; `app/integration/tavily`
+  additionally pins its own copy (0.7.11) in a package-local `node_modules`
+  as the version/provenance pin. The Researcher reaches Tavily only through
+  the `app/integration/tavily` boundary; no backend module imports
+  `@tavily/core` directly. Removing the root copy breaks the compiled
+  runtime, because Node resolves `@tavily/core` relative to
+  `dist/app/integration/tavily/src/` rather than the integration package.
+- `strands-agents-mcp-server` and its dependency `strands-agents` are removed.
+  They were declared at the root but imported nowhere in backend, frontend,
+  `app/`, `scripts/`, `docker/`, or `.github/`, and no manifest declared them
+  as a dependency (verified against the lock graph). The repository's own plan
+  notes already recorded them as "PACKAGE_PRESENT, imported nowhere". Do not
+  reintroduce them without a real MCP server caller.
+- `@ai-sdk/google` is owned by `app/integration/gemini` and installed there
+  by the root postinstall (and by `backend/integration/installer.ts` for
+  on-demand installs). It must never become a root dependency.
+- `ai`, `ajv`, `bullmq`, and `ioredis` are core backend runtime dependencies
+  and stay at the root.
+- `app/integration/gemini` is the one bundled integration; other curated
+  model packages install on demand. The root `postinstall` bootstrap is
+  contract-tested by `backend/tests/ts/integration-package-runtime.test.ts`.
 
 ### Language and contract conventions
 
@@ -110,10 +153,10 @@ Use the relevant Python package/dependency files for its runtime requirements.
 | Bootstrap through launch | `npm run oneshot` |
 | Build all / backend / frontend | `npm run build` / `npm run build:backend` / `npm run build:ui` |
 | Start compiled backend | `npm start`; `npm run dev` additionally loads `app/env/.env` |
-| Frontend development / types | `npm --prefix app/web run dev` / `npm --prefix app/web run typecheck` |
+| Frontend development / types | `npm --prefix frontend/web run dev` / `npm --prefix frontend/web run typecheck` |
 | Backend tests | `npm test` (compiles backend and tests) |
 | Compile tests separately | `npm run build:test` |
-| Web tests | `npm --prefix app/web test` |
+| Web tests | `npm --prefix frontend/web test` |
 | Repository verification | `npm run verify` |
 | Workspace API | `uvicorn --app-dir app workspace_api.main:app` |
 | Python reasoner tests | From `backend/python/`: `python -m pytest` |

@@ -183,6 +183,47 @@ export function whenRedisReady(timeoutMs = 5000): Promise<void> {
   });
 }
 
+/**
+ * Short-lived Redis reachability probe.
+ *
+ * Creates a fresh ioredis client with NO persistent retry strategy, probes the
+ * configured Redis endpoint, and always disconnects. It never touches the
+ * shared singletons, so a failed probe cannot leave a retrying client behind.
+ */
+export function probeRedis(timeoutMs = 2000): Promise<void> {
+  const Ctor = redisCtor();
+  const client = new Ctor({
+    ...resolveRedisOptions(),
+    retryStrategy: () => null,
+    enableOfflineQueue: false,
+    maxRetriesPerRequest: 0,
+  });
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      cleanup();
+      client.disconnect();
+      reject(new Error("redis probe timeout"));
+    }, timeoutMs);
+    const onReady = () => {
+      cleanup();
+      client.disconnect();
+      resolve();
+    };
+    const onError = (err: Error) => {
+      cleanup();
+      client.disconnect();
+      reject(err);
+    };
+    const cleanup = () => {
+      clearTimeout(timer);
+      client.off("ready", onReady);
+      client.off("error", onError);
+    };
+    client.once("ready", onReady);
+    client.once("error", onError);
+  });
+}
+
 export function closeSharedRedis(): void {
   if (redisInstance) {
     try {

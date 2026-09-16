@@ -24,10 +24,9 @@ import {
 } from "../runtime/queue.js";
 
 import type { ArtifactStore } from "../runtime/artifact-store.js";
-import { getProducerRedis } from "../runtime/redis-connection.js";
+import { getSharedRedis } from "../runtime/redis-connection.js";
 import {
   confirmPlan as pipelineConfirmPlan,
-  enqueueStage,
   saveArtifact,
   getCurrentResearchRevision,
   incrementResearchRevision,
@@ -143,7 +142,10 @@ function workspacePolicyError(res: ServerResponse, error: unknown): boolean {
 // ---------------------------------------------------------------------------
 
 export interface RuntimeInfo {
-  mode: string;
+  /** Active queue execution mode. */
+  mode?: "redis-pipeline" | "redis-legacy" | "standalone" | "unavailable";
+  /** Deployment mode from ONESHOT_MODE (preserved for diagnostics). */
+  deploymentMode: string;
   integration?: string;
   /** Whether the BullMQ run queue (Redis) is available. */
   queue?: boolean;
@@ -156,7 +158,7 @@ export interface RuntimeInfo {
  */
 export interface PipelineApi {
   queueReady: boolean;
-  enqueue: (runId: string, stage: PipelineStage) => Promise<string>;
+  enqueue: (runId: string, stage: PipelineStage, iteration?: number) => Promise<string>;
   confirmPlan: (
     runId: string,
     edits?: PlanReviewEdits,
@@ -469,7 +471,8 @@ export async function startHttpServer(
         // Health
         // ---------------------------------------------------------------
         if (req.method === "GET" && url.pathname === "/api/health") {
-          const mode = runtimeInfo?.mode ?? "production";
+          const mode = runtimeInfo?.mode ?? "unavailable";
+          const deploymentMode = runtimeInfo?.deploymentMode ?? "standalone";
           const publicName = runtimeInfo?.integration ?? "none";
           const pipelineReady = options.pipeline?.queueReady ?? false;
           const legacyReady = Boolean(runQueue && queueReady);
@@ -506,6 +509,7 @@ export async function startHttpServer(
             status,
             workflow: "oneshot-canonical-workflow",
             mode,
+            deploymentMode,
             integration: publicName,
             redis,
             queue,
@@ -733,8 +737,13 @@ export async function startHttpServer(
             if (snapshot.pipeline_status === "Done") {
               return json(res, 409, { error: "Run has already finished" });
             }
+            if (!options.pipeline) {
+              return json(res, 503, {
+                error: "research-again requires the per-stage pipeline runtime",
+              });
+            }
 
-            const redis = getProducerRedis();
+            const redis = getSharedRedis();
             const idempotency = new PipelineIdempotency(redis);
             const currentRevision = await getCurrentResearchRevision(
               redis,
@@ -768,7 +777,11 @@ export async function startHttpServer(
                 redis,
                 runId,
               );
-              await enqueueStage(runId, "researcher", undefined, nextRevision);
+              await options.pipeline.enqueue(
+                runId,
+                "researcher",
+                nextRevision,
+              );
               events.emit(runId, "ResearchAgain", "Completed", {
                 scope: "SUPPORT",
                 message: `Research Again requested; enqueued researcher revision ${nextRevision}`,
@@ -1240,13 +1253,14 @@ export async function startHttpServer(
         // ---------------------------------------------------------------
         // Only parse the body for researcher-specific POST routes to avoid
         // consuming the stream before the existing review handler can read it.
-        const isResearcherPostRoute =
-          req.method === "POST" && (
+        const isResearcherRoute =
+          (req.method === "GET" && url.pathname === "/api/providers") ||
+          (req.method === "POST" && (
             url.pathname === "/api/providers/test" ||
             url.pathname === "/api/providers/discover-models" ||
             url.pathname === "/api/researcher/run"
-          );
-        if (isResearcherPostRoute) {
+          ));
+        if (isResearcherRoute) {
           if (!options.researcher) {
             // Without a researcher workflow, return 501 for researcher-specific routes.
             if (url.pathname === "/api/providers/test" ||
@@ -1744,7 +1758,7 @@ async function checkWorkerHealth(
   }
 
   try {
-    const redis = getProducerRedis();
+    const redis = getSharedRedis();
     if (redis.status !== "ready") return "degraded";
     let cursor = "0";
     // Bound the health probe's work even in a large shared Redis database.

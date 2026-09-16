@@ -1,4 +1,4 @@
-# M0–M10 Implementation Report (Checkpoint)
+> **Status update (2026-09-15):** This report is an archival checkpoint. For the current milestone status and remaining work, see M0-M10_IMPLEMENTATION_STATUS.md and REMAINING_WORK.md.\n>\n# M0–M10 Implementation Report (Checkpoint)
 
 ## 1. Status
 M0–M10 accepted as an implementation checkpoint. A clean verification run was

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Worker, type Job } from "bullmq";
 import type { Redis } from "ioredis";
 import type { StageJobData, StageProgress } from "./types.js";
-import { PIPELINE_QUEUE, getSharedRedis } from "./queue.js";
+import { PIPELINE_QUEUE, createPipelineQueue, getSharedRedis } from "./queue.js";
 import type { StageServices } from "./processors.js";
 import {
   runResearcherStage,
@@ -59,6 +59,7 @@ export function createPipelineWorker(
   const idempotency = new PipelineIdempotency(redis);
   const faultController = new PipelineFaultController(redis);
 
+  const transitionQueue = createPipelineQueue();
   const { checkpoints, services: transitionServices } =
     createTransitionServices({
       runs,
@@ -66,6 +67,7 @@ export function createPipelineWorker(
       events: services.events,
       redis,
       history,
+      queue: transitionQueue,
     });
 
   const workerId = randomUUID();
@@ -418,6 +420,11 @@ export function createPipelineWorker(
   worker.close = async (force?: boolean) => {
     clearInterval(heartbeatInterval);
     await originalClose(force);
+    try {
+      await transitionQueue.close();
+    } catch {
+      /* ignore */
+    }
   };
 
   return worker;
