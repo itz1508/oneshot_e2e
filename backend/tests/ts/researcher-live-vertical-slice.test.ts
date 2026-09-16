@@ -35,14 +35,15 @@ test("Researcher Live Vertical Slice — Full Runtime Proof Chain", async (t) =>
     }
   }
 
-  const liveEnabled = process.env.RUN_LIVE_TAVILY_TESTS === "true" || (Boolean(process.env.TAVILY_API_KEY) && process.env.TAVILY_API_KEY.trim().length > 0);
-  if (!liveEnabled) {
+  const tavilyEnvKey = (process.env.TAVILY_API_KEY || "").trim();
+  const liveEnabled = process.env.RUN_LIVE_TAVILY_TESTS === "true" || tavilyEnvKey.length > 0;
+  if (!liveEnabled || tavilyEnvKey.length === 0) {
     t.skip("Live Tavily test skipped: set TAVILY_API_KEY or RUN_LIVE_TAVILY_TESTS=true to enable live Tavily calls");
     return;
   }
 
   assert.ok(
-    process.env.TAVILY_API_KEY && process.env.TAVILY_API_KEY.trim().length > 0,
+    tavilyEnvKey.length > 0,
     "TAVILY_API_KEY must be configured in environment or app/env/.env",
   );
 
