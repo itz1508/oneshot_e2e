@@ -197,9 +197,9 @@ export function createTavilyResearchTool(
           });
         }
 
-        const urls = (searchResult.results || [])
-          .map((r) => r.url)
-          .filter((u): u is string => Boolean(u))
+        const urls = ((searchResult.results || []) as Array<{ url?: string }>)
+          .map((r: { url?: string }) => r.url)
+          .filter((u: string | undefined): u is string => Boolean(u))
           .slice(0, Math.min(maxResults || 3, 3));
 
         let extractSection = "";
@@ -209,7 +209,7 @@ export function createTavilyResearchTool(
               apiKey: key,
               query,
             });
-            for (const ext of extracted.results || []) {
+            for (const ext of (extracted.results || []) as Array<{ url?: string; rawContent?: string }>) {
               if (ext.rawContent) {
                 recorder?.add({
                   source: ext.url || "tavily:extract",
@@ -219,8 +219,8 @@ export function createTavilyResearchTool(
               }
             }
             if (extracted.results && extracted.results.length > 0) {
-              extractSection = `\n\nExtracted Grounding:\n` + extracted.results
-                .map((e) => `URL: ${e.url}\n${(e.rawContent || "").slice(0, 1500)}`)
+              extractSection = `\n\nExtracted Grounding:\n` + (extracted.results as Array<{ url?: string; rawContent?: string }>)
+                .map((e: { url?: string; rawContent?: string }) => `URL: ${e.url}\n${(e.rawContent || "").slice(0, 1500)}`)
                 .join("\n---\n");
             }
           } catch {
@@ -228,8 +228,8 @@ export function createTavilyResearchTool(
           }
         }
 
-        const formatted = (searchResult.results || [])
-          .map((r, i) => `[Source ${i + 1}]: ${r.title}\nURL: ${r.url}\n${(r.content || "").slice(0, 2000)}`)
+        const formatted = ((searchResult.results || []) as Array<{ title?: string; url?: string; content?: string }>)
+          .map((r: { title?: string; url?: string; content?: string }, i: number) => `[Source ${i + 1}]: ${r.title}\nURL: ${r.url}\n${(r.content || "").slice(0, 2000)}`)
           .join("\n\n---\n\n");
 
         return (formatted + extractSection) || "No search results returned.";

@@ -74,6 +74,8 @@ def source_path_is_forbidden(relative_path: str | PurePosixPath) -> bool:
     name = lowered[-1]
     if name == ".env" or name.startswith(".env.") or name.endswith(".env"):
         return True
+    if name.endswith(".local.json") or name.endswith(".secret.json"):
+        return True
     return PurePosixPath(name).suffix.lower() in PRIVATE_KEY_SUFFIXES | {
         ".log",
         ".pid",

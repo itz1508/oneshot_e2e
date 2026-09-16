@@ -1,0 +1,9 @@
+{
+  "name": "@oneshot/runtime-integration-tavily",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "@tavily/core": "0.7.11"
+  }
+}

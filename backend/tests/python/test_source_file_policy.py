@@ -89,6 +89,8 @@ class SourceFilePolicyTests(unittest.TestCase):
                 "secrets-local.txt": "secret",
                 "nested/.env.example": "secret",
                 "data/runtime.json": "secret",
+                "app/integration/config/state.local.json": "secret",
+                "app/integration/config/secrets.secret.json": "secret",
             }
             for relative_path, content in fixtures.items():
                 target = root / relative_path
