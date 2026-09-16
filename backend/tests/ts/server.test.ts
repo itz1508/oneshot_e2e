@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
+import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { harness } from "./harness.js";
 import { startHttpServer } from "../../server/http-server.js";
@@ -11,11 +12,18 @@ test("HTTP/UI product runs chain and durable run snapshot reloads", async () => 
   const root = resolve(".runtime/test-harness/state/server");
   await rm(root, { recursive: true, force: true });
   const h = await harness("server");
+  const webDistPath = resolve("frontend/web/dist");
+  const legacyWebDistPath = resolve("app/web/dist");
+  const uiRoot = existsSync(webDistPath)
+    ? webDistPath
+    : existsSync(legacyWebDistPath)
+      ? legacyWebDistPath
+      : resolve("ui");
   const server = await startHttpServer(
     h.runtime,
     h.runs,
     h.events,
-    resolve("app/web/dist"),
+    uiRoot,
     0,
     h.task,
   );

@@ -18,7 +18,7 @@ interface RuntimeFact {
   metadata?: Record<string, unknown>;
 }
 
-test("Researcher Live Vertical Slice — Full Runtime Proof Chain", async () => {
+test("Researcher Live Vertical Slice — Full Runtime Proof Chain", async (t) => {
   const facts: RuntimeFact[] = [];
   const emitFact = (fact: RuntimeFact) => {
     facts.push(fact);
@@ -33,6 +33,12 @@ test("Researcher Live Vertical Slice — Full Runtime Proof Chain", async () => 
     } catch {
       // app/env/.env optional if already set in environment
     }
+  }
+
+  const liveEnabled = process.env.RUN_LIVE_TAVILY_TESTS === "true" || (Boolean(process.env.TAVILY_API_KEY) && process.env.TAVILY_API_KEY.trim().length > 0);
+  if (!liveEnabled) {
+    t.skip("Live Tavily test skipped: set TAVILY_API_KEY or RUN_LIVE_TAVILY_TESTS=true to enable live Tavily calls");
+    return;
   }
 
   assert.ok(
