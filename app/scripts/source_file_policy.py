@@ -13,7 +13,6 @@ EXCLUDED_DIRECTORY_NAMES = frozenset(
         ".runtime",
         ".venv",
         "__pycache__",
-        "data",
         "dist",
         "node_modules",
     }
@@ -36,7 +35,7 @@ IGNORED_LOCAL_FILES = frozenset(
 # on purpose: "runtime" must only exclude /runtime, never legitimate nested
 # source directories such as backend/runtime/.
 ROOT_LEVEL_EXCLUDED_DIRECTORIES = frozenset(
-    {"external", "runtime", ".headless_profile", ".devswarm-temp"}
+    {"data", "external", "runtime", ".headless_profile", ".devswarm-temp"}
 )
 
 

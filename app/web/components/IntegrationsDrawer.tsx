@@ -4,6 +4,7 @@ import {
   INTEGRATIONS_SEED,
   SUPPORT_LABELS,
   type IntegrationCategory,
+  type IntegrationEntry,
   type SupportState,
 } from "../lib/data/integrations";
 
@@ -45,7 +46,7 @@ export function IntegrationsDrawer({ open, onClose }: { open: boolean; onClose: 
         </header>
         <div className="flex-1 space-y-5 overflow-y-auto scrollbar-thin px-4 py-4">
           {CATEGORY_ORDER.map((cat) => {
-            const entries = INTEGRATIONS_SEED.filter((e) => e.category === cat);
+            const entries = INTEGRATIONS_SEED.filter((e: IntegrationEntry) => e.category === cat);
             if (entries.length === 0) return null;
             return (
               <section key={cat}>
@@ -53,7 +54,7 @@ export function IntegrationsDrawer({ open, onClose }: { open: boolean; onClose: 
                   {CATEGORY_LABELS[cat]}
                 </h3>
                 <div className="space-y-1.5">
-                  {entries.map((e) => (
+                  {entries.map((e: IntegrationEntry) => (
                     <div key={e.id} className="card px-3 py-2">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[0.8rem] font-semibold">{e.name}</span>
