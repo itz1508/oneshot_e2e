@@ -21,6 +21,20 @@ export interface RoutingPolicy {
 }
 
 /**
+ * M16: Ollama-local routing policy. Ollama is treated as a local-only provider
+ * by default, with no cloud fallback and local preference enabled.
+ */
+export const OLLAMA_LOCAL_POLICY: RoutingPolicy = {
+  mode: "automatic",
+  preferLocal: true,
+  privacyFirst: true,
+  allowFallback: false,
+  allowCloudFallback: false,
+  researchMode: "disabled",
+  allowedProviderIds: ["ollama"],
+};
+
+/**
  * A privacy-preserving default for ordinary local runs: automatic, prefer
  * local, no cloud fallback, research disabled.
  */

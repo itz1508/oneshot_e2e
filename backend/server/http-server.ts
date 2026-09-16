@@ -40,6 +40,12 @@ import { projectWorkflowGraph } from "../graph/workflow-graph.js";
 import { projectAuthorityGraph } from "../graph/authority-graph.js";
 import { projectIntentGraph } from "../graph/intent-graph.js";
 import type { IntentCollectionService } from "../intent/intent-collection.js";
+import {
+  ResearchCorrectionService,
+  ConflictError as DrawerConflictError,
+  NotFoundError as DrawerNotFoundError,
+  BadRequestError as DrawerBadRequestError,
+} from "../intent/research-correction-service.js";
 import type { SandboxService } from "../sandbox/sandbox-service.js";
 import { projectSandboxGraph } from "../sandbox/graph/sandbox-graph.js";
 import type { SandboxExecutionInput } from "../sandbox/types.js";
@@ -240,6 +246,14 @@ export async function startHttpServer(
   const workspacePolicy = await WorkspacePathPolicy.create(workspaceRoot);
 
   // Opt-in skill activation (P7.8). Skills are inactive by default.
+  const researchCorrectionService = intent
+    ? new ResearchCorrectionService(
+        intent.getStore(),
+        options.pipeline?.store || runtime.store,
+        runtime.review,
+        runs,
+      )
+    : undefined;
   const activationStore = new InMemorySkillActivationStore();
   const skillGate: SkillActivationGate = new SkillConversationActivationGate(activationStore);
   const skillRegistry = new Map<string, SkillRuntimeBinding>();
@@ -280,6 +294,9 @@ export async function startHttpServer(
     };
 
     runs.create(runId);
+    if (extra?.conversation_id) {
+      runs.artifact(runId, `conversation:${extra.conversation_id}`, "linked");
+    }
 
     if (reviewPlan) {
       await runtime?.review?.enable?.(runId);
@@ -697,6 +714,14 @@ export async function startHttpServer(
         // Conversation / Intent endpoints
         // ---------------------------------------------------------------
 
+        // GET /api/conversations â€” list all conversations
+        if (req.method === "GET" && url.pathname === "/api/conversations") {
+          if (!intent)
+            return json(res, 503, { error: "intent collection unavailable" });
+          const conversations = intent.list();
+          return json(res, 200, conversations);
+        }
+
         // POST /api/conversations â€” start a new conversation
         if (req.method === "POST" && url.pathname === "/api/conversations") {
           if (!intent)
@@ -865,12 +890,12 @@ export async function startHttpServer(
           }
 
           if (made.result !== "Passed") return json(res, 409, made);
-
           return submitRun(
             runId,
             made.prompt,
             res,
             {
+              conversation_id: cid,
               prompt_id: made.prompt.prompt_id,
               intent_id: made.intent.intent_id,
               intent_revision: made.intent.revision,
@@ -904,6 +929,96 @@ export async function startHttpServer(
             : json(res, 404, { error: "conversation not found" });
         }
 
+        // GET /api/conversations/:id/messages â€” get conversation messages
+        const convMessages = url.pathname.match(
+          /^\/api\/conversations\/([^/]+)\/messages$/,
+        );
+        if (req.method === "GET" && convMessages) {
+          if (!intent)
+            return json(res, 503, { error: "intent collection unavailable" });
+          const cid = decodeURIComponent(convMessages[1]);
+          const messages = intent.getMessages(cid);
+          return json(res, 200, { conversation_id: cid, messages });
+        }
+
+        // ---------------------------------------------------------------
+        // Research Drawer & Correction endpoints
+        // ---------------------------------------------------------------
+
+        // GET /conversations/:id/research/drawer or /api/conversations/:id/research/drawer
+        const convDrawer = url.pathname.match(
+          /^(?:\/api)?\/conversations\/([^/]+)\/research\/drawer$/,
+        );
+        if (req.method === "GET" && convDrawer) {
+          if (!researchCorrectionService)
+            return json(res, 503, { error: "research correction service unavailable" });
+          const cid = decodeURIComponent(convDrawer[1]);
+          try {
+            const projection = await researchCorrectionService.getDrawerProjection(cid);
+            return json(res, 200, projection);
+          } catch (e) {
+            if (e instanceof DrawerNotFoundError) return json(res, 404, { error: e.message });
+            return json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+          }
+        }
+
+        // POST /conversations/:id/research/review or /api/conversations/:id/research/review
+        const convReview = url.pathname.match(
+          /^(?:\/api)?\/conversations\/([^/]+)\/research\/review$/,
+        );
+        if (req.method === "POST" && convReview) {
+          if (!researchCorrectionService)
+            return json(res, 503, { error: "research correction service unavailable" });
+          const cid = decodeURIComponent(convReview[1]);
+          try {
+            const input = await body(req);
+            const review = await researchCorrectionService.agreeReview(cid, {
+              expected_conversation_revision: Number(input.expected_conversation_revision),
+              expected_research_revision: Number(input.expected_research_revision),
+              notes: Array.isArray(input.notes) ? input.notes.map(String) : [],
+            });
+            return json(res, 200, {
+              conversation_id: cid,
+              status: "approved",
+              review,
+            });
+          } catch (e) {
+            if (e instanceof DrawerNotFoundError) return json(res, 404, { error: e.message });
+            if (e instanceof DrawerConflictError)
+              return json(res, 409, { error: e.message, ...(e.details || {}) });
+            if (e instanceof PlanReviewError) return json(res, e.status, { error: e.message });
+            return json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+          }
+        }
+
+        // POST /conversations/:id/research/corrections or /api/conversations/:id/research/corrections
+        const convCorrection = url.pathname.match(
+          /^(?:\/api)?\/conversations\/([^/]+)\/research\/corrections$/,
+        );
+        if (req.method === "POST" && convCorrection) {
+          if (!researchCorrectionService)
+            return json(res, 503, { error: "research correction service unavailable" });
+          const cid = decodeURIComponent(convCorrection[1]);
+          try {
+            const input = await body(req);
+            const result = await researchCorrectionService.submitCorrection(cid, {
+              expected_conversation_revision: Number(input.expected_conversation_revision),
+              expected_research_revision: Number(input.expected_research_revision),
+              feedback: String(input.feedback || ""),
+              targets: Array.isArray(input.targets) ? input.targets : [],
+              idempotency_key: input.idempotency_key ? String(input.idempotency_key) : undefined,
+              requested_by: input.requested_by ? String(input.requested_by) : undefined,
+            });
+            return json(res, 202, result);
+          } catch (e) {
+            if (e instanceof DrawerNotFoundError) return json(res, 404, { error: e.message });
+            if (e instanceof DrawerConflictError)
+              return json(res, 409, { error: e.message, ...(e.details || {}) });
+            if (e instanceof DrawerBadRequestError) return json(res, 400, { error: e.message });
+            return json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+          }
+        }
+
         // ---------------------------------------------------------------
         // Run endpoints
         // ---------------------------------------------------------------
@@ -933,6 +1048,41 @@ export async function startHttpServer(
           };
 
           return submitRun(runId, prompt, res);
+        }
+
+
+        // POST /api/runs/:runId/cancel â€” cancel an in-flight run (M15)
+        const runCancelPost = url.pathname.match(/^\/api\/runs\/([^/]+)\/cancel$/);
+        if (req.method === "POST" && runCancelPost) {
+          const runId = decodeURIComponent(runCancelPost[1]);
+          const snap = runs.get(runId);
+          if (!snap) return json(res, 404, { error: "run not found" });
+          if (snap.pipeline_status === "Done") {
+            return json(res, 409, { error: "run has already finished" });
+          }
+
+          // Emit cancellation event
+          events.emit(runId, "Cancellation", "Running", {
+            scope: "SUPPORT",
+            message: "Run cancelled by user",
+          });
+
+          // Finalize as cancelled
+          runs.finish(runId, "Failed", undefined, {
+            issue: "Run cancelled by user",
+            expected: "Run completes normally",
+            actual: "User requested cancellation",
+            evidence_ids: [],
+            required_correction: "Restart the run if needed",
+            recheck_target: runId,
+          });
+
+          events.emit(runId, "Cancellation", "Completed", {
+            scope: "SUPPORT",
+            message: "Run cancelled successfully",
+          });
+
+          return json(res, 200, { run_id: runId, status: "cancelled" });
         }
 
         // ---------------------------------------------------------------
@@ -1154,7 +1304,11 @@ export async function startHttpServer(
             if (snapshot.pipeline_status === "Done")
               return json(res, 409, { error: "Run has already finished" });
             const input = await body(req);
-            const gate = await runtime.buildReview.decide(runId, input);
+            const gate = await runtime.buildReview.decide(
+              runId,
+              input,
+              intent?.getStore(),
+            );
             const mode = await runtime?.store?.load?.<{ mode: string }>(
               runId,
               "execution-mode",
@@ -1254,7 +1408,7 @@ export async function startHttpServer(
         // Only parse the body for researcher-specific POST routes to avoid
         // consuming the stream before the existing review handler can read it.
         const isResearcherRoute =
-          (req.method === "GET" && url.pathname === "/api/providers") ||
+          url.pathname === "/api/providers" ||
           (req.method === "POST" && (
             url.pathname === "/api/providers/test" ||
             url.pathname === "/api/providers/discover-models" ||
@@ -1317,7 +1471,11 @@ export async function startHttpServer(
             return json(
               res,
               200,
-              await runtime.review.decide(runId, await body(req)),
+              await runtime.review.decide(
+                runId,
+                await body(req),
+                intent?.getStore(),
+              ),
             );
           } catch (error) {
             if (error instanceof PlanReviewError)
@@ -1426,6 +1584,7 @@ export async function startHttpServer(
             connection: "keep-alive",
             "x-content-type-options": "nosniff",
           });
+          res.flushHeaders?.();
 
           // SSE wire format: `id: <sequence>` + `event: processing` + `data:{...}`.
           // The id lets a reconnecting client send Last-Event-ID so we replay only
@@ -1455,6 +1614,7 @@ export async function startHttpServer(
               /* connection already closed */
             }
           }, 15_000);
+          heartbeat.unref?.();
           req.on("close", () => {
             unsub();
             clearInterval(heartbeat);

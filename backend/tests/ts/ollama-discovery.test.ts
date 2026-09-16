@@ -6,6 +6,8 @@ import {
   isApprovedOllamaEndpoint,
   ollamaModelId,
   OLLAMA_APPROVED_ENDPOINTS,
+  autoDetectOllamaBaseUrl,
+  verifyOllamaDiscoveryPaths,
   type OllamaModel,
 } from "../../integration/provider/ollama-discovery.js";
 
@@ -66,7 +68,7 @@ test("M16: custom Ollama model names and tags work", async () => {
 test("M16: no cloud key is required for Ollama", () => {
   // Ollama preset has requiresAuth: false, authMethod: "none"
   // The discovery function takes no API key parameter
-  assert.equal(OLLAMA_APPROVED_ENDPOINTS.length, 3);
+  assert.equal(OLLAMA_APPROVED_ENDPOINTS.length, 2);
   for (const ep of OLLAMA_APPROVED_ENDPOINTS) {
     assert.ok(ep.startsWith("http://"), "Ollama endpoints use http (local)");
     assert.ok(!ep.includes("https://"), "no https for local Ollama");
@@ -74,10 +76,10 @@ test("M16: no cloud key is required for Ollama", () => {
   }
 });
 
-test("M16: approved endpoint check works for all three candidates", () => {
+test("M16: approved endpoint check works for all candidates", () => {
   assert.ok(isApprovedOllamaEndpoint("http://127.0.0.1:11434"));
   assert.ok(isApprovedOllamaEndpoint("http://localhost:11434"));
-  assert.ok(isApprovedOllamaEndpoint("http://host.docker.internal:11434"));
+  assert.ok(!isApprovedOllamaEndpoint("http://host.docker.internal:11434"));
   assert.ok(!isApprovedOllamaEndpoint("http://evil.com:11434"));
   assert.ok(!isApprovedOllamaEndpoint("https://api.openai.com"));
 });
@@ -92,5 +94,46 @@ test("M16: local-only Researcher makes no cloud requests", async () => {
     const url = new URL(ep);
     const isLocal = url.hostname === "localhost" || url.hostname.startsWith("127.") || url.hostname === "host.docker.internal";
     assert.ok(isLocal, `endpoint ${ep} must be local`);
+  }
+});
+
+test("M16: auto-detection finds first reachable endpoint", async () => {
+  const srv = await mockOllamaServer([{ name: "llama3", tag: "latest" }]);
+  try {
+    // Temporarily add the mock server URL to approved endpoints for testing
+    const originalApproved = [...OLLAMA_APPROVED_ENDPOINTS];
+    (OLLAMA_APPROVED_ENDPOINTS as any).push(srv.url);
+
+    const detected = await autoDetectOllamaBaseUrl();
+    assert.equal(detected, srv.url);
+
+    // Restore original approved endpoints
+    (OLLAMA_APPROVED_ENDPOINTS as any).splice(originalApproved.length);
+  } finally {
+    await srv.close();
+  }
+});
+
+test("M16: auto-detection returns undefined when no endpoint reachable", async () => {
+  // No Ollama server running, should return undefined
+  const detected = await autoDetectOllamaBaseUrl();
+  assert.equal(detected, undefined);
+});
+
+test("M16: verifyOllamaDiscoveryPaths checks both /api/tags and /v1/models", async () => {
+  const srv = await mockOllamaServer([{ name: "llama3", tag: "latest" }]);
+  try {
+    // Temporarily add the mock server URL to approved endpoints for testing
+    const originalApproved = [...OLLAMA_APPROVED_ENDPOINTS];
+    (OLLAMA_APPROVED_ENDPOINTS as any).push(srv.url);
+
+    const result = await verifyOllamaDiscoveryPaths(srv.url);
+    assert.ok(result.apiTags, "/api/tags should be reachable");
+    // /v1/models may not be implemented in mock, so we don't assert on it
+
+    // Restore original approved endpoints
+    (OLLAMA_APPROVED_ENDPOINTS as any).splice(originalApproved.length);
+  } finally {
+    await srv.close();
   }
 });

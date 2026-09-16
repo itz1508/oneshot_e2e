@@ -21,6 +21,19 @@ export class FakeRuntime implements AgentRuntime {
 
   async invoke(invocation: RuntimeInvocation): Promise<NormalizedResult> {
     const { route, promptText } = invocation;
+
+    // M15: Check for cancellation signal
+    if (invocation.signal?.aborted) {
+      return {
+        routeId: route.routeId,
+        workflowId: route.workflowId,
+        content: "",
+        evidence: [],
+        finishReason: "error",
+        error: "Cancelled by user",
+      };
+    }
+
     const head = promptText.slice(0, 80);
     const draft = {
       summary: `Fake research summary for: ${head}`,

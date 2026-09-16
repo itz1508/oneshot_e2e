@@ -95,3 +95,101 @@ test("M15: client reconnect replays known events", async () => {
     assert.equal(store2.replay("run:3", 0).length, 5);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+test("M15: HTTP SSE streaming and run cancellation endpoint", async () => {
+  const temporaryRoot = await mkdtemp(join(tmpdir(), "m15-http-"));
+  const runStateDir = join(temporaryRoot, "runs");
+  const taskEventsDir = join(temporaryRoot, "task-events");
+  const artifactsDir = join(temporaryRoot, "artifacts");
+  let server: import("node:http").Server | undefined;
+
+  try {
+    const { mkdir } = await import("node:fs/promises");
+    await mkdir(runStateDir, { recursive: true });
+    await mkdir(taskEventsDir, { recursive: true });
+    await mkdir(artifactsDir, { recursive: true });
+
+    const { RunRepository } = await import("../../runtime/run-repository.js");
+    const { ProcessingEventBus } = await import("../../runtime/event-bus.js");
+    const { AppendOnlyProcessingEventStore } = await import("../../task/event/event-store.js");
+    const { FileArtifactStore } = await import("../../runtime/artifact-store.js");
+    const { WorkflowRuntime } = await import("../../runtime/workflow-runtime.js");
+    const { startHttpServer } = await import("../../server/http-server.js");
+
+    const runs = new RunRepository(runStateDir);
+    const events = new ProcessingEventBus(
+      new AppendOnlyProcessingEventStore(taskEventsDir),
+    );
+    const artifactStore = new FileArtifactStore(artifactsDir);
+    const runtime = new WorkflowRuntime(
+      events,
+      runs,
+      artifactStore,
+      () => ({} as any),
+    );
+
+    server = await startHttpServer(
+      runtime,
+      runs,
+      events,
+      join(process.cwd(), "app/web/dist"),
+      0,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { workspaceRoot: temporaryRoot },
+    );
+    const address = server.address() as import("node:net").AddressInfo;
+    const base = `http://127.0.0.1:${address.port}`;
+
+    // 1. Create a run
+    const runId = "test-run-m15";
+    runs.create(runId);
+
+    // 2. Connect to SSE endpoint GET /api/runs/:runId/events
+    const ac = new AbortController();
+    const eventPromise = fetch(`${base}/api/runs/${runId}/events`, {
+      signal: ac.signal,
+    });
+    const eventRes = await eventPromise;
+    assert.equal(eventRes.status, 200);
+    assert.equal(eventRes.headers.get("content-type"), "text/event-stream");
+
+    // 3. Cancel non-existent run returns 404
+    const cancel404 = await fetch(`${base}/api/runs/nonexistent/cancel`, { method: "POST" });
+    assert.equal(cancel404.status, 404);
+
+    // 4. Cancel active run returns 200 status: "cancelled"
+    const cancelRes = await fetch(`${base}/api/runs/${runId}/cancel`, { method: "POST" });
+    assert.equal(cancelRes.status, 200);
+    const cancelBody = (await cancelRes.json()) as { status: string };
+    assert.equal(cancelBody.status, "cancelled");
+
+    // 5. Verify run snapshot is marked Failed with cancellation reason
+    const snap = runs.get(runId);
+    assert.ok(snap);
+    assert.equal(snap.pipeline_status, "Done");
+    assert.equal(snap.test_result, "Failed");
+    assert.ok(snap.root_cause?.issue.includes("cancelled"));
+
+    // 6. Cancelling already completed/cancelled run returns 409
+    const cancel409 = await fetch(`${base}/api/runs/${runId}/cancel`, { method: "POST" });
+    assert.equal(cancel409.status, 409);
+
+    ac.abort();
+    try {
+      await eventRes.body?.cancel();
+    } catch {}
+  } finally {
+    if (server) {
+      try {
+        server.closeAllConnections?.();
+        await new Promise((ok) => server!.close(() => ok(undefined)));
+      } catch {}
+    }
+    await new Promise((r) => setTimeout(r, 100));
+    await rm(temporaryRoot, { recursive: true, force: true });
+  }
+});
+

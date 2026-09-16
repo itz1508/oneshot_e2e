@@ -39,6 +39,11 @@ export interface RuntimeInvocation {
    * ResolvedExecutionRoute.
    */
   readonly credentialRef?: CredentialReference;
+  /**
+   * M15: AbortSignal for cancellation. When aborted, the runtime should
+   * stop processing and return a cancelled result.
+   */
+  readonly signal?: AbortSignal;
 }
 
 /**

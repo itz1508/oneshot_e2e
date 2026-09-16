@@ -41,6 +41,8 @@ export interface ConversationSnapshot {
   intent: IntentState;
   created_at: string;
   updated_at: string;
+  /** Hash of the conversation state for workflow gate validation (M14). */
+  conversation_hash?: string;
 }
 
 /**

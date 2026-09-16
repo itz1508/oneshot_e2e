@@ -58,6 +58,18 @@ export class DirectOpenAIRuntime implements AgentRuntime {
     if (systemPrompt) messages.push({ role: "system", content: systemPrompt });
     messages.push({ role: "user", content: promptText });
 
+    // M15: Check for cancellation signal
+    if (invocation.signal?.aborted) {
+      return {
+        routeId: route.routeId,
+        workflowId: route.workflowId,
+        content: "",
+        evidence: [],
+        finishReason: "error",
+        error: "Cancelled by user",
+      };
+    }
+
     let apiKey = this.opts.apiKey;
     if (this.opts.credentialResolver && invocation.credentialRef) {
       apiKey = await this.opts.credentialResolver.resolve(invocation.credentialRef);

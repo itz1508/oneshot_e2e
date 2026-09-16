@@ -86,6 +86,19 @@ export class StrandsAdapter implements AgentRuntime {
       this.opts.onFact,
       recorder,
     );
+
+    // M15: Check for cancellation signal
+    if (invocation.signal?.aborted) {
+      return {
+        routeId: invocation.route.routeId,
+        workflowId: invocation.route.workflowId,
+        content: "",
+        evidence: [],
+        finishReason: "error",
+        error: "Cancelled by user",
+      };
+    }
+
     const draft = await agent.runResearch(invocation.promptText);
     return {
       routeId: invocation.route.routeId,

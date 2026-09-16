@@ -27,6 +27,10 @@ export interface BuildReview {
     responsibility: string;
   }>;
   created_at: string;
+  /** M14: Conversation context for gate validation. */
+  conversation_id?: string;
+  conversation_revision?: number;
+  conversation_hash?: string;
 }
 interface GateRecord {
   review: BuildReview;
@@ -68,6 +72,11 @@ export class BuildReviewService {
     runId: string,
     confirmed: ConfirmedPackage,
     hash: string,
+    conversationContext?: {
+      conversation_id: string;
+      conversation_revision: number;
+      conversation_hash: string;
+    },
   ): Promise<BuildReview> {
     const triple = confirmed.core.triple_validation;
     if (
@@ -101,6 +110,10 @@ export class BuildReviewService {
           responsibility,
         })),
         created_at: new Date().toISOString(),
+        // M14: Store conversation context for gate validation
+        conversation_id: conversationContext?.conversation_id,
+        conversation_revision: conversationContext?.conversation_revision,
+        conversation_hash: conversationContext?.conversation_hash,
       },
     };
     await this.create(runId, "build-review", record);
@@ -126,7 +139,11 @@ export class BuildReviewService {
       status: approval?.hash === record.review.hash ? "approved" : "pending",
     };
   }
-  async decide(runId: string, input: unknown): Promise<BuildReview> {
+  async decide(
+    runId: string,
+    input: unknown,
+    conversationStore?: import("../intent/conversation-store.js").ConversationStore,
+  ): Promise<BuildReview> {
     if (!validateAction(input))
       throw new BuildReviewError(
         "Provide action approve or return and the current confirmation hash",
@@ -143,6 +160,21 @@ export class BuildReviewService {
       throw new BuildReviewError(
         "Confirmed package changed; reload Build Ready",
       );
+
+    // M14: Validate conversation hash if conversation context is present
+    if (record.review.conversation_id && record.review.conversation_hash && conversationStore) {
+      const hashValid = conversationStore.validateHash(
+        record.review.conversation_id,
+        record.review.conversation_hash,
+      );
+      if (!hashValid) {
+        throw new BuildReviewError(
+          "Conversation state has changed since build was generated; please regenerate the build",
+          409,
+        );
+      }
+    }
+
     if (action.action === "return") {
       const gate = (await this.get(runId))!;
       if (gate.status !== "pending")

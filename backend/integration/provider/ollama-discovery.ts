@@ -28,12 +28,37 @@ export interface OllamaTagsResponse {
   models: OllamaModel[];
 }
 
-/** The three approved Ollama endpoints. */
+/** Approved Ollama endpoints (local-only by default). */
 export const OLLAMA_APPROVED_ENDPOINTS = [
-  "http://127.0.0.1:11434",
   "http://localhost:11434",
-  "http://host.docker.internal:11434",
+  "http://127.0.0.1:11434",
 ] as const;
+
+/**
+ * M16: Auto-detect Ollama base URL from common local endpoints.
+ * Returns the first reachable endpoint, or undefined if none are available.
+ */
+export async function autoDetectOllamaBaseUrl(): Promise<string | undefined> {
+  const envCandidate = process.env.OLLAMA_BASE_URL?.trim();
+  const candidates = envCandidate
+    ? [envCandidate, ...OLLAMA_APPROVED_ENDPOINTS]
+    : OLLAMA_APPROVED_ENDPOINTS;
+  for (const endpoint of candidates) {
+    try {
+      const response = await httpJsonRequest(`${endpoint}/api/tags`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        timeoutMs: 1000,
+      });
+      if (response.ok && response.status < 400) {
+        return endpoint;
+      }
+    } catch {
+      // Continue to next candidate
+    }
+  }
+  return undefined;
+}
 
 /**
  * Discover models from an Ollama installation via the native /api/tags
@@ -65,6 +90,44 @@ export async function discoverOllamaModels(
     size: m.size,
     modifiedAt: m.modifiedAt,
   }));
+}
+
+/**
+ * M16: Verify Ollama discovery paths (/api/tags and /v1/models).
+ * Returns true if at least one discovery path is reachable.
+ */
+export async function verifyOllamaDiscoveryPaths(
+  baseUrl: string,
+): Promise<{ apiTags: boolean; v1Models: boolean }> {
+  const cleanUrl = baseUrl.replace(/\/+$/, "");
+  let apiTags = false;
+  let v1Models = false;
+
+  // Try /api/tags (native Ollama endpoint)
+  try {
+    const response = await httpJsonRequest(`${cleanUrl}/api/tags`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      timeoutMs: 2000,
+    });
+    apiTags = response.ok && response.status < 400;
+  } catch {
+    apiTags = false;
+  }
+
+  // Try /v1/models (OpenAI-compatible endpoint)
+  try {
+    const response = await httpJsonRequest(`${cleanUrl}/v1/models`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      timeoutMs: 2000,
+    });
+    v1Models = response.ok && response.status < 400;
+  } catch {
+    v1Models = false;
+  }
+
+  return { apiTags, v1Models };
 }
 
 /**

@@ -40,6 +40,7 @@ import {
   resolveProviderConfiguration,
   KNOWN_PROVIDERS,
 } from "../integration/provider-discovery.js";
+import { autoDetectOllamaBaseUrl } from "../integration/provider/ollama-discovery.js";
 export { body } from "./http-response.js";
 
 /** Non-secret subset of a route, safe to place on RunSnapshot and response bodies. */
@@ -192,13 +193,117 @@ export async function handleListProviders(
   _input: Record<string, unknown>,
   _ctx: ResearcherHandlerContext,
 ): Promise<boolean> {
-  const providers = Object.values(KNOWN_PROVIDERS).map((p) => ({
-    id: p.id,
-    name: p.name,
-    requiresApiKey: p.requiresApiKey,
-    endpointCandidates: p.endpointCandidates,
-  }));
-    json(res, 200, { providers });
+  const detectedOllama = await autoDetectOllamaBaseUrl().catch(() => undefined);
+  const providers = Object.values(KNOWN_PROVIDERS).map((p) => {
+    if (p.id === "ollama" && detectedOllama) {
+      return {
+        id: p.id,
+        name: p.name,
+        requiresApiKey: p.requiresApiKey,
+        endpointCandidates: [
+          {
+            id: "ollama-detected",
+            url: detectedOllama,
+            label: `Detected Ollama (${detectedOllama})`,
+            source: "discovered" as const,
+          },
+          ...p.endpointCandidates,
+        ],
+        discoveredEndpoint: detectedOllama,
+      };
+    }
+    return {
+      id: p.id,
+      name: p.name,
+      requiresApiKey: p.requiresApiKey,
+      endpointCandidates: p.endpointCandidates,
+    };
+  });
+  json(res, 200, { providers });
+  return true;
+}
+
+// --- Endpoint: POST /api/providers ---
+
+export async function handleCreateProvider(
+  _req: IncomingMessage,
+  res: ServerResponse,
+  _url: URL,
+  input: Record<string, unknown>,
+  ctx: ResearcherHandlerContext,
+): Promise<boolean> {
+  const providerId =
+    typeof input.provider_id === "string" ? input.provider_id.trim() : "";
+  const baseUrl = typeof input.baseUrl === "string" ? input.baseUrl.trim() : "";
+  const apiKey =
+    typeof input.api_key === "string" ? input.api_key.trim() : undefined;
+
+  if (!providerId) {
+    json(res, 400, {
+      error: "provider_id is required and must be a non-empty string",
+    });
+    return true;
+  }
+  if (!baseUrl) {
+    json(res, 400, {
+      error: "baseUrl is required and must be a non-empty string",
+    });
+    return true;
+  }
+
+  // Validate URL protocol
+  try {
+    const parsed = new URL(baseUrl);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      json(res, 400, { error: "baseUrl must use http or https protocol" });
+      return true;
+    }
+  } catch {
+    json(res, 400, { error: "invalid baseUrl format" });
+    return true;
+  }
+
+  // M17: Enforce credential policy
+  if (apiKey) {
+    if (ctx.credentialPolicy?.isPublicUnauthed()) {
+      json(res, 403, {
+        error: "credential management is disabled in public unauthenticated mode",
+      });
+      return true;
+    }
+    try {
+      ctx.credentialPolicy?.assertStorageAllowed("session");
+    } catch (e: any) {
+      json(res, 403, { error: e.message || "credential storage not allowed" });
+      return true;
+    }
+  }
+
+  // Register or update KNOWN_PROVIDERS
+  KNOWN_PROVIDERS[providerId] = {
+    id: providerId,
+    name: (input.name as string) || providerId,
+    requiresApiKey: Boolean(apiKey),
+    endpointCandidates: [
+      {
+        id: `${providerId}-custom`,
+        url: baseUrl,
+        label: `${providerId} (${baseUrl})`,
+        source: "custom",
+      },
+    ],
+    knownCapabilities: {
+      toolCalling: true,
+      streaming: true,
+      structuredOutput: true,
+    },
+  };
+
+  json(res, 201, {
+    provider_id: providerId,
+    baseUrl,
+    status: "created",
+  });
   return true;
 }
 
@@ -422,6 +527,8 @@ export async function handleResearcherRoutes(
   }
   if (req.method === "GET" && url.pathname === "/api/providers")
     return handleListProviders(req, res, url, input, ctx);
+  if (req.method === "POST" && url.pathname === "/api/providers")
+    return handleCreateProvider(req, res, url, input, ctx);
   if (req.method === "POST" && url.pathname === "/api/providers/test")
     return handleProviderTest(req, res, url, input, ctx);
   if (req.method === "POST" && url.pathname === "/api/providers/discover-models")

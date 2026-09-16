@@ -26,6 +26,8 @@ import { Icon } from "./icon";
 import { Modal } from "./modal";
 import { CodeViewerModal, FileNode } from "./file-browser";
 import { BuildCard, Mutations, ResearchCard, ResultCard } from "./review-cards";
+import { ResearchDrawer } from "./ResearchDrawer";
+import type { ResearchDrawerProjection } from "../lib/contracts";
 
 const STAGE_ORDER = [
     "Researcher",
@@ -83,6 +85,55 @@ export default function Workspace() {
     const [integrationsList, setIntegrationsList] = useState<any[]>([]);
     const [integrationBusy, setIntegrationBusy] = useState(false);
     const [integrationMsg, setIntegrationMsg] = useState("");
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [researchDrawer, setResearchDrawer] = useState<ResearchDrawerProjection | null>(null);
+
+    const loadResearchDrawer = useCallback(async (cid?: string) => {
+        const id = cid || conversation?.conversation_id;
+        if (!id) return;
+        try {
+            const data = await request<ResearchDrawerProjection>(
+                `/conversations/${encodeURIComponent(id)}/research/drawer`,
+            );
+            setResearchDrawer(data);
+        } catch {
+            // drawer is optional
+        }
+    }, [conversation?.conversation_id]);
+
+    const handleDrawerAgree = async () => {
+        if (!conversation || !researchDrawer) return;
+        await perform(async () => {
+            await request(
+                `/conversations/${encodeURIComponent(conversation.conversation_id)}/research/review`,
+                {
+                    expected_research_revision: researchDrawer.research_revision,
+                    expected_conversation_revision: researchDrawer.conversation_revision,
+                    notes: ["Approved via Research Drawer"],
+                },
+                "POST",
+            );
+            await loadResearchDrawer();
+            setRefreshKey((v) => v + 1);
+        });
+    };
+
+    const handleDrawerCorrection = async (feedbackText: string) => {
+        if (!conversation || !researchDrawer) return;
+        await perform(async () => {
+            await request(
+                `/conversations/${encodeURIComponent(conversation.conversation_id)}/research/corrections`,
+                {
+                    expected_research_revision: researchDrawer.research_revision,
+                    expected_conversation_revision: researchDrawer.conversation_revision,
+                    feedback: feedbackText,
+                },
+                "POST",
+            );
+            await loadResearchDrawer();
+            setRefreshKey((v) => v + 1);
+        });
+    };
 
     const loadIntegrations = useCallback(async () => {
         try {
@@ -1273,6 +1324,48 @@ export default function Workspace() {
                                 }}
                             />
                             <div className="composer-controls">
+                                <button
+                                    type="button"
+                                    className={`btn btn-secondary ${researchDrawer?.status === "Needs Review" ? "animate-pulse" : ""}`}
+                                    onClick={() => {
+                                        setDrawerOpen(!drawerOpen);
+                                        void loadResearchDrawer();
+                                    }}
+                                    title="Open Research Drawer"
+                                    style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "4px",
+                                        fontSize: "11px",
+                                        padding: "4px 8px",
+                                    }}
+                                >
+                                    <span>🔬</span>
+                                    <span>Research</span>
+                                    {researchDrawer && (
+                                        <span
+                                            style={{
+                                                fontSize: "9.5px",
+                                                padding: "1px 5px",
+                                                borderRadius: "8px",
+                                                background:
+                                                    researchDrawer.status === "Ready"
+                                                        ? "rgba(16, 185, 129, 0.2)"
+                                                        : researchDrawer.status === "Needs Review"
+                                                          ? "rgba(245, 158, 11, 0.2)"
+                                                          : "rgba(255, 255, 255, 0.1)",
+                                                color:
+                                                    researchDrawer.status === "Ready"
+                                                        ? "#10b981"
+                                                        : researchDrawer.status === "Needs Review"
+                                                          ? "#f59e0b"
+                                                          : "var(--text-muted)",
+                                            }}
+                                        >
+                                            {researchDrawer.status}
+                                        </span>
+                                    )}
+                                </button>
                                 <span className="grow" />
                                 {conversation?.intent.ready_for_prompt &&
                                     !runId && (
@@ -2169,6 +2262,16 @@ export default function Workspace() {
                     </div>
                 </Modal>
             )}
+
+            {/* Research Drawer (§Governed Research Projection & Revision Corrections) */}
+            <ResearchDrawer
+                drawer={researchDrawer}
+                open={drawerOpen}
+                onClose={() => setDrawerOpen(false)}
+                onAgree={handleDrawerAgree}
+                onRequestCorrection={handleDrawerCorrection}
+                busy={busy}
+            />
         </div>
     );
 }

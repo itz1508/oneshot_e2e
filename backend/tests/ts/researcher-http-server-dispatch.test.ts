@@ -91,6 +91,31 @@ test("M13: startHttpServer dispatches researcher routes when researcher is confi
     await run.arrayBuffer();
     assert.notEqual(run.status, 501);
     assert.notEqual(run.status, 404);
+
+    // POST /api/providers creates a custom provider
+    const createProv = await fetch(`${base}/api/providers`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        provider_id: "custom-mock-test",
+        baseUrl: "http://127.0.0.1:8080/v1",
+      }),
+    });
+    assert.equal(createProv.status, 201);
+    const createBody = (await createProv.json()) as { provider_id: string; status: string };
+    assert.equal(createBody.provider_id, "custom-mock-test");
+    assert.equal(createBody.status, "created");
+
+    // Invalid baseUrl returns 400
+    const badProv = await fetch(`${base}/api/providers`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        provider_id: "bad-prov",
+        baseUrl: "ftp://invalid-protocol",
+      }),
+    });
+    assert.equal(badProv.status, 400);
   } finally {
     try {
       server.closeAllConnections?.();

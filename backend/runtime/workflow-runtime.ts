@@ -23,6 +23,7 @@ import type { BuilderWorkflow } from "../agents/builder/workflow.js";
 import type { ConfirmationWorkflow } from "../workflow/confirmation.js";
 import type { HashWorkflow } from "../workflow/hash.js";
 import type { TripleValidationWorkflow } from "../workflow/triple-validation.js";
+import type { PublicEventEmitter } from "../conversation/public-event-emitter.js";
 
 export interface WorkflowRuntimeDependencies {
   researcher: ResearcherWorkflow;
@@ -88,6 +89,7 @@ export class WorkflowRuntime {
     private runs: RunRepository,
     readonly store: ArtifactStore,
     private bindDependencies: DynamicDependencyFactory,
+    private publicEventEmitter?: PublicEventEmitter,
   ) {
     this.review = new PlanReviewService(store);
     this.buildReview = new BuildReviewService(store);
@@ -100,6 +102,31 @@ export class WorkflowRuntime {
     data: Parameters<ProcessingEventBus["emit"]>[3] = {},
   ): void {
     this.events.emit(runId, processor, state, data);
+
+    // M15: Translate internal ProcessingEvents to public events
+    if (this.publicEventEmitter) {
+      this.translateToPublicEvent(runId, processor, state, data);
+    }
+  }
+
+  /** M15: Translate internal ProcessingEvent to PublicRunEvent */
+  private translateToPublicEvent(
+    runId: string,
+    processor: string,
+    state: "Pending" | "Running" | "Completed" | "Failed",
+    data: Parameters<ProcessingEventBus["emit"]>[3] = {},
+  ): void {
+    if (state === "Running") {
+      if (processor === "Researcher") {
+        this.publicEventEmitter?.emitRunStarted();
+      }
+    } else if (state === "Completed") {
+      if (processor === "Done") {
+        this.publicEventEmitter?.emitRunCompleted();
+      }
+    } else if (state === "Failed") {
+      this.publicEventEmitter?.emitRunFailed("WORKFLOW_ERROR");
+    }
   }
 
   private async save(

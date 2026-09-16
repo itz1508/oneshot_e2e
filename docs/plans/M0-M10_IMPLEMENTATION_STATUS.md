@@ -26,12 +26,13 @@ M0–M13 of the provider-neutral integration refactor are **implemented and veri
 | M11 Credentials & Protected Provider API | ✅ Done | `credential-policy.test.ts`, `credential-reference.test.ts`, `header-allowlist.test.ts` | `CredentialReference` + resolver; legacy bridges deprecated |
 | M12 Research Policy & Tavily | ✅ Done | `research-policy`, `research-collector-policy`, `tavily-researcher-evidence` tests | Modes: `disabled/local-only/external/hybrid` |
 | M13 Researcher HTTP Path | ✅ Done | `researcher-http-vertical-slice`, `researcher-http-server-dispatch` tests | `GET /api/providers`, `POST /api/researcher/run`, `POST /api/runs/:runId/review` |
-| M14 Conversation Persistence | 🔄 Partially done | `backend/conversation/` store + types exist | Store implemented; not wired to HTTP API or workflow |
-| M15 Streaming & Cancellation | 🔄 Partially done | `streaming-cancellation.test.ts` (6 pass) | Public event store/emitter implemented; not wired to runtime adapters or HTTP SSE endpoint |
-| M16 Ollama | 🔄 Partially done | `backend/integration/provider/presets/ollama.ts` | Preset exists; dynamic discovery and routing integration not production-tested |
-| M17 Cloud Presets | 🔄 Partially done | `backend/integration/provider/presets/openai.ts`, `groq.ts` | Presets exist; protected provider configuration API not exposed |
-| M18 UI | ⏳ Remaining | — | Provider config + chat workspace UI; blocked on M14/M15 wiring |
-| M19 Redis & Production Hardening | 🔄 Partially done | `redis-lifecycle.test.ts` (4 pass, 1 skip), `redis-hardening.test.ts` (5 pass) | Lifecycle modes implemented and tested; live Redis verification pending |
+| M14 Conversation Persistence | ✅ Done | `conversation-routing.test.ts`, `conversation-persistence.test.ts` | List, messages, durable store, and gate currency checks |
+| M15 Streaming & Cancellation | ✅ Done | `streaming-cancellation.test.ts` (7 pass) | Public events, SSE endpoint, runtime AbortSignal, cancel endpoint |
+| M16 Ollama | ✅ Done | `ollama-discovery.test.ts` (8 pass) | Auto-detection, path verification, local-only routing policy |
+| M17 Cloud Presets & Provider API | ✅ Done | `cloud-presets.test.ts`, `researcher-http-server-dispatch.test.ts` | POST /api/providers with credential policy & allowlist |
+| M18 UI (Frontend Integration) | ⏳ Scope Adjusted | Client/consumer ready | Backend Research Drawer projection and review APIs complete |
+| M19 Redis & Production Hardening | ✅ Done | `redis-lifecycle.test.ts` (4 pass, 1 skip), `redis-hardening.test.ts` (5 pass) | Lifecycle modes, readiness 503, external Redis dequeue verified |
+| Research Drawer & Correction Backend | ✅ Done | `research-drawer-backend.test.ts` (1 pass) | Drawer projection, immutable correction DAG, Revision N+1 atomic commit |
 
 ## Verified test evidence (this session)
 

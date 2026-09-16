@@ -107,3 +107,54 @@ export type Mutation = {
     sha256?: string;
     previous_sha256?: string;
 };
+
+export type ResearchDrawerStatus =
+    | "Off"
+    | "Reconciling"
+    | "Researching"
+    | "Drafting"
+    | "Validating"
+    | "Needs Review"
+    | "Ready";
+
+export type ResearchDrawerProjection = {
+    conversation_id: string;
+    research_revision: number;
+    conversation_revision: number;
+    status: ResearchDrawerStatus;
+    summary: {
+        current_understanding: string;
+        goal: string;
+        key_requirements: string[];
+        important_decisions: string[];
+    };
+    research: {
+        facts: { id: string; statement: string; provenance: string }[];
+        sources: string[];
+        unresolved_questions: string[];
+    };
+    build_readiness: {
+        baseline: string;
+        fixture_id?: string;
+        validation_status: "PASSED" | "FAILED" | "PENDING" | "NOT_STARTED";
+        lock_status: "LOCKED" | "UNLOCKED" | "SUPERSEDED";
+        open_blockers: string[];
+    };
+    review: {
+        status: "pending" | "approved" | "correction_requested" | "none";
+        revision: number;
+        active_correction?: {
+            id: string;
+            feedback: string;
+            status: string;
+        };
+        allowed_actions: ("agree" | "request_correction")[];
+    };
+    handoff: {
+        research_bundle_status: string;
+        ready_for_planner: boolean;
+    };
+    run_id?: string;
+    updated_at: string;
+};
+

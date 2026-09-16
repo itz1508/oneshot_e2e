@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import type { Prompt, RootCause } from "../contracts/schema/types.js";
 import type {
   ConversationSnapshot,
@@ -10,6 +10,8 @@ import type {
 } from "./types.js";
 import { ConversationStore } from "./conversation-store.js";
 import { PromptGenerator } from "./prompt-generator.js";
+import type { MessageStore } from "../conversation/message-store.js";
+import type { ConversationMessage, MessageRole } from "../conversation/types.js";
 
 // ---------------------------------------------------------------------------
 // Semantic intent extraction — recognizes natural user requests and derives
@@ -34,6 +36,21 @@ const CONSTRAINT =
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/** Compute a stable hash of the conversation state for gate validation. */
+export function computeConversationHash(snap: ConversationSnapshot): string {
+  const hash = createHash("sha256");
+  hash.update(snap.conversation_id);
+  hash.update(snap.intent.intent_id);
+  hash.update(String(snap.intent.revision));
+  hash.update(snap.intent.goal || "");
+  hash.update(snap.intent.requested_outcome || "");
+  hash.update(snap.intent.requirements.join(","));
+  hash.update(snap.intent.constraints.join(","));
+  hash.update(snap.intent.statements.map((s) => `${s.kind}:${s.value}:${s.revision}`).join(","));
+  hash.update(snap.updated_at);
+  return hash.digest("hex");
+}
 
 function clean(v: string): string {
   return v
@@ -136,6 +153,7 @@ function statement(
 export class IntentCollectionService {
   constructor(
     private store: ConversationStore,
+    private messageStore?: MessageStore,
     private promptGenerator = new PromptGenerator(),
   ) {}
 
@@ -185,12 +203,62 @@ export class IntentCollectionService {
     snap.turns.push(turn);
     snap.intent = this.merge(snap.intent, turn);
     snap.updated_at = turn.created_at;
-    return this.store.save(snap);
+
+    // Persist user message to MessageStore if available
+    if (this.messageStore) {
+      this.messageStore.add({
+        messageId: `message:${randomUUID()}`,
+        conversationId,
+        role: "user" as MessageRole,
+        content: message.trim(),
+        status: "completed",
+        sequence: turn.turn_number,
+      });
+    }
+
+    return this.store.saveWithHash(snap, computeConversationHash);
   }
 
   /** Get a conversation snapshot, if it exists. */
   get(conversationId: string): ConversationSnapshot | undefined {
     return this.store.get(conversationId);
+  }
+
+  /** List all conversations with metadata. */
+  list(): Array<{ conversation_id: string; created_at: string; updated_at: string }> {
+    return this.store.list();
+  }
+
+  /** Add an assistant message to a conversation (for agent responses). */
+  addAssistantMessage(
+    conversationId: string,
+    content: string,
+    runId?: string,
+  ): void {
+    if (!this.messageStore) return;
+    const snap = this.store.get(conversationId);
+    if (!snap) return;
+
+    this.messageStore.add({
+      messageId: `message:${randomUUID()}`,
+      conversationId,
+      runId,
+      role: "assistant" as MessageRole,
+      content,
+      status: "completed",
+      sequence: snap.turns.length + 1,
+    });
+  }
+
+  /** Get messages for a conversation. */
+  getMessages(conversationId: string): ConversationMessage[] {
+    if (!this.messageStore) return [];
+    return this.messageStore.list(conversationId);
+  }
+
+  /** Get underlying conversation store. */
+  getStore(): ConversationStore {
+    return this.store;
   }
 
   /**

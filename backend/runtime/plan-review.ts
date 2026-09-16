@@ -15,6 +15,10 @@ export interface PlanReview {
   confirmed_at?: string;
   research: ResearchBundle;
   edits: PlanReviewEdits;
+  /** M14: Conversation context for gate validation. */
+  conversation_id?: string;
+  conversation_revision?: number;
+  conversation_hash?: string;
 }
 export class PlanReviewError extends Error {
   constructor(
@@ -39,6 +43,11 @@ export class PlanReviewService {
   async open(
     runId: string,
     research: ResearchBundle,
+    conversationContext?: {
+      conversation_id: string;
+      conversation_revision: number;
+      conversation_hash: string;
+    },
   ): Promise<PlanReview | undefined> {
     const requested = await loadOptionalArtifact<{ enabled?: boolean }>(
       this.store,
@@ -64,6 +73,10 @@ export class PlanReviewService {
         })),
         notes: [],
       },
+      // M14: Store conversation context for gate validation
+      conversation_id: conversationContext?.conversation_id,
+      conversation_revision: conversationContext?.conversation_revision,
+      conversation_hash: conversationContext?.conversation_hash,
     };
     await this.store.save(runId, "review", review);
     return review;
@@ -72,6 +85,7 @@ export class PlanReviewService {
   async decide(
     runId: string,
     input: Record<string, unknown>,
+    conversationStore?: import("../intent/conversation-store.js").ConversationStore,
   ): Promise<PlanReview> {
     const previous = this.locks.get(runId) ?? Promise.resolve();
     let release!: () => void;
@@ -90,6 +104,21 @@ export class PlanReviewService {
         throw new PlanReviewError("Review changed; reload the current draft");
       if (input.action !== "approve" && input.action !== "cancel")
         throw new PlanReviewError("Choose approve or cancel", 400);
+
+      // M14: Validate conversation hash if conversation context is present
+      if (review.conversation_id && review.conversation_hash && conversationStore) {
+        const hashValid = conversationStore.validateHash(
+          review.conversation_id,
+          review.conversation_hash,
+        );
+        if (!hashValid) {
+          throw new PlanReviewError(
+            "Conversation state has changed since plan was generated; please regenerate the plan",
+            409,
+          );
+        }
+      }
+
       if (input.action === "approve")
         review.edits = validatePlanReviewEdits(input.edits, review);
       review.status = input.action === "approve" ? "approved" : "cancelled";

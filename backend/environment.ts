@@ -30,4 +30,7 @@ if (existsSync(environmentFile)) {
  *   ONESHOT_REDIS_PROBE_TIMEOUT_MS — ms cap for the startup reachability probe (default 2000)
  *   ONESHOT_START_WORKER          — "true" starts a pipeline worker in the server process
  *   ONESHOT_RUN_CONCURRENCY       — worker concurrency (default 1)
+ *
+ * M16 Ollama integration variables:
+ *   OLLAMA_BASE_URL               — Ollama endpoint URL (auto-detected if not set)
  */

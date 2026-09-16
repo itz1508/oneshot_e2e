@@ -114,6 +114,20 @@ test("conversation message routing stores turns and rejects invalid runs", async
       body: JSON.stringify({ message: "Unauthenticated" }),
     });
     assert.notEqual(postRes.status, 401);
+
+    // 7. GET /api/conversations lists conversations
+    const listRes = await fetch(`${base}/api/conversations`);
+    assert.equal(listRes.status, 200);
+    const listBody = (await listRes.json()) as Array<{ conversation_id: string }>;
+    assert.ok(Array.isArray(listBody));
+    assert.ok(listBody.some((c) => c.conversation_id === conv.conversation_id));
+
+    // 8. GET /api/conversations/:id/messages returns message history
+    const getMsgsRes = await fetch(`${base}/api/conversations/${conv.conversation_id}/messages`);
+    assert.equal(getMsgsRes.status, 200);
+    const getMsgsBody = (await getMsgsRes.json()) as { conversation_id: string; messages: unknown[] };
+    assert.equal(getMsgsBody.conversation_id, conv.conversation_id);
+    assert.ok(Array.isArray(getMsgsBody.messages));
   } finally {
     if (server) await closeServer(server);
     await rm(temporaryRoot, { recursive: true, force: true });
