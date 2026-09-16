@@ -54,7 +54,7 @@ jobs:
 
       - name: Build application
         run: |
-          npm --prefix app/web ci
+          npm --prefix frontend/web ci
           npm run build
 
       - name: Start OneShot server
