@@ -1,8 +1,45 @@
 "use client";
 import { useMemo, useState } from "react";
-import { useStream } from "@langchain/langgraph-sdk/react";
-import type { deepAgentTodoListAgent } from "./types";
-import { HumanMessage, AIMessage } from "@langchain/core/messages";
+import { deepAgentTodoListAgent, type BaseMessage } from "./types";
+
+export class HumanMessage {
+  id?: string;
+  content: string;
+  constructor(content: string, id?: string) {
+    this.content = content;
+    this.id = id;
+  }
+  static isInstance(msg: any): msg is HumanMessage {
+    return msg instanceof HumanMessage || msg?._getType?.() === "human";
+  }
+}
+
+export class AIMessage {
+  id?: string;
+  content: string;
+  constructor(content: string, id?: string) {
+    this.content = content;
+    this.id = id;
+  }
+  static isInstance(msg: any): msg is AIMessage {
+    return msg instanceof AIMessage || msg?._getType?.() === "ai";
+  }
+}
+
+export function useStream<T = any>(_config?: {
+  apiUrl?: string;
+  assistantId?: string;
+  threadId?: string | null;
+  onThreadId?: (id: string) => void;
+}) {
+  return {
+    submit: (_payload: any) => {},
+    values: { todos: [] as Todo[] } as { todos?: Todo[] },
+    messages: [] as BaseMessage[],
+    isLoading: false,
+  };
+}
+
 
 import {
   FIXTURE_SCENARIOS,
@@ -345,7 +382,7 @@ export default function DeepAgentTodoListPreview() {
               </AIBubble>
             )}
 
-            {messages.map((msg, i) => {
+            {messages.map((msg: any, i: number) => {
               if (HumanMessage.isInstance(msg)) {
                 return (
                   <HumanBubble key={msg.id ?? i}>

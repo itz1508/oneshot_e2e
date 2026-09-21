@@ -1,4 +1,11 @@
-import type { BaseMessage } from "@langchain/core/messages";
+export interface BaseMessage {
+  id?: string;
+  content: string | any;
+  _getType?: () => string;
+}
+
+export const deepAgentTodoListAgent = {} as any;
+export type deepAgentTodoListAgent = typeof deepAgentTodoListAgent;
 
 export type TodoStatus = "pending" | "in_progress" | "completed";
 
@@ -11,3 +18,4 @@ export interface AgentState {
   messages: BaseMessage[];
   todos?: Todo[];
 }
+
