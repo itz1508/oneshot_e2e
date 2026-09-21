@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Accessibility research fixture preview</title>
+    <link rel="stylesheet" href="./researcher-workflow-demo.css" />
+  </head>
+  <body>
+    <main class="product-shell" data-demo-root>
+      <section class="product-main">
+        <section class="chat-pane" aria-label="Product chat fixture">
+          <div class="product-hero">
+            <p class="product-eyebrow">Accessibility research fixture</p>
+            <h1>Planning assistant with sourced findings</h1>
+            <p>This static simulation preview mirrors the product layout: chat on the left, Agent Progress on the right, and public-source citations for each accessibility finding.</p>
+          </div>
+          <section class="fixture-controls" aria-label="Deterministic simulation controls">
+            <div class="fixture-picker" aria-label="Accessibility research simulations">
+              <label class="fixture-option"><input type="radio" name="fixture" value="straight-success" checked /> <span>Fixture 1: sourced accessibility findings</span></label>
+              <label class="fixture-option"><input type="radio" name="fixture" value="section-change-reloop" /> <span>Fixture 2: sourced correction loop</span></label>
+            </div>
+            <div class="fixture-actions">
+              <button type="button" data-start>Start</button>
+              <button type="button" class="button-secondary" data-cancel>Cancel</button>
+              <button type="button" data-continue hidden>Continue</button>
+            </div>
+            <p class="fixture-state">Simulation state: <strong data-state>idle</strong></p>
+          </section>
+          <section class="chat-card" aria-label="Chat transcript">
+            <div data-chat-log class="chat-log">
+              <article class="ai-message">Choose a simulation and press Start, or embed this file as a deterministic simulation preview.</article>
+            </div>
+            <form class="chat-input" data-chat-form>
+              <input aria-label="Message" placeholder="Ask about focus indicators or live-region status messages…" />
+              <button type="submit" class="send-button">Send</button>
+            </form>
+          </section>
+        </section>
+        <aside class="progress-pane" aria-label="Agent progress and review">
+          <div data-progress></div>
+          <p class="progress-idle-note" data-idle-note>Agent Progress appears after the simulated source-check plan starts.</p>
+          <div data-review></div>
+        </aside>
+      </section>
+    </main>
+    <script src="./researcher-workflow-demo.js"></script>
+  </body>
+</html>

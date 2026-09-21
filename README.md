@@ -79,3 +79,69 @@ Local URL: http://localhost:8787
 [Source repository](https://github.com/itz1508/oneshot_e2e) · [Download ZIP](https://github.com/itz1508/oneshot_e2e/archive/refs/heads/main.zip)
 
 [Apache License 2.0](LICENSE) · [Third-party notices](docs/license/NOTICE)
+
+---
+
+## Researcher Workflow Preview
+
+**Source:** `frontend/web/src/patterns/deep-agent-todo-list/`
+**Embed preview:** `frontend/web/public/embed/researcher-workflow-demo.html`
+**Tests:** `frontend/web/tests/researcher-workflow.test.mjs` — 23 pass / 0 fail
+
+### Architecture invariants
+
+| Invariant | Implementation |
+|---|---|
+| One `useStream` boundary | `useStream<typeof deepAgentTodoListAgent>` in `preview.tsx` — the single live agent connection |
+| Live Agent Progress | `getTodosFromStreamValues(stream.values)` → `liveTodos` → `data-source="live"` region |
+| Fixture todos isolated | Local `useState` only → `fixtureTodos` → `data-source="fixture"` region |
+| No stream/fixture merge | `liveTodos` and `fixtureTodos` are **never concatenated or written into `stream.values`** |
+| Preview controls are offline | `openResearcherPreview`, `closeResearcherPreview`, `startFixture`, `cancelFixture`, `continueFixture`, `requestSectionChange` — none call `stream.submit`, `fetch`, `WebSocket`, or `EventSource` |
+
+### Fixture scenarios
+
+- **Fixture 1 (`straight-success`):** Sourced accessibility findings — keyboard focus visibility, ARIA live regions, cited from W3C WAI and MDN.
+- **Fixture 2 (`section-change-reloop`):** Sourced correction loop — targeted revision of a single Facts and Sources section without re-running unaffected sections.
+
+### Normal chat vs Preview
+
+Normal chat remains connected to the live agent stream whether the Researcher Preview is open or closed. `stream.submit` is called only from `handleSubmit` (the normal-chat path). The Researcher Preview is a deterministic product-review fixture — it does not execute the Researcher, call an API, or write into live stream state.
+
+---
+
+## Evaluation Middleware
+
+**Source:** `backend/validation/python/evaluation_middleware/`
+**Tests:** `backend/tests/python/evaluation_middleware/` — 48 pass / 0 fail
+
+Framework-level build-requirement evaluation middleware. Provider-neutral, deterministic-first, offline-mandatory.
+
+**Status flags:** `FRAMEWORK_PROOF_ONLY` · `DETERMINISTIC_FIRST` · `PROVIDER_NEUTRAL` · `NO_LIVE_MODEL` · `NO_NETWORK` · `NO_COSMOS_INSTALL`
+
+### Public evaluator roles
+
+| Role | Upstream Strands reference | Outcome vocabulary |
+|---|---|---|
+| `RequirementEvaluator` | `goal_success_rate_evaluator.py` | `SATISFIED` / `PARTIALLY_SATISFIED` / `MISSING` / `UNVERIFIED` / `NOT_APPLICABLE` / `BLOCKED` |
+| `GoalEvaluator` | `goal_success_rate_with_assertions_evaluator.py` | `ACHIEVED` / `PARTIAL` / `NOT_ACHIEVED` / `UNVERIFIED` |
+| `OutputEvaluator` | `output_evaluator.py` | `PASS` / `MARGINAL` / `FAIL` / `UNVERIFIED` |
+| `WorkflowEvaluator` | `trajectory_evaluator.py` | `HONORED` / `HONORED_WITH_GAPS` / `VIOLATED` / `UNVERIFIED` |
+
+The `EvaluationMiddleware` async facade composes all four evaluators and returns an `EvaluationReceipt` with `recommendedDisposition` ∈ `{READY_FOR_APPROVAL, CORRECTION_REQUIRED, MORE_EVIDENCE_REQUIRED, BLOCKED, CANCELLED}`.
+
+### Invariants
+
+| ID | Statement |
+|---|---|
+| INV-1 | A requirement that is blank, missing, skipped, or unevaluated is **never** `SATISFIED`. |
+| INV-2 | A model-based score, however high, does **not** override a deterministic missing-requirement disposition. |
+| INV-3 | Timeout, cancellation, and failure are **distinct** on the receipt. One evaluator's timeout does not erase another's payload. |
+| INV-4 | The receipt exposes `recommendedDisposition` + `limitations` only — no patch, no deployment instruction, no hidden reasoning. |
+| INV-5 | `MultimodalObservation` is always `MODEL_DERIVED_VISUAL_OBSERVATION`; never a confirmed fact / component / requirement / root cause / approved implementation. |
+
+### Run tests
+
+```powershell
+python -m pytest backend/tests/python/evaluation_middleware/ -v
+# 48 passed, 0 failed — no network, no GPU, no credentials required
+```
