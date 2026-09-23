@@ -1,5 +1,49 @@
-node_modules
-.next
-dist
+# Dependencies
+node_modules/
+app/integration/*/node_modules/
+frontend/web/node_modules/
+
+# Build and export outputs
+dist/
+build/
+out/
+.next/
+frontend/web/.next/
+frontend/web/dist/
+frontend/web/out/
 *.tsbuildinfo
-test-results
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+app/env/.env
+app/env/.env.local
+
+# Logs and test artifacts
+*.log
+*.tmp
+*.temp
+server.log
+server-err.log
+test-results/
+coverage/
+.nyc_output/
+test.txt
+test-api.mjs
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.kiro/
+.oneshot/

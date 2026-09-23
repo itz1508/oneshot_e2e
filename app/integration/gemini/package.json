@@ -1,0 +1,9 @@
+{
+  "name": "@oneshot/integration-gemini",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@ai-sdk/google": "4.0.67"
+  }
+}

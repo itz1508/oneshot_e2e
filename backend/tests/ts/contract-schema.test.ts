@@ -5,6 +5,9 @@ import {
   ContractRegistry,
   JsonSchema,
   ContractSchema,
+  ValidateFixturesSchema,
+  ValidateFixturesInput,
+  fixture,
 } from '../../contract/schema.js';
 import { FailureType } from '../../validation/failure-taxonomy.js';
 
@@ -312,5 +315,115 @@ test('Contract Schema', async (suite) => {
 
     registry.clear();
     assert.strictEqual(registry.count(), 0);
+  });
+
+  await suite.test('ValidateFixturesSchema enforces mandatory sessionId', () => {
+    // 1. Valid input with authoritative sessionId
+    const validInput: ValidateFixturesInput = {
+      sessionId: 'session-e2e-101',
+      fixtures: [
+        {
+          id: 'fix-1',
+          path: 'app/fixtures/sample.json',
+          expectedHash: 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        },
+      ],
+      strict: true,
+    };
+    const validViolations = SchemaValidator.validate(validInput, ValidateFixturesSchema);
+    assert.strictEqual(validViolations.length, 0);
+
+    // 2. Missing sessionId: must produce contract violation
+    const missingSession = {
+      fixtures: [
+        {
+          id: 'fix-1',
+          path: 'app/fixtures/sample.json',
+          expectedHash: 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        },
+      ],
+    };
+    const missingViolations = SchemaValidator.validate(missingSession, ValidateFixturesSchema);
+    assert.ok(missingViolations.length > 0);
+    assert.ok(missingViolations.some((v) => v.message.includes('sessionId')));
+
+    // 3. Invalid sessionId type: must produce contract violation
+    const invalidSessionType = {
+      sessionId: 12345,
+      fixtures: [],
+    };
+    const typeViolations = SchemaValidator.validate(invalidSessionType, ValidateFixturesSchema);
+    assert.ok(typeViolations.length > 0);
+
+    // 4. Validate input with fixture_id and session_id
+    const persistenceInput = {
+      sessionId: 'session-e2e-202',
+      session_id: 'session-e2e-202',
+      fixtures: [
+        {
+          id: 'fix-2',
+          fixture_id: 'fix-2',
+          path: 'app/fixtures/sample.json',
+          expectedHash: 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+          actualHash: 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+          status: 'passed',
+        },
+      ],
+    };
+    const persistenceViolations = SchemaValidator.validate(persistenceInput, ValidateFixturesSchema);
+    assert.strictEqual(persistenceViolations.length, 0);
+  });
+
+  await suite.test('Fixture Runtime Rule and Persistence Artifact Rule for fixture(...) and fixture_id', () => {
+    // 1. Create mutable runtime fixture(...) in progress
+    const activeFixture = fixture(
+      'fix-test-01',
+      'session-audit-999',
+      'app/fixtures/sample.json',
+      'sha256:expected_hash_value'
+    );
+    assert.strictEqual(activeFixture.fixture_id, 'fix-test-01');
+    assert.strictEqual(activeFixture.session_id, 'session-audit-999');
+    assert.strictEqual(activeFixture.isMutable, true);
+    assert.strictEqual(activeFixture.isInProgress, true);
+    assert.strictEqual(activeFixture.status, 'draft');
+
+    // 2. Can Evolve
+    activeFixture.evolve({ status: 'in_progress', actualHash: 'sha256:different_hash' });
+    assert.strictEqual(activeFixture.status, 'in_progress');
+    assert.strictEqual(activeFixture.actualHash, 'sha256:different_hash');
+
+    // 3. Can Be Refined
+    activeFixture.refine((curr: any) => ({
+      expectedHash: 'sha256:matching_hash',
+    }));
+    assert.strictEqual(activeFixture.expectedHash, 'sha256:matching_hash');
+
+    // 4. Can Emit Events
+    let eventFired = false;
+    activeFixture.onEvent((evt: any) => {
+      if (evt.type === 'fixture:refined') eventFired = true;
+    });
+    activeFixture.emit('fixture:refined', { detail: 'refined for test' });
+    assert.strictEqual(eventFired, true);
+
+    // 5. Can Fail Validation
+    activeFixture.actualHash = 'sha256:mismatch_hash';
+    const failedResult = activeFixture.validate();
+    assert.strictEqual(failedResult.ok, false);
+    assert.strictEqual(activeFixture.status, 'failed');
+
+    // 6. Validation Success & Freeze to Persistence Artifact (Stored Record)
+    activeFixture.actualHash = 'sha256:matching_hash';
+    const passedResult = activeFixture.validate();
+    assert.strictEqual(passedResult.ok, true);
+    assert.strictEqual(activeFixture.status, 'passed');
+
+    const stored = activeFixture.toStoredRecord();
+    assert.strictEqual(stored.fixture_id, 'fix-test-01');
+    assert.strictEqual(stored.session_id, 'session-audit-999');
+    assert.strictEqual(stored.status, 'passed');
+    assert.strictEqual(activeFixture.isInProgress, false);
+    assert.ok(stored.auditTrail.length > 0);
   });
 });

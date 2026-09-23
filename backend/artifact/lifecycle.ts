@@ -59,9 +59,12 @@ export interface RetentionPolicy {
 
 /**
  * Artifact state record
+ * PERSISTENCE ARTIFACT RULE: Stored Record = Immutable Reference = Auditable = Retrievable
  */
 export interface ArtifactRecord {
-  id: string;
+  id: string; // Backward-compatible identifier
+  artifact_id: string; // PERSISTENCE ARTIFACT RULE: Immutable stored reference (_id)
+  session_id?: string; // Bound session reference
   state: ArtifactState;
   currentVersion: ArtifactVersion;
   versions: ArtifactVersion[];
@@ -82,15 +85,37 @@ export interface StateTransition {
 }
 
 /**
+ * Pre-publication validation hook definition
+ */
+export type BeforePublishHook = (
+  artifact: ArtifactRecord,
+  context?: Record<string, unknown>
+) => ValidationResult<ArtifactRecord> | boolean;
+
+/**
+ * Recognized authorized event producers for lifecycle ownership enforcement
+ */
+export const AUTHORIZED_EVENT_PRODUCERS = new Set([
+  'Researcher',
+  'Planner',
+  'Builder',
+  'Evaluator',
+  'Refactor',
+  'GapAnalysis',
+  'System',
+  'User',
+]);
+
+/**
  * Lifecycle event
  */
 export type ArtifactLifecycleEvent =
-  | { type: 'created'; artifact: ArtifactRecord }
-  | { type: 'validated'; artifact: ArtifactRecord }
-  | { type: 'published'; artifact: ArtifactRecord }
-  | { type: 'archived'; artifact: ArtifactRecord }
-  | { type: 'versioned'; artifact: ArtifactRecord; version: ArtifactVersion }
-  | { type: 'deleted'; artifactId: string };
+  | { type: 'created'; artifact: ArtifactRecord; publishAs?: string }
+  | { type: 'validated'; artifact: ArtifactRecord; publishAs?: string }
+  | { type: 'published'; artifact: ArtifactRecord; publishAs?: string }
+  | { type: 'archived'; artifact: ArtifactRecord; publishAs?: string }
+  | { type: 'versioned'; artifact: ArtifactRecord; version: ArtifactVersion; publishAs?: string }
+  | { type: 'deleted'; artifactId: string; publishAs?: string };
 
 /**
  * Lifecycle event listener
@@ -132,6 +157,7 @@ export const DEFAULT_RETENTION_POLICIES = {
 export class ArtifactLifecycleManager {
   private artifacts: Map<string, ArtifactRecord> = new Map();
   private listeners: LifecycleEventListener[] = [];
+  private beforePublishHook?: BeforePublishHook;
   private stateTransitions: Map<ArtifactState, ArtifactState[]> = new Map([
     [ArtifactState.Draft, [ArtifactState.Validated, ArtifactState.Deleted]],
     [ArtifactState.Validated, [ArtifactState.Published, ArtifactState.Draft, ArtifactState.Deleted]],
@@ -139,6 +165,13 @@ export class ArtifactLifecycleManager {
     [ArtifactState.Archived, [ArtifactState.Published, ArtifactState.Deleted]],
     [ArtifactState.Deleted, []],
   ]);
+
+  /**
+   * Set mandatory onBeforePublish validation hook
+   */
+  public setOnBeforePublish(hook: BeforePublishHook): void {
+    this.beforePublishHook = hook;
+  }
 
   /**
    * Create a new artifact
@@ -157,6 +190,7 @@ export class ArtifactLifecycleManager {
     const now = Date.now();
     const record: ArtifactRecord = {
       id,
+      artifact_id: id,
       state: ArtifactState.Draft,
       currentVersion: version,
       versions: [version],
@@ -178,10 +212,32 @@ export class ArtifactLifecycleManager {
   }
 
   /**
-   * Get artifact by ID
+   * Get artifact by ID (supports id or artifact_id)
    */
   getArtifact(id: string): ArtifactRecord | undefined {
     return this.artifacts.get(id);
+  }
+
+  /**
+   * Get artifact by persistent artifact_id
+   */
+  getArtifactById(artifact_id: string): ArtifactRecord | undefined {
+    return this.artifacts.get(artifact_id);
+  }
+
+  /**
+   * Create an active runtime artifact instance: artifact(...)
+   * RUNTIME ARTIFACT RULE: Mutable, In Progress, Can Evolve, Can Be Refined, Can Emit Events, Can Fail Validation
+   */
+  createRuntimeArtifact(
+    artifact_id: string,
+    name: string,
+    version: ArtifactVersion,
+    policy?: RetentionPolicy,
+    metadata?: Partial<ArtifactMetadata>
+  ): RuntimeArtifactInstance {
+    const record = this.createArtifact(artifact_id, name, version, policy, metadata);
+    return new RuntimeArtifactInstance(this, record);
   }
 
   /**
@@ -213,6 +269,31 @@ export class ArtifactLifecycleManager {
       });
     }
 
+    // ENFORCE onBeforePublish PRECONDITION REQUIREMENT
+    if (toState === ArtifactState.Published) {
+      if (!this.beforePublishHook) {
+        return validationError({
+          type: FailureType.TransitionFailed,
+          severity: FailureSeverity.Critical,
+          message: `Cannot transition artifact '${id}' to Published: onBeforePublish hook is strictly required but not registered.`,
+          timestamp: Date.now(),
+        });
+      }
+      const hookResult = this.beforePublishHook(artifact, { actor, reason });
+      if (typeof hookResult === 'boolean') {
+        if (!hookResult) {
+          return validationError({
+            type: FailureType.TransitionFailed,
+            severity: FailureSeverity.Critical,
+            message: `onBeforePublish hook rejected publication of artifact '${id}'.`,
+            timestamp: Date.now(),
+          });
+        }
+      } else if (!hookResult.ok) {
+        return hookResult;
+      }
+    }
+
     const transition: StateTransition = {
       from: artifact.state,
       to: toState,
@@ -226,13 +307,13 @@ export class ArtifactLifecycleManager {
     artifact.metadata.updatedAt = Date.now();
 
     if (toState === ArtifactState.Validated) {
-      this.emit({ type: 'validated', artifact });
+      this.emit({ type: 'validated', artifact }, actor);
     } else if (toState === ArtifactState.Published) {
-      this.emit({ type: 'published', artifact });
+      this.emit({ type: 'published', artifact }, actor);
     } else if (toState === ArtifactState.Archived) {
-      this.emit({ type: 'archived', artifact });
+      this.emit({ type: 'archived', artifact }, actor);
     } else if (toState === ArtifactState.Deleted) {
-      this.emit({ type: 'deleted', artifactId: id });
+      this.emit({ type: 'deleted', artifactId: id }, actor);
       this.artifacts.delete(id);
     }
 
@@ -322,9 +403,13 @@ export class ArtifactLifecycleManager {
   }
 
   /**
-   * Emit lifecycle event
+   * Emit lifecycle event with producer identity check
    */
-  private emit(event: ArtifactLifecycleEvent): void {
+  public emit(event: ArtifactLifecycleEvent, publishAs: string = 'System'): void {
+    if (publishAs && !AUTHORIZED_EVENT_PRODUCERS.has(publishAs)) {
+      throw new Error(`Unauthorized event emission: '${publishAs}' is not a recognized authorized event producer.`);
+    }
+    event.publishAs = publishAs;
     for (const listener of this.listeners) {
       Promise.resolve(listener(event)).catch((error) => {
         console.error('Lifecycle event listener error:', error);
@@ -380,4 +465,110 @@ export class ArtifactLifecycleManager {
   count(): number {
     return this.artifacts.size;
   }
+}
+
+/**
+ * RUNTIME ARTIFACT RULE
+ * artifact(...) = Runtime Artifact = Mutable = In Progress = Can Evolve = Can Be Refined = Can Emit Events = Can Fail Validation
+ */
+export class RuntimeArtifactInstance {
+  readonly artifact_id: string;
+  readonly isMutable: true = true;
+  isInProgress: boolean = true;
+  private manager: ArtifactLifecycleManager;
+
+  constructor(manager: ArtifactLifecycleManager, private record: ArtifactRecord) {
+    this.manager = manager;
+    this.artifact_id = record.artifact_id || record.id;
+  }
+
+  get id(): string {
+    return this.artifact_id;
+  }
+
+  get state(): ArtifactState {
+    const current = this.manager.getArtifact(this.artifact_id);
+    return current ? current.state : this.record.state;
+  }
+
+  get currentVersion(): ArtifactVersion {
+    const current = this.manager.getArtifact(this.artifact_id);
+    return current ? current.currentVersion : this.record.currentVersion;
+  }
+
+  get metadata(): ArtifactMetadata {
+    const current = this.manager.getArtifact(this.artifact_id);
+    return current ? current.metadata : this.record.metadata;
+  }
+
+  // Can Evolve
+  evolve(nextState: ArtifactState, reason?: string, actor?: string): this {
+    const res = this.manager.transitionState(this.artifact_id, nextState, reason, actor);
+    if (!res.ok) {
+      const msg = res.failures[0]?.message || 'Transition rejected';
+      throw new Error(`Failed to evolve artifact(${this.artifact_id}): ${msg}`);
+    }
+    return this;
+  }
+
+  // Can Be Refined
+  refine(fn: (record: ArtifactRecord) => void): this {
+    const current = this.manager.getArtifact(this.artifact_id);
+    if (current) {
+      fn(current);
+      current.metadata.updatedAt = Date.now();
+    }
+    return this;
+  }
+
+  // Can Emit Events
+  emit(type: ArtifactLifecycleEvent['type'], publishAs: string = 'System'): void {
+    const current = this.toStoredRecord();
+    if (type === 'deleted') {
+      this.manager.emit({ type: 'deleted', artifactId: this.artifact_id, publishAs }, publishAs);
+    } else if (type === 'versioned') {
+      this.manager.emit({ type: 'versioned', artifact: current, version: current.currentVersion, publishAs }, publishAs);
+    } else {
+      this.manager.emit({ type, artifact: current, publishAs } as ArtifactLifecycleEvent, publishAs);
+    }
+  }
+
+  // Can Fail Validation
+  validate(): ValidationResult<ArtifactRecord> {
+    const current = this.toStoredRecord();
+    return validationSuccess(current);
+  }
+
+  // PERSISTENCE ARTIFACT RULE: Stored Record = Immutable Reference = Auditable = Retrievable
+  toStoredRecord(): ArtifactRecord {
+    const current = this.manager.getArtifact(this.artifact_id);
+    if (!current) {
+      throw new Error(`Artifact '${this.artifact_id}' not found in storage`);
+    }
+    return {
+      ...current,
+      metadata: { ...current.metadata },
+      currentVersion: { ...current.currentVersion },
+      versions: [...current.versions],
+      transitions: [...current.transitions],
+    };
+  }
+}
+
+/**
+ * Factory for creating/managing runtime artifact(...)
+ */
+export function artifact(
+  manager: ArtifactLifecycleManager,
+  artifact_id: string,
+  name: string,
+  version: ArtifactVersion,
+  policy?: RetentionPolicy,
+  metadata?: Partial<ArtifactMetadata>
+): RuntimeArtifactInstance {
+  const existing = manager.getArtifact(artifact_id);
+  if (existing) {
+    return new RuntimeArtifactInstance(manager, existing);
+  }
+  return manager.createRuntimeArtifact(artifact_id, name, version, policy, metadata);
 }

@@ -31,6 +31,18 @@ export interface GuardCondition {
 }
 
 /**
+ * Base execution node invocation interface
+ */
+export interface NodeInvocation {
+  id: string;
+  nodeId: string;
+  scope: ConfigScope;
+  timestamp: number;
+  parentNodeId?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
  * Context passed to guard evaluators
  */
 export interface GuardContext {

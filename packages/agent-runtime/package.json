@@ -1,0 +1,12 @@
+{
+  "name": "@oneshot/agent-runtime",
+  "version": "1.3.0",
+  "description": "OneShot unified agent runtime, canonical workflow engine, session ledger, and hierarchical todo manager",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "node --import tsx --test tests/*.test.mjs"
+  },
+  "license": "Apache-2.0"
+}

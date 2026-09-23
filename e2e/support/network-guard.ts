@@ -11,16 +11,12 @@ export function attachNetworkGuard(
 ): NetworkGuard {
     const unexpectedRequests: string[] = [];
 
-    const FORBIDDEN_PATTERNS = [
-        /\/api\/langgraph/i,
-        /\/research(\/.*)?$/i,
-        /openai/i,
-        /anthropic/i,
-        /gemini/i,
+    const FORBIDDEN_EXTERNAL_HOSTS = [
         /generativelanguage\.googleapis\.com/i,
-        /tavily/i,
-        /strands/i,
-        /mcp/i,
+        /openai\.com/i,
+        /anthropic\.com/i,
+        /tavily\.com/i,
+        /nebius\.ai/i,
     ];
 
     const routeHandler = async (route: Route, request: Request) => {
@@ -33,9 +29,13 @@ export function attachNetworkGuard(
                 parsed.origin === "http://localhost:4173" ||
                 parsed.origin === "http://127.0.0.1:4173";
 
-            const matchesForbidden = FORBIDDEN_PATTERNS.some((pat) => pat.test(url));
+            const isFontOrStaticAsset =
+                parsed.hostname === "fonts.googleapis.com" ||
+                parsed.hostname === "fonts.gstatic.com";
 
-            if (!isLocal || matchesForbidden) {
+            const matchesExternalForbidden = FORBIDDEN_EXTERNAL_HOSTS.some((pat) => pat.test(parsed.hostname));
+
+            if (matchesExternalForbidden || (!isLocal && !isFontOrStaticAsset)) {
                 unexpectedRequests.push(url);
                 await route.abort("blockedbyclient");
                 return;

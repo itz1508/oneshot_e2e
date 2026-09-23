@@ -1,0 +1,8 @@
+packages:
+  - "backend"
+  - "packages/*"
+  - "frontend/web"
+  - "app/integration/*"
+allowBuilds:
+  esbuild: set this to true or false
+  msgpackr-extract: set this to true or false
