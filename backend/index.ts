@@ -1582,7 +1582,9 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
 
 const currentFile = fileURLToPath(import.meta.url);
 const invokedFile = process.argv[1] ? path.resolve(process.argv[1]) : "";
-if (invokedFile && (currentFile === invokedFile || invokedFile.endsWith("backend/index.ts") || invokedFile.endsWith("backend/index.js"))) {
+const normCurrent = currentFile.replace(/\\/g, "/").toLowerCase();
+const normInvoked = invokedFile.replace(/\\/g, "/").toLowerCase();
+if (invokedFile && (normCurrent === normInvoked || normInvoked.endsWith("backend/index.ts") || normInvoked.endsWith("backend/index.js"))) {
   startAgentServer().catch((err) => {
     console.error("[Error]", err);
     process.exit(1);
