@@ -1,54 +1,5 @@
-# local scratch
-
-node_modules/
-__pycache__/
-*.pyc
-.env
-.env.*
-*.env
-!.env.example
-!.env.workspace.example
-*.pem
-*.key
-*.p12
-*.pfx
-credentials*
-secrets*
-/.runtime/
-dist/
-.venv/
-.ollama/
-.pytest_cache/
-
-app/web/node_modules/
-app/web/dist/
-/data/
-# Dev/experimental integration scratch (not part of the tracked tree)
-external/
-scripts/bootstrap/start.mjs
-scripts/bootstrap/health.mjs
-scripts/config/
-
-# Runtime noise (never migration baseline content)
-/.headless_profile/
-/runtime/
-/oneshot_e2e.runtimeserver*.log
-/ui_*.png
-
-# Transient local test/run logs
-*.log
-/unit-log.txt
-
-# Package manager local artifacts
-pnpm-lock.yaml
-pnpm-workspace.yaml
-
-
-# Next.js generated output
-app/web/.next/
-app/web/out/
-app/web/*.tsbuildinfo
-frontend/web/.next/
-frontend/web/out/
-frontend/web/*.tsbuildinfo
-.devswarm-temp/
+node_modules
+.next
+dist
+*.tsbuildinfo
+test-results
