@@ -8,6 +8,14 @@
   <img src="https://img.shields.io/badge/Manual-git%20clone%20https%3A%2F%2Fgithub.com%2Fitz1508%2Foneshot__e2e.git%20%3B%20cd%20oneshot__e2e%20%3B%20.%5Cscripts%5Cstart--web.ps1-1E293B?style=for-the-badge" alt="Manual: git clone https://github.com/itz1508/oneshot_e2e.git; cd oneshot_e2e; .\scripts\start-web.ps1" />
 </p>
 
+<p align="center">
+  <a href="public/demo/oneshot-demo.webm">
+    <img src="public/demo/screen-1-initial.png" alt="OneShot Product Walkthrough Video" width="100%" />
+  </a>
+  <br />
+  <em>🎬 Click image to watch the product walkthrough video (public/demo/oneshot-demo.webm)</em>
+</p>
+
 ---
 
 ### 🚀 Automated Quickstart (1 Command)
@@ -35,14 +43,6 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 > - **CLI**: `pnpm oneshot` *(supports `--help`, `--dev`, `--sample`, `--no-browser`)*
 > - **Windows**: `.\scripts\start-web.ps1` *(or `.\scripts\launch.bat`)*
 > - **macOS / Linux**: `pnpm oneshot` *(or `./scripts/launch.sh`)*
-
-### 🤖 Non-API Key Autonomous Style Chat Bot
-
-By default, OneShot starts in **Zero-Config Local Mode**:
-
-- **Interactive Chatbot**: Ask the agent to *"validate fixtures"* or *"run tests"* to watch `fixture(...)` evolve, verify hashes, and record into immutable `fixture_id` records in real time.
-- **Human Review Gates**: Ask for *"workflow gate status"* to inspect Gate 1 (Research Review) and Gate 2 (Build Ready).
-- **Task Rail Synchronization**: Watch live subtasks, plan status, and validation cards update live across the Task Rail.
 
 ### Optional: Live Model Providers
 

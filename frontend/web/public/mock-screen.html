@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OneShot — Interactive Playable UI Simulation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --os-bg: #0d0d0e;
+      --os-panel: #111113;
+      --os-panel-soft: #151517;
+      --os-card: #18181b;
+      --os-card-muted: #141416;
+      --os-line: rgba(255, 255, 255, 0.08);
+      --os-line-soft: rgba(255, 255, 255, 0.045);
+      --os-text: #f2f2f3;
+      --os-muted: #8e8e93;
+      --os-subtle: #65656a;
+      --os-green: #10b981;
+      --os-green-glow: rgba(16, 185, 129, 0.25);
+      --os-amber: #f59e0b;
+      --os-amber-glow: rgba(245, 158, 11, 0.2);
+      --os-blue: #3b82f6;
+      --os-blue-glow: rgba(59, 130, 246, 0.25);
+      --os-purple: #8b5cf6;
+      --os-radius: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background: var(--os-bg);
+      color: var(--os-text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Simulation Control Toolbar */
+    .sim-bar {
+      background: linear-gradient(90deg, #13112c 0%, #0d1322 40%, #0d1a1f 100%);
+      border-bottom: 1px solid rgba(139, 92, 246, 0.35);
+      padding: 8px 16px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #cbd5e1;
+      z-index: 100;
+      flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .sim-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sim-badge {
+      background: rgba(139, 92, 246, 0.25);
+      border: 1px solid rgba(139, 92, 246, 0.5);
+      padding: 3px 9px;
+      border-radius: 999px;
+      color: #c4b5fd;
+      font-weight: 600;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sim-badge .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #a855f7;
+      box-shadow: 0 0 8px #a855f7;
+      animation: pulseAnim 1.5s infinite;
+    }
+
+    @keyframes pulseAnim {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+
+    .sim-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sim-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #f1f5f9;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+
+    .sim-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .sim-btn.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+    }
+
+    .sim-timeline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 3px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--os-line);
+    }
+
+    .stage-step {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 500;
+      color: #64748b;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .stage-step:hover { color: #cbd5e1; }
+    .stage-step.active {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+    .stage-step.passed {
+      color: #4ade80;
+    }
+
+    .stage-step .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #475569;
+    }
+    .stage-step.active .dot { background: #38bdf8; box-shadow: 0 0 6px #38bdf8; }
+    .stage-step.passed .dot { background: #4ade80; }
+
+    .stage-sep { color: #334155; font-size: 9px; }
+
+    .view-toggles {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 2px 4px;
+      border-radius: 6px;
+      border: 1px solid var(--os-line);
+    }
+
+    .view-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .view-btn:hover { color: #f8fafc; }
+    .view-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #f8fafc;
+      font-weight: 600;
+    }
+
+    /* App Shell Container with Device Framing */
+    .viewport-wrapper {
+      flex: 1;
+      width: 100%;
+      height: calc(100vh - 43px);
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      background: #060608;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .viewport-frame {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 240px 1fr 340px;
+      background: var(--os-bg);
+      overflow: hidden;
+      transition: max-width 0.3s ease, border 0.3s ease;
+    }
+
+    /* Device sizes */
+    .viewport-frame.tablet {
+      max-width: 820px;
+      margin: 16px auto;
+      height: calc(100% - 32px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+      grid-template-columns: 200px 1fr;
+    }
+
+    .viewport-frame.mobile {
+      max-width: 420px;
+      margin: 16px auto;
+      height: calc(100% - 32px);
+      border-radius: 24px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
+      grid-template-columns: 1fr;
+    }
+
+    /* Left Sidebar */
+    .sidebar {
+      background: #101011;
+      border-right: 1px solid var(--os-line);
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      user-select: none;
+      overflow-y: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 6px 14px 6px;
+      border-bottom: 1px solid var(--os-line-soft);
+    }
+
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+    }
+
+    .brand-name {
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-version {
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: var(--os-muted);
+      margin-left: auto;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .btn-new-chat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--os-line);
+      color: var(--os-text);
+      padding: 9px 12px;
+      border-radius: var(--os-radius);
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 14px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-new-chat:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .session-group-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--os-subtle);
+      font-weight: 600;
+      margin: 18px 6px 8px 6px;
+    }
+
+    .session-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--os-muted);
+      cursor: pointer;
+      transition: all 0.12s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+    }
+
+    .session-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--os-text);
+    }
+
+    .session-item.active {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--os-text);
+      font-weight: 500;
+    }
+
+    .session-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      bottom: 6px;
+      width: 3px;
+      background: var(--os-green);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--os-line-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .provider-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 11px;
+      color: var(--os-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .provider-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--os-green);
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    /* Main Chat View */
+    .main-chat {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: var(--os-bg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-bar {
+      height: 48px;
+      border-bottom: 1px solid var(--os-line);
+      background: rgba(16, 16, 17, 0.85);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .session-title {
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stage-badge {
+      font-size: 11px;
+      background: rgba(37, 99, 235, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(37, 99, 235, 0.3);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .gate-badge {
+      font-size: 11px;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.3s ease;
+    }
+
+    .gate-badge.authorized {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-drawer-toggle {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--os-line);
+      color: var(--os-text);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Scrollable Workspace */
+    .chat-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px 140px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .chat-container {
+      max-width: 820px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Research Status Banner */
+    .research-banner {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(124, 58, 237, 0.08));
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: var(--os-radius);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .research-banner-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .research-pulse {
+      width: 8px;
+      height: 8px;
+      background: #3b82f6;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #3b82f6;
+    }
+
+    /* Messages */
+    .message-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .message-row.user {
+      align-items: flex-end;
+    }
+
+    .message-meta {
+      font-size: 11px;
+      color: var(--os-subtle);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 4px;
+    }
+
+    .message-bubble {
+      padding: 12px 16px;
+      border-radius: var(--os-radius);
+      font-size: 13.5px;
+      line-height: 1.55;
+      max-width: 85%;
+    }
+
+    .message-row.user .message-bubble {
+      background: #27272a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .message-row.assistant .message-bubble {
+      background: var(--os-card);
+      border: 1px solid var(--os-line);
+      color: #e4e4e7;
+    }
+
+    /* Typewriter cursor */
+    .typing-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 14px;
+      background: var(--os-green);
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 0.8s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Tool Call Card */
+    .tool-card {
+      background: var(--os-card-muted);
+      border: 1px solid var(--os-line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tool-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .tool-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tool-name {
+      color: #93c5fd;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tool-status {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .tool-payload {
+      color: #94a3b8;
+      font-size: 11px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 8px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      display: none;
+    }
+
+    .tool-card.expanded .tool-payload {
+      display: block;
+    }
+
+    /* Human Gate Review Card */
+    .gate-card {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(180, 83, 9, 0.04));
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 12px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 4px 20px var(--os-amber-glow);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .gate-card.confirmed {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.06));
+      border-color: rgba(16, 185, 129, 0.4);
+      box-shadow: 0 4px 20px var(--os-green-glow);
+    }
+
+    .gate-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .gate-title {
+      font-weight: 600;
+      font-size: 13px;
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .gate-card.confirmed .gate-title {
+      color: #34d399;
+    }
+
+    .gate-hash {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-gate-confirm {
+      background: #f59e0b;
+      color: #000;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+
+    .btn-gate-confirm:hover {
+      background: #fbbf24;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .btn-gate-confirm.confirmed {
+      background: #10b981;
+      color: #fff;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* Floating Composer */
+    .composer-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 24px 20px 24px;
+      background: linear-gradient(180deg, transparent 0%, rgba(13, 13, 14, 0.95) 40%, #0d0d0e 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 20;
+    }
+
+    .quick-tools {
+      display: flex;
+      gap: 6px;
+      max-width: 820px;
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .quick-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--os-line);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--os-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.12s;
+    }
+
+    .quick-pill:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--os-text);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .composer-box {
+      max-width: 820px;
+      width: 100%;
+      background: var(--os-card);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .composer-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--os-text);
+      font-size: 13.5px;
+      resize: none;
+      height: 38px;
+      font-family: inherit;
+    }
+
+    .composer-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--os-subtle);
+    }
+
+    .btn-send {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #f4f4f5;
+      color: #18181b;
+      border: none;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .btn-send:hover {
+      background: #fff;
+      transform: scale(1.05);
+    }
+
+    /* Right Rail / Context Drawer */
+    .drawer {
+      background: #111113;
+      border-left: 1px solid var(--os-line);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 14px;
+      gap: 14px;
+    }
+
+    .drawer-tabs {
+      display: flex;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--os-line-soft);
+    }
+
+    .drawer-tab {
+      flex: 1;
+      text-align: center;
+      padding: 6px 0;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--os-muted);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.12s;
+    }
+
+    .drawer-tab:hover { color: var(--os-text); }
+    .drawer-tab.active {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--os-text);
+      font-weight: 600;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .meta-cell {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--os-line-soft);
+      padding: 8px 10px;
+      border-radius: 8px;
+    }
+
+    .meta-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--os-subtle);
+      margin-bottom: 2px;
+      font-weight: 600;
+    }
+
+    .meta-value {
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #e2e8f0;
+      font-weight: 500;
+    }
+
+    /* Subtask Checklist */
+    .subtask-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .subtask-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--os-line-soft);
+      border-radius: 6px;
+      font-size: 11px;
+    }
+
+    .subtask-check {
+      color: var(--os-green);
+      font-weight: bold;
+    }
+
+    .subtask-active {
+      color: #3b82f6;
+      font-size: 12px;
+    }
+
+    /* Validation Ledger Panel */
+    .val-item {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--os-line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .val-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+    }
+
+    .val-pass { color: #34d399; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+
+    .val-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--os-muted);
+      margin-top: 2px;
+    }
+
+    /* Live Preview Screen (Swappable mode) */
+    .preview-mode-container {
+      display: none;
+      flex: 1;
+      height: 100%;
+      background: #0d0d0e;
+      flex-direction: column;
+    }
+
+    .preview-mode-container.active {
+      display: flex;
+    }
+
+    .browser-mock-bar {
+      height: 36px;
+      background: #141416;
+      border-bottom: 1px solid var(--os-line);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 10px;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 5px;
+    }
+
+    .window-dots span {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .window-dots .red { background: #ef4444; }
+    .window-dots .amber { background: #f59e0b; }
+    .window-dots .green { background: #10b981; }
+
+    .browser-url {
+      flex: 1;
+      background: #09090b;
+      border: 1px solid var(--os-line-soft);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #94a3b8;
+    }
+
+    .preview-render-area {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+    }
+
+    .preview-card-showcase {
+      max-width: 600px;
+      width: 100%;
+      background: #18181b;
+      border: 1px solid var(--os-line);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Simulation Toolbar -->
+  <header class="sim-bar">
+    <div class="sim-left">
+      <div class="sim-badge">
+        <span class="pulse-dot"></span>
+        <span>INTERACTIVE SIMULATION</span>
+      </div>
+
+      <div class="sim-controls">
+        <button id="btnPlay" class="sim-btn active" title="Run workflow simulation">
+          <span>▶</span> <span id="lblPlay">Play Demo</span>
+        </button>
+        <button id="btnReset" class="sim-btn" title="Reset to initial state">
+          <span>🔄</span> Reset
+        </button>
+        <button id="btnSpeed" class="sim-btn" title="Toggle simulation speed">
+          ⚡ <span id="lblSpeed">1x</span>
+        </button>
+      </div>
+
+      <!-- Canonical Stage Scrubber -->
+      <div class="sim-timeline">
+        <div class="stage-step passed" data-stage="1"><span class="dot"></span>Research</div>
+        <span class="stage-sep">→</span>
+        <div class="stage-step active" id="stgGate" data-stage="2"><span class="dot"></span>Gate 1</div>
+        <span class="stage-sep">→</span>
+        <div class="stage-step" id="stgPlan" data-stage="3"><span class="dot"></span>Planning</div>
+        <span class="stage-sep">→</span>
+        <div class="stage-step" id="stgTask" data-stage="4"><span class="dot"></span>Task Rail</div>
+        <span class="stage-sep">→</span>
+        <div class="stage-step" id="stgVal" data-stage="5"><span class="dot"></span>Validation</div>
+        <span class="stage-sep">→</span>
+        <div class="stage-step" id="stgBuild" data-stage="6"><span class="dot"></span>Build</div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <!-- Viewport Switcher -->
+      <div class="view-toggles">
+        <button class="view-btn active" id="vwMain">ChatShell</button>
+        <button class="view-btn" id="vwSplit">Split</button>
+        <button class="view-btn" id="vwPreview">Preview</button>
+      </div>
+
+      <!-- Device Switcher -->
+      <div class="view-toggles">
+        <button class="view-btn active" id="devDesk" title="Desktop View">🖥️ 100%</button>
+        <button class="view-btn" id="devTab" title="Tablet View">📱 768px</button>
+        <button class="view-btn" id="devMob" title="Mobile View">📲 375px</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Frame Container -->
+  <div class="viewport-wrapper">
+    <div class="viewport-frame" id="appFrame">
+      
+      <!-- 1. Left Sidebar -->
+      <nav class="sidebar" id="sidebar">
+        <div class="brand">
+          <div class="brand-icon">⚡</div>
+          <div class="brand-name">OneShot</div>
+          <div class="brand-version">v1.3.0</div>
+        </div>
+
+        <button class="btn-new-chat" id="btnNewChat">
+          <span style="color: var(--os-green); font-size: 16px; font-weight: 700;">＋</span>
+          <span>New Chat</span>
+        </button>
+
+        <div class="session-group-title">Today</div>
+        <div class="session-item active" id="sess1">
+          <span>💬</span>
+          <span>E2E Architectural Pipeline</span>
+        </div>
+        <div class="session-item">
+          <span>💬</span>
+          <span>Dual Research Invariant Test</span>
+        </div>
+        <div class="session-item">
+          <span>💬</span>
+          <span>Vercel AI SDK Integration</span>
+        </div>
+
+        <div class="session-group-title">Yesterday</div>
+        <div class="session-item">
+          <span>📁</span>
+          <span>Pluggable Backends Setup</span>
+        </div>
+        <div class="session-item">
+          <span>📁</span>
+          <span>Deterministic Fixtures Run</span>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="provider-pill">
+            <span><span class="provider-dot"></span>Gemini 2.5 Flash</span>
+            <span style="color: #6ee7b7;">READY</span>
+          </div>
+          <div class="provider-pill">
+            <span><span class="provider-dot" style="background: #3b82f6;"></span>OpenAI GPT-4o</span>
+            <span style="color: #93c5fd;">STANDBY</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- 2. Main Chat Workspace -->
+      <main class="main-chat" id="chatArea">
+        <header class="header-bar">
+          <div class="header-left">
+            <div class="session-title">
+              <span>E2E Architectural Pipeline</span>
+            </div>
+            <div class="stage-badge" id="hdrStage">Stage: Research</div>
+            <div class="gate-badge" id="hdrGate">
+              <span>Gate 1: Pending Approval</span>
+            </div>
+          </div>
+          <div class="header-right">
+            <button class="btn-drawer-toggle" id="btnToggleDrawer">
+              <span>Context Review</span>
+              <span style="background: #3b82f6; color: #fff; padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: bold;">4</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="chat-scroll" id="chatScroll">
+          <div class="chat-container" id="chatContainer">
+
+            <!-- Banner -->
+            <div class="research-banner">
+              <div class="research-banner-left">
+                <span class="research-pulse"></span>
+                <span><strong>Tavily Dual Research Engine:</strong> Canonical search completed with verified citations.</span>
+              </div>
+              <button class="sim-btn" style="padding: 2px 8px; font-size: 10px;" onclick="alert('Citations verified against authoritative sources.')">View Citations (4)</button>
+            </div>
+
+            <!-- User Message -->
+            <div class="message-row user">
+              <div class="message-meta">
+                <span>You</span>
+                <span>•</span>
+                <span>10:42 AM</span>
+              </div>
+              <div class="message-bubble">
+                Execute canonical research, verify the 24 invariants, and assemble the build ready package for approval.
+              </div>
+            </div>
+
+            <!-- Assistant Message -->
+            <div class="message-row assistant">
+              <div class="message-meta">
+                <span style="color: #38bdf8; font-weight: 600;">OneShot Main Agent</span>
+                <span>•</span>
+                <span>10:42 AM</span>
+              </div>
+              <div class="message-bubble" id="assistantBubble">
+                I have completed the authoritative research sweep and audited all invariants across the unified runtime engine. The runtime operates on <code>(...)</code> and persistence anchors to <code>_id</code>.
+              </div>
+            </div>
+
+            <!-- Interactive Tool Executions List -->
+            <div id="toolList" style="display: flex; flex-direction: column; gap: 8px;">
+              <div class="tool-card expanded" onclick="this.classList.toggle('expanded')">
+                <div class="tool-header">
+                  <div class="tool-name">
+                    <span>🔍</span>
+                    <span>tavily_search("OneShot canonical gates and invariants")</span>
+                  </div>
+                  <div class="tool-status">SUCCESS</div>
+                </div>
+                <div class="tool-payload">
+{
+  "query": "OneShot canonical gates and invariants",
+  "resultsCount": 4,
+  "invariantsVerified": true,
+  "confidenceScore": 0.99
+}
+                </div>
+              </div>
+
+              <div class="tool-card" onclick="this.classList.toggle('expanded')">
+                <div class="tool-header">
+                  <div class="tool-name">
+                    <span>⚙️</span>
+                    <span>workflow_gate_status()</span>
+                  </div>
+                  <div class="tool-status">GATE_1_PENDING</div>
+                </div>
+                <div class="tool-payload">
+{
+  "activeStage": "research",
+  "gate1": { "status": "pending_human_review", "coreHash": "sha256:4f8a9e103b22..." },
+  "gate2": { "status": "locked", "requires": "build_ready_manifest" }
+}
+                </div>
+              </div>
+            </div>
+
+            <!-- Interactive Human Gate Card -->
+            <div class="gate-card" id="gateCard">
+              <div class="gate-card-header">
+                <div class="gate-title" id="gateTitle">
+                  <span>⚠️</span>
+                  <span>Human Gate Review Required — Research Review</span>
+                </div>
+                <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #fbbf24;">CORE_HASH</span>
+              </div>
+              <p style="font-size: 12px; color: #cbd5e1; line-height: 1.5;">
+                In accordance with <strong>Invariant 10 (Validation blocks promotion)</strong> and <strong>Gate 1</strong>, human authorization is required before unlocking the Planner stage.
+              </p>
+              <div class="gate-hash">
+                <span>confirmed_package.core:</span>
+                <strong style="color: #60a5fa;" id="coreHashVal">sha256:4f8a9e103b22c7104bda90</strong>
+              </div>
+              <button class="btn-gate-confirm" id="btnConfirmGate">
+                <span>Confirm Research & Progress to Planning →</span>
+              </button>
+            </div>
+
+            <!-- Dynamic Streaming Output Container (Appended during simulation) -->
+            <div id="dynamicStream"></div>
+
+          </div>
+        </div>
+
+        <!-- Floating Composer -->
+        <div class="composer-container">
+          <div class="quick-tools">
+            <div class="quick-pill" onclick="simulateSend('Run validation ledger checks')">🔍 Validate Ledger</div>
+            <div class="quick-pill" onclick="simulateSend('Generate live preview UI mockup')">🎨 Generate UI Mockup</div>
+            <div class="quick-pill" onclick="simulateSend('Inspect active capabilities in useTool')">⚡ Inspect Tools</div>
+            <div class="quick-pill" onclick="simulateSend('Audit 24 invariants')">📋 Audit Invariants</div>
+          </div>
+          <div class="composer-box">
+            <textarea class="composer-input" id="composerInput" placeholder="Type an instruction to the agent or click 'Play Demo'..."></textarea>
+            <div class="composer-footer">
+              <div style="display: flex; gap: 12px;">
+                <span style="cursor: pointer;">📎 Attach File</span>
+                <span style="cursor: pointer;">Model: <strong>Gemini 2.5 Flash</strong> ▾</span>
+              </div>
+              <button class="btn-send" id="btnSend">↑</button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- 3. Right Task Management Rail -->
+      <aside class="drawer" id="rightRail">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="font-size: 13px;">Execution Visibility Rail</strong>
+          <span style="font-size: 10px; font-mono; color: #34d399; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">ACTIVE</span>
+        </div>
+
+        <div class="drawer-tabs">
+          <div class="drawer-tab active" id="tabJob">Job</div>
+          <div class="drawer-tab" id="tabTasks">Tasks (4)</div>
+          <div class="drawer-tab" id="tabVal">Validation</div>
+        </div>
+
+        <!-- Tab 1: Active Job Execution (Invariant 2 & 17) -->
+        <div id="panelJob" style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="meta-grid">
+            <div class="meta-cell">
+              <div class="meta-label">Job Title</div>
+              <div class="meta-value" style="font-size: 11px;">OneShot Exec</div>
+            </div>
+            <div class="meta-cell">
+              <div class="meta-label">job_id</div>
+              <div class="meta-value">job_88a91</div>
+            </div>
+            <div class="meta-cell">
+              <div class="meta-label">Current Step</div>
+              <div class="meta-value" id="valCurrentStep" style="color: #60a5fa;">Fact Synthesis</div>
+            </div>
+            <div class="meta-cell">
+              <div class="meta-label">Progress</div>
+              <div class="meta-value" id="valProgress" style="color: var(--os-green);">45%</div>
+            </div>
+          </div>
+
+          <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden;">
+            <div id="progBar" style="width: 45%; height: 100%; background: #10b981; transition: width 0.4s ease;"></div>
+          </div>
+
+          <div class="meta-label" style="margin-top: 4px;">Active Stage Subtasks</div>
+          <div class="subtask-list" id="subtaskList">
+            <div class="subtask-item">
+              <span class="subtask-check">✓</span>
+              <span>Repository Architecture Audit</span>
+            </div>
+            <div class="subtask-item">
+              <span class="subtask-check">✓</span>
+              <span>Dual Research Invariants Verified</span>
+            </div>
+            <div class="subtask-item" id="taskGate1" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.08);">
+              <span class="subtask-active" style="color: #fbbf24;">●</span>
+              <span style="color: #fff; font-weight: 500;">Gate 1 Human Authorization</span>
+            </div>
+            <div class="subtask-item" style="opacity: 0.5;">
+              <span>○</span>
+              <span>Planner Trajectory Execution</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Validation Panel (Invariant 10, 12, 13, 20) -->
+        <div id="panelVal" style="display: none; flex-direction: column; gap: 8px;">
+          <div style="font-size: 11px; color: #94a3b8; line-height: 1.4;">
+            Every validation requires <strong>Expected</strong>, <strong>Observed</strong>, <strong>Assertion</strong>, and <strong>Failure</strong>.
+          </div>
+
+          <div class="val-item">
+            <div class="val-header">
+              <span>Expected == Observed</span>
+              <span class="val-pass">PASS [PROOF]</span>
+            </div>
+            <div class="val-grid">
+              <div>EXP: 24_INVARIANTS</div>
+              <div>OBS: 24_INVARIANTS</div>
+            </div>
+          </div>
+
+          <div class="val-item">
+            <div class="val-header">
+              <span>Build Manifest Valid</span>
+              <span class="val-pass">PASS [PROOF]</span>
+            </div>
+            <div class="val-grid">
+              <div>EXP: VALID_MANIFEST</div>
+              <div>OBS: VALID_MANIFEST</div>
+            </div>
+          </div>
+
+          <div class="val-item">
+            <div class="val-header">
+              <span>Artifact Consumer Defined</span>
+              <span class="val-pass">PASS [PROOF]</span>
+            </div>
+            <div class="val-grid">
+              <div>EXP: CONSUMER_BOUND</div>
+              <div>OBS: CONSUMER_BOUND</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pluggable Backends Status -->
+        <div style="margin-top: auto; padding-top: 10px; border-top: 1px solid var(--os-line-soft);">
+          <div class="meta-label">Pluggable Sandboxed Backends</div>
+          <div style="font-size: 11px; font-family: 'JetBrains Mono', monospace; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border: 1px solid var(--os-line-soft); display: flex; flex-direction: column; gap: 4px;">
+            <div style="color: #34d399;">virtual://workspace (mounted)</div>
+            <div style="color: #60a5fa;">git://local-storage (active)</div>
+            <div style="color: #c084fc;">sse://ag-ui-protocol (connected)</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 4. Live Preview Viewport (When in Preview or Split mode) -->
+      <section class="preview-mode-container" id="previewArea">
+        <div class="browser-mock-bar">
+          <div class="window-dots">
+            <span class="red"></span>
+            <span class="amber"></span>
+            <span class="green"></span>
+          </div>
+          <div class="browser-url">oneshot://build-preview/dist/index.html</div>
+          <div style="font-size: 11px; color: #34d399; font-weight: 600; font-family: 'JetBrains Mono';">BUILD #5baa28f9</div>
+        </div>
+
+        <div class="preview-render-area">
+          <div class="preview-card-showcase">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 18px; font-weight: 700; color: #fff;">OneShot Live Preview</span>
+              <span style="font-size: 11px; background: rgba(16,185,129,0.2); color: #34d399; padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono';">STATUS: VERIFIED</span>
+            </div>
+            <p style="color: #94a3b8; font-size: 13px; line-height: 1.6;">
+              Live rendering produced by the Builder stage upon passing human review and deterministic validation. No build complete without build manifest (Invariant 14).
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px;">
+              <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; border: 1px solid var(--os-line-soft);">
+                <div style="font-size: 10px; color: #64748b; font-weight: 600;">BACKEND</div>
+                <div style="font-size: 13px; font-weight: 600; color: #38bdf8; margin-top: 4px;">Node.js 24</div>
+              </div>
+              <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; border: 1px solid var(--os-line-soft);">
+                <div style="font-size: 10px; color: #64748b; font-weight: 600;">FRONTEND</div>
+                <div style="font-size: 13px; font-weight: 600; color: #a78bfa; margin-top: 4px;">Next.js 16.3</div>
+              </div>
+              <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; border: 1px solid var(--os-line-soft);">
+                <div style="font-size: 10px; color: #64748b; font-weight: 600;">VALIDATION</div>
+                <div style="font-size: 13px; font-weight: 600; color: #34d399; margin-top: 4px;">7/7 CHECKS</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Interactive Simulation Script -->
+  <script>
+    (function () {
+      let isPlaying = false;
+      let playTimer = null;
+      let simSpeed = 1; // 1x, 2x, 5x
+      let currentStage = 2; // Gate 1 pending
+
+      const btnPlay = document.getElementById('btnPlay');
+      const lblPlay = document.getElementById('lblPlay');
+      const btnReset = document.getElementById('btnReset');
+      const btnSpeed = document.getElementById('btnSpeed');
+      const lblSpeed = document.getElementById('lblSpeed');
+      const btnConfirmGate = document.getElementById('btnConfirmGate');
+      const gateCard = document.getElementById('gateCard');
+      const gateTitle = document.getElementById('gateTitle');
+      const hdrGate = document.getElementById('hdrGate');
+      const hdrStage = document.getElementById('hdrStage');
+      const progBar = document.getElementById('progBar');
+      const valProgress = document.getElementById('valProgress');
+      const valCurrentStep = document.getElementById('valCurrentStep');
+      const dynamicStream = document.getElementById('dynamicStream');
+      const chatScroll = document.getElementById('chatScroll');
+      const composerInput = document.getElementById('composerInput');
+      const btnSend = document.getElementById('btnSend');
+
+      // Speed Toggle
+      btnSpeed.addEventListener('click', () => {
+        if (simSpeed === 1) { simSpeed = 2; lblSpeed.textContent = '2x'; }
+        else if (simSpeed === 2) { simSpeed = 5; lblSpeed.textContent = 'Instant'; }
+        else { simSpeed = 1; lblSpeed.textContent = '1x'; }
+      });
+
+      // Reset Simulation
+      btnReset.addEventListener('click', () => {
+        clearInterval(playTimer);
+        isPlaying = false;
+        lblPlay.textContent = 'Play Demo';
+        btnPlay.classList.remove('active');
+        currentStage = 2;
+        progBar.style.width = '45%';
+        valProgress.textContent = '45%';
+        valCurrentStep.textContent = 'Fact Synthesis';
+        hdrStage.textContent = 'Stage: Research';
+        hdrGate.className = 'gate-badge';
+        hdrGate.innerHTML = '<span>Gate 1: Pending Approval</span>';
+        gateCard.className = 'gate-card';
+        gateTitle.innerHTML = '<span>⚠️</span><span>Human Gate Review Required — Research Review</span>';
+        btnConfirmGate.className = 'btn-gate-confirm';
+        btnConfirmGate.disabled = false;
+        btnConfirmGate.innerHTML = '<span>Confirm Research & Progress to Planning →</span>';
+        dynamicStream.innerHTML = '';
+        updateScrubber(2);
+      });
+
+      // Scrubber Navigation
+      function updateScrubber(stage) {
+        document.querySelectorAll('.stage-step').forEach((el) => {
+          const s = parseInt(el.getAttribute('data-stage'));
+          el.className = 'stage-step';
+          if (s < stage) el.classList.add('passed');
+          else if (s === stage) el.classList.add('active');
+        });
+      }
+
+      // Confirm Gate 1 Action
+      btnConfirmGate.addEventListener('click', () => {
+        if (btnConfirmGate.disabled) return;
+        confirmGate1();
+      });
+
+      function confirmGate1() {
+        btnConfirmGate.disabled = true;
+        btnConfirmGate.className = 'btn-gate-confirm confirmed';
+        btnConfirmGate.innerHTML = '<span>✅ Gate 1 Approved by Human</span>';
+        gateCard.className = 'gate-card confirmed';
+        gateTitle.innerHTML = '<span>✅</span><span>Human Gate 1 Authorized — Progressing to Planner</span>';
+        hdrGate.className = 'gate-badge authorized';
+        hdrGate.innerHTML = '<span>Gate 1: Approved ✓</span>';
+        hdrStage.textContent = 'Stage: Planner';
+        
+        progBar.style.width = '70%';
+        valProgress.textContent = '70%';
+        valCurrentStep.textContent = 'Planner Trajectory Synthesis';
+        updateScrubber(3);
+
+        // Update task item
+        const taskGate1 = document.getElementById('taskGate1');
+        if (taskGate1) {
+          taskGate1.style.background = 'rgba(16, 185, 129, 0.08)';
+          taskGate1.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+          taskGate1.innerHTML = '<span class="subtask-check">✓</span><span>Gate 1 Human Authorization (Passed)</span>';
+        }
+
+        // Stream next response
+        setTimeout(() => {
+          streamAssistantMessage(
+            "Gate 1 authorization confirmed with package core hash <code>sha256:4f8a9e10...</code>. Transitioning to Planner stage under Invariant 10.\n\nSynthesizing hierarchical subtasks and locking build ready invariants..."
+          );
+        }, 500 / simSpeed);
+      }
+
+      // Play Demo Simulation Sequence
+      btnPlay.addEventListener('click', () => {
+        if (isPlaying) {
+          isPlaying = false;
+          lblPlay.textContent = 'Play Demo';
+          btnPlay.classList.remove('active');
+          return;
+        }
+
+        isPlaying = true;
+        lblPlay.textContent = 'Pause';
+        btnPlay.classList.add('active');
+
+        // Step 1: Trigger Gate 1 if pending
+        if (!btnConfirmGate.disabled) {
+          setTimeout(() => {
+            if (!isPlaying) return;
+            confirmGate1();
+            
+            // Step 2: Progress to Validation
+            setTimeout(() => {
+              if (!isPlaying) return;
+              progBar.style.width = '90%';
+              valProgress.textContent = '90%';
+              valCurrentStep.textContent = 'Validation Proof Ledger';
+              hdrStage.textContent = 'Stage: Validation';
+              updateScrubber(5);
+
+              // Switch drawer to validation tab
+              document.getElementById('tabVal').click();
+
+              // Step 3: Complete Build
+              setTimeout(() => {
+                if (!isPlaying) return;
+                progBar.style.width = '100%';
+                valProgress.textContent = '100%';
+                valCurrentStep.textContent = 'Build Complete';
+                hdrStage.textContent = 'Stage: Build Complete';
+                updateScrubber(6);
+
+                streamAssistantMessage(
+                  "🎉 <strong>Build Complete:</strong> Build manifest structurally verified (Invariant 14). All 24 invariants satisfied with proof (Invariant 13). Live preview unlocked."
+                );
+
+                // Switch to Preview view
+                document.getElementById('vwPreview').click();
+
+                isPlaying = false;
+                lblPlay.textContent = 'Play Demo';
+                btnPlay.classList.remove('active');
+              }, 2500 / simSpeed);
+
+            }, 2500 / simSpeed);
+
+          }, 1000 / simSpeed);
+        }
+      });
+
+      // Typewriter streaming message simulation
+      function streamAssistantMessage(text) {
+        const row = document.createElement('div');
+        row.className = 'message-row assistant';
+        row.innerHTML = `
+          <div class="message-meta">
+            <span style="color: #38bdf8; font-weight: 600;">OneShot Main Agent</span>
+            <span>•</span>
+            <span>Just now</span>
+          </div>
+          <div class="message-bubble"><span class="stream-content"></span><span class="typing-cursor"></span></div>
+        `;
+        dynamicStream.appendChild(row);
+        chatScroll.scrollTop = chatScroll.scrollHeight;
+
+        const contentSpan = row.querySelector('.stream-content');
+        const cursor = row.querySelector('.typing-cursor');
+
+        if (simSpeed >= 5) {
+          contentSpan.innerHTML = text;
+          cursor.remove();
+          chatScroll.scrollTop = chatScroll.scrollHeight;
+          return;
+        }
+
+        let i = 0;
+        const interval = setInterval(() => {
+          contentSpan.innerHTML = text.slice(0, i);
+          i += 3;
+          chatScroll.scrollTop = chatScroll.scrollHeight;
+          if (i >= text.length) {
+            clearInterval(interval);
+            contentSpan.innerHTML = text;
+            cursor.remove();
+          }
+        }, 30 / simSpeed);
+      }
+
+      // User Message Send Simulation
+      window.simulateSend = function(txt) {
+        if (!txt) return;
+        
+        // Add User Bubble
+        const userRow = document.createElement('div');
+        userRow.className = 'message-row user';
+        userRow.innerHTML = `
+          <div class="message-meta">
+            <span>You</span>
+            <span>•</span>
+            <span>Just now</span>
+          </div>
+          <div class="message-bubble">${txt}</div>
+        `;
+        dynamicStream.appendChild(userRow);
+        chatScroll.scrollTop = chatScroll.scrollHeight;
+        composerInput.value = '';
+
+        // Response simulation
+        setTimeout(() => {
+          streamAssistantMessage(
+            `Acknowledged: "${txt}". Executing capability through <code>useTool(...)</code> and validating invariants... Verified with proof.`
+          );
+        }, 600 / simSpeed);
+      };
+
+      btnSend.addEventListener('click', () => {
+        simulateSend(composerInput.value.trim());
+      });
+
+      composerInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          simulateSend(composerInput.value.trim());
+        }
+      });
+
+      // Drawer Tabs Switching
+      const tabJob = document.getElementById('tabJob');
+      const tabTasks = document.getElementById('tabTasks');
+      const tabVal = document.getElementById('tabVal');
+      const panelJob = document.getElementById('panelJob');
+      const panelVal = document.getElementById('panelVal');
+
+      tabJob.addEventListener('click', () => {
+        tabJob.className = 'drawer-tab active';
+        tabTasks.className = 'drawer-tab';
+        tabVal.className = 'drawer-tab';
+        panelJob.style.display = 'flex';
+        panelVal.style.display = 'none';
+      });
+
+      tabTasks.addEventListener('click', () => {
+        tabJob.className = 'drawer-tab';
+        tabTasks.className = 'drawer-tab active';
+        tabVal.className = 'drawer-tab';
+        panelJob.style.display = 'flex';
+        panelVal.style.display = 'none';
+      });
+
+      tabVal.addEventListener('click', () => {
+        tabJob.className = 'drawer-tab';
+        tabTasks.className = 'drawer-tab';
+        tabVal.className = 'drawer-tab active';
+        panelJob.style.display = 'none';
+        panelVal.style.display = 'flex';
+      });
+
+      // View Switching (ChatShell, Split, Preview)
+      const vwMain = document.getElementById('vwMain');
+      const vwSplit = document.getElementById('vwSplit');
+      const vwPreview = document.getElementById('vwPreview');
+      const chatArea = document.getElementById('chatArea');
+      const previewArea = document.getElementById('previewArea');
+      const rightRail = document.getElementById('rightRail');
+      const appFrame = document.getElementById('appFrame');
+
+      vwMain.addEventListener('click', () => {
+        vwMain.className = 'view-btn active';
+        vwSplit.className = 'view-btn';
+        vwPreview.className = 'view-btn';
+        chatArea.style.display = 'flex';
+        previewArea.className = 'preview-mode-container';
+        rightRail.style.display = 'flex';
+        appFrame.style.gridTemplateColumns = '240px 1fr 340px';
+      });
+
+      vwSplit.addEventListener('click', () => {
+        vwMain.className = 'view-btn';
+        vwSplit.className = 'view-btn active';
+        vwPreview.className = 'view-btn';
+        chatArea.style.display = 'flex';
+        previewArea.className = 'preview-mode-container active';
+        rightRail.style.display = 'none';
+        appFrame.style.gridTemplateColumns = '240px 1fr 1fr';
+      });
+
+      vwPreview.addEventListener('click', () => {
+        vwMain.className = 'view-btn';
+        vwSplit.className = 'view-btn';
+        vwPreview.className = 'view-btn active';
+        chatArea.style.display = 'none';
+        previewArea.className = 'preview-mode-container active';
+        rightRail.style.display = 'flex';
+        appFrame.style.gridTemplateColumns = '240px 1fr 340px';
+      });
+
+      // Device Framing Switcher
+      const devDesk = document.getElementById('devDesk');
+      const devTab = document.getElementById('devTab');
+      const devMob = document.getElementById('devMob');
+
+      devDesk.addEventListener('click', () => {
+        devDesk.className = 'view-btn active';
+        devTab.className = 'view-btn';
+        devMob.className = 'view-btn';
+        appFrame.className = 'viewport-frame';
+      });
+
+      devTab.addEventListener('click', () => {
+        devDesk.className = 'view-btn';
+        devTab.className = 'view-btn active';
+        devMob.className = 'view-btn';
+        appFrame.className = 'viewport-frame tablet';
+      });
+
+      devMob.addEventListener('click', () => {
+        devDesk.className = 'view-btn';
+        devTab.className = 'view-btn';
+        devMob.className = 'view-btn active';
+        appFrame.className = 'viewport-frame mobile';
+      });
+
+    })();
+  </script>
+</body>
+</html>
