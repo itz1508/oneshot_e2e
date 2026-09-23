@@ -4,12 +4,30 @@
  * Tests the /api/network/test endpoint for external API connectivity.
  */
 
-import { describe, it } from 'node:test';
+import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import type { Server } from 'node:http';
+import { startAgentServer } from '../../index.js';
 
 const BASE_URL = 'http://localhost:8080';
+let server: Server | null = null;
 
 describe('Network Endpoint', () => {
+  before(async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/ping`);
+      if (res.ok) return;
+    } catch {
+      server = (await startAgentServer({ port: 8080 })) as Server;
+    }
+  });
+
+  after(async () => {
+    if (server) {
+      await new Promise<void>((resolve) => server!.close(() => resolve()));
+    }
+  });
+
   it('returns 200 OK for /api/network/test', async () => {
     const response = await fetch(`${BASE_URL}/api/network/test`);
     assert.strictEqual(response.status, 200);
@@ -31,8 +49,6 @@ describe('Network Endpoint', () => {
     const response = await fetch(`${BASE_URL}/api/network/test`);
     const data = await response.json();
     
-    // These endpoints should be reachable (even if API key is missing)
-    // The response will be 404/421 but connection succeeds
     assert.ok(data.network.gemini.reachable || !data.network.gemini.reachable, 'Gemini reachability should be reported');
     assert.ok(data.network.openai.reachable || !data.network.openai.reachable, 'OpenAI reachability should be reported');
   });

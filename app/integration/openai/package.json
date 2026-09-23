@@ -1,0 +1,9 @@
+{
+  "name": "@oneshot/runtime-integration-openai",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@ai-sdk/openai": "4.0.65"
+  }
+}

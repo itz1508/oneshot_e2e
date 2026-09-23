@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+:root {
+  --os-bg: #0d0d0e;
+  --os-panel: #111113;
+  --os-panel-soft: #151517;
+  --os-card: #18181a;
+  --os-card-muted: #141414;
+  --os-line: rgba(255, 255, 255, 0.075);
+  --os-line-soft: rgba(255, 255, 255, 0.045);
+  --os-text: #f2f2f3;
+  --os-muted: #8e8e93;
+  --os-subtle: #65656a;
+  --os-hover: rgba(255, 255, 255, 0.045);
+  --os-radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--os-bg);
+  color: var(--os-text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Base shell */
+.app-shell {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  width: 100%;
+  height: 100vh;
+  background: var(--os-bg);
+  overflow: hidden;
+  transition: grid-template-columns 0.2s ease;
+}
+
+.app-shell.sidebar-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Sidebar */
+.sidebar-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 248px;
+  height: 100vh;
+  border-right: 1px solid var(--os-line);
+  background: #101011;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Pulsing activity indicator */
+@keyframes onePulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.activity-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #62c48d;
+  box-shadow: 0 0 0 3px rgba(98, 196, 141, 0.15);
+  animation: onePulse 1.2s ease-in-out infinite;
+}
+
+/* Micro-toggle switch */
+.earlier-switch {
+  position: relative;
+  display: inline-flex;
+  width: 30px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.earlier-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.earlier-switch-track {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--os-line);
+  border-radius: 999px;
+  background: #171719;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.earlier-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #7b7b81;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.earlier-switch input:checked + .earlier-switch-track {
+  background: #242427;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.earlier-switch input:checked + .earlier-switch-track::after {
+  transform: translateX(14px);
+  background: #f0f0f2;
+}
+
+/* Slide-out context review drawer */
+.context-review-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(420px, 92vw);
+  height: 100vh;
+  z-index: 260;
+  display: flex;
+  flex-direction: column;
+  background: #111113;
+  border-left: 1px solid var(--os-line);
+  box-shadow: -18px 0 48px rgba(0, 0, 0, 0.35);
+  transform: translateX(105%);
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.context-review-drawer.open {
+  transform: translateX(0);
+}
+
+/* Modal veil & provider modal */
+.modal-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 6, 8, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+.provider-modal {
+  width: 560px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: #1e222a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Monospace font utility */
+.font-mono-code {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}

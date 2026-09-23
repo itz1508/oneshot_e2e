@@ -389,3 +389,68 @@ export class ContractRegistry {
     return this.contracts.size;
   }
 }
+
+export * from '../artifact/fixture.js';
+
+/**
+ * Fixture validation entry definition
+ * PERSISTENCE ARTIFACT: fixture_id is the immutable stored reference
+ */
+export interface FixtureEntry {
+  id: string; // Backward-compatible identifier
+  fixture_id?: string; // PERSISTENCE ARTIFACT RULE: Immutable stored reference
+  path: string;
+  expectedHash: string;
+  actualHash?: string;
+  status?: string;
+}
+
+/**
+ * ValidateFixtures input payload requiring authoritative session identifier
+ * PERSISTENCE ARTIFACT: session_id / sessionId
+ */
+export interface ValidateFixturesInput {
+  sessionId: string; // REQUIRED: Authoritative session identifier
+  session_id?: string; // Persistence Artifact reference alias
+  fixtures: FixtureEntry[];
+  strict?: boolean;
+}
+
+/**
+ * JSON Schema for ValidateFixturesInput enforcing session identifier requirement
+ */
+export const ValidateFixturesSchema: JsonSchema = {
+  $schema: 'http://json-schema.org/draft-07/schema#',
+  title: 'ValidateFixturesInput',
+  type: 'object',
+  required: ['sessionId', 'fixtures'],
+  properties: {
+    sessionId: {
+      type: 'string',
+      minLength: 1,
+      description: 'Authoritative ledger session ID bound to this fixture validation run',
+    },
+    session_id: {
+      type: 'string',
+      minLength: 1,
+      description: 'Authoritative ledger session_id bound to this fixture validation run',
+    },
+    fixtures: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['id', 'path', 'expectedHash'],
+        properties: {
+          id: { type: 'string' },
+          fixture_id: { type: 'string' },
+          path: { type: 'string' },
+          expectedHash: { type: 'string' },
+          actualHash: { type: 'string' },
+          status: { type: 'string' },
+        },
+      },
+    },
+    strict: { type: 'boolean' },
+  },
+  additionalProperties: false,
+};

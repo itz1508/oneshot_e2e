@@ -9,9 +9,16 @@ Read nested `AGENTS.md` files before changing their subtree.
    Preserve existing edits; do not use a refactor to replace unrelated work.
 2. Find the responsible module using the map below. Read its implementation and
    relevant authority document before proposing changes.
-3. Make a bounded change that completes the request. Preserve public imports,
+3. **Mandatory Planning & Approval Gate**: Always create an implementation plan
+   and STOP to wait for explicit user review and approval before executing any
+   code changes. Never modify files or invent out-of-scope behaviors without prior approval.
+4. **Skill Standard Invocation**: Invoke official builtin skills (such as
+   `agy-customizations`) rather than inventing ad-hoc or unapproved processes.
+5. **Package Manager Standard**: Use `pnpm` exclusively across all development,
+   build, test, and lifecycle scripts. Do not use `npm`.
+6. Make a bounded change that completes the request. Preserve public imports,
    artifact identities, resource paths, and launch behavior when moving code.
-4. Check the changed behavior at the appropriate scope and report what changed,
+7. Check the changed behavior at the appropriate scope and report what changed,
    what was verified, and any remaining limitation.
 
 Use `rg` for searches. Keep source text LF-normalized. Do not hand-edit generated
@@ -21,12 +28,12 @@ output or introduce dependencies solely to reformat files.
 
 | Responsibility | Source of truth |
 | --- | --- |
-| Workflow order, ownership, and human gates | [Canonical workflow](docs/CANONICAL_WORKFLOW.md) |
-| Required web behavior | [Web requirements v3](docs/ONESHOT_WEB_APP_SOURCE_OF_TRUTH_v3.md) |
-| Requirement-to-implementation gaps | [Reconciliation](docs/WEB_APP_REQUIREMENTS_RECONCILIATION.md) |
-| Agent, skill, tool, and IAM boundaries | [Architecture rule](.agents/rules/oneshot-skill-architecture.md) |
+| Workflow order, ownership, and human gates | `packages/agent-runtime/src/workflow/` |
+| Required web behavior & invariants | `frontend/web/src/types/invariants.ts`, `frontend/web/src/lib/api.ts` |
+| Action API and backend routes | `backend/index.ts` |
+| Agent SOPs and model registry | `packages/agent-runtime/src/agents/`, `packages/agent-runtime/src/models/` |
 | Payload contracts | `backend/schema/` and its contract registry |
-| Executable transitions | `backend/workflow/graph.json`, `backend/workflow/canonical-transition.ts` |
+| Executable transitions | `packages/agent-runtime/src/workflow/engine.ts` |
 
 When documentation and implementation disagree, identify the discrepancy before
 changing either. Historical reports and green builds do not establish current
@@ -42,6 +49,38 @@ runtime or deployment behavior.
   under `backend/skills/`. Directory ownership does not establish IAM permission.
 - Credentials stay server-side and outside browser-readable output. Preserve
   authentication, workspace path policy, and sandbox admission checks.
+- **Response Verification Invariant (No Bare 'Passed')**: A test or stage transition
+  that merely asserts or returns a superficial `pass` or `passed` status is strictly
+  invalid and rejected. Progress is valid ONLY when the actual response payload from
+  the call is inspected, asserted, and verified against expected data contracts
+  (verifying response body, actual payload fields, error codes, and byte/hash equality).
+  Any test or step relying solely on a bare 'pass'/'passed' flag without call response
+  verification must be reworked.
+- **24 Final Invariants**:
+  1. Session owns conversation.
+  2. Job owns execution.
+  3. `useStream(...)` owns conversation runtime.
+  4. `useTool(...)` owns capability runtime.
+  5. Explorer owns discovery.
+  6. Main owns response.
+  7. Task Rail owns execution visibility.
+  8. Runtime operates on `(...)`.
+  9. Persistence operates on `_id`.
+  10. Validation blocks promotion.
+  11. Manifest validates structure.
+  12. Expected must equal Observed.
+  13. No PASS without proof.
+  14. No Build Complete without Build Manifest.
+  15. No Event Out without Manifest VALID.
+  16. Session Label != `session_id`.
+  17. Job Title != `job_id`.
+  18. Every Artifact requires a Consumer.
+  19. Every Node requires a Manifest.
+  20. Every Validation requires: Expected, Observed, Assertion, Failure.
+  21. All workflow outputs eventually become persistence records.
+  22. Conversation flows through `useStream(...)`.
+  23. Capabilities execute through `useTool(...)`.
+  24. Only final persisted decisions become `*_id` artifacts.
 
 Before suggesting technology or changing responsibility boundaries, consult the
 relevant official specification or documentation and include its URL. Prefer
@@ -144,24 +183,24 @@ vocabulary. Keep separate Python import roots intact when moving modules.
 ## Commands
 
 Run from the repository root unless a different directory is stated.
-Root package requirements: Node >=24.13.0 and npm >=11.8.0.
+Root package requirements: Node >=24.13.0 and pnpm >=10.0.0 (verified with pnpm 11.9.0).
 Use the relevant Python package/dependency files for its runtime requirements.
 
 | Purpose | Command |
 | --- | --- |
-| Windows launch | `./start-web.ps1` (default port 8787; supports `-Rebuild`, `-Sample`, `-NoBrowser`, `-Port`) |
-| Bootstrap through launch | `npm run oneshot` |
-| Build all / backend / frontend | `npm run build` / `npm run build:backend` / `npm run build:ui` |
-| Start compiled backend | `npm start`; `npm run dev` additionally loads `app/env/.env` |
-| Frontend development / types | `npm --prefix frontend/web run dev` / `npm --prefix frontend/web run typecheck` |
-| Backend tests | `npm test` (compiles backend and tests) |
-| Compile tests separately | `npm run build:test` |
-| Web tests | `npm --prefix frontend/web test` |
-| Repository verification | `npm run verify` |
+| Windows launch | `./scripts/start-web.ps1` (default port 8787; supports `-Rebuild`, `-Sample`, `-NoBrowser`, `-Port`) |
+| Bootstrap through launch | `pnpm run oneshot` |
+| Build all / backend / frontend | `pnpm run build` / `pnpm run build:backend` / `pnpm run build:ui` |
+| Start compiled backend | `pnpm start`; `pnpm run dev` additionally loads `app/env/.env` |
+| Frontend development / types | `pnpm --prefix frontend/web run dev` / `pnpm --prefix frontend/web run typecheck` |
+| Backend tests | `pnpm test` (compiles backend and tests) |
+| Compile tests separately | `pnpm run build:test` |
+| Web tests | `pnpm --prefix frontend/web test` |
+| Repository verification | `pnpm run verify` |
 | Workspace API | `uvicorn --app-dir app workspace_api.main:app` |
 | Python reasoner tests | From `backend/python/`: `python -m pytest` |
-| Local Redis | `npm run redis:up`; see `docker/docker-compose.dev.yml` |
-| Pipeline E2E | `npm run test:pipeline:e2e`; requires the configured server, worker, and Redis |
+| Local Redis | `pnpm run redis:up`; see `docker/docker-compose.dev.yml` |
+| Pipeline E2E | `pnpm run test:pipeline:e2e`; requires the configured server, worker, and Redis |
 | Manifest | `python app/scripts/generate_manifest.py`, then `python app/scripts/verify_manifest.py` |
 
 For direct validation RPC in PowerShell, set
@@ -175,14 +214,24 @@ checks and a diff review, not a full runtime suite. Refactors need relevant
 compilation and behavior checks; security changes need positive and negative cases.
 Avoid tests that depend only on whitespace or quote style.
 
-Before release-facing commits, run `npm run verify`, web tests, and manifest
-verification. Compile tests explicitly with `npm run build:test` when checking
+Before release-facing commits, run `pnpm run verify`, web tests, and manifest
+verification. Compile tests explicitly with `pnpm run build:test` when checking
 compiled test output; do not assume an old `dist/` proves current source.
 
-After source changes, regenerate the manifest only after builds have stopped,
-then review its diff and verify it. The manifest uses
-`app/scripts/source_file_policy.py`; generated output, credentials, and local
-diagnostic logs must not become release source artifacts.
+### Post-Build & Verification Lifecycle
+
+1. Stop active build, test, and background daemon processes.
+2. Run test suites with response verification:
+   - Backend tests: `pnpm test`
+   - Runtime engine tests: `pnpm run test:runtime`
+   - Web frontend tests: `pnpm --prefix frontend/web test`
+3. Regenerate repository manifest after builds finish:
+   `python app/scripts/generate_manifest.py`
+4. Verify manifest integrity:
+   `python app/scripts/verify_manifest.py`
+5. Run full system verification suite:
+   `pnpm run verify` (7/7 checks passed).
+6. Commit and push only when explicitly authorized by the user.
 
 Commit and push only when authorized by the user. Stage reviewed paths explicitly.
 Use a concise conventional commit title and record relevant validation in PRs.

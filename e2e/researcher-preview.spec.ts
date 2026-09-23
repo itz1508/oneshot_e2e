@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import path from "node:path";
 import fs from "node:fs";
-import { attachNetworkGuard } from "./support/network-guard";
+import { attachNetworkGuard } from "./support/network-guard.ts";
 
 const screenshotsDir = "C:/Users/itz15/.gemini/antigravity-ide/brain/b929d9ad-bec2-4972-b3ae-ff631a326281/screenshots";
 
@@ -11,311 +11,226 @@ test.beforeAll(() => {
     }
 });
 
-test.describe("Researcher Workflow Demo Static Embed E2E", () => {
-    test("Primary E2E scenario: straight success", async ({ page }) => {
-        const pageErrors: Error[] = [];
-        const consoleErrors: string[] = [];
-        page.on("pageerror", (err) => pageErrors.push(err));
-        page.on("console", (msg) => {
-            if (msg.type() === "error") consoleErrors.push(msg.text());
-        });
-
+test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () => {
+    test("Scenario 1: Core Layout & Earlier Conversation Toggle", async ({ page }) => {
         const guard = attachNetworkGuard(page);
 
-        // 1. Open the static embed entry point
-        await page.goto("/embed/researcher-workflow-demo.html");
+        await page.goto("http://127.0.0.1:4173/index.html");
+        await expect(page.locator("text=OneShot").first()).toBeVisible();
 
-        // 2. Confirm the page loads without browser console errors
-        expect(consoleErrors).toEqual([]);
-        expect(pageErrors).toEqual([]);
+        // Earlier Conversation Details
+        const earlierDetails = page.locator("#earlierCard");
+        await expect(earlierDetails).toBeVisible();
 
-        // 3. Confirm the initial simulation state is idle
-        const stateElem = page.locator("strong[data-state]");
-        await expect(stateElem).toHaveText("idle");
+        // Toggle micro-switch
+        const toggleSwitch = page.locator("#earlierToggleSwitch");
+        await expect(toggleSwitch).toBeVisible();
 
-        // 4. Confirm the deterministic-simulation copy is visible
-        await expect(
-            page.getByText("Deterministic simulation controls", { exact: false })
-                .or(page.getByText("deterministic simulation preview", { exact: false }))
-                .or(page.getByText("This static simulation preview mirrors the product layout", { exact: false }))
-                .first()
-        ).toBeVisible();
+        // Toggle to summary view
+        await toggleSwitch.check({ force: true });
+        await expect(page.locator("#earlierSummaryView")).toBeVisible();
+        await expect(page.locator("#earlierDetailView")).toBeHidden();
 
-        // Capture screenshot: idle state
-        await page.screenshot({ path: path.join(screenshotsDir, "idle-state.png"), fullPage: true });
+        // Toggle back to detail view
+        await toggleSwitch.uncheck({ force: true });
+        await expect(page.locator("#earlierDetailView")).toBeVisible();
+        await expect(page.locator("#earlierSummaryView")).toBeHidden();
 
-        // 5. Select the straight-success fixture
-        const straightOption = page.locator('input[name="fixture"][value="straight-success"]');
-        await straightOption.check();
-
-        // 6. Click Start
-        const startBtn = page.getByRole("button", { name: "Start" });
-        await expect(startBtn).toBeVisible();
-        await startBtn.click();
-
-        // 7. Wait for the visible state to become review
-        await expect(stateElem).toHaveText("review", { timeout: 10_000 });
-
-        // 8. Confirm progress is rendered under an element carrying data-source="fixture"
-        const fixtureProgressContainer = page.locator('[data-source="fixture"]');
-        await expect(fixtureProgressContainer).toBeVisible();
-
-        // 9. Confirm exactly six progress items are visible
-        const progressItems = fixtureProgressContainer.locator("li.agent-progress-row");
-        await expect(progressItems).toHaveCount(6);
-
-        // 10. Confirm four items are completed
-        const completedItems = fixtureProgressContainer.locator('li.agent-progress-row[data-status="completed"]');
-        await expect(completedItems).toHaveCount(4);
-
-        // 11. Confirm one item is in progress
-        const inProgressItems = fixtureProgressContainer.locator('li.agent-progress-row[data-status="in_progress"]');
-        await expect(inProgressItems).toHaveCount(1);
-
-        // 12. Confirm one item is pending
-        const pendingItems = fixtureProgressContainer.locator('li.agent-progress-row[data-status="pending"]');
-        await expect(pendingItems).toHaveCount(1);
-
-        // 13. Confirm the sourced review card is visible
-        const reviewCard = page.locator(".fixture-review");
-        await expect(reviewCard).toBeVisible();
-
-        // 14. Confirm the expected fixture chat entries are visible
-        const chatLog = page.locator("[data-chat-log]");
-        await expect(chatLog).toContainText("Research keyboard focus visibility");
-        await expect(chatLog).toContainText("Ready for planning: the simulated research summary contains cited focus-visible and status-message findings.");
-
-        // Capture screenshot: straight-success review state
-        await page.screenshot({ path: path.join(screenshotsDir, "straight-success-review-state.png"), fullPage: true });
-
-        // 15. Click Continue
-        const continueBtn = page.getByRole("button", { name: "Continue" });
-        await expect(continueBtn).toBeVisible();
-        await expect(continueBtn).toBeEnabled();
-        await continueBtn.click();
-
-        // 16. Confirm all six progress items are completed
-        await expect(completedItems).toHaveCount(6, { timeout: 10_000 });
-
-        // 17. Confirm the final state is ready for planning
-        await expect(stateElem).toHaveText("ready for planning");
-
-        // 18. Confirm no failure or cancellation message is visible
-        await expect(page.locator(".fixture-status-card")).toHaveCount(0);
-        await expect(page.getByText(/canceled/i)).toHaveCount(0);
-
-        // Capture screenshot: straight-success completed state
-        await page.screenshot({ path: path.join(screenshotsDir, "straight-success-completed-state.png"), fullPage: true });
-
-        // Network and error checks
-        expect(guard.unexpectedRequests).toHaveLength(0);
-        expect(pageErrors).toHaveLength(0);
-        expect(consoleErrors).toHaveLength(0);
+        await page.screenshot({ path: path.join(screenshotsDir, "01-layout-and-earlier-toggle.png"), fullPage: true });
         await guard.dispose();
     });
 
-    test("Correction-loop scenario", async ({ page }) => {
-        const pageErrors: Error[] = [];
-        const consoleErrors: string[] = [];
-        page.on("pageerror", (err) => pageErrors.push(err));
-        page.on("console", (msg) => {
-            if (msg.type() === "error") consoleErrors.push(msg.text());
-        });
-
+    test("Scenario 2: Context Review Drawer 3-Tab Navigation & Invariant Gates", async ({ page }) => {
         const guard = attachNetworkGuard(page);
 
-        await page.goto("/embed/researcher-workflow-demo.html");
+        await page.goto("http://127.0.0.1:4173/index.html");
 
-        // 1. Select section-change-reloop
-        const reloopOption = page.locator('input[name="fixture"][value="section-change-reloop"]');
-        await reloopOption.check();
+        // Open drawer via toggle button
+        const toggleBtn = page.locator("#toggleDrawerBtn");
+        await toggleBtn.click();
+        const drawer = page.locator("#contextDrawer");
+        await expect(drawer).toHaveClass(/open/);
 
-        // 2. Click Start
-        const startBtn = page.getByRole("button", { name: "Start" });
-        await startBtn.click();
+        // Tab: Tasks (Human Invariant Gates)
+        const tabTaskBtn = page.locator("#tabTaskBtn");
+        await tabTaskBtn.click();
+        await expect(page.locator("text=Gate 1: Research Review")).toBeVisible();
+        await expect(page.locator("text=Gate 2: Build Ready")).toBeVisible();
 
-        // 3. Wait for review state
-        const stateElem = page.locator("strong[data-state]");
-        await expect(stateElem).toHaveText("review", { timeout: 10_000 });
+        // Tab: Backends (DeepAgents Partition Routing & Sandbox)
+        const tabBackendsBtn = page.locator("#tabBackendsBtn");
+        await tabBackendsBtn.click();
+        await expect(page.locator("text=/workspace/").first()).toBeVisible();
+        await expect(page.locator("text=/scratch/").first()).toBeVisible();
+        await expect(page.locator("text=/memories/").first()).toBeVisible();
+        await expect(page.locator("text=/artifacts/").first()).toBeVisible();
+        await expect(page.locator("text=virtual_mode").first()).toBeVisible();
 
-        // 4. Click Continue before applying the correction
-        const continueBtn = page.locator("[data-continue]");
-        await expect(continueBtn).toBeVisible();
-        // Since button is disabled in UI before correction, dispatch click directly to test the continue paused handler
-        await continueBtn.dispatchEvent("click");
-
-        // 5. Confirm the fixture remains in review
-        await expect(stateElem).toHaveText("review");
-
-        // 6. Confirm this message is visible: Continue paused until sourced section changes are done.
-        const chatLog = page.locator("[data-chat-log]");
-        await expect(chatLog).toContainText("Continue paused until sourced section changes are done.");
-
-        // Capture screenshot: section-change blocked state
-        await page.screenshot({ path: path.join(screenshotsDir, "section-change-blocked-state.png"), fullPage: true });
-
-        // 7. Use the existing section Change control
-        const changeBtn = page.locator('button.section-action[data-section="facts-sources"]');
-        await expect(changeBtn).toBeVisible();
-        await changeBtn.click();
-
-        // 8. Confirm the fixture enters the correction or re-loop behavior
-        await expect(chatLog).toContainText("Returning only to the affected Facts and Sources section.");
-
-        // 9. Wait for it to return to review
-        await expect(stateElem).toHaveText("review", { timeout: 10_000 });
-        await expect(chatLog).toContainText("Revised sourced finding displayed; Continue is now available.");
-
-        // 10. Confirm the corrected review content is visible
-        await expect(page.locator(".fixture-section--revised")).toBeVisible();
-        await expect(page.locator(".fixture-review")).toContainText("After correction: use programmatically determinable status messages");
-
-        // Capture screenshot: section-change corrected state
-        await page.screenshot({ path: path.join(screenshotsDir, "section-change-corrected-state.png"), fullPage: true });
-
-        // 11. Click Continue
-        await expect(continueBtn).toBeEnabled();
-        await continueBtn.click();
-
-        // 12. Confirm the final state becomes ready for planning
-        await expect(stateElem).toHaveText("ready for planning", { timeout: 10_000 });
-
-        expect(guard.unexpectedRequests).toHaveLength(0);
-        expect(pageErrors).toHaveLength(0);
-        expect(consoleErrors).toHaveLength(0);
+        await page.screenshot({ path: path.join(screenshotsDir, "02-drawer-backends-and-gates.png") });
         await guard.dispose();
     });
 
-    test("Cancellation scenario", async ({ page }) => {
-        const pageErrors: Error[] = [];
-        const consoleErrors: string[] = [];
-        page.on("pageerror", (err) => pageErrors.push(err));
-        page.on("console", (msg) => {
-            if (msg.type() === "error") consoleErrors.push(msg.text());
-        });
-
+    test("Scenario 3: Server Security Boundary in Provider Modal", async ({ page }) => {
         const guard = attachNetworkGuard(page);
 
-        await page.goto("/embed/researcher-workflow-demo.html");
+        await page.goto("http://127.0.0.1:4173/index.html");
 
-        // 1. Select either fixture
-        const straightOption = page.locator('input[name="fixture"][value="straight-success"]');
-        await straightOption.check();
+        // Click integration config open button
+        const openModalBtn = page.locator(".provider-open-btn").first();
+        await openModalBtn.click();
 
-        // 2. Click Start
-        const startBtn = page.getByRole("button", { name: "Start" });
-        await startBtn.click();
+        const modal = page.locator("#providerModal");
+        await expect(modal).toHaveClass(/open/);
 
-        // 3. Click Cancel before successful completion
-        const cancelBtn = page.getByRole("button", { name: "Cancel" });
-        await expect(cancelBtn).toBeVisible();
-        await cancelBtn.click();
+        // Verify Server Security Boundary notice is displayed
+        await expect(page.locator("text=Server Security Boundary")).toBeVisible();
+        await expect(page.locator("#serverBadge")).toHaveText("SERVER-OWNED");
 
-        // 4. Confirm the state becomes canceled using the exact existing fixture spelling
-        const stateElem = page.locator("strong[data-state]");
-        await expect(stateElem).toHaveText("canceled");
+        // Security assertion: NO password input or API key input in DOM
+        const passwordInputs = page.locator('input[type="password"]');
+        await expect(passwordInputs).toHaveCount(0);
 
-        // 5. Confirm the cancellation explanation is visible
-        const statusCard = page.locator(".fixture-status-card");
-        await expect(statusCard).toBeVisible();
-        await expect(statusCard).toContainText("Cancel stopped the simulation path. Ready for planning was not reached.");
+        // Probe server status
+        const testBtn = page.locator("#modalTestBtn");
+        await testBtn.click();
+        await expect(page.locator("#modalStatusText")).not.toBeEmpty();
 
-        // 6. Confirm "Ready for planning" was not reached
-        await expect(stateElem).not.toHaveText("ready for planning");
-
-        // 7. Confirm no successful-completion state is displayed
-        await expect(page.locator(".agent-progress-card")).toHaveCount(0);
-
-        // Capture screenshot: canceled state
-        await page.screenshot({ path: path.join(screenshotsDir, "canceled-state.png"), fullPage: true });
-
-        expect(guard.unexpectedRequests).toHaveLength(0);
-        expect(pageErrors).toHaveLength(0);
-        expect(consoleErrors).toHaveLength(0);
+        await page.screenshot({ path: path.join(screenshotsDir, "03-server-security-boundary-modal.png") });
         await guard.dispose();
     });
 
-    test("Fixture switching scenario", async ({ page }) => {
-        const pageErrors: Error[] = [];
-        const consoleErrors: string[] = [];
-        page.on("pageerror", (err) => pageErrors.push(err));
-        page.on("console", (msg) => {
-            if (msg.type() === "error") consoleErrors.push(msg.text());
-        });
-
+    test("Scenario 4: Real AG-UI Stream Consumption & Safe Unavailable State", async ({ page }) => {
         const guard = attachNetworkGuard(page);
 
-        await page.goto("/embed/researcher-workflow-demo.html");
+        await page.goto("http://127.0.0.1:4173/index.html");
 
-        // 1. Start one fixture
-        const straightOption = page.locator('input[name="fixture"][value="straight-success"]');
-        await straightOption.check();
-        const startBtn = page.getByRole("button", { name: "Start" });
-        await startBtn.click();
+        // Enter prompt into composer
+        const input = page.locator("#composerInput");
+        await input.fill("Verify current Tokyo travel preferences");
 
-        // Wait for it to become review
-        const stateElem = page.locator("strong[data-state]");
-        await expect(stateElem).toHaveText("review", { timeout: 10_000 });
-
-        // 2. Switch the selected fixture using the existing radio control
-        const reloopOption = page.locator('input[name="fixture"][value="section-change-reloop"]');
-        await reloopOption.check();
-
-        // 3. Confirm state resets to idle
-        await expect(stateElem).toHaveText("idle");
-
-        // 4. Confirm previous progress is cleared
-        const idleNote = page.locator("[data-idle-note]");
-        await expect(idleNote).toBeVisible();
-        await expect(page.locator(".agent-progress-card")).toHaveCount(0);
-
-        // 5. Confirm previous fixture chat state is cleared
-        const chatLog = page.locator("[data-chat-log]");
-        await expect(chatLog).toContainText("Simulation reset. Start and Cancel are available; Ready for planning is not available.");
-
-        expect(guard.unexpectedRequests).toHaveLength(0);
-        expect(pageErrors).toHaveLength(0);
-        expect(consoleErrors).toHaveLength(0);
-        await guard.dispose();
-    });
-
-    test("Local chat scenario", async ({ page }) => {
-        const pageErrors: Error[] = [];
-        const consoleErrors: string[] = [];
-        page.on("pageerror", (err) => pageErrors.push(err));
-        page.on("console", (msg) => {
-            if (msg.type() === "error") consoleErrors.push(msg.text());
-        });
-
-        const guard = attachNetworkGuard(page);
-
-        await page.goto("/embed/researcher-workflow-demo.html");
-
-        // Fill and submit the static preview chat
-        const input = page.getByPlaceholder("Ask about focus indicators or live-region status messages…");
-        await expect(input).toBeVisible();
-        await input.fill("What are the focus indicator requirements?");
-
-        const sendBtn = page.getByRole("button", { name: "Send" });
+        // Click send
+        const sendBtn = page.locator("#composerSendBtn");
         await sendBtn.click();
 
-        // 1. Appends the user message locally
-        const chatLog = page.locator("[data-chat-log]");
-        await expect(chatLog.locator(".human-message").last()).toHaveText("What are the focus indicator requirements?");
+        // Wait for safe unavailable response (503 when provider credentials unconfigured)
+        const asstMessage = page.locator("#asstContent");
+        await expect(asstMessage).toContainText("Backend Service Unavailable (503)", { timeout: 10_000 });
 
-        // 2. Displays the fixture's existing local-preview response
-        await expect(chatLog.locator(".ai-message").last()).toHaveText(
-            "Static preview captured the message locally. Use the React app for live stream submission."
-        );
+        // Verify no simulated progress or fake tool execution was fabricated
+        await expect(asstMessage).toContainText("Credentials remain server-side per security policy.");
 
-        // 3. Makes no external request
-        expect(guard.unexpectedRequests).toHaveLength(0);
+        await page.screenshot({ path: path.join(screenshotsDir, "04-ag-ui-stream-safe-unavailable.png") });
+        await guard.dispose();
+    });
 
-        // 4. Does not claim a live response
-        await expect(chatLog).not.toContainText("Live response connected");
+    test("Scenario 5: Browser Network Isolation Enforcement", async ({ page }) => {
+        const guard = attachNetworkGuard(page);
 
-        expect(pageErrors).toHaveLength(0);
-        expect(consoleErrors).toHaveLength(0);
+        await page.goto("http://127.0.0.1:4173/index.html");
+
+        // Trigger health endpoint and provider status
+        await page.evaluate(async () => {
+            await fetch("/api/health").catch(() => {});
+            await fetch("/api/providers/status").catch(() => {});
+        });
+
+        // Verify zero forbidden external network requests were made by the browser
+        expect(guard.unexpectedRequests).toEqual([]);
+
+        await guard.dispose();
+    });
+
+    test("Scenario 6: Research Banner & Standalone Researcher Drawer (User-Driven Tavily Search)", async ({ page }) => {
+        const guard = attachNetworkGuard(page);
+
+        await page.goto("http://127.0.0.1:4173/index.html");
+
+        // Verify Research Banner exists and is visible
+        const researchBanner = page.locator("#researchBanner");
+        await expect(researchBanner).toBeVisible();
+        await expect(researchBanner).toContainText("Research Mode Active");
+
+        // Verify Researcher button
+        const researcherBtn = page.locator("#researcherBtn");
+        await expect(researcherBtn).toBeVisible();
+        await expect(researcherBtn).toContainText("Researcher");
+
+        // Click Researcher button to open standalone drawer
+        await researcherBtn.click();
+        const researcherDrawer = page.locator("#researcherDrawer");
+        await expect(researcherDrawer).toHaveClass(/open/);
+
+        // Perform user-driven Tavily search
+        const searchInput = page.locator("#tavilySearchInput");
+        await searchInput.fill("OneShot architecture invariants");
+        const searchBtn = page.locator("#tavilySearchBtn");
+        await searchBtn.click();
+
+        // Verify search results are rendered with citations
+        await expect(page.locator("text=Architecture and Invariants Analysis").first()).toBeVisible({ timeout: 5000 });
+        await expect(page.locator(".insert-cite-btn").first()).toBeVisible();
+
+        // Insert citation into composer
+        await page.locator(".insert-cite-btn").first().click();
+        const composerInput = page.locator("#composerInput");
+        await expect(composerInput).toHaveValue(/Architecture and Invariants Analysis/);
+
+        // Close researcher drawer
+        await page.locator("#closeResearcherDrawerBtn").click();
+        await expect(researcherDrawer).not.toHaveClass(/open/);
+
+        await page.screenshot({ path: path.join(screenshotsDir, "05-standalone-researcher-tavily.png") });
+        await guard.dispose();
+    });
+
+    test("Scenario 7: Tasks Flip Card, Active-Only Todo Chain, Gate 1 Confirmation, & Message Actions", async ({ page }) => {
+        const guard = attachNetworkGuard(page);
+
+        await page.goto("http://127.0.0.1:4173/index.html");
+
+        // Open Tasks drawer
+        await page.locator("#toggleDrawerBtn").click();
+        await page.locator("#tabTaskBtn").click();
+
+        // Verify Active-Only Todo Chain
+        const activeSkill = page.locator(".todo-skill.active");
+        await expect(activeSkill).toBeVisible();
+        await expect(activeSkill).toContainText("ACTIVE");
+
+        // Test Tasks Flip Card (Stage Todos ⇆ Hook Audit Log)
+        const flipBtn = page.locator("#tasksFlipBtn");
+        await expect(flipBtn).toBeVisible();
+        const flipCard = page.locator("#tasksFlipCard");
+        await expect(flipCard).not.toHaveClass(/flipped/);
+
+        // Flip to Back (Hook Log)
+        await flipBtn.click();
+        await expect(flipCard).toHaveClass(/flipped/);
+        await expect(page.locator("#hookLogScroll")).toBeVisible();
+
+        // Flip back to Front
+        await flipBtn.click();
+        await expect(flipCard).not.toHaveClass(/flipped/);
+
+        // Test Gate 1 Plan Card confirmation
+        const planCard = page.locator("#planReviewCard");
+        await expect(planCard).toBeVisible();
+        const confirmBtn = page.locator("#confirmPlanBtn");
+        await confirmBtn.click();
+        await expect(page.locator("#gate1Badge")).toHaveText("CONFIRMED");
+
+        // Test Message Content Actions (Copy & Fork)
+        const copyBtn = page.locator('[data-action="copy"]').first();
+        await expect(copyBtn).toBeVisible();
+        await copyBtn.click();
+        await expect(copyBtn).toHaveText(/Copied/);
+
+        const forkBtn = page.locator('[data-action="fork"]').first();
+        await expect(forkBtn).toBeVisible();
+        await forkBtn.click();
+        await expect(forkBtn).toHaveText(/Branch/);
+
+        await page.screenshot({ path: path.join(screenshotsDir, "06-flipcard-todos-and-gate-confirm.png") });
         await guard.dispose();
     });
 });

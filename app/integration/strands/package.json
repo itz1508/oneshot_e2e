@@ -1,0 +1,10 @@
+{
+  "name": "@oneshot/integration-strands",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@strands-agents/sdk": "^1.17.0",
+    "openai": "^6.49.0"
+  }
+}

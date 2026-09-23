@@ -18,20 +18,27 @@ export default defineConfig({
         {
             name: "chromium",
             use: {
+                baseURL: "http://127.0.0.1:4173",
                 headless: true,
                 screenshot: "off",
                 video: "off",
                 trace: "off",
+                launchOptions: {
+                    args: ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
+                },
             },
         },
     ],
     use: {
         baseURL: "http://127.0.0.1:4173",
+        launchOptions: {
+            args: ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
+        },
     },
     webServer: {
-        command: "node e2e/support/static-server.mjs",
+        command: "node --import tsx e2e/support/static-server.mjs",
         cwd: repoRoot,
-        url: "http://127.0.0.1:4173/embed/researcher-workflow-demo.html",
+        url: "http://127.0.0.1:4173/index.html",
         reuseExistingServer: true,
         timeout: 15_000,
     },

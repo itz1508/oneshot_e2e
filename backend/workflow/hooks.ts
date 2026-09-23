@@ -56,12 +56,28 @@ export interface HookExecutionResult {
 }
 
 /**
+ * Recognized authorized event producers for lifecycle ownership enforcement
+ */
+export const AUTHORIZED_EVENT_PRODUCERS = new Set([
+  'Researcher',
+  'Planner',
+  'Builder',
+  'Evaluator',
+  'Refactor',
+  'GapAnalysis',
+  'System',
+  'User',
+]);
+
+/**
  * Hook lifecycle event
  */
 export interface HookLifecycleEvent {
   type: 'registered' | 'unregistered' | 'executed' | 'failed';
   hook: WorkflowHook;
   result?: HookExecutionResult;
+  producerId?: string;
+  publishAs?: string;
 }
 
 /**
@@ -162,9 +178,14 @@ export class WorkflowHooksRegistry {
   }
 
   /**
-   * Emit event
+   * Emit event with producer identity enforcement
    */
-  private emit(event: HookLifecycleEvent): void {
+  emit(event: HookLifecycleEvent, publishAs: string = 'System'): void {
+    if (publishAs && !AUTHORIZED_EVENT_PRODUCERS.has(publishAs)) {
+      throw new Error(`Unauthorized event emission: '${publishAs}' is not a recognized authorized event producer.`);
+    }
+    event.producerId = publishAs;
+    event.publishAs = publishAs;
     for (const listener of this.listeners) {
       Promise.resolve(listener(event)).catch((error) => {
         console.error('Hook listener error:', error);

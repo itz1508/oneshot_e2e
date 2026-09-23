@@ -1,11 +1,15 @@
 {
   "compilerOptions": {
     "target": "ES2024",
-    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2024",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "rootDir": ".",
-    "outDir": "dist",
+    "noEmit": true,
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -14,6 +18,12 @@
     "declaration": false,
     "sourceMap": false
   },
-  "include": ["backend/**/*.ts"],
-  "exclude": ["dist/**", "node_modules/**"]
+  "include": [
+    "backend/**/*.ts",
+    "packages/**/*.ts"
+  ],
+  "exclude": [
+    "dist/**",
+    "node_modules/**"
+  ]
 }

@@ -8,20 +8,24 @@
     "node": ">=24.13.0",
     "npm": ">=11.8.0"
   },
+  "bin": {
+    "oneshot": "./scripts/oneshot.mjs"
+  },
   "scripts": {
-    "postinstall": "npm install --prefix app/integration/gemini --ignore-scripts --no-audit --no-fund --package-lock=false",
+    "postinstall": "pnpm install --prefix app/integration/gemini --ignore-scripts",
     "oneshot": "node scripts/oneshot.mjs",
-    "dev": "node --env-file=app/env/.env dist/backend/index.js",
-    "dev:worker": "node --env-file=app/env/.env dist/backend/scripts/run-pipeline-worker.js",
-    "build": "tsc -p tsconfig.json && npm run build:ui",
+    "dev": "node --import tsx backend/index.ts",
+    "serve": "node dist/backend/index.js",
     "start": "node dist/backend/index.js",
-    "test": "npm run build:backend && tsc -p tsconfig.test.json && node --test --test-concurrency=1 --test-force-exit dist/backend/tests/ts/*.test.js",
+    "build": "pnpm run build:backend && pnpm run build:ui",
+    "build:backend": "tsc -p tsconfig.json --outDir dist --noEmit false",
+    "build:ui": "pnpm --prefix frontend/web run build",
+    "test": "pnpm run build:backend && pnpm run build:test && node --test --test-concurrency=1 --test-force-exit dist/backend/tests/ts/*.test.js",
+    "test:runtime": "node --import tsx --test packages/agent-runtime/tests/*.test.mjs",
+    "test:web": "pnpm --prefix frontend/web test",
+    "test:all": "pnpm test && pnpm run test:runtime && pnpm run test:web",
     "build:test": "tsc -p tsconfig.test.json",
-    "demo": "node app/bootstrap/demo.mjs",
-    "setup": "node -e \"require('child_process').execSync(process.platform==='win32'?'app/bootstrap/setup.bat':'bash app/bootstrap/setup.sh',{stdio:'inherit'})\"",
     "verify": "python app/scripts/verify_all.py",
-    "build:backend": "tsc -p tsconfig.json",
-    "build:ui": "npm --prefix frontend/web run build",
     "judge": "node scripts/judge.mjs",
     "bootstrap": "node scripts/bootstrap.mjs",
     "guard:layout": "node scripts/guard/layout.mjs",
@@ -44,8 +48,16 @@
     "ai": "^7.0.97",
     "ajv": "^8.20.0",
     "bullmq": "^6.3.4",
+    "dotenv": "^18.0.3",
     "ioredis": "^6.0.0",
-    "openai": "^6.49.0"
+    "openai": "^6.49.0",
+    "zod": "^4.6.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msgpackr-extract"
+    ]
   },
   "overrides": {
     "@opentelemetry/core": "^2.8.0",
@@ -53,8 +65,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
-    "@types/node": "file:app/vendor/npm/types-node-24.0.4.tgz",
-    "typescript": "file:app/vendor/npm/typescript-5.8.3.tgz",
-    "undici-types": "file:app/vendor/npm/undici-types-7.8.0.tgz"
+    "@types/node": "24.0.4",
+    "tsx": "^4.23.15",
+    "typescript": "5.8.3",
+    "undici-types": "7.8.0"
   }
 }
