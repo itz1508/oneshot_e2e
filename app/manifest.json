@@ -1,0 +1,4745 @@
+{
+  "generated_at": "2026-09-23T08:41:21Z",
+  "version": "1.3.0",
+  "commit": "e7b1df54",
+  "files": [
+    {
+      "path": ".github\\workflows\\deploy.yml",
+      "size": 3000,
+      "hash": "sha256:31afd3e9ad0a8b62f197f161ecd55f194c1c1f581335a0e65a537f0e1a1acd27",
+      "category": "source"
+    },
+    {
+      "path": ".kiro\\IMPLEMENTATION_SUMMARY.md",
+      "size": 9279,
+      "hash": "sha256:01e90f472b705d4c23afaeccabc197904ce69f093f8d4e7959d5805665e32de7",
+      "category": "source"
+    },
+    {
+      "path": ".kiro\\SERVER_QUICK_START.md",
+      "size": 1316,
+      "hash": "sha256:8d0d69ad95acb9c4bc709fd1691e6709c2a0e23228a18ece7e20870c9cbd09d4",
+      "category": "source"
+    },
+    {
+      "path": ".kiro\\specs\\google-oauth-auth-card-design.md",
+      "size": 14506,
+      "hash": "sha256:3ff59b7714414d465581635d723776def9cd3914133d0fab73f2ef6cf499be5b",
+      "category": "source"
+    },
+    {
+      "path": ".kiro\\specs\\google-oauth-auth-card-requirements.md",
+      "size": 11357,
+      "hash": "sha256:d279a87a36214d5c0bdf295043ff4b801484ff741d84ea0bea0569f922c06053",
+      "category": "source"
+    },
+    {
+      "path": ".kiro\\specs\\google-oauth-auth-card-tasks.md",
+      "size": 8847,
+      "hash": "sha256:0c7215fbfafaeaa72a140368e55ead02df7d5cb0fecab8905b1db9873eea5460",
+      "category": "source"
+    },
+    {
+      "path": ".kiro\\specs\\integration-modular-providers-design.md",
+      "size": 10942,
+      "hash": "sha256:81069c95ffc6b2fd4c11024084dc81302066d9b92ad129687a5fac93b25281d0",
+      "category": "source"
+    },
+    {
+      "path": ".kiro\\specs\\integration-modular-providers-requirements.md",
+      "size": 10347,
+      "hash": "sha256:c7783b0566bd6485643c1f78a6034c311b7b5e6887413f8ab540379b56e3f1be",
+      "category": "source"
+    },
+    {
+      "path": ".kiro\\specs\\integration-modular-providers-tasks.md",
+      "size": 8349,
+      "hash": "sha256:a7328ba49dc06fbd6162e6c3ba487b8f03f770b4378906790c086aa631368881",
+      "category": "source"
+    },
+    {
+      "path": ".oneshot\\storage\\snapshots\\snap_1790101017716_u3vojx\\metadata.json",
+      "size": 209,
+      "hash": "sha256:d2d6acd2de389faa5318d899fb4fdc3cb31b571c4e441ceeb0bda7944f681161",
+      "category": "source"
+    },
+    {
+      "path": ".oneshot\\storage\\snapshots\\snap_1790101084336_q0418y\\metadata.json",
+      "size": 209,
+      "hash": "sha256:b78c2f1049b85b41036f9ba9e3b684cbc36e8ede35fe65deaedf842e21c41b01",
+      "category": "source"
+    },
+    {
+      "path": ".oneshot\\storage\\snapshots\\snap_1790101089152_sp2f3h\\metadata.json",
+      "size": 223,
+      "hash": "sha256:ce532315067c9dbaac812cb3b5ad1d3bf88d3c2b51a203fcef46ca7dd674300f",
+      "category": "source"
+    },
+    {
+      "path": ".oneshot\\storage\\snapshots\\snap_1790101455413_lr7d4x\\metadata.json",
+      "size": 223,
+      "hash": "sha256:4a0cd5a19a62283f7f90096acdaa90e3e4ab2a06d3e3ba10620a9e68a05b675b",
+      "category": "source"
+    },
+    {
+      "path": ".oneshot\\storage\\snapshots\\snap_1790101512530_x9u8jl\\metadata.json",
+      "size": 223,
+      "hash": "sha256:088e37f72ec4430e1c720c3263357c8b5acc7fce9a24c882c2c4a1620b889cea",
+      "category": "source"
+    },
+    {
+      "path": "AGENTS.md",
+      "size": 12236,
+      "hash": "sha256:21de73014e3a0e4d09eb013433847ae5fca4a829a5e26580c75b481a7a03c2aa",
+      "category": "source"
+    },
+    {
+      "path": "README.md",
+      "size": 9732,
+      "hash": "sha256:685ed6e403d16fa3a8a47faccb96b3d30542543a117029592c70c1aa4ad0940c",
+      "category": "source"
+    },
+    {
+      "path": "app\\bootstrap\\demo.mjs",
+      "size": 2425,
+      "hash": "sha256:bb696056a366c2dfd30d9189bc456f6fb3c43de736130ea7604cd1b706505ed4",
+      "category": "source"
+    },
+    {
+      "path": "app\\scripts\\generate_manifest.py",
+      "size": 4286,
+      "hash": "sha256:f35a477cddccf856f195f112b62361608a29ffda1a2c10bedbc1d08f15e03247",
+      "category": "source"
+    },
+    {
+      "path": "app\\scripts\\source_file_policy.py",
+      "size": 5773,
+      "hash": "sha256:bfbda826a7de39dd258b90e15e9cf6323ff041762b95542ec53cbfddd3f2ed55",
+      "category": "source"
+    },
+    {
+      "path": "app\\scripts\\verify_all.py",
+      "size": 11729,
+      "hash": "sha256:acfcfa5d889fa7a087373781f561ee69d7d8cb62d4649de2cc7e0c47289e31c6",
+      "category": "source"
+    },
+    {
+      "path": "app\\scripts\\verify_manifest.py",
+      "size": 5586,
+      "hash": "sha256:9ae05cc0e79722d4516a6cdaab8df1fced85508003ff16fdceb1ca283e50ebbe",
+      "category": "source"
+    },
+    {
+      "path": "backend\\adapter\\contract-adapter.ts",
+      "size": 7871,
+      "hash": "sha256:d3c5bfdd8a39271ebe6db6daee59b177dc766802a4f6573670119ed462967700",
+      "category": "source"
+    },
+    {
+      "path": "backend\\artifact\\lifecycle.ts",
+      "size": 9819,
+      "hash": "sha256:207cb5ec297ba71842283351dddc051a67b3853bfcce3228efd45c4847267208",
+      "category": "source"
+    },
+    {
+      "path": "backend\\config\\boundaries.ts",
+      "size": 7528,
+      "hash": "sha256:09f226703c31d13885fb7cefdd8ce01e7b07def210d6c2b812ab77e156829ab3",
+      "category": "source"
+    },
+    {
+      "path": "backend\\contract\\schema.ts",
+      "size": 10356,
+      "hash": "sha256:5c50d0ef797b8feb705eb501148cec9471f6a097e54e88e1277c8c98721ee3d7",
+      "category": "source"
+    },
+    {
+      "path": "backend\\index.ts",
+      "size": 23513,
+      "hash": "sha256:bd6316726f08e36e70b3dd165056e01980888b21d66737aa6f20fa49223ebe04",
+      "category": "source"
+    },
+    {
+      "path": "backend\\oauth.ts",
+      "size": 4399,
+      "hash": "sha256:2a1f417fa8ed8c3aa252882e2b5d060e3e73ec449ab3c2025c0be9966483d5a5",
+      "category": "source"
+    },
+    {
+      "path": "backend\\research\\lifecycle.ts",
+      "size": 9745,
+      "hash": "sha256:4429525b6d2f97301621fc6cb3dfe1ab3b7b3873ef2f4f4582b4a610ff8239b2",
+      "category": "source"
+    },
+    {
+      "path": "backend\\serialization\\codec.ts",
+      "size": 10893,
+      "hash": "sha256:d11ada3f1cfe4f8090353ffa95a8e45ca3d0e39fc0e005f2f2a4cf3ab883e448",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\artifact-lifecycle.test.ts",
+      "size": 8345,
+      "hash": "sha256:3e89cb48beeebf79cd010f8c073862080d6452dcdba800cb0b7156b9710b9617",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\boundaries.test.ts",
+      "size": 6242,
+      "hash": "sha256:050640ac0e0c5f290cdcbc96db5ac67fa149d16613c2d00f326a275a17a4db31",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\contract-adapter.test.ts",
+      "size": 5378,
+      "hash": "sha256:8b66f5e7f2f0a8d9fc0cdb1174ad124eed90f00bf77481214245ff93a17eda7f",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\contract-schema.test.ts",
+      "size": 10253,
+      "hash": "sha256:07ed7f5c68f5fed3dce4510171b68a3adea121babb832232af7a8074c1b43e73",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\environment.test.ts",
+      "size": 1514,
+      "hash": "sha256:4d7ac51ec221121f1e4b2770256988cf019104a6b1bd16d5a32a0462624bd4aa",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\execution-guards.test.ts",
+      "size": 9338,
+      "hash": "sha256:65294711626d492afed955d87cea42c5c6fcd496ff640ebeb7b58b2355465323",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\failure-taxonomy.test.ts",
+      "size": 8919,
+      "hash": "sha256:b755fce456b7dd64b139cd2886b08a55ae37709fb089239183f98daa6e9e6549",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\health-endpoint.test.ts",
+      "size": 1468,
+      "hash": "sha256:62343d8f8c131a01f429f4cce9414385b12ba1232633a99df30aa44d7174d64d",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\network-endpoint.test.ts",
+      "size": 1543,
+      "hash": "sha256:6d87a7846cdc5703497a008ca2c4f779b1c688576c47899c7425aafafa57b199",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\research-lifecycle.test.ts",
+      "size": 8149,
+      "hash": "sha256:7e75a44ecdc78db936a98ab747895bfa94a2f87c942b702d2818fdd2d8d1e20c",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\serialization-codec.test.ts",
+      "size": 7789,
+      "hash": "sha256:327b6cd76f5ac232884c963effc7a3d81ca713c95cbf4e0d43c805d83dad2d91",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\validation-runtime.test.ts",
+      "size": 8858,
+      "hash": "sha256:0580e72c12e8b933c7d6291b9bf8a2f22da4a5cb11331989e424e3f4107c16bf",
+      "category": "source"
+    },
+    {
+      "path": "backend\\tests\\ts\\workflow-hooks.test.ts",
+      "size": 8479,
+      "hash": "sha256:9b9cf8d8b140e59a18cad0464c555edba08628709a5686f37e659268da92aa7e",
+      "category": "source"
+    },
+    {
+      "path": "backend\\validation\\failure-taxonomy.ts",
+      "size": 7821,
+      "hash": "sha256:f7dcca6950e7118f8fa0e0c922fc626e19f661bd460d0e3ab4007ad9d516d194",
+      "category": "source"
+    },
+    {
+      "path": "backend\\validation\\runtime.ts",
+      "size": 9793,
+      "hash": "sha256:697bf7c8da31fd71f8c615af00ed0074b34a291a89139b614f615eefb53bbd4c",
+      "category": "source"
+    },
+    {
+      "path": "backend\\workflow\\hooks.ts",
+      "size": 7804,
+      "hash": "sha256:7495f0b233c3e67e1b3facfa755ca2b75ffcdac7e5e671bdd603b1b9cb730e2b",
+      "category": "source"
+    },
+    {
+      "path": "backend\\workflow\\node\\guard.ts",
+      "size": 9116,
+      "hash": "sha256:689414179b17bc95f4d78dd3e2cf1dc24813b66b10e45a7c6f9e71b6b6f0cd23",
+      "category": "source"
+    },
+    {
+      "path": "e2e\\playwright.config.ts",
+      "size": 1242,
+      "hash": "sha256:895c1a0f13a6ba07510b40048b9a8156ec0ae43d7ec0b60b41c948cb850b63d0",
+      "category": "source"
+    },
+    {
+      "path": "e2e\\researcher-preview.spec.ts",
+      "size": 10199,
+      "hash": "sha256:3efde467f9f6b9387ec5b998592dd9365bdec2d531471162d268706bb9656aa2",
+      "category": "source"
+    },
+    {
+      "path": "e2e\\support\\network-guard.ts",
+      "size": 1762,
+      "hash": "sha256:598e7519506944dfbd52191b3459281c57c9f23bdef3013a022286ff7ea1d464",
+      "category": "source"
+    },
+    {
+      "path": "e2e\\support\\static-server.mjs",
+      "size": 30029,
+      "hash": "sha256:c8e70d9b2877c3ca734bb218613b5f8e86f6fc649d0b6460814394d1d3ab46fa",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\.next\\package.json",
+      "size": 20,
+      "hash": "sha256:091a04fa67c7907b98e106fcff8b964e13129754fce72d24f3025b97c4887fa3",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\.next\\types\\package.json",
+      "size": 18,
+      "hash": "sha256:e3d5a4a2d8551aa52c5a01d2a0efb2e06a2d9711b4f5c5f1d20de6e21807e2cd",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\app\\globals.css",
+      "size": 3602,
+      "hash": "sha256:e02ae3db35e848819a110b475d0421957216321a97269190dd2b5fdf04d6dcaf",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\app\\layout.tsx",
+      "size": 781,
+      "hash": "sha256:a820c1c847fc27f29cbfd2f3b282f5f64d10017c449eee1bf49e927a5445cdfe",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\app\\page.tsx",
+      "size": 114,
+      "hash": "sha256:43658793ec9ebdfef0a173ead82c66e9dc9ca6f97a8054dbccdddee0fc1758c2",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\next-env.d.ts",
+      "size": 295,
+      "hash": "sha256:1b59d4c6b83807db275d43f3cf2cc8e9323f465fab764eea091cc5becd5bad37",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\next.config.ts",
+      "size": 210,
+      "hash": "sha256:6194606ff4a96e1d4dc197686e1df8717734827a4c84eaf6b220b51325b99b0e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@alloc\\quick-lru\\package.json",
+      "size": 764,
+      "hash": "sha256:d0f49e388ec17dbcfda6573e1b7672a20af11d0cf4c7247299d0bc19bdb58d71",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@img\\colour\\package.json",
+      "size": 1515,
+      "hash": "sha256:bc38c5097693ed53b91c32f35fb0a52569736c7854ba2eb6d080f3252071f75c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@img\\sharp-win32-x64\\package.json",
+      "size": 888,
+      "hash": "sha256:b4fc98ec709b31a80e8450259c3d5ed2fc1e2b8f8355ced4bfd4d75db45f8a87",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@jridgewell\\gen-mapping\\package.json",
+      "size": 2201,
+      "hash": "sha256:6264fca78382a9782f8e8d5e653e7bf43dc8aa6d469f3322a82e531093896a01",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@jridgewell\\remapping\\package.json",
+      "size": 2307,
+      "hash": "sha256:cc535fb0665977104146fb8fe6c81ff63d2c9ae7f7b783d86e7f7db064cde57a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@jridgewell\\resolve-uri\\package.json",
+      "size": 2063,
+      "hash": "sha256:0793e722ffe08f3b4f1862c4dc96d920a62d6811a3648b4feb02f06c63227e8b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@jridgewell\\sourcemap-codec\\package.json",
+      "size": 2185,
+      "hash": "sha256:ac7afd57294dbee1f891ca797e19e405340f2cd6031808e6d3845fec60a5b43f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@jridgewell\\trace-mapping\\package.json",
+      "size": 2252,
+      "hash": "sha256:7f5eacc669d36013f9b792ab15721a97d48b26b093100122aa6c8691ebe656be",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@next\\env\\package.json",
+      "size": 975,
+      "hash": "sha256:229045587b8f7898b12126f99fadd1021c8c928f207f92f22146908d46899b5b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@next\\swc-win32-x64-msvc\\package.json",
+      "size": 425,
+      "hash": "sha256:23641726d9f8e4ec44860c5e7caadb8ec0d9ce1eccf47c022f46674341e4d862",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_apply_decorated_descriptor\\package.json",
+      "size": 118,
+      "hash": "sha256:a6b9a0bdc8ee4d17ee6f75d396e52e1859250b434c0c1ca7098904a21511823b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_apply_decs_2203_r\\package.json",
+      "size": 100,
+      "hash": "sha256:7a3ca1e4eda8134976fc08ba1f486e503f398bc448a211455c626c9f01b48b49",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_apply_decs_2311\\package.json",
+      "size": 96,
+      "hash": "sha256:7059ebf98dde0959ecf79036144c3179a5750f5a6af373c59f2bfba40572a70d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_array_like_to_array\\package.json",
+      "size": 104,
+      "hash": "sha256:62614afee74875866ab0cba06b00ba9d73db7fc9349712c6c9fc1f02a28bf487",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_array_with_holes\\package.json",
+      "size": 98,
+      "hash": "sha256:b6c09f8a9ffa356d4cbc904f6fea693fab02b7f54c6c64ced37b48b76e578abe",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_array_without_holes\\package.json",
+      "size": 104,
+      "hash": "sha256:feae8ac943235b36378c072ab5f06309f304c7623119fa2a93055b4d3c217618",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_assert_this_initialized\\package.json",
+      "size": 112,
+      "hash": "sha256:3170ad522a4ba0a95f05a8bd63cea81b3e6d2d6917b23640b64d4446b0457159",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_async_generator\\package.json",
+      "size": 96,
+      "hash": "sha256:88e15278eb28a000a6b8b1d4cbeac0eb866bc60e15b270651c09176538f5ea5c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_async_generator_delegate\\package.json",
+      "size": 114,
+      "hash": "sha256:328ea804e3c51564a43135ee8088d2725d146b7e124ab9db72e3cf99b510b3ef",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_async_iterator\\package.json",
+      "size": 94,
+      "hash": "sha256:967537b5dcd68fbe702ba9e3d0fa1a84129c172ced7083193aeff6431af26058",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_async_to_generator\\package.json",
+      "size": 102,
+      "hash": "sha256:ac1e102d4d780b4ef176419be2698b2ae3e44d74f950e3fa0120f4658fcf336d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_await_async_generator\\package.json",
+      "size": 108,
+      "hash": "sha256:47f5a022ceb5154264747abafe33985b335e1aee9f02f2edc4ffe0b90c4ac344",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_await_value\\package.json",
+      "size": 88,
+      "hash": "sha256:95836ec95257e7fd52ec7057a175fe61f41a82380cea534712c27914d0fd4876",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_call_super\\package.json",
+      "size": 86,
+      "hash": "sha256:28fb6af09c1d9d2bd3ef0ab4f8557901552d79ab6e6b4c5e5b429fac76057c31",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_check_private_redeclaration\\package.json",
+      "size": 120,
+      "hash": "sha256:a9e12baf4460b692786291f44932417d7109858fcced567fa945ea91e0f0ae20",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_apply_descriptor_destructure\\package.json",
+      "size": 134,
+      "hash": "sha256:303cd67020eb60c451ae5c8b2605096dab350c9c326c74f7c917763c82f23659",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_apply_descriptor_get\\package.json",
+      "size": 118,
+      "hash": "sha256:69dc9903d96a4cec2785a0b5509f4f4487185dafdc28b051b309ef1190a1178e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_apply_descriptor_set\\package.json",
+      "size": 118,
+      "hash": "sha256:64d94a458139c9671fb9d91389b62e7d4a1a6aec1926412e200ecdb1514c8702",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_apply_descriptor_update\\package.json",
+      "size": 124,
+      "hash": "sha256:f2c1579d7f9297234f3e5047d7199f14bbd5cf878dd9e5fb06c795b9852c47ed",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_call_check\\package.json",
+      "size": 98,
+      "hash": "sha256:8a5d0cd32d27251c5e12aa72d6f4d7dd8bf8897e277d6d835c8cb93b5bf7b740",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_check_private_static_access\\package.json",
+      "size": 132,
+      "hash": "sha256:0f41f153c3edfa77f68084971b4399a9ad5b71ed3bf25944f00be54f53d17e0d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_check_private_static_field_descriptor\\package.json",
+      "size": 152,
+      "hash": "sha256:55128ee0de857f96388de86eb3ee21edcde04b750079e9ffbb0af1f6363cbfa9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_extract_field_descriptor\\package.json",
+      "size": 126,
+      "hash": "sha256:0b1846e4a9e412ce95b250fef8072ac624d0fbc611e43b20597c0d6bfcdbb217",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_name_tdz_error\\package.json",
+      "size": 106,
+      "hash": "sha256:0270406b7c76e9b457621d7a6aca49a373551d2b3e2ac0dc02e26d7d436fa171",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_private_field_destructure\\package.json",
+      "size": 128,
+      "hash": "sha256:a695d7bed2222aebd4c10e9d11147049a13cca4651b7316effaaa03ee3c50048",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_private_field_get\\package.json",
+      "size": 112,
+      "hash": "sha256:435ee69efc09c765c4b90d2bbc5054b2eae11e3cb9f2796cdec8fc539e376e27",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_private_field_init\\package.json",
+      "size": 114,
+      "hash": "sha256:a7001c183a022adef769d9d6825885aa464233daa63a9019898007c5984ef6a8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_private_field_loose_base\\package.json",
+      "size": 126,
+      "hash": "sha256:ef6bc60a0cca955a9aebc8905706957fa8eb9b2b5c1c90be4021a490e14f1cda",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_private_field_loose_key\\package.json",
+      "size": 124,
+      "hash": "sha256:bd7ce3928f8b9db7b48db41daf29ed35cacac57b164d85631e48e4cd32b790ad",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_private_field_set\\package.json",
+      "size": 112,
+      "hash": "sha256:66e6b2f74ebf3078f16439f4b407bc1308dc2ba8db9f8e9eb24c7f225e2fb045",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_private_field_update\\package.json",
+      "size": 118,
+      "hash": "sha256:e24805dd9b274008bb37bc8ea2604365900e0afc35ef277bce947d35b9d85338",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_private_method_get\\package.json",
+      "size": 114,
+      "hash": "sha256:a432369a7f029c1b25a35aa618828a21755b4cb0424d37a45a9cb7f31e55db27",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_private_method_init\\package.json",
+      "size": 116,
+      "hash": "sha256:8ebf873ccec19cc09fdd31cb2a5d808287038ec9b48b5f8a05613aab5749a424",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_private_method_set\\package.json",
+      "size": 114,
+      "hash": "sha256:acb1817dd29c028b20aff3705c3fdc637a6bf9164aa495c2c61aefee63ccf44c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_static_private_field_destructure\\package.json",
+      "size": 142,
+      "hash": "sha256:17b2a6829f829186899926077a159f7bbdf7a6b8857c548fbe9d8e0ab6eb70b0",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_static_private_field_spec_get\\package.json",
+      "size": 136,
+      "hash": "sha256:68ce4ac7dd4bbca348a27199e0c2e855a52e9482128382f008bd4f873bfff657",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_static_private_field_spec_set\\package.json",
+      "size": 136,
+      "hash": "sha256:21019cb294c2ec31bdd4c5cd890f19c9f9bdf63d0eea6533b7a80729dcbaeb2f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_static_private_field_update\\package.json",
+      "size": 132,
+      "hash": "sha256:0fa2009d458c61b643121c3d0eddf1614af463175afef7fded15660bffe779c7",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_class_static_private_method_get\\package.json",
+      "size": 128,
+      "hash": "sha256:25458c2fa1c9479288d65d3bd61af11cf57a23f0ee3e58c18724c22da2489d40",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_construct\\package.json",
+      "size": 84,
+      "hash": "sha256:fc0442e854fdbaa15828995cf1b794307e8e81d82b83547c6be2cf4ec67a9164",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_create_class\\package.json",
+      "size": 90,
+      "hash": "sha256:2444f0af0f50b7deac5b560a2d8393f8aa9be34044b17e8c2eaa2b3793088e3c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_create_for_of_iterator_helper_loose\\package.json",
+      "size": 136,
+      "hash": "sha256:79c8216cc2b8ea2045cdbbc9c14b0ac87ebc62a91f7514e18a1d5ddd73205778",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_create_super\\package.json",
+      "size": 90,
+      "hash": "sha256:31b0f1ed0544546d29d7ed1ac01304220f83cc04dd7e5fdfc5de6ef16e092fcb",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_decorate\\package.json",
+      "size": 82,
+      "hash": "sha256:ff7cb0b8a27ca4452dc42f75941b6a120742223fcc88c42bda83dbf6d7c23383",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_defaults\\package.json",
+      "size": 82,
+      "hash": "sha256:9adf17c4333383585ded8402fc337b156f6ade3567b59e38d9f53673942041bb",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_define_enumerable_properties\\package.json",
+      "size": 122,
+      "hash": "sha256:162720bbc4e925d7660c37e328e455539f1aa760cd3fe4bf36d5fb9b88bf71ed",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_define_property\\package.json",
+      "size": 96,
+      "hash": "sha256:9ad167f033349a6fd1b610e1eba7968a16425b5633dd3d6eac0e458df736dcf1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_dispose\\package.json",
+      "size": 80,
+      "hash": "sha256:51c12dc43139fda4b829be8572b3f69cdc7c92e0aa5e973837c3e066b47c1062",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_export_star\\package.json",
+      "size": 88,
+      "hash": "sha256:a00926449425bbf07b6e928ac91cf7e68359bd1f61a4706c432e87d2bec6fab3",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_extends\\package.json",
+      "size": 80,
+      "hash": "sha256:f25baaf8dd7c7ba6dab55d8523d7502806d78cf63455643b49160f02c5483395",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_get\\package.json",
+      "size": 72,
+      "hash": "sha256:106d51618674817762b7a5fecbfab02b33f6f37aa307aa13a4b6ab4b62520ab1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_get_prototype_of\\package.json",
+      "size": 98,
+      "hash": "sha256:55ed9c62bc40e06537038db817d4f803da14852a282080e4c1b2e4594dff9f13",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_identity\\package.json",
+      "size": 82,
+      "hash": "sha256:09cbe11daa8e4054545e0487beeb44cf771869d1ab79175125e118e1f4737bb2",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_inherits\\package.json",
+      "size": 82,
+      "hash": "sha256:7f7f51ae8b909fd297b44323cdd91cffd1cc7567c9230881c8503ef2c6552e93",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_inherits_loose\\package.json",
+      "size": 94,
+      "hash": "sha256:5cdc85272f4d4c881e9af99ad5ff0ff8d05f0aec2ea7c073c54aca178a3de688",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_initializer_define_property\\package.json",
+      "size": 120,
+      "hash": "sha256:a20b2e7874f73c7d7fe2e78a81612beec9c6ff05e653aa6afd5986cdcd53666a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_initializer_warning_helper\\package.json",
+      "size": 118,
+      "hash": "sha256:1169ff133b9fb147011921e3eeed9b98370c59f335ac333f6c6d79e28e6a7b20",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_instanceof\\package.json",
+      "size": 86,
+      "hash": "sha256:14027f5a9e5ac4a503cffac8b8f68fed6209f4c9bc1128450d6cadf198a6d88d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_interop_require_default\\package.json",
+      "size": 112,
+      "hash": "sha256:9cf5cdb2fda7dff60167b91a89a618c78d63f6e044e7681075efdb03a3834ed5",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_interop_require_wildcard\\package.json",
+      "size": 114,
+      "hash": "sha256:0771ab9c96c3d022cfabd5f7aebfeb43192893b24b025b5b0c941c0b5b450c1f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_is_native_function\\package.json",
+      "size": 102,
+      "hash": "sha256:eef69119e5ad6b58bddbbbc48554352f2437b572c66ad39be49a457ee37240ab",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_is_native_reflect_construct\\package.json",
+      "size": 120,
+      "hash": "sha256:52d8c9bf0ab4d4f0efb9783bbb575cabb8dd01cc1a490914ad13589123762501",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_iterable_to_array\\package.json",
+      "size": 100,
+      "hash": "sha256:cba3da0b643255c83e83f1cde1534b6c2ee111c58611e3347d96418449edb99f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_iterable_to_array_limit\\package.json",
+      "size": 112,
+      "hash": "sha256:98599d85ba328bdbf1c9f59cadba5ed1ac8f962c8b741f2b7a0c3816f55faf70",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_iterable_to_array_limit_loose\\package.json",
+      "size": 124,
+      "hash": "sha256:3f243725558a9cdfb991893967a8f110701d528ca005bee5c294825bc88a245d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_jsx\\package.json",
+      "size": 72,
+      "hash": "sha256:7736c535defff6df9e75a41a87705eb3d9ec79dcdd71811f3949ee23a69b825a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_new_arrow_check\\package.json",
+      "size": 96,
+      "hash": "sha256:63de066eb444bef8d71eb425e81f12efb2f892143323aafe4cf6c30b3a95183e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_non_iterable_rest\\package.json",
+      "size": 100,
+      "hash": "sha256:e2d3f41cc677a534149b095342f2a44d62aa08b9ebacef05791dcf40eeb630f3",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_non_iterable_spread\\package.json",
+      "size": 104,
+      "hash": "sha256:13abc3fcd88747959856f8aa083514ded6d1a242348fd981a80c9705d1b5189f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_object_destructuring_empty\\package.json",
+      "size": 118,
+      "hash": "sha256:95692b0fdf1a53f1d017039b555d19ac18f09dde9360e3e2141ea437103a4815",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_object_spread\\package.json",
+      "size": 92,
+      "hash": "sha256:6c7d0eb7ee11c069006780a4c41eb013164437e280ecb17785c8d89dfd565570",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_object_spread_props\\package.json",
+      "size": 104,
+      "hash": "sha256:c8788c3c61785e75a4b26aec594d858b1ad2df3162ed036a5f9471f04c1cb552",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_object_without_properties\\package.json",
+      "size": 116,
+      "hash": "sha256:8c25e74489cf1154d80ced79ae4bd137d7331d3e030d2561cf733db8199437ad",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_object_without_properties_loose\\package.json",
+      "size": 128,
+      "hash": "sha256:9cd053b4ecc15df9661d41e6a97b513a6c1364310740708d4cf14d9db92e86c4",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_overload_yield\\package.json",
+      "size": 94,
+      "hash": "sha256:6ff74d630e064d02844c96a91058f4f658e20e8bf98966c639c277d8c6e3af6c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_possible_constructor_return\\package.json",
+      "size": 120,
+      "hash": "sha256:ae1b3a096d1a7d6a45d17998c9ee63a41ee189533a7ef487b2205b7c6dc05023",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_read_only_error\\package.json",
+      "size": 96,
+      "hash": "sha256:f44c6a08b165cd10a9263074387519609cab198373ce7e496fb4e7f802265b23",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_set\\package.json",
+      "size": 72,
+      "hash": "sha256:73f2d56039c0bfb3f0c2a14f94a78bf918cae91ef4ef0165e50b570195ceaafb",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_set_prototype_of\\package.json",
+      "size": 98,
+      "hash": "sha256:99d7be8e2d756b6b9bc1e021bbb2ce48c3a83b0fc606543d4f401040d3074853",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_skip_first_generator_next\\package.json",
+      "size": 116,
+      "hash": "sha256:a3bb047683622bf58c1f39225b5e760ec14af1559e669422ac25896c90e594ef",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_sliced_to_array\\package.json",
+      "size": 96,
+      "hash": "sha256:7185e841bd8fae24cd0692746ea5858bc360ceab70dcb7482490b33d583b228e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_sliced_to_array_loose\\package.json",
+      "size": 108,
+      "hash": "sha256:7996b0e3527b90ac48bbec282e94b7817de532775aa51bd0ee0f8ed7717c3c13",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_super_prop_base\\package.json",
+      "size": 96,
+      "hash": "sha256:beb08b54c2e84c29d63f88833d6e14dfd520117eb953d8e95ecb298bbff51d75",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_tagged_template_literal\\package.json",
+      "size": 112,
+      "hash": "sha256:d576e8c8736b540ca98d49d598ea1c75f3aedf6e5c2dffdbf5bad2e345b03170",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_tagged_template_literal_loose\\package.json",
+      "size": 124,
+      "hash": "sha256:1444c363a4e1232c968809571d846b8dc6e71f8bb028dadaa23480f60b41ea5d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_throw\\package.json",
+      "size": 76,
+      "hash": "sha256:1f48ee7843320a618bae80ca20f591e7c3f7920881b94bea7145845d74581374",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_to_array\\package.json",
+      "size": 82,
+      "hash": "sha256:807e62d3a63b8e1688a6fbff226f157296b567922553f2f8dabd0fd6eae2d294",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_to_consumable_array\\package.json",
+      "size": 104,
+      "hash": "sha256:59adf9d742f6655f1a93583d013cc01fb7b993f4ff88ce23efd8d21186cdf0de",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_to_primitive\\package.json",
+      "size": 90,
+      "hash": "sha256:bee794714d205694e37cfd3e048b1748ef8a6ce4f8337b6204935ae60fcda726",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_to_property_key\\package.json",
+      "size": 96,
+      "hash": "sha256:b626b07490c30dabac449a1f27027ff7cce56b050271b208ac2cccf4d839a3c5",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_ts_add_disposable_resource\\package.json",
+      "size": 118,
+      "hash": "sha256:7109ddcfc96dbe08e792e2473e575cc3b28bc16282d54e9e8ee23c9e1c09daaa",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_ts_decorate\\package.json",
+      "size": 88,
+      "hash": "sha256:1a1922a20863f4e13b88bf1f942a8888adc1e152f6f091df63e5cd67fb87794f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_ts_dispose_resources\\package.json",
+      "size": 106,
+      "hash": "sha256:8e928dd4eb49f6d87683e59ecd12a3093c4a89ed32fbbb058c15b81244783ea1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_ts_generator\\package.json",
+      "size": 90,
+      "hash": "sha256:f4a93bb6e30936ea80ab26162223cb5aa5af9a454a1220ead2cb22624767d776",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_ts_metadata\\package.json",
+      "size": 88,
+      "hash": "sha256:bc3a8e64b9ca652a39f414c7b0b3ce0f8bc616969afc1a03fa8dd4400ce80f55",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_ts_param\\package.json",
+      "size": 82,
+      "hash": "sha256:58bd3673a71de1fd124f1d1148c837f20e98fd56dfd74b45e20c0c9e3f199f4b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_ts_rewrite_relative_import_extension\\package.json",
+      "size": 138,
+      "hash": "sha256:4773825b4c09f0f5216ed2bc548e2c9f95a763609900df65a5a79280219db29d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_ts_values\\package.json",
+      "size": 84,
+      "hash": "sha256:d262fe815da60db4a8b76f0aa11b7310076174083915c0475f8fa4207dc86e93",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_type_of\\package.json",
+      "size": 80,
+      "hash": "sha256:48bb58827fdcb66166418ad20ca82a9c01d7665f025f85bcccded39cf7426019",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_unsupported_iterable_to_array\\package.json",
+      "size": 124,
+      "hash": "sha256:2547d1a2e5be4e328a611a541443fa63c88e9610c6bc782a06d3f8affe841a7c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_update\\package.json",
+      "size": 78,
+      "hash": "sha256:4d897d7deada3461d64a2f81789bd5811069df7a66c5233cbc7ba5e6258c8e5a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_using\\package.json",
+      "size": 76,
+      "hash": "sha256:a4bd2eef6e26b154312458773619d2f3cc1a3b46b79c6f1e5b362bd544a35e54",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_using_ctx\\package.json",
+      "size": 84,
+      "hash": "sha256:40ea382c189eb943a9244ba40affde82682ea375a65a5bb946af18398a0064b3",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_wrap_async_generator\\package.json",
+      "size": 106,
+      "hash": "sha256:a43892cc8a6b53e029b942760c0880b802258fc4c154db862ae582f53938e4b7",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_wrap_native_super\\package.json",
+      "size": 100,
+      "hash": "sha256:42182ec18bc8e22fc30df596a89c5b8d5c750122e86965aa8bbe50c8672680b7",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_wrap_reg_exp\\package.json",
+      "size": 90,
+      "hash": "sha256:f2fbe854580c0d0bbea6684c4edab867bc617ca453fbaf91d3db34f77d131967",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\_write_only_error\\package.json",
+      "size": 98,
+      "hash": "sha256:41dca6345522d1c17df4b759dbafb7539e2ad88d23a37131bfc40721830c0929",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\_\\index\\package.json",
+      "size": 74,
+      "hash": "sha256:d3d618815e09a90b29c118898b57cb0c37dcd93e169e7b2b8125456e9d879000",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@swc\\helpers\\package.json",
+      "size": 27807,
+      "hash": "sha256:10ee79b75759afbf8cfa2b8e5a2eff946c487143e935fc31b2433aa68be84596",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@tailwindcss\\node\\package.json",
+      "size": 1247,
+      "hash": "sha256:2afa932dc85e4edc27126e83f8b31df2d5ec5b15f86b5033182d6a82466ed43f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@tailwindcss\\oxide-win32-x64-msvc\\package.json",
+      "size": 528,
+      "hash": "sha256:09657fdd8d8e83db093959eb5a8aec87cadb50bbb084cf403c490a8b94d557ed",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@tailwindcss\\oxide\\package.json",
+      "size": 2221,
+      "hash": "sha256:d57385a0a2f680b35a488f9a9816490a6580cc7a989a430e3e426b4c24af212e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@tailwindcss\\postcss\\package.json",
+      "size": 1296,
+      "hash": "sha256:2f8268cf1c0b9947d4f5fc6de60d45d2ee0bac3523c485c15722d2f8de7a65b4",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@types\\http-proxy\\package.json",
+      "size": 1476,
+      "hash": "sha256:58e234fe51c3c5232cd51a5778b56f02585ee7b346ab8d768eeacad895a2977d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@types\\node\\package.json",
+      "size": 4059,
+      "hash": "sha256:0c855c9c76ecf4e8bc5097b617bc4db97fcfd6a37cf2794b386d44d9d58d9297",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@types\\react-dom\\package.json",
+      "size": 3383,
+      "hash": "sha256:4a2052bb362c34f1d39cfe0818b6fe01a9f988b609e8b7e4832aff7dbf2f7180",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\@types\\react\\package.json",
+      "size": 6108,
+      "hash": "sha256:505c0df4cd73d6a02c946bd9b81451584bd9c83ea72d75cff9b826efceaa19c2",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\accepts\\package.json",
+      "size": 1157,
+      "hash": "sha256:e5716d5d939db08c5c28ec6ae86ed67be5320f91089e2673fca1c5b876e57aa3",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\array-flatten\\package.json",
+      "size": 879,
+      "hash": "sha256:5c5e0e10cfa23f163d1fe68aa57a881d09cac39d720e1361c697b86c4d33e0f5",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\baseline-browser-mapping\\package.json",
+      "size": 2843,
+      "hash": "sha256:d0a45355e04b95b0fa6ad6b7abc80d250395176ee3048660c171785bd2117176",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\body-parser\\package.json",
+      "size": 1461,
+      "hash": "sha256:1545e5c4868c2b733fce76a1210c3d6de17322f464de04ba8975dc94b0ffd80d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\braces\\package.json",
+      "size": 1647,
+      "hash": "sha256:56f08b888a4f30dc7cf8a7dbb36ffe92b737912ba36abe9d069d32167c957ac7",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\bytes\\package.json",
+      "size": 959,
+      "hash": "sha256:99b21c09ce812dc76a06cd87c4753247cb9615c6a8501c5a5a9d9caa22ea2d12",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\call-bind-apply-helpers\\package.json",
+      "size": 2480,
+      "hash": "sha256:59639b628c6846f674857c6a613fd47e2e4d2a24036cdf0f7a62ac634f4c8a5f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\call-bind-apply-helpers\\tsconfig.json",
+      "size": 115,
+      "hash": "sha256:e85504b06a62ff3963fd69c1d30589c0808e5ce70c244e74efcaed46a8ea77c9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\call-bound\\package.json",
+      "size": 2507,
+      "hash": "sha256:dcc8abb3c4ad3774234272149020cb36d7b1a3d377a419454d1e7adb368dd9c3",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\call-bound\\tsconfig.json",
+      "size": 137,
+      "hash": "sha256:97ce3d982a834f79a60b6c4b8dccc0e961711f2e74fac4c8c2e1b877f9bc8bb4",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\caniuse-lite\\package.json",
+      "size": 742,
+      "hash": "sha256:85120c8ff297e58a955aa37713e6a843a05adf5e3a11dd37cd1aa696500feda5",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\client-only\\package.json",
+      "size": 467,
+      "hash": "sha256:4d6342705767832f299b9a59c28e4275bcf02db19472732f93f67d979441df8f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\content-disposition\\package.json",
+      "size": 1200,
+      "hash": "sha256:2459c0e8fbeb5716ab06e9ef73747bba46ed2bc52e310bd4e9f0ef1f102da61f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\content-type\\package.json",
+      "size": 1075,
+      "hash": "sha256:bd78a5427ffca1966621301edc6cac2146c8c1e137f122161ba90dca7ec89f77",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\cookie-signature\\package.json",
+      "size": 491,
+      "hash": "sha256:3bcffbe31f4169c483a9b80fb86a2a91f81a24796c8b750bf0ff345a1b10bdbc",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\cookie\\package.json",
+      "size": 1092,
+      "hash": "sha256:7fa781bd142e7f38b66bff64b4e3a8be9e53e340e7ddaf27caebd00322602208",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\csstype\\package.json",
+      "size": 1985,
+      "hash": "sha256:c818b74a9bc1556488b7ec2a65399224738f6619228f9a6491c5c02ca91f849e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\debug\\package.json",
+      "size": 1138,
+      "hash": "sha256:6c3d2c892db282317913ce7c340dd2edccd326bcafd18b644b8738144967d6ee",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\depd\\package.json",
+      "size": 1335,
+      "hash": "sha256:5a3659bcc2e47b25ebf9f23f38eb9452a58920bfe4b59410bfa6fe84639a3b99",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\destroy\\package.json",
+      "size": 1128,
+      "hash": "sha256:f865b50652dc062f43142e01f55db2760cc10d255bd05afd232e738999c58188",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\detect-libc\\package.json",
+      "size": 1278,
+      "hash": "sha256:ee88e5b954fdf3a8480b1d01ef767d68d8ca2c6da269f58c5cf1c5550e9aa2a7",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\dunder-proto\\package.json",
+      "size": 2108,
+      "hash": "sha256:24df71008e4225c858f389dd2728b76cf66b752256d42a38ed7930aacae7fe2b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\dunder-proto\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:5c01887c6c8539144c0fc5fae6f5115073b6e26ecbeae8434a0329f46f9169c6",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\ee-first\\package.json",
+      "size": 859,
+      "hash": "sha256:a4eece6ff6b38bf7ac107323f381cc60500097a9cbdd473f5d5b45e68822cb89",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\encodeurl\\package.json",
+      "size": 1092,
+      "hash": "sha256:5df10798f4b086da95c24180d7519fa4f68e2057a48e2ff6b76b91d6ffed1e9b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\enhanced-resolve\\package.json",
+      "size": 3455,
+      "hash": "sha256:2dae8a9ef79948a60b2d0027fcc4b0a81aedce174cfe6f6525284d8999220430",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\es-define-property\\package.json",
+      "size": 2129,
+      "hash": "sha256:3a2cb30dae30a96705dcd9aa2d5fb190cf8200f27badccfa5a81a4374e5708b4",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\es-define-property\\tsconfig.json",
+      "size": 138,
+      "hash": "sha256:2ff433185c049374ca38887ac82b549215cd40f0090d4c350f8ee6c549fb076d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\es-errors\\package.json",
+      "size": 2174,
+      "hash": "sha256:1a0a0bcccc76b915cb64073317312840cf6363e9144b96f406d0059774dd5278",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\es-errors\\tsconfig.json",
+      "size": 3170,
+      "hash": "sha256:539cacffe5895fcf9a9eb59e3a6a9fadbb41ba3e05339d97e3b55da34d2c85a4",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\es-object-atoms\\package.json",
+      "size": 2249,
+      "hash": "sha256:e4b7882975d10c68457945c883e1060d0b058af5b1216215c872263f42e12fc9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\es-object-atoms\\tsconfig.json",
+      "size": 112,
+      "hash": "sha256:22c713482377f2492fcad1e7cb33ef479cf8c1151b0ea2c8c3a49d20d4369988",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\escape-html\\package.json",
+      "size": 434,
+      "hash": "sha256:bd320a3e9d23249f5f7d3ce72f2fa426e28a6b2704bd2b281d0c92806a1f5223",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\etag\\package.json",
+      "size": 1306,
+      "hash": "sha256:836b9a5dd1c6af638f4602e83e2568277f9ab1f457db0b95d949c2a4ddb0462a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\eventemitter3\\package.json",
+      "size": 1495,
+      "hash": "sha256:2e9612fd0b3b723d4e27dbd741752f84ad840f3151973250820be782650cb7e1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\express\\package.json",
+      "size": 2821,
+      "hash": "sha256:0a1770344ae7215b2a8e4f31be9f08d726253d4ded2c8b820ec1db8c7c00d000",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\fill-range\\package.json",
+      "size": 1760,
+      "hash": "sha256:87f5c78f9b47d21f9ca62b60cff1d250a3b468eab320dd13c3f3ab2464a02735",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\finalhandler\\package.json",
+      "size": 1278,
+      "hash": "sha256:4907275accd15800e34bd953b35b64e391dbe182f75d870a5a30da72b4e9271b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\follow-redirects\\package.json",
+      "size": 1289,
+      "hash": "sha256:42d8d50f86a6a8ab62f2c9d9d69532fc51de63becfd1a96681812e479443960c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\forwarded\\package.json",
+      "size": 1150,
+      "hash": "sha256:550a78f64b6a76bc353d6a10152af5750613d0d910f8478943176c1a6196158a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\fresh\\package.json",
+      "size": 1357,
+      "hash": "sha256:65f8ebd91560a3a6143f06bd9066d337bcf5f0c53e4a5329b98894f24eefb8b1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\function-bind\\package.json",
+      "size": 2262,
+      "hash": "sha256:edb1c4faf4148e6e3d74ed8dbac1a1dc359a647ff4207aad4851396dc7a3559a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\get-intrinsic\\package.json",
+      "size": 2576,
+      "hash": "sha256:45b14763baacc59b0fd7b39e3ad983d5d2aaf7f5ed682f2fce9edb469826c999",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\get-proto\\package.json",
+      "size": 2176,
+      "hash": "sha256:73839e012ac7134a632c9d9fc6bdb700ac9ab5553cce39eb789ba2b65663e734",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\get-proto\\tsconfig.json",
+      "size": 118,
+      "hash": "sha256:2f3c811aa59dd8b9d58e160110c7ad919cab9827c1fa89f580e328da3c573db4",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\gopd\\package.json",
+      "size": 2070,
+      "hash": "sha256:33ace32dc861f6da9d1fd9d0a44c66e8c6ff3b13358d070683c1c2978ff5f19f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\gopd\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:6346ee4c020f341387588479dd83740a65ab902a462b8c6b3b8bf51f032c6795",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\graceful-fs\\package.json",
+      "size": 1031,
+      "hash": "sha256:5747d4ba6b17165c6ecac30ab3a331715f41c7ad546e1f1574dab1bdcb116181",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\has-symbols\\package.json",
+      "size": 2974,
+      "hash": "sha256:5190268c0e3308d7446d1f7c036238f329f786938453e6017cb90980b3612e7a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\has-symbols\\tsconfig.json",
+      "size": 143,
+      "hash": "sha256:b9b19c254344aae6fec9086e109040f9a13369c0d061c9a018e9b26dfe94a1c8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\hasown\\package.json",
+      "size": 2258,
+      "hash": "sha256:40b750c55a8bacf2c5ac316f5299dd44d48acc101c189a00cd59d39376b5eb89",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\hasown\\tsconfig.json",
+      "size": 73,
+      "hash": "sha256:29ef530207266f2859676c048073e7f746db37a0a20e2a75bc2ef2b3893fbf40",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\http-errors\\package.json",
+      "size": 1410,
+      "hash": "sha256:d540721372bf8bf77b5fad31f6567a916e24d0aeeb78c81ba92b69feea9f1eef",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\http-proxy-middleware\\node_modules\\debug\\package.json",
+      "size": 1479,
+      "hash": "sha256:ea8e33d63fe5f3a4c36609b6c3df8e2ef1f8b8ba2fc3a2e1e53cb27291f384af",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\http-proxy-middleware\\node_modules\\ms\\package.json",
+      "size": 732,
+      "hash": "sha256:1a6b4d9739790c0b94ab96c8cc0507e281c164c311ff4fbf5e57fb8d26290b40",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\http-proxy-middleware\\package.json",
+      "size": 3002,
+      "hash": "sha256:bbed872464dcb4b52d4303fc0d3c0a276c08f6e8340d77697ae2456311c928ef",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\http-proxy\\package.json",
+      "size": 1017,
+      "hash": "sha256:1acdbcb8393b76ae43e8d35ae4b6ba74d0ea7040a6ba93fa03485f89fc7473a8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\iconv-lite\\package.json",
+      "size": 1227,
+      "hash": "sha256:6f7c96c32f7d6e0498be71b0ccedaf298bb00ab4dd40c1d63655ec53477db384",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\inherits\\package.json",
+      "size": 581,
+      "hash": "sha256:be645800bc94fd8de29c8ae91690549b316cc437100108aeea7b2f347693cc80",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\ipaddr.js\\package.json",
+      "size": 719,
+      "hash": "sha256:fc1071893728a0e78fa40ce0dbe04c5a1021179fdcb5b229f274e3556d6a87cd",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\is-extglob\\package.json",
+      "size": 1220,
+      "hash": "sha256:8031afcd87f448d75ba8a5dd2cde9c68f982a94f406ebae8e5fb7cf6dfdeede2",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\is-glob\\package.json",
+      "size": 1748,
+      "hash": "sha256:1cce62b80db12fc033d85250b5881b1a288476229abda8e1abd983724befd56f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\is-number\\package.json",
+      "size": 1599,
+      "hash": "sha256:51c133f4e41df982aef69027249ff9d7262645029f437d079adc7c83328fb620",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\is-plain-object\\package.json",
+      "size": 1622,
+      "hash": "sha256:0fe1587ff3b255249a880f58ab02fa29ecb384438adac241724ae28c1434a9ff",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\jiti\\package.json",
+      "size": 4784,
+      "hash": "sha256:aab8aafc42d9aeec14a6e2fe0e15ea1514c0c205a624055a7e776f2ec456283c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\lightningcss-win32-x64-msvc\\package.json",
+      "size": 719,
+      "hash": "sha256:76456a8ca20848b96b5819f115368bebfbb941c51c860b62073e3e591c836b8b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\lightningcss\\package.json",
+      "size": 3835,
+      "hash": "sha256:1b7fbd47a660ecb37d1fa8304a14b726aa44a31bb3d3338f417593f6276b762f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\lucide-react\\package.json",
+      "size": 2440,
+      "hash": "sha256:aeb1945a9ff9e78f63c137b09194668d53bc3700abb6db14f6659b3ed3f89be5",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\magic-string\\package.json",
+      "size": 1840,
+      "hash": "sha256:86814aaf7dacba9d31fbf361c3285981f1cbbda0a87108caa4131d297bd9eba2",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\math-intrinsics\\package.json",
+      "size": 2670,
+      "hash": "sha256:39d74aa5a354153130706286dd60a2d8409ce0c8f66546eff2edcac0afff17e1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\math-intrinsics\\tsconfig.json",
+      "size": 36,
+      "hash": "sha256:0e570d88a16e1e96c7b5ff8f4b44e50a6e7f49e5fc5e1affab9a3a8946964f80",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\media-typer\\package.json",
+      "size": 759,
+      "hash": "sha256:8ccf875e488e700b79ec48386e2f47c51c5f26297ec74e5e4e5d92dc5d70ef30",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\merge-descriptors\\package.json",
+      "size": 1028,
+      "hash": "sha256:6321e7d658510186de8976bd577ef59a1dcc4f1371d238ce2e676e484d1ebbed",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\methods\\package.json",
+      "size": 947,
+      "hash": "sha256:1aea21641646c87a589208a9363141cd2acd503db45c635f8217613c45837c09",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\micromatch\\package.json",
+      "size": 2648,
+      "hash": "sha256:94dbc881c0329813f2481f35fcfa725a2285d45926d33e9b9b8b80b28487752b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\mime-db\\package.json",
+      "size": 1624,
+      "hash": "sha256:d03e37b915a050af548d543f4e45ff5de06ec767c19e745f18c431d9dc26b5bf",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\mime-types\\package.json",
+      "size": 1149,
+      "hash": "sha256:5053cc10259c3913ab6b6c8f13170a619c0d1836c1d9081238329a559fafeb3a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\mime\\package.json",
+      "size": 933,
+      "hash": "sha256:f6a871d6ab40d2f2945d626a4d75da2fce78a35737c0870a0a4da9bee43f9d4e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\ms\\package.json",
+      "size": 704,
+      "hash": "sha256:30fbfaa3840b2f63978ad4bcd7ed8dc24d277b818e4755fe93eda8cb1bc8b74c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\nanoid\\async\\package.json",
+      "size": 233,
+      "hash": "sha256:0e02b9178f3638eba65e96c8643f3bf08ea192dcef7faadaf3c38c50a829b301",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\nanoid\\non-secure\\package.json",
+      "size": 99,
+      "hash": "sha256:2f9b8c4bee9312538f388b49c13987f4565ac25d6756fabdbbb771d339945e3e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\nanoid\\package.json",
+      "size": 2283,
+      "hash": "sha256:9085b3737c98a71e5cca3fe9f6469a974534a6a9afa384cebabf2c0a6e5f6fae",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\nanoid\\url-alphabet\\package.json",
+      "size": 99,
+      "hash": "sha256:2f9b8c4bee9312538f388b49c13987f4565ac25d6756fabdbbb771d339945e3e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\negotiator\\package.json",
+      "size": 993,
+      "hash": "sha256:8672e91f7395ce51ec789d883d7f7d872a40847bb83a6a3f89c3d1ded39e55d9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@babel\\runtime\\helpers\\esm\\package.json",
+      "size": 35,
+      "hash": "sha256:655b3c79e6852c49301b1ee4359ef1ce79460151261317d0febb15050be6acfd",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@babel\\runtime\\package.json",
+      "size": 31561,
+      "hash": "sha256:d032bf4eb8efa1fbea0eab42fd92d097a7463d7ec55fa1f697066f40ae0a0a1c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@edge-runtime\\cookies\\package.json",
+      "size": 87,
+      "hash": "sha256:84dec8086a6d6a1176ff52a54dbc4542aeca7241214a0cf7d5af2870ee422db2",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@edge-runtime\\ponyfill\\package.json",
+      "size": 111,
+      "hash": "sha256:04d31884423b345e3abddc712adc85e10347ccf057630b23a930f1ba9af56708",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@edge-runtime\\primitives\\package.json",
+      "size": 90,
+      "hash": "sha256:ee5dfbcb78d0c753908a0643fc23d7486cf4478872789bca8722a88f71d5c213",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@hapi\\accept\\package.json",
+      "size": 67,
+      "hash": "sha256:0e264b353f98a5047f47a4af7cd718888f33345d78a8bbea30eaaac585059abc",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@mswjs\\interceptors\\ClientRequest\\package.json",
+      "size": 95,
+      "hash": "sha256:d01c0050c9f635ad97c5e49368f456db68dc474bb7f8ada9b78121c90ed9f287",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@napi-rs\\triples\\package.json",
+      "size": 104,
+      "hash": "sha256:828a978674962e997f0f5d2920124bc17a4e9f1ba7a55d7f8ea72e25675bcef8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@next\\font\\package.json",
+      "size": 64,
+      "hash": "sha256:c99740a4da3ab17fdbfed0b601e2e8084a7a9463f62a13e5a7ed106648976586",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\package.json",
+      "size": 104,
+      "hash": "sha256:a7352d5f47b67b86f38d634360f761fa2356a4256f42a5239a12892b6b08074a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@vercel\\blob\\package.json",
+      "size": 66,
+      "hash": "sha256:73c915c949822c96534d37063fcf15c1f17ff537b340e6d80fb5397eae79e415",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@vercel\\detect-agent\\package.json",
+      "size": 91,
+      "hash": "sha256:c8ed9a25f3b85a9c400e05f23e998bdfa820e83665c71fd9164eb584f7684afd",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@vercel\\nft\\package.json",
+      "size": 57,
+      "hash": "sha256:3d26054595f0ea7f5f26e0b5a269521f77fa4fd030dd7c964c492c7a018e4d22",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@vercel\\og\\package.json",
+      "size": 341,
+      "hash": "sha256:9a36609740a2b848fe40672bf9bb8805542196fd5ec3722535cf619dbbd15f2a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\@vercel\\routing-utils\\package.json",
+      "size": 80,
+      "hash": "sha256:d65beaa9a6453c9c93dbb8e0a373a3d80f770f90b49eea0808aa987bccbb99f5",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\acorn\\package.json",
+      "size": 51,
+      "hash": "sha256:aa6eff9593179bc7379017992eda314ce97bd7c6576869d82d514139ce612cca",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\anser\\package.json",
+      "size": 127,
+      "hash": "sha256:627411f53264dccfc2a723b3bd9e77fd1c5bd3cdde9247795dd3c571c70832ee",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\assert\\package.json",
+      "size": 53,
+      "hash": "sha256:cee48f1c2973cbe0cc9075fa1ad46540571e39f82368b90680e3f08385acc67d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\async-retry\\package.json",
+      "size": 57,
+      "hash": "sha256:b17113b29f3ee160e536bacf5332fb1cc91f81f5dba02db749491a469108b9e5",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\async-sema\\package.json",
+      "size": 80,
+      "hash": "sha256:327a56df6511702ea28014e18425bd50300890fb433d1e8e8cf200ab33ac70c5",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\babel-packages\\package.json",
+      "size": 56,
+      "hash": "sha256:828b12b4e497121b9a04735e1defeeb93dfde3c7531ce7b89b568ed520c86b4e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\babel\\package.json",
+      "size": 109,
+      "hash": "sha256:74a866ce237c245a6657979b9255e4e702711ba2f83a72a9d1d9d5647037f322",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\browserify-zlib\\package.json",
+      "size": 109,
+      "hash": "sha256:fbfda5f3dd28400e7e43080c996f39ceb97ff45dc94237b218bdb9785afa163d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\browserslist\\package.json",
+      "size": 102,
+      "hash": "sha256:5c9be14e5f45d01c0f11ce740c55b61008e3878d9003121989a2d5700b1e7ff1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\buffer\\package.json",
+      "size": 146,
+      "hash": "sha256:beec4c77cd84bb8bbcbd9ad3ddc435bf9b4369884a56cb2c4cfb9e8805eb87cb",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\busboy\\package.json",
+      "size": 79,
+      "hash": "sha256:7ec808358d01f7e153eec8ace30496d69f066e589abd3b1deaaadaa24a2c9e78",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\bytes\\package.json",
+      "size": 125,
+      "hash": "sha256:f67cda9a406b0173dd8bce3165b246a7461f0b6aa8b1db5d773a8d858e618e0d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\ci-info\\package.json",
+      "size": 125,
+      "hash": "sha256:5f266b005be5715f7971df5255242ce2684ecb7d073ee597ad7a01c5049d9889",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\cli-select\\package.json",
+      "size": 94,
+      "hash": "sha256:d2f3004e381c651854fda02da59d920bae2d925e339e1434b3dba65ac9821dc8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\client-only\\package.json",
+      "size": 467,
+      "hash": "sha256:4d6342705767832f299b9a59c28e4275bcf02db19472732f93f67d979441df8f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\commander\\package.json",
+      "size": 102,
+      "hash": "sha256:23bca2c540bfa9a86bfc07d3d3322a5821c11d9d1c8d592bc5bfbc8b0641745d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\comment-json\\package.json",
+      "size": 79,
+      "hash": "sha256:a3f86bf44c9a56dd6c9724a32938c8aa3876412ebb17400b613563f79017bf5d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\compression\\package.json",
+      "size": 57,
+      "hash": "sha256:bb26d52201279816e928ccd1a58ecdd0fab49d7feb3136b8c74e82b09a0f2bb9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\conf\\package.json",
+      "size": 142,
+      "hash": "sha256:0a761c63beca5354c035de3f8a0844a1a64f62e94d08ef8c57e2571701cb0d90",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\constants-browserify\\package.json",
+      "size": 58,
+      "hash": "sha256:57ff101ce1ee4f9ff1cd717424bfc9ba13db28c0ed99e7ce06ff8e4f080a56f2",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\content-disposition\\package.json",
+      "size": 128,
+      "hash": "sha256:deee6f8ca16ef491cfcc902176392f0c06fb7bea87338f521c384a174553c7bb",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\content-type\\package.json",
+      "size": 121,
+      "hash": "sha256:0c481f9c3a287b38fe0ccaa61173cd46ae210e1f9a61bca6bc6abacef66c4e3c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\cookie\\package.json",
+      "size": 99,
+      "hash": "sha256:202616a73f282bc2c6243db8781e044d0fa1090d15b0a35eea88431ebcb8ac84",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\cross-spawn\\package.json",
+      "size": 100,
+      "hash": "sha256:427908598a096747431c250f457a5440b2b4828d6243db1c98d89ac8467b84a3",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\crypto-browserify\\package.json",
+      "size": 130,
+      "hash": "sha256:231080cafc3e64b7bcc175551a70ed4b3b15396d721417c56f227fa4aeda45d4",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\css.escape\\package.json",
+      "size": 130,
+      "hash": "sha256:e3c39d2d316b2ab8279f5da3de0b4eea09a7965303bec13234bf52104698f23f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\data-uri-to-buffer\\package.json",
+      "size": 131,
+      "hash": "sha256:7884ade4aa4ccd6fa4c15a37591172fccc6b543e3cc6c1a0fef7888f39d1b39e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\debug\\package.json",
+      "size": 98,
+      "hash": "sha256:ead56d5fb4a68fe23ce148b366356f9a56c8f12e14891db6bd8425b339cb360a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\devalue\\package.json",
+      "size": 59,
+      "hash": "sha256:02cc0546b6f93a1d07c2f10db73edc761a7b6353130982b90113bb9b051c8b4f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\domain-browser\\package.json",
+      "size": 123,
+      "hash": "sha256:102f56b1f979828dc82944853a4df4d728d44f61c34e729ecd07b82dca0ba56a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\edge-runtime\\package.json",
+      "size": 58,
+      "hash": "sha256:9887ce733e2d0abdb8a5c2307e1ddd952f144bd8df2fd67d53595732a7590b1e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\events\\package.json",
+      "size": 128,
+      "hash": "sha256:d1b2b2fc773bb2dc793372c848c00f60c721137ba0762370a4516f603670f143",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\find-up\\package.json",
+      "size": 145,
+      "hash": "sha256:7658d63408818236df3c4fd7107c5712d73106f7939649043b81d2fd1c18f705",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\fresh\\package.json",
+      "size": 125,
+      "hash": "sha256:0f8f39469d55646a4a359833c464529df8720059c1db552f9e94036c06ac4f47",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\glob\\package.json",
+      "size": 112,
+      "hash": "sha256:4ba8d8e55eab51eb510fcb2dec4c377a71e4a552a532f559fef65af1701e7741",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\gzip-size\\package.json",
+      "size": 147,
+      "hash": "sha256:88fa90031b294d01b1ccd41443ac213710cd3aeb3abae96f2d9dd25b31c697ee",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\http-proxy-agent\\package.json",
+      "size": 129,
+      "hash": "sha256:00884de8effb02adaab8ea8fce8d0ac9240dee19df517eb87dc35cdf5ba8ed79",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\https-browserify\\package.json",
+      "size": 153,
+      "hash": "sha256:f0e319d9ff18e39dae7cd7a7cba7e22e8faae1e7b149dd86279fa5ae7730fa7b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\https-proxy-agent\\package.json",
+      "size": 130,
+      "hash": "sha256:144ceffc497b5f331153c9d291f682f5264595c7b8711baa1d93de5f53897c4e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\httpxy\\package.json",
+      "size": 52,
+      "hash": "sha256:1a24e02af08692a30d9a29580d267d14c70e307df1d1ba765fee94787fb95afa",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\icss-utils\\package.json",
+      "size": 80,
+      "hash": "sha256:a28db1d8a722f0f40b351bbca8c8e8559bbe09a4021448f954c8b9d4860f92d5",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\ignore-loader\\package.json",
+      "size": 43,
+      "hash": "sha256:570b3e062c5757cb39e8f81060b4884ac32fdc8cdcd5a7e7d99385607239bf73",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\image-size\\package.json",
+      "size": 113,
+      "hash": "sha256:0f08e3455955e889e24ae141610e910ff606c4ff779f1cb67407ad5036a15bb9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\ipaddr.js\\package.json",
+      "size": 106,
+      "hash": "sha256:28f0b70ca1c217b65158ff0d05247025b2e8810351902946d3c5ff3dad209507",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\is-animated\\package.json",
+      "size": 114,
+      "hash": "sha256:61fa46c5a1bb37239f12272b650527742595eb63a5104f7e625469370562585a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\is-docker\\package.json",
+      "size": 147,
+      "hash": "sha256:aac5594fc4ae98f4b297f52c91fede06bc9eca25915a216d192a6bd3952609bb",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\is-wsl\\package.json",
+      "size": 144,
+      "hash": "sha256:189b610be03f7aab4bf124bf31fcf75a03f6504b115648991c2c10dc8a11263e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\jest-worker\\package.json",
+      "size": 57,
+      "hash": "sha256:9b89fefb8dad25d6f083de6c34d156be2ced3cab898354e6b1360260d6f843d9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\json5\\package.json",
+      "size": 102,
+      "hash": "sha256:5662b636583985d168a45c9c61b1a874ad5dd0cfc2e95984b1a218e73f93c18f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\jsonwebtoken\\package.json",
+      "size": 75,
+      "hash": "sha256:f35673a4e7c1dcaa11adc4ea0a6d0272692877bbf7e82a7831a5bbbcd3bb4400",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\loader-runner\\package.json",
+      "size": 99,
+      "hash": "sha256:58735269f59a6fee6f913990e4b79860a1348f04f49b7f451e9a3d39c29c896d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\loader-utils2\\package.json",
+      "size": 91,
+      "hash": "sha256:997729fb489c230d7ee272c392237d90b6d2aea6006e66c664374caa0af55db0",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\loader-utils3\\package.json",
+      "size": 91,
+      "hash": "sha256:997729fb489c230d7ee272c392237d90b6d2aea6006e66c664374caa0af55db0",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\lodash.curry\\package.json",
+      "size": 145,
+      "hash": "sha256:423851cd0529ddf3b16f399efa82ef71aa54e03faa275c680e46468c07ab0ed5",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\lru-cache\\package.json",
+      "size": 96,
+      "hash": "sha256:12b2e366f83a8cf697dec2cc400f135bfd07fb62d02df0df5fcab4d7cb98f631",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\mini-css-extract-plugin\\package.json",
+      "size": 100,
+      "hash": "sha256:a940820e002afcfc41db9eb8856fd709af8fe6002ac378e02206ff4dec9bfc62",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\nanoid\\package.json",
+      "size": 97,
+      "hash": "sha256:9383f87d5189f73399e60c5b9666fe4930f35ba304355e3555c74f5d9d2ff006",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\native-url\\package.json",
+      "size": 90,
+      "hash": "sha256:8056830cb93b8f4904d1e63c7e40abdcac725623e19aa6cb0a07964757570402",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\neo-async\\package.json",
+      "size": 55,
+      "hash": "sha256:ab030dfc79c2b9b39e329d2fb518891cef7479cc62c95cf1a691e19e2364e0e1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\node-html-parser\\package.json",
+      "size": 104,
+      "hash": "sha256:933103c456916af32e92302cd561e2bb792bc8580c9a29fa9b222b8020765509",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\ora\\package.json",
+      "size": 149,
+      "hash": "sha256:d0b5a6c8572ea257917d45f84f30816b22af9202e9ec98142a3c16e51836b6d4",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\os-browserify\\package.json",
+      "size": 104,
+      "hash": "sha256:b27bdc906022bfe4361aeeed67b6874df02c7b324db6eac870f8f89a5113af5a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\p-limit\\package.json",
+      "size": 153,
+      "hash": "sha256:40495ef05f0ea39ba8d64eb98e492f2d461985e18a937b87b523b3322dbae5ea",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\p-queue\\package.json",
+      "size": 53,
+      "hash": "sha256:50f88936a3223c57edfde9e3844e932e20501f49403a761ec210b39d565bc2a6",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\path-browserify\\package.json",
+      "size": 152,
+      "hash": "sha256:6be7adc0449e83f7f2295aad331b7cde780dda2c97c54ba51f51de74114b02a1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\path-to-regexp\\package.json",
+      "size": 60,
+      "hash": "sha256:5bf6a22265a08b61b2ab9e05a77cea0dd0f078dd086d17769a2c5b4f93a7426a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\picomatch\\package.json",
+      "size": 116,
+      "hash": "sha256:bcb6e75087cfe22755400218f098b6b36805627e5f54171abf58454f6484ac47",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\postcss-flexbugs-fixes\\package.json",
+      "size": 111,
+      "hash": "sha256:233739e87858b972ff4100d4f7f7a9fa5adab75b7f3202ecab808892ad0d7439",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\postcss-modules-extract-imports\\package.json",
+      "size": 101,
+      "hash": "sha256:37b6b10887f8d084500ab94e349f3db0f0ef02dcb6439a4e6aa849b13a81ff8f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\postcss-modules-local-by-default\\package.json",
+      "size": 104,
+      "hash": "sha256:2b99f876f88e1ff8bbd2bcabec5120d9fb12015c1050a8b2e0cd6aed902c2a09",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\postcss-modules-scope\\package.json",
+      "size": 91,
+      "hash": "sha256:0594c88976370138023c222480d65eaec2591b859366c7dcd33cf5f2576a1d99",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\postcss-modules-values\\package.json",
+      "size": 92,
+      "hash": "sha256:75686122910108295fd244fcb2e7ed2cd8f2785e571152c15838febaeb5f9e99",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\postcss-preset-env\\package.json",
+      "size": 122,
+      "hash": "sha256:22056897f5fa4de9e64c5ca87d14008b3ddc01be85fe33c1f3eeae513dadea22",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\postcss-safe-parser\\package.json",
+      "size": 114,
+      "hash": "sha256:2ab2e4d2ae487cba744fe1b60a8eae2a20d3f7ec9526104b78ce0f5524391c49",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\postcss-scss\\package.json",
+      "size": 108,
+      "hash": "sha256:d054cb1fce9ea5852729c829bab799126eae2c07ca3f33d761760cae829cb10f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\postcss-value-parser\\package.json",
+      "size": 113,
+      "hash": "sha256:096375657ecf115fc78281f8c43c0cec36cd6396e2801d463f700fd987d9a8e8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\process\\package.json",
+      "size": 102,
+      "hash": "sha256:f1c6ff9dc88ded25db7f9e314b18124c8e5648c8fa4de324968d6c83914a5cfd",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\punycode\\package.json",
+      "size": 126,
+      "hash": "sha256:4d69f3d2928226148fd39c2b9724d60c560ca13f01729937964ea3bfb4e2e19b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\querystring-es3\\package.json",
+      "size": 95,
+      "hash": "sha256:deef9957fd78ab6495db1c8ac121d9bd7b0e65af73f50a554efac5b5a7144f08",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\raw-body\\package.json",
+      "size": 124,
+      "hash": "sha256:ebc1e2456bc3c948d587d9cbbfc845a4cd4a839732d2072afdbf23b918792ef0",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\react-dom-experimental\\package.json",
+      "size": 2499,
+      "hash": "sha256:c48b761f01b60352ae323d1b213908a349b4473c01d5fd7aaf5d291089a4d5a9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\react-dom\\package.json",
+      "size": 2257,
+      "hash": "sha256:bb90e44befb12a8304aa8eb4a24248c7ed7029de6cf73645216252088b906c9d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\react-experimental\\package.json",
+      "size": 597,
+      "hash": "sha256:2d7bddbbbda0fc9c1b997c7ea0d66eac4200940fa1a3250acd22badbade71f30",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\react-is\\package.json",
+      "size": 534,
+      "hash": "sha256:e58e18130d2a543b485afacc83456e161c54c8e3e63ee3174d7160167d9ddc61",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\react-refresh\\package.json",
+      "size": 882,
+      "hash": "sha256:7634851c499058e71f98f6333982d2ed2bcd109bfe0e86a71d4134281a7c497c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\react-server-dom-turbopack-experimental\\package.json",
+      "size": 1629,
+      "hash": "sha256:95e7a13c134a22621b23bb201f7d7b307e6387a6becb2ddc409e5ae85995a3a8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\react-server-dom-turbopack\\package.json",
+      "size": 1606,
+      "hash": "sha256:43b077a90e8ab320c903c3e956912492e1664b7aff8fd122a33d29bd9fbd188b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\react-server-dom-webpack-experimental\\package.json",
+      "size": 1843,
+      "hash": "sha256:903aca834cda94c0b24085a600dfd69908f453bb60bb43da930ee0d29da714cd",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\react-server-dom-webpack\\package.json",
+      "size": 1820,
+      "hash": "sha256:e866d5efd7c0f9605335663993326fb07725a6de561a5e335a0ddcc3e5ab951c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\react\\package.json",
+      "size": 584,
+      "hash": "sha256:fb4380ed22c1097c949a85521bd0a79f93605f7f8f8e21536d842694c5116eb8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\regenerator-runtime\\package.json",
+      "size": 477,
+      "hash": "sha256:19a1b69415c9661789cb9c87e822a6fbd976d78ac8d31d7d6ce30acc86a491cf",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\safe-stable-stringify\\package.json",
+      "size": 96,
+      "hash": "sha256:5fd2e6d5ad1018bfb55b5af6bb2bdd61b1314b7993586953e5c6841eb4b936d6",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\sass-loader\\package.json",
+      "size": 79,
+      "hash": "sha256:021cd8eefc24b305b58e1379f83368f54083baa3a8d06f529bbe79d3380ddec8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\scheduler-experimental\\package.json",
+      "size": 46,
+      "hash": "sha256:a0f2311c2830006a27ed96ec69a91fc74e1eab6b850342e35d1254b1f1f02c9f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\scheduler\\package.json",
+      "size": 33,
+      "hash": "sha256:dd051684f59e6c0bdcc2a3b32f11ffebe6f11979cc6e677f2bc85c9d60471072",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\schema-utils2\\package.json",
+      "size": 122,
+      "hash": "sha256:1213b565bcb89186df47543861eab7c2b262a71c9a3805cfb82d539f1d73d6bc",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\schema-utils3\\package.json",
+      "size": 122,
+      "hash": "sha256:1213b565bcb89186df47543861eab7c2b262a71c9a3805cfb82d539f1d73d6bc",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\semver\\package.json",
+      "size": 52,
+      "hash": "sha256:3b7c2da335e6f7d178a13d32917fc6ad85d62e6ca2cda2513e52815aa7ca95e9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\send\\package.json",
+      "size": 97,
+      "hash": "sha256:9ee32160a660db32561814157aec6fa4054e79ff838c80981808d839bfec6938",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\serve-handler\\package.json",
+      "size": 74,
+      "hash": "sha256:4f1bbbee7e278ec94b0ee0426c717f25ce2b5a3baabcda42e50872632ab74a65",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\server-only\\package.json",
+      "size": 467,
+      "hash": "sha256:e4b0cc01e2e0349c51c694fa97d8a642eb8322521ca1444b20bd1842594b4339",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\setimmediate\\package.json",
+      "size": 83,
+      "hash": "sha256:07c28ab21f75001cd3c5f0e49a2171bc5c55536b55296b4fc9425810a01bea8a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\shell-quote\\package.json",
+      "size": 148,
+      "hash": "sha256:907fda3052f7e1ece852b1cf025642aa3d90cb96ccccf4d568017d974002e9af",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\source-map08\\package.json",
+      "size": 125,
+      "hash": "sha256:3c7de96c15e46a376f876ea51b70daac14988f5a8bd261565e21a0e17b14a8c1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\source-map\\package.json",
+      "size": 123,
+      "hash": "sha256:64b17ef1036027151303e0d09a47a0507901878accd7f6d8276a71c06a2e4312",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\stacktrace-parser\\package.json",
+      "size": 153,
+      "hash": "sha256:72e32b3357e6fab245dc57c202a274cdd75020cd23ce6a1a9916bfa6127d80cf",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\stream-browserify\\package.json",
+      "size": 154,
+      "hash": "sha256:fe7da53b4104f1ef65c7f28d8ba2e0e46f1ab61e71dd11f0bf374dd1742ddcf9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\stream-http\\package.json",
+      "size": 80,
+      "hash": "sha256:e5ec05a5ff5a2bf75d194542d26dc7e5fe46a22a60f020e08729ab70bffba947",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\string-hash\\package.json",
+      "size": 134,
+      "hash": "sha256:afb2563fe191f4e7eecc9e6bf1131f07da3f855e6e51b2d517206ae737b343b0",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\string_decoder\\package.json",
+      "size": 69,
+      "hash": "sha256:0ff89407b42b08cb0cfe9aaa590b593693e3b07ebb16902f42297c00453f25ab",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\strip-ansi\\package.json",
+      "size": 148,
+      "hash": "sha256:a3005e66c096be0df65ecba459ee8cd1aabb39970615eed0e73f5b7cb8ae5672",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\superstruct\\package.json",
+      "size": 58,
+      "hash": "sha256:30e83d602cf8471740fa94fe38c3bedbdf400aabe94160154557f558c5ee7fd8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\tar\\package.json",
+      "size": 93,
+      "hash": "sha256:d118552ac665732fb7a1bb0e08dba0ab1d21a0edbc0eb3601a094ef821198f21",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\terser\\package.json",
+      "size": 138,
+      "hash": "sha256:d2920a9e70d24ee54091efc50226e187e1224e3bc6d88ddc4b7c90c159d34a47",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\text-table\\package.json",
+      "size": 147,
+      "hash": "sha256:b4175217ffbbbc394e1914b32227416464e8d04ee3fff315c7dea0fc1c478961",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\timers-browserify\\package.json",
+      "size": 131,
+      "hash": "sha256:8ca98b86666056d8a2096f7cbf391e67f7db6564a0869736bee34c9503558abd",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\tty-browserify\\package.json",
+      "size": 151,
+      "hash": "sha256:14c14e5fb2bb63d8d59ac7a356cd0744e47f7901571835d931e2c92be79b60cb",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\ua-parser-js\\package.json",
+      "size": 128,
+      "hash": "sha256:54dedad65859e173dad8415233d1b6f50903240637632c2f2cbbcb579a25c244",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\unistore\\package.json",
+      "size": 102,
+      "hash": "sha256:e87b50fb2eb256e59fa61d95ff0fb4e93529edcbc261eafca05d8b78abd8d612",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\util\\package.json",
+      "size": 106,
+      "hash": "sha256:7572a0bd8de81dec020332fdb8ef9648775e778d45c8a4412f23af72fcbe1112",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\vm-browserify\\package.json",
+      "size": 150,
+      "hash": "sha256:962e75a1f1639a60d74753649cc10f087ece7154f97a087e7930011debed6cb1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\watchpack\\package.json",
+      "size": 92,
+      "hash": "sha256:e906fea196fd89a89690c506e75ea3daea427ca00f64daeda491f95bd829335c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\web-vitals-attribution\\package.json",
+      "size": 180,
+      "hash": "sha256:dc917a2129e35870fe270cd512d6b5633a926322cdf724846525938498f87cdc",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\web-vitals\\package.json",
+      "size": 168,
+      "hash": "sha256:05611656b8ce7c346270eb0b4cc549f9bb8c44c59911b81390d3a82866282113",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\webpack-sources1\\package.json",
+      "size": 94,
+      "hash": "sha256:85853d186a1b3d943c185b0e45c51ea65116505cd62818f975f0494bc607104f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\webpack-sources3\\package.json",
+      "size": 94,
+      "hash": "sha256:85853d186a1b3d943c185b0e45c51ea65116505cd62818f975f0494bc607104f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\webpack\\package.json",
+      "size": 88,
+      "hash": "sha256:8b9b63424fee5b92fb14315318782ca0cb97f7b51293e201234ba4b655f9dffa",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\write-file-atomic\\package.json",
+      "size": 86,
+      "hash": "sha256:4f98c17cb9cdd527588d48a536808594d323e4afc459c53e3eeb7961bd1eff70",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\ws\\package.json",
+      "size": 114,
+      "hash": "sha256:40f71b1fd703434f93cf2d4f34a68ccdd884de8b70b5ab05b2ee197726e19b26",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\zod-validation-error\\package.json",
+      "size": 171,
+      "hash": "sha256:0e378c7dede8f0e0077e25bf6895728c3fb855350c7315fa5175f783fe0a8d14",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\dist\\compiled\\zod\\package.json",
+      "size": 98,
+      "hash": "sha256:53c461e9ad93deaa50e7d07a81b6b772dfb0a99f8a5b30414deb895fa95de30c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\node_modules\\postcss\\package.json",
+      "size": 2497,
+      "hash": "sha256:df43e035f054943454c49556c89cea8a288d91f5d4b1a6f4e56d48b85c7ebd75",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\next\\package.json",
+      "size": 3173,
+      "hash": "sha256:c4ef8a1c8da320a162485f96d35df7745da90e6becc36882d6e81be9df66eec1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\object-inspect\\package.json",
+      "size": 2841,
+      "hash": "sha256:21c5c63f653705f44a60f5fe93752b231caf6ff07b01805740bd89b71b2d6d8a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\on-finished\\package.json",
+      "size": 1057,
+      "hash": "sha256:c812eca4b0dee2317cb446124cb27ae8e5b993c8fdd0144886b629ef6ef53fc1",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\parseurl\\package.json",
+      "size": 1180,
+      "hash": "sha256:98c7b953c844cac7c0be2d5abc6559c6fd3a6075fd159b04c0f1bf46145bfed2",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\path-to-regexp\\package.json",
+      "size": 554,
+      "hash": "sha256:643e7a3db344a1513c1c7797d2aff9c50fc52cab665233e11768cfbca9f8c0f9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\picocolors\\package.json",
+      "size": 552,
+      "hash": "sha256:ef2ac226c4811d312e12c64214c453878653e834482125ae475f27cea60de737",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\picomatch\\package.json",
+      "size": 1912,
+      "hash": "sha256:63264d817e856a4bff57d4304f2b38d2964a4f6df520eb169e7bcdb619f13e9a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\postcss\\package.json",
+      "size": 2497,
+      "hash": "sha256:f5c32824e407aadf9d306cb36370330109f017a7590e4f10c4fe0ff61831e436",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\proxy-addr\\package.json",
+      "size": 1281,
+      "hash": "sha256:b2e305ca817ae4e8b088e07f38c5df1d7ad77aa3473809e4c37a9a1c83600225",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\qs\\package.json",
+      "size": 3192,
+      "hash": "sha256:69d58ca5abcff9be3f6becc70940caa76d8ec1b72ef7d2d735305c16cb877dca",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\range-parser\\package.json",
+      "size": 1184,
+      "hash": "sha256:d0b5f54eaa59001dc86720a9be1fdf653bad83707d70842332fb3e8847f65a89",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\raw-body\\package.json",
+      "size": 1292,
+      "hash": "sha256:3847f01a7ffd81ca56879b158b8301f96244113f152ed117bff3f3abf5f88a5f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\react-dom\\package.json",
+      "size": 3057,
+      "hash": "sha256:7c82f0967114d4b5d38b1f07e543af87c9919e8d3243f9604004819319cb2200",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\react\\package.json",
+      "size": 1242,
+      "hash": "sha256:e40c3ed9b633c9ecf188e09a4be309780a1ea0a9c068278a30ff6a27e7b2dbb6",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\requires-port\\package.json",
+      "size": 1127,
+      "hash": "sha256:537ddc6900b1f1996989cc61a3e170d918bed0ab5cc77a49245bcc59361e8f47",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\safe-buffer\\package.json",
+      "size": 1057,
+      "hash": "sha256:e4018fdbfe625433371f48274fee26f520bbe865e0d8c85bf3aa07424134b90c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\safer-buffer\\package.json",
+      "size": 822,
+      "hash": "sha256:4247a3a63c45a6a7ced1557fe4dd9d2a163af4915d594b95e5867b69a53edb52",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\scheduler\\package.json",
+      "size": 564,
+      "hash": "sha256:393bb96b7e481bf50189a1a02c7e0e7f4d01acba5abc6fbe7d214638624462fc",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\semver\\package.json",
+      "size": 1661,
+      "hash": "sha256:7c94cb7f2a53c27b20d76386ec144c062894dbcc909cfabd0f728c37874b1776",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\send\\node_modules\\ms\\package.json",
+      "size": 732,
+      "hash": "sha256:1a6b4d9739790c0b94ab96c8cc0507e281c164c311ff4fbf5e57fb8d26290b40",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\send\\package.json",
+      "size": 1575,
+      "hash": "sha256:2d511afc0dc9965be1f1a5b4b7966cad2e02b95be6e5ff962baabebc12739385",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\serve-static\\package.json",
+      "size": 1142,
+      "hash": "sha256:068fbb0738f4eb2f8ea6ad2f9757ef060d0b79e7990bb9c3dc5ead72a0e3b1f8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\setprototypeof\\package.json",
+      "size": 1264,
+      "hash": "sha256:5b39ddf23d2c12a751cb4af2ce12dd5c87314350be7526fff69b4a3ff2a2d538",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\sharp\\package.json",
+      "size": 8115,
+      "hash": "sha256:27b5a6c6e1e1f27c527b09a963c932979403837d0f5f013ab5bdfb4a0ef2269a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\side-channel-list\\package.json",
+      "size": 2258,
+      "hash": "sha256:90f0c08c6c17f4a3fa3dd61873223957b89da4201f01dc0c8b95b0b9e6a2a59a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\side-channel-list\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:6346ee4c020f341387588479dd83740a65ab902a462b8c6b3b8bf51f032c6795",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\side-channel-map\\package.json",
+      "size": 2336,
+      "hash": "sha256:914a8bd732b82523d95bb697eec3e6d95badc5eb13b196fb0772e59354a3ab25",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\side-channel-map\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:6346ee4c020f341387588479dd83740a65ab902a462b8c6b3b8bf51f032c6795",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\side-channel-weakmap\\package.json",
+      "size": 2447,
+      "hash": "sha256:8c11f0a1c6cfa549588d991a5cb1b04d62953277ed29f47463d415d5946388a8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\side-channel-weakmap\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:6346ee4c020f341387588479dd83740a65ab902a462b8c6b3b8bf51f032c6795",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\side-channel\\package.json",
+      "size": 2362,
+      "hash": "sha256:14da3b013c3762da85cfd8b173290285394dfa41870bc4a1e8243aaa38316f2a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\side-channel\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:6346ee4c020f341387588479dd83740a65ab902a462b8c6b3b8bf51f032c6795",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\source-map-js\\package.json",
+      "size": 2548,
+      "hash": "sha256:58f8e94a461a5e461e0cb2bb2be681cbd89b9181989fd26fceb858e67711469a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\statuses\\package.json",
+      "size": 1440,
+      "hash": "sha256:dc2508da5568ba768d94b73126cd20a5df934bc0c651ad681022236484ca156c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\styled-jsx\\package.json",
+      "size": 3271,
+      "hash": "sha256:0a11b14d7bbeab650019db18883a14cb67daa3615f498a5a625d45828be7eef9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\tailwindcss\\package.json",
+      "size": 2493,
+      "hash": "sha256:3dc86b46c511947ca00838aa3f1776243abe923ac347c092e60a0cbc7ae68559",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\tapable\\package.json",
+      "size": 1961,
+      "hash": "sha256:82d5903b3a6f9d6e41868f405176da8122799e8c71a51f5507087091862a2a3d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\to-regex-range\\package.json",
+      "size": 1782,
+      "hash": "sha256:766fc1bb34fffcd503c89f4194188ce059795c52fd0dc6753cd4b7dcfc3fe1ec",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\toidentifier\\package.json",
+      "size": 1142,
+      "hash": "sha256:f34c59f784d43da6e633390d85d14ca60539b4676159444f313c62fcfc3b68dc",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\tslib\\modules\\package.json",
+      "size": 26,
+      "hash": "sha256:f2a77d1fa2e7ee710b2835b2933d75d9c7f5dad4f1bab69e1679876e32b5e9eb",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\tslib\\package.json",
+      "size": 1219,
+      "hash": "sha256:f02b4851df316f29bdfcd404aa1eb41e4e216b5859015f81fcd3e91caf8be931",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\type-is\\package.json",
+      "size": 1133,
+      "hash": "sha256:87917e3dda1080179447633c3edff7e4b917d62b463893c88cef5be0b2babc63",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\typescript\\package.json",
+      "size": 3615,
+      "hash": "sha256:ebb0ce176c85ac13ce82f5be7e6f15114732ba0f064ccc893fd9051426d35d3a",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\undici-types\\package.json",
+      "size": 1193,
+      "hash": "sha256:01701286a0441eddf1cd47d488047d363ce7d75466e7b6c89f1c605fba1c3957",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\unpipe\\package.json",
+      "size": 770,
+      "hash": "sha256:28b717f978d2a4fc72cd08236931443b63fe6586102df3d1967e2b21ea8c5e11",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\utils-merge\\package.json",
+      "size": 857,
+      "hash": "sha256:6238e6d7e2fddd3e4826014b4e69cb20d332b472999728a7157db454c69121b8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\node_modules\\vary\\package.json",
+      "size": 1215,
+      "hash": "sha256:73edaee964d527117a9f69d6360fbe6cec534abd9127794be01a6af58a139daa",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\package-lock.json",
+      "size": 94055,
+      "hash": "sha256:08735001f36a92c21bf792d7c63e9b8d348de23148b9c9b5e3537e669b13fdb8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\package.json",
+      "size": 1024,
+      "hash": "sha256:7a5d84a6ea1d0118b88ff459d81cd0f1494a6d00df1831eb7a1a9ac9e19818f9",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\postcss.config.mjs",
+      "size": 70,
+      "hash": "sha256:5b0bc4c78be977cd81f947fb5563aaa7cc6d451e6f1c53a3260b7656a7144d20",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\public\\index.html",
+      "size": 360,
+      "hash": "sha256:0d9acee6d7a6334997721e9338b6f916837035e5a7a71843d730f35e5a284fbc",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\scripts\\check.mjs",
+      "size": 245,
+      "hash": "sha256:92122c23b1fc8b27c612494899013a424c120fc83c3e72bd398ecfea9677d1bb",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\scripts\\export.mjs",
+      "size": 163,
+      "hash": "sha256:9cc15ba8f6fc7213083b840cc64ac43f3211ab515d3cbe2e29131f3b65afb2dc",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\App.tsx",
+      "size": 12428,
+      "hash": "sha256:ecd91b649c30c8f2b4cb241d74b8cda1235fd7fb94cc0c6b162c7122151f7739",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\Composer.tsx",
+      "size": 7280,
+      "hash": "sha256:03a7c9ac6267219621f23d8f5e838e5c41101a917d235e121822c1bd6af6700d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\ContextReviewDrawer.tsx",
+      "size": 20614,
+      "hash": "sha256:59c9631677c6c0873dba56ad555cafdab96340107f7fa80913b5fb0e45c5470f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\EarlierConversation.tsx",
+      "size": 4808,
+      "hash": "sha256:305e17a485f1dab7495a8baa4c301d1a167c70ac12acaf6afbb4edbca85d91f0",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\EphemeralActivity.tsx",
+      "size": 9721,
+      "hash": "sha256:b665e46341d981e84ab99fcbca1f5e62845c3b85400e2ff964abc9ef297771aa",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\HeaderBar.tsx",
+      "size": 3995,
+      "hash": "sha256:fd8cd354414a967d548b2532a8d5efb8cdb79e396b1c438cd17eb5676f713270",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\Integration\\Authlogin\\Gemini.tsx",
+      "size": 8166,
+      "hash": "sha256:f54331af89fc4e54d99e2f0782b8e31135f9082974f318c81d00b5faa8e54eaf",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\Integration\\Integration.tsx",
+      "size": 7463,
+      "hash": "sha256:88464883d465ffd8423de508525799d3802c95c18566ee21324a63418265fb22",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\Integration\\Model\\Gemini.tsx",
+      "size": 6969,
+      "hash": "sha256:d07dc1b30b2cedfb037f6b930c1321bfe88e39dee1fef2a0abb85825c006e421",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\Integration\\Model\\OpenAI.tsx",
+      "size": 6762,
+      "hash": "sha256:a5ca82ef4322f4a035670ca09a4be03a5f81016c818faa68b4a396816bffb475",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\Integration\\index.ts",
+      "size": 191,
+      "hash": "sha256:1c153ce0de069765c91998063e7adea2474f876683688478f88fc0f18d3ff399",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\MessageBubble.tsx",
+      "size": 9685,
+      "hash": "sha256:924fcd83df15f6eb2bffd20994f41c237b987a5c45915901a7d372be13ef2275",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\PlanReviewCard.tsx",
+      "size": 2474,
+      "hash": "sha256:7c878eae7bdfa32d9ae4429ab44de7260670e49c3642dec6248a5fc8ab77b188",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\ProviderConfigModal.tsx",
+      "size": 12636,
+      "hash": "sha256:1cded886e3eb171290fc272c4ddecae918642d0a0ee841e18c36a9776c553141",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\ResearchBanner.tsx",
+      "size": 1618,
+      "hash": "sha256:ccf99743c7e322209fd34dbeb312c49131469e057027690837e0fbf32a7687e2",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\ResearcherDrawer.tsx",
+      "size": 6858,
+      "hash": "sha256:7da2e54718d8151167b6b7a7337a4c99b651e177f0e238aaee5144f1b0d2c1ba",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\Sidebar.tsx",
+      "size": 7237,
+      "hash": "sha256:71a53264f4ef3f9de81fd28f5f2fe48a0cedcff3f91e460e7cdb3e2f81a0f627",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\ToolCallList.tsx",
+      "size": 6500,
+      "hash": "sha256:1da620bf694005f14c362183c72c1cc53d2360cf6289e7dc48c6c3e294c10b04",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\chat\\Bubble.tsx",
+      "size": 4278,
+      "hash": "sha256:019bf853a8ec21dea20bcfdd9ef0f844d49f99c947909a5425a9654cfdaac89f",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\chat\\ChatContainer.tsx",
+      "size": 972,
+      "hash": "sha256:06ada6fb72546f7280ad303e690736371e57f6fe4477c27d18479adea80744cd",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\chat\\ChatInput.tsx",
+      "size": 1822,
+      "hash": "sha256:30238f7029872f3166c5335922aeaa5c46fa11cff1fd0812138be25ffe2bd877",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\chat\\PresetPrompts.tsx",
+      "size": 867,
+      "hash": "sha256:488b6b4020406dbf1ba23de9bd66283ea05ec260daa23b68ab45713dc7968788",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\chat\\TypingIndicator.tsx",
+      "size": 543,
+      "hash": "sha256:90e7a3c10a47eada4d80b802890200409e95c125a784cdc8189fc8ed6988534b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\layout\\SplitView.tsx",
+      "size": 538,
+      "hash": "sha256:c2d4586a9b60250ec1e729d8c0bd0a2da5004327b5b372a092665ac6cab78fae",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\lib\\ag-ui.ts",
+      "size": 2606,
+      "hash": "sha256:0c6faf28d693eefb968d2f7b8dff2973dc58052a7bb43ef8acc92b9e2e290c58",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\lib\\api.ts",
+      "size": 9973,
+      "hash": "sha256:4f1c326df3e55475e43740e886704be0ba99dcbacebcb77a22d3a014f58e2e08",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\lib\\backends.ts",
+      "size": 2398,
+      "hash": "sha256:142a295dcc7825ff6bfe808b4468f41518fa9ca70088bc75e87e4e81d0d01230",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\lib\\handoffs.ts",
+      "size": 2677,
+      "hash": "sha256:70dd384458cc746ffa56314005d063def4e7a2795097835a02dc8d8662b0e233",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\lib\\providers.ts",
+      "size": 2587,
+      "hash": "sha256:77b33595a23a68844d90a5a28563531d9121d6a6a35990384076c72672a714cb",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\lib\\storage.ts",
+      "size": 4582,
+      "hash": "sha256:7a2fccfec66bccdd471d77be1bc0152ed663f082733acbeeb5d112e9661ad233",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\lib\\structured-output.ts",
+      "size": 3353,
+      "hash": "sha256:45b8050d46ee7a21eb82eca29866d1cc45a202b7ec61cbf5cb21a438cef071a7",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\lib\\useChatSession.ts",
+      "size": 18880,
+      "hash": "sha256:c4e6aa4e05a031ef6ed1b39710c7dd01abb25fc3c7a76613d2c478430c55cc0e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\types\\index.ts",
+      "size": 1629,
+      "hash": "sha256:6d554beb72a52907d8bfd4f1edf8929773fac1f7d4deea5845bc4bff8f130a1d",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\tests\\backends-and-handoffs.test.mjs",
+      "size": 8223,
+      "hash": "sha256:37936ffd6ed0885bf2b9e064d2e4d718ba947504545df4d9f8f36261fd4c5fa5",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\tests\\chat-ui.test.mjs",
+      "size": 8707,
+      "hash": "sha256:4afd1e670a6d3635845b77597f140e0d7b560d2e4c18d26937723cdde4a19471",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\tests\\structured-output.test.mjs",
+      "size": 2759,
+      "hash": "sha256:396bd19859fba1cac5b6f63fc7daebeb841fd450105897642454923f9d8b8db8",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\tests\\tool-calling.test.mjs",
+      "size": 1995,
+      "hash": "sha256:4a8878df1d5b45e6e1b0be892bb47db6dae8753d1e372b90771fea7be372b2e6",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\tsconfig.json",
+      "size": 1073,
+      "hash": "sha256:84389fe3be66637ff748b6150faa834f0a536a636d73e6f80e9686fe9055bf06",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@ai-sdk\\gateway\\node_modules\\@ai-sdk\\provider\\package.json",
+      "size": 1404,
+      "hash": "sha256:303c57dc0e431f036da32841b570931cac01596eef02c166968a2b6c247174fd",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@ai-sdk\\gateway\\package.json",
+      "size": 1985,
+      "hash": "sha256:2ddc392407ff63d81789b93d2537b528a20a3756f7a24a6b3646a54464c6fecf",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@ai-sdk\\provider-utils\\node_modules\\@ai-sdk\\provider\\package.json",
+      "size": 1404,
+      "hash": "sha256:303c57dc0e431f036da32841b570931cac01596eef02c166968a2b6c247174fd",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@ai-sdk\\provider-utils\\package.json",
+      "size": 2276,
+      "hash": "sha256:56616fb760e7a16186c79d6146bd648d1e0aed1b04a38117c9e03edcec8a3bda",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\client-bedrock-runtime\\package.json",
+      "size": 3133,
+      "hash": "sha256:a26f0b8db080df0a4ababbeceb71e7860c3445b95744d9e346d2ed66f8216be9",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\core\\package.json",
+      "size": 5815,
+      "hash": "sha256:f41e316f4145afaa611248576fac940f67e7d1e1c6a1cafa11c444189c98493d",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\credential-provider-env\\package.json",
+      "size": 1902,
+      "hash": "sha256:83cb069a705d40c4d8cac65c4df9f3094d64db8c3105cd15670d2676f730192c",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\credential-provider-http\\package.json",
+      "size": 2410,
+      "hash": "sha256:6db5ed1c0c41ca8672b0eb663e539f87ed0deb7fc96d241ef766d2b441fe59a1",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\credential-provider-ini\\package.json",
+      "size": 2491,
+      "hash": "sha256:825c4827279fad1a15aa72a365f4f91557305259771ab2216682c4f24690c075",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\credential-provider-login\\package.json",
+      "size": 1975,
+      "hash": "sha256:5993af12213692c03386b8af68d3894c007c87fcbee64356743668aa9ea39696",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\credential-provider-node\\package.json",
+      "size": 2421,
+      "hash": "sha256:d107f130cf4631f0b687351fd8d2baf74d8a8496f28a0bd463545306ba9e6f22",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\credential-provider-process\\package.json",
+      "size": 1930,
+      "hash": "sha256:37354078bd4f4ffcaeccfafe9e818b4dd298f4685fcbd6695c13437ff2e2360b",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\credential-provider-sso\\package.json",
+      "size": 2161,
+      "hash": "sha256:417af24392691fbaa2023130328fe065688b74e4f69a2dbd96319242f86621c9",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\credential-provider-web-identity\\package.json",
+      "size": 2129,
+      "hash": "sha256:f7b5562bbccef5b2387e5b282a7edaf1645da0cab95f2855dc33e8f38c4189af",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\eventstream-handler-node\\package.json",
+      "size": 1720,
+      "hash": "sha256:7b7c302e6b7ef729d5c2af0f78657fc18dfc3e3ddcf22d871c9c91375f2ebca5",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\middleware-eventstream\\package.json",
+      "size": 1783,
+      "hash": "sha256:0a9a5c5f4c4216f1cc8f29a37ded920bfcb96fd12c18d7b8751a377c895b3e98",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\middleware-websocket\\package.json",
+      "size": 2011,
+      "hash": "sha256:c67751a1206d0a8b388ec23b942adf9afe2caba761cd7a3db66825596bce362e",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\nested-clients\\package.json",
+      "size": 4419,
+      "hash": "sha256:dd334b9f6453d2e9094bf36a10e3a1a5637fa6c43fe38ca42e649e3fae4fdbd3",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\signature-v4-multi-region\\package.json",
+      "size": 1971,
+      "hash": "sha256:a500d3298997fbe442acc76fd217dabd4c8310a0085a65578ba868a37d4e3f79",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\token-providers\\package.json",
+      "size": 2088,
+      "hash": "sha256:8680751f73f36f637b0b96dc5ff4b39578af9b3186195726eef4147758153dee",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\types\\package.json",
+      "size": 1663,
+      "hash": "sha256:bdd916bfcfac454fb2ba9ff2dd2e581d10f946654515ca860bf4b8f4e4b82561",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws-sdk\\xml-builder\\package.json",
+      "size": 1958,
+      "hash": "sha256:103e94854d3f01cdb7eda3d170d3a8775e4fb107da472a1347418abb76116e08",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@aws\\lambda-invoke-store\\package.json",
+      "size": 1634,
+      "hash": "sha256:67dd0cc15cb17df9e12654a78486e710e13a2e96623cb28c683056378fa973dc",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@esbuild\\win32-x64\\package.json",
+      "size": 374,
+      "hash": "sha256:89382df45735edcd917c492a810ab514920fa07d36c653cdc122bdfd8f526964",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@hono\\node-server\\package.json",
+      "size": 3121,
+      "hash": "sha256:66f3aa3ddef3a6b54c5b99ec22e76cc85b1f5bcabe9bb7849675edd0f7221553",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@ioredis\\commands\\package.json",
+      "size": 1310,
+      "hash": "sha256:c0c5c47cb21cdfd23d2ba770c0072de604e71482db5755b33f8deb8ad479fad4",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@modelcontextprotocol\\sdk\\dist\\cjs\\package.json",
+      "size": 21,
+      "hash": "sha256:e78adbbbe5741f27e8d900be349911234c1ae45c20a3f2fa293e2c8e5abf3c31",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@modelcontextprotocol\\sdk\\dist\\esm\\package.json",
+      "size": 19,
+      "hash": "sha256:48e847860dd4f0907ce91e346dbb00a4a12213163ad3d80a953c343eb9a11979",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@modelcontextprotocol\\sdk\\package.json",
+      "size": 6511,
+      "hash": "sha256:0690cbe02511a95d1ff199acf20b5a12ac4dfde1bbe30c82a0de73afa92dffc9",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@msgpackr-extract\\msgpackr-extract-win32-x64\\package.json",
+      "size": 377,
+      "hash": "sha256:5ca28cd9343e1d079307257ecc7e57249cb129448385cf797dbf4e69a950f71a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@opentelemetry\\api\\package.json",
+      "size": 2974,
+      "hash": "sha256:c0d7c72331bc8cd456dd791f2f429ddafa1d0b5b8abeb4104e6deb12f18b4a86",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@playwright\\test\\package.json",
+      "size": 754,
+      "hash": "sha256:5587f932b8979b6889654b60e3c28aeb7ca0abbac00eec8c176c939a16149536",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@smithy\\core\\package.json",
+      "size": 10472,
+      "hash": "sha256:b3a06d1c549d4b1ead3b19f7259d3506f3eaaac4b8fc0d3e9027c67aaf71a30d",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@smithy\\credential-provider-imds\\package.json",
+      "size": 1702,
+      "hash": "sha256:1e3b437bfaf7800cbcd770cc744084ab9e3b6c445196b707fde90e2f66e0403c",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@smithy\\fetch-http-handler\\package.json",
+      "size": 1772,
+      "hash": "sha256:3319f9f00b71ae85d49473c1f5d5a0151c89547d7724753abe8d189471decffe",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@smithy\\node-http-handler\\package.json",
+      "size": 1649,
+      "hash": "sha256:e685e00a1e28371390ffab5711e5300b81743b7a7d5f5bf1a994e40197467221",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@smithy\\signature-v4\\package.json",
+      "size": 1589,
+      "hash": "sha256:311248fd3c1829d286f59813f53bb5d2805a57bc48d883849d78b39545ebe616",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@smithy\\types\\package.json",
+      "size": 1389,
+      "hash": "sha256:3de7840fd63a03c33bb687fbdc4794884598402600b2ee02c68856e78e41bd52",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@standard-schema\\spec\\package.json",
+      "size": 1146,
+      "hash": "sha256:58e5bd75ddd0684c88b07cd799585cc72a37fd6efb8ab0c936d49e230d5164fb",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@strands-agents\\sdk\\package.json",
+      "size": 13493,
+      "hash": "sha256:90b04341fc8c148bae0a1916035ecba329a4c4ede39f07486547b13ca381dde6",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@tavily\\core\\package.json",
+      "size": 962,
+      "hash": "sha256:661c100f4926f1f6cb21732bf1e4cf1074f91320166fa2dff53d99e263247034",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@types\\json-schema\\package.json",
+      "size": 1253,
+      "hash": "sha256:6bf0cb0808cafc14023ae10d55d6a88228397dc54c16106d121f42ac88d64fc8",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@types\\node\\package.json",
+      "size": 6848,
+      "hash": "sha256:87a90a62a05f225a6c4cc460d588980ec365bd0e3d3ac4a81b9130ceb9733f31",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@vercel\\oidc\\package.json",
+      "size": 1320,
+      "hash": "sha256:989edf56a27f7fc414d6718aad5d5d69e83f14ef14eaacd2b3e59b47a67a51b5",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\@workflow\\serde\\package.json",
+      "size": 772,
+      "hash": "sha256:06a007abc3797db37b39a78c549a498c5e5b0f90d79b3988c3ccfd22e4be6e2d",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\accepts\\package.json",
+      "size": 1157,
+      "hash": "sha256:c579f3f992d488ac2f4ae751df8fd4169f034f4b6f6716f9a3ddfaf130993d63",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\agent-base\\package.json",
+      "size": 1059,
+      "hash": "sha256:7a08cb2fe1d2b788e0a7bf6a9b7597dbeeeae804698c2fbd15de786d284d327c",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\ai\\node_modules\\@ai-sdk\\provider\\package.json",
+      "size": 1404,
+      "hash": "sha256:303c57dc0e431f036da32841b570931cac01596eef02c166968a2b6c247174fd",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\ai\\package.json",
+      "size": 3316,
+      "hash": "sha256:23ecf257c6aa622ce56c6d889deca4fefc5d46cbe0d1bf020b1eacd014c71ad3",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\ajv-formats\\package.json",
+      "size": 1897,
+      "hash": "sha256:402fb4bcfa457f0226813f3976ac42839dd619907c075c108efba8600d7edb69",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\ajv\\package.json",
+      "size": 4405,
+      "hash": "sha256:1f9033ee5a6515e7d76938b7072941862d1ed228a6879cc7fe10cdeb75107989",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\asynckit\\package.json",
+      "size": 1611,
+      "hash": "sha256:63eb9ff63be2e241ee6e80434d4641d6e9b5157d88bd3bbb692fcb2dfc8da4a9",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\axios\\node_modules\\agent-base\\package.json",
+      "size": 1635,
+      "hash": "sha256:05daa619e51686fd21d15f987f943f6692c56b9f489f555cbaf42a4263d5c5e8",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\axios\\node_modules\\https-proxy-agent\\package.json",
+      "size": 1405,
+      "hash": "sha256:d41d9127cbed43df8e2d404bfaf41361942a8afeb82eb57ccf8515e04eb33d1d",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\axios\\package.json",
+      "size": 6681,
+      "hash": "sha256:cc221510be6315b0ebf648d7e4346680e47a828fafcbb9cc141922d2d219761e",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\base64-js\\package.json",
+      "size": 1115,
+      "hash": "sha256:9758f3ab8c45e07bb9a368e32f9a8b3729623bbf47cbbb205b32d674ab2a91f0",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\body-parser\\node_modules\\content-type\\package.json",
+      "size": 1126,
+      "hash": "sha256:33102772db7c8375395bdcc11e7004c597b4cdbe457d8dd0ae2e56f5a2d28637",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\body-parser\\package.json",
+      "size": 1767,
+      "hash": "sha256:ae841913f51a2b463ba86e011564784654dad953352dc972baf59f87da4b2d36",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\bowser\\package.json",
+      "size": 2381,
+      "hash": "sha256:b12b643998a1a7febff9933b5a05e53045c722ff4de13fab751391b2d346a974",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\bullmq\\package.json",
+      "size": 10221,
+      "hash": "sha256:780d1c961acbc0348b040463604fd14bd000fcd4a965a485e12826c341e2ca78",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\bytes\\package.json",
+      "size": 959,
+      "hash": "sha256:99b21c09ce812dc76a06cd87c4753247cb9615c6a8501c5a5a9d9caa22ea2d12",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\call-bind-apply-helpers\\package.json",
+      "size": 2480,
+      "hash": "sha256:59639b628c6846f674857c6a613fd47e2e4d2a24036cdf0f7a62ac634f4c8a5f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\call-bind-apply-helpers\\tsconfig.json",
+      "size": 115,
+      "hash": "sha256:e85504b06a62ff3963fd69c1d30589c0808e5ce70c244e74efcaed46a8ea77c9",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\call-bound\\package.json",
+      "size": 2507,
+      "hash": "sha256:dcc8abb3c4ad3774234272149020cb36d7b1a3d377a419454d1e7adb368dd9c3",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\call-bound\\tsconfig.json",
+      "size": 137,
+      "hash": "sha256:97ce3d982a834f79a60b6c4b8dccc0e961711f2e74fac4c8c2e1b877f9bc8bb4",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\cluster-key-slot\\package.json",
+      "size": 1524,
+      "hash": "sha256:a6801b1fe6f853ddd30b93ea273ba3ef2a34943cd855ff4ef266395895907674",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\combined-stream\\package.json",
+      "size": 640,
+      "hash": "sha256:761adece21443081ae818fe0e18864d7fa03f387075b89afa6cc5dd98356fafa",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\content-disposition\\package.json",
+      "size": 1039,
+      "hash": "sha256:20ca1508f7b48509f2e5079ef94a84d56bc5d147d31f0310bf515a8c52ecf5f7",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\content-type\\package.json",
+      "size": 1075,
+      "hash": "sha256:bd78a5427ffca1966621301edc6cac2146c8c1e137f122161ba90dca7ec89f77",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\cookie-signature\\package.json",
+      "size": 548,
+      "hash": "sha256:c07dac3271d2ab772ac105f714c3f44bea5180a9a40bf95c2db8d6cb29bb28be",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\cookie\\package.json",
+      "size": 1092,
+      "hash": "sha256:7fa781bd142e7f38b66bff64b4e3a8be9e53e340e7ddaf27caebd00322602208",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\cors\\package.json",
+      "size": 926,
+      "hash": "sha256:b314218cdfc9e9442efd35c74c4176902c0bbd74700ba30d6055e70a76455174",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\cron-parser\\package.json",
+      "size": 3601,
+      "hash": "sha256:83ddad480f91cc65859bbd277b4ba937fb034a29e8fb32778bd03aab4330fb4f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\cross-spawn\\package.json",
+      "size": 1655,
+      "hash": "sha256:2e106cd9b4ae4e34ead35218371a0d4e172da72515a4f8f97d69a2e1fe3dee82",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\debug\\package.json",
+      "size": 1479,
+      "hash": "sha256:ea8e33d63fe5f3a4c36609b6c3df8e2ef1f8b8ba2fc3a2e1e53cb27291f384af",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\delayed-stream\\package.json",
+      "size": 684,
+      "hash": "sha256:4f5bd886efbd8feda6ac04db6ac1aa8b2e8dfc159503b0652667e1bc88efd4cb",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\denque\\package.json",
+      "size": 1758,
+      "hash": "sha256:b84d3e7e26500d9a9ebbe103b627bda007049fa7f0672ceae96533992cc2fc9c",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\depd\\package.json",
+      "size": 1335,
+      "hash": "sha256:5a3659bcc2e47b25ebf9f23f38eb9452a58920bfe4b59410bfa6fe84639a3b99",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\detect-libc\\package.json",
+      "size": 1278,
+      "hash": "sha256:ee88e5b954fdf3a8480b1d01ef767d68d8ca2c6da269f58c5cf1c5550e9aa2a7",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\dotenv\\package.json",
+      "size": 1752,
+      "hash": "sha256:0ab052f52308a03eefa94ddfad99a56f4c28ea35395d7619beec217e7c14fcff",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\dunder-proto\\package.json",
+      "size": 2108,
+      "hash": "sha256:24df71008e4225c858f389dd2728b76cf66b752256d42a38ed7930aacae7fe2b",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\dunder-proto\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:5c01887c6c8539144c0fc5fae6f5115073b6e26ecbeae8434a0329f46f9169c6",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\ee-first\\package.json",
+      "size": 859,
+      "hash": "sha256:a4eece6ff6b38bf7ac107323f381cc60500097a9cbdd473f5d5b45e68822cb89",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\encodeurl\\package.json",
+      "size": 1092,
+      "hash": "sha256:5df10798f4b086da95c24180d7519fa4f68e2057a48e2ff6b76b91d6ffed1e9b",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\es-define-property\\package.json",
+      "size": 2129,
+      "hash": "sha256:3a2cb30dae30a96705dcd9aa2d5fb190cf8200f27badccfa5a81a4374e5708b4",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\es-define-property\\tsconfig.json",
+      "size": 138,
+      "hash": "sha256:2ff433185c049374ca38887ac82b549215cd40f0090d4c350f8ee6c549fb076d",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\es-errors\\package.json",
+      "size": 2174,
+      "hash": "sha256:1a0a0bcccc76b915cb64073317312840cf6363e9144b96f406d0059774dd5278",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\es-errors\\tsconfig.json",
+      "size": 3170,
+      "hash": "sha256:539cacffe5895fcf9a9eb59e3a6a9fadbb41ba3e05339d97e3b55da34d2c85a4",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\es-object-atoms\\package.json",
+      "size": 2249,
+      "hash": "sha256:e4b7882975d10c68457945c883e1060d0b058af5b1216215c872263f42e12fc9",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\es-object-atoms\\tsconfig.json",
+      "size": 112,
+      "hash": "sha256:22c713482377f2492fcad1e7cb33ef479cf8c1151b0ea2c8c3a49d20d4369988",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\es-set-tostringtag\\package.json",
+      "size": 2193,
+      "hash": "sha256:c9506942c9ef472286aff079bb65b7f3edcaccbc7f59fac9f419787b570086e5",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\es-set-tostringtag\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:6346ee4c020f341387588479dd83740a65ab902a462b8c6b3b8bf51f032c6795",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\esbuild\\package.json",
+      "size": 3980,
+      "hash": "sha256:9d0bc453f4e791553c4cc2298ba023b409241fd9801e494741666eb0f6051490",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\escape-html\\package.json",
+      "size": 434,
+      "hash": "sha256:bd320a3e9d23249f5f7d3ce72f2fa426e28a6b2704bd2b281d0c92806a1f5223",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\etag\\package.json",
+      "size": 1306,
+      "hash": "sha256:836b9a5dd1c6af638f4602e83e2568277f9ab1f457db0b95d949c2a4ddb0462a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\eventsource-parser\\package.json",
+      "size": 2734,
+      "hash": "sha256:27a8440c43f6bb12ec3d93338d93efcc4130e8be1ec7f33f5b31c05c2147430b",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\eventsource\\package.json",
+      "size": 3334,
+      "hash": "sha256:99cec0bc0f4919b5de13302b0ce28cb0dd966b316cd2c961e0e7c73f884f7524",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\express-rate-limit\\package.json",
+      "size": 3296,
+      "hash": "sha256:f4a1920625aac5d15991cfc3f00ebe35392791d1150aa0d489dc89cd78b158ec",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\express-rate-limit\\tsconfig.json",
+      "size": 150,
+      "hash": "sha256:e01bace0aeb0b1a35655b37ebfddebf2871279a870c2c780694b0e4957469251",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\express\\package.json",
+      "size": 2731,
+      "hash": "sha256:2980b885bad92f757a2d44674e905cf875867d5685111d8ab8f285635b11367d",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\fast-deep-equal\\package.json",
+      "size": 1496,
+      "hash": "sha256:a5c63940db0260739be9e2ac67f3aac268df4db5770420ee4e34e493152f97d2",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\fast-uri\\benchmark\\package.json",
+      "size": 293,
+      "hash": "sha256:463a034d344b042e495841b770ca69a812693087ee2053d7c18cc8497e020b58",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\fast-uri\\package.json",
+      "size": 1983,
+      "hash": "sha256:30cad05aad3d3596513706451dbfc7e0422f9c1d00f2903ecc34580327d54bc7",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\fast-uri\\tsconfig.json",
+      "size": 166,
+      "hash": "sha256:6bbba68684f6d6f1613d9ae79de617c25d8d749f30942307faee46a6d2fd721f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\finalhandler\\package.json",
+      "size": 1287,
+      "hash": "sha256:42f5503e57f067caf49dda0353d766f8eb4616429d3c43234ba673ee8acd1196",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\follow-redirects\\package.json",
+      "size": 1289,
+      "hash": "sha256:42d8d50f86a6a8ab62f2c9d9d69532fc51de63becfd1a96681812e479443960c",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\form-data\\node_modules\\mime-db\\package.json",
+      "size": 1624,
+      "hash": "sha256:d03e37b915a050af548d543f4e45ff5de06ec767c19e745f18c431d9dc26b5bf",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\form-data\\node_modules\\mime-types\\package.json",
+      "size": 1149,
+      "hash": "sha256:5053cc10259c3913ab6b6c8f13170a619c0d1836c1d9081238329a559fafeb3a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\form-data\\package.json",
+      "size": 3009,
+      "hash": "sha256:d5222c863d975ddefb3ec2c012d3c3ab92f51ef8f3f5c3080dee02c79d217665",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\forwarded\\package.json",
+      "size": 1150,
+      "hash": "sha256:550a78f64b6a76bc353d6a10152af5750613d0d910f8478943176c1a6196158a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\fresh\\package.json",
+      "size": 1218,
+      "hash": "sha256:3895d6c15a9e65c1cca20c675db7637423ec2d087bb221ef79e09ed2e7d34ec0",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\function-bind\\package.json",
+      "size": 2262,
+      "hash": "sha256:edb1c4faf4148e6e3d74ed8dbac1a1dc359a647ff4207aad4851396dc7a3559a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\get-intrinsic\\package.json",
+      "size": 2576,
+      "hash": "sha256:45b14763baacc59b0fd7b39e3ad983d5d2aaf7f5ed682f2fce9edb469826c999",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\get-proto\\package.json",
+      "size": 2176,
+      "hash": "sha256:73839e012ac7134a632c9d9fc6bdb700ac9ab5553cce39eb789ba2b65663e734",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\get-proto\\tsconfig.json",
+      "size": 118,
+      "hash": "sha256:2f3c811aa59dd8b9d58e160110c7ad919cab9827c1fa89f580e328da3c573db4",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\gopd\\package.json",
+      "size": 2070,
+      "hash": "sha256:33ace32dc861f6da9d1fd9d0a44c66e8c6ff3b13358d070683c1c2978ff5f19f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\gopd\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:6346ee4c020f341387588479dd83740a65ab902a462b8c6b3b8bf51f032c6795",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\has-symbols\\package.json",
+      "size": 2974,
+      "hash": "sha256:5190268c0e3308d7446d1f7c036238f329f786938453e6017cb90980b3612e7a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\has-symbols\\tsconfig.json",
+      "size": 143,
+      "hash": "sha256:b9b19c254344aae6fec9086e109040f9a13369c0d061c9a018e9b26dfe94a1c8",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\has-tostringtag\\package.json",
+      "size": 2838,
+      "hash": "sha256:30ab773c52021a6b800ea48f251abeeb1f6e378300f819204dfbb38d6e43f3ad",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\has-tostringtag\\tsconfig.json",
+      "size": 3611,
+      "hash": "sha256:b772fc0e85fe374bb32302cdbc08c8854d6a679bcf7f4f7b8da28098e2979521",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\hasown\\package.json",
+      "size": 2258,
+      "hash": "sha256:40b750c55a8bacf2c5ac316f5299dd44d48acc101c189a00cd59d39376b5eb89",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\hasown\\tsconfig.json",
+      "size": 73,
+      "hash": "sha256:29ef530207266f2859676c048073e7f746db37a0a20e2a75bc2ef2b3893fbf40",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\hono\\dist\\cjs\\package.json",
+      "size": 25,
+      "hash": "sha256:8005a3491db7d92f36ac66369861589f9c47123d3a7c71e643fc2c06168cd45a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\hono\\dist\\types\\package.json",
+      "size": 25,
+      "hash": "sha256:8005a3491db7d92f36ac66369861589f9c47123d3a7c71e643fc2c06168cd45a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\hono\\package.json",
+      "size": 23613,
+      "hash": "sha256:cafef790692456673dfe5e8644161830cfff3331cb34414c2baf576bb4135052",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\http-errors\\package.json",
+      "size": 1410,
+      "hash": "sha256:d540721372bf8bf77b5fad31f6567a916e24d0aeeb78c81ba92b69feea9f1eef",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\https-proxy-agent\\package.json",
+      "size": 1223,
+      "hash": "sha256:b08c1977d38f14f4be7fb5be33aab545e3e5a6e2e12100733a6ad97dec995206",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\iconv-lite\\package.json",
+      "size": 2260,
+      "hash": "sha256:f24ad03476d51470a5b069e65b03ef6383d615897ffe2239edf22584ea0e3d03",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\inherits\\package.json",
+      "size": 581,
+      "hash": "sha256:be645800bc94fd8de29c8ae91690549b316cc437100108aeea7b2f347693cc80",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\ioredis\\package.json",
+      "size": 3104,
+      "hash": "sha256:04d967c4482349a81349c6daa81e536691009d235f1dd2570623d4fe53ca64a0",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\ip-address\\package.json",
+      "size": 2304,
+      "hash": "sha256:05ab5d8380317293b7a6eca2b454fb3e08efdb09a89a4f4970132e6adee1973a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\ipaddr.js\\package.json",
+      "size": 719,
+      "hash": "sha256:fc1071893728a0e78fa40ce0dbe04c5a1021179fdcb5b229f274e3556d6a87cd",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\is-promise\\package.json",
+      "size": 576,
+      "hash": "sha256:ae7a1bff928cb99f0b828f8a8236f623828f5f48ce930268ac5726554e083b50",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\isexe\\package.json",
+      "size": 786,
+      "hash": "sha256:395c2af9abeeaafe7391974c1eacfb2a2bdeef187f21c3f5582c49e0368e59bf",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\jose\\package.json",
+      "size": 3201,
+      "hash": "sha256:faa28d9e4362c02c81ce4c7a3b62443495343830c53de2efcbd8c1088e4ba931",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\js-tiktoken\\package.json",
+      "size": 2407,
+      "hash": "sha256:5040ae37366971233fd53ef33360bc8d94159fa55c0c541f5663980b53b6b3b3",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\json-schema-traverse\\package.json",
+      "size": 1004,
+      "hash": "sha256:156fb24af02845c190701360d06dfda35ef04282e34a734289ea9535ad9819ae",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\json-schema-typed\\package.json",
+      "size": 1124,
+      "hash": "sha256:8d04cdd834382b5b4e7d3e00fbc1da5654c430d04934c3031fe8f2d79a1625d9",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\json-schema\\package.json",
+      "size": 597,
+      "hash": "sha256:22fe1fdf2eb8925bb5ea40f4dbff8fbfcd695190362afeadb8ce1b7d79f6f3f0",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\luxon\\package.json",
+      "size": 2872,
+      "hash": "sha256:bf8c55f4072d01467c1c0c49807722f79577680ac1ff7fa7c030a83716d3db4f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\luxon\\src\\package.json",
+      "size": 45,
+      "hash": "sha256:06eccc321ab3eed3923cc9858ad67809ab7cfcbc10cf43db7240350ad31084c9",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\math-intrinsics\\package.json",
+      "size": 2670,
+      "hash": "sha256:39d74aa5a354153130706286dd60a2d8409ce0c8f66546eff2edcac0afff17e1",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\math-intrinsics\\tsconfig.json",
+      "size": 36,
+      "hash": "sha256:0e570d88a16e1e96c7b5ff8f4b44e50a6e7f49e5fc5e1affab9a3a8946964f80",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\media-typer\\package.json",
+      "size": 1036,
+      "hash": "sha256:532b2af00ae4de1bb2853f233a1ee6d3c19703d18d2c4e173cdc59f7a01e1bba",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\merge-descriptors\\package.json",
+      "size": 961,
+      "hash": "sha256:36d6d2cd304c06d5b690625af7ecc07995d5e220eba014ee3818af8c51421fed",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\mime-db\\package.json",
+      "size": 1530,
+      "hash": "sha256:33bdbb99915697ac01df12490b9d479a55529123842e67975e6d76d0010aa142",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\mime-types\\package.json",
+      "size": 1266,
+      "hash": "sha256:644fc05ded7d8a20c069a07c7c61373593d4859c91b1386f544cbf247e39820c",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\ms\\package.json",
+      "size": 732,
+      "hash": "sha256:1a6b4d9739790c0b94ab96c8cc0507e281c164c311ff4fbf5e57fb8d26290b40",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\msgpackr-extract\\package.json",
+      "size": 2487,
+      "hash": "sha256:5cc88f0f15a0b54d9bb55b7aba652b792342199d77a8402727b76f0a53f9c2d1",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\msgpackr\\package.json",
+      "size": 2572,
+      "hash": "sha256:4ecf898ac275fc13831d346bfbd041941b856cbcf2dd4800b4a2e217bd66f8ce",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\negotiator\\node_modules\\content-type\\package.json",
+      "size": 1126,
+      "hash": "sha256:33102772db7c8375395bdcc11e7004c597b4cdbe457d8dd0ae2e56f5a2d28637",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\negotiator\\package.json",
+      "size": 1232,
+      "hash": "sha256:2bc164db19aca1e7af967b7211f7d728940f48ff22d56aa75be587f3bb13ee56",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\node-abort-controller\\package.json",
+      "size": 831,
+      "hash": "sha256:814f52dce3563eea12d4996ab3e4834d4180e0d2849a0a431ac27dc0515ea253",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\node-gyp-build-optional-packages\\package.json",
+      "size": 897,
+      "hash": "sha256:939e18b5652b4cd288a9ff263ddd9be1101b0503903794b9f8feb2603461e1a4",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\object-assign\\package.json",
+      "size": 764,
+      "hash": "sha256:5990bbffa235fc675debd925d50f6c3f48a2b4526d8c9f7555cadec9029d0d7f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\object-inspect\\package.json",
+      "size": 2841,
+      "hash": "sha256:21c5c63f653705f44a60f5fe93752b231caf6ff07b01805740bd89b71b2d6d8a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\on-finished\\package.json",
+      "size": 1057,
+      "hash": "sha256:c812eca4b0dee2317cb446124cb27ae8e5b993c8fdd0144886b629ef6ef53fc1",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\once\\package.json",
+      "size": 574,
+      "hash": "sha256:33840d74c14c94bfb75c76374765b635531b1eacb88d7f1f2f380c94d0ea1328",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\openai\\package.json",
+      "size": 6151,
+      "hash": "sha256:3e84370c189c41e745700f55aa5535e38f6437a48d539d0e9ce02d0554863d9f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\openai\\src\\tsconfig.json",
+      "size": 348,
+      "hash": "sha256:43e7c91eb81f6cb6a4d72a14dd33e263ed077e2a17185473a5eedcc17d430fec",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\parseurl\\package.json",
+      "size": 1180,
+      "hash": "sha256:98c7b953c844cac7c0be2d5abc6559c6fd3a6075fd159b04c0f1bf46145bfed2",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\path-key\\package.json",
+      "size": 650,
+      "hash": "sha256:25594dab72681c910d9cc919263a4daf27d77a75e0d2c26a4d958d6d6b798f86",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\path-to-regexp\\package.json",
+      "size": 1399,
+      "hash": "sha256:3c37dce1e0587231f7c9f63e137dd0ed4d6f25552c89b5b5939c6a3d36113634",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\pkce-challenge\\package.json",
+      "size": 1648,
+      "hash": "sha256:74fd5b54078ebad49e15421f928d285f63926caae3220356d95a9afc6fa0e417",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\playwright-core\\package.json",
+      "size": 876,
+      "hash": "sha256:f061c58427e47e843e26d201f0a57076c734e57c734ecbbd87d4a23b7a20db9b",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\playwright\\package.json",
+      "size": 1359,
+      "hash": "sha256:8bc2ddebe8d9b051b9ecb87d62c6c63877e59d08617f32c3215681ca8bb70998",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\proxy-addr\\package.json",
+      "size": 1281,
+      "hash": "sha256:b2e305ca817ae4e8b088e07f38c5df1d7ad77aa3473809e4c37a9a1c83600225",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\proxy-from-env\\package.json",
+      "size": 1263,
+      "hash": "sha256:d01e73f0bf86e192e7eab7ff3f6f9e1284695ecc713ace22d982f9a35c9be451",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\qs\\package.json",
+      "size": 3192,
+      "hash": "sha256:69d58ca5abcff9be3f6becc70940caa76d8ec1b72ef7d2d735305c16cb877dca",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\range-parser\\package.json",
+      "size": 1297,
+      "hash": "sha256:3461c9c15204b32f459c97920bb678e42341e9e9675e4b748907ce4de740f26d",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\raw-body\\package.json",
+      "size": 1275,
+      "hash": "sha256:3072f77ab429d8b89e78c85e0cdefb6e3ef554a9fb19443d006a892a74361e78",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\redis-errors\\package.json",
+      "size": 1070,
+      "hash": "sha256:0d1efebc88f54540a2e08779a388bf1ac08ca2144faa7cf90774cebfbf4be14e",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\require-from-string\\package.json",
+      "size": 511,
+      "hash": "sha256:c0002f7d4c7d7e2a885cf0f97226344902417c3a0980f2beca41962d2bc1f6d8",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\router\\package.json",
+      "size": 1142,
+      "hash": "sha256:b77062595f89476fab6acbcde5fa8dfac3be7d7b9b0b0b69d48c84ebc13c9a06",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\safer-buffer\\package.json",
+      "size": 822,
+      "hash": "sha256:4247a3a63c45a6a7ced1557fe4dd9d2a163af4915d594b95e5867b69a53edb52",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\semver\\package.json",
+      "size": 1661,
+      "hash": "sha256:7c94cb7f2a53c27b20d76386ec144c062894dbcc909cfabd0f728c37874b1776",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\send\\package.json",
+      "size": 1669,
+      "hash": "sha256:303cfb195f13651e5174c23310e6a71e319b4bf85f9afe9e16b16567cbab02f8",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\serve-static\\package.json",
+      "size": 1193,
+      "hash": "sha256:4f2884fa761dee155f31cb960d792c2900dbaa6aecbe6ebcc3bcfd7e754706b8",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\setprototypeof\\package.json",
+      "size": 1264,
+      "hash": "sha256:5b39ddf23d2c12a751cb4af2ce12dd5c87314350be7526fff69b4a3ff2a2d538",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\shebang-command\\package.json",
+      "size": 558,
+      "hash": "sha256:44de390ae5ed6c5f9758b8b9c90b93fa53977d5361731600429f1de08f4b3f30",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\shebang-regex\\package.json",
+      "size": 582,
+      "hash": "sha256:b8018c6b8cc9900dfd1ac18a54956ba34c453fdc2da5e5fe555ee8f04133a1c5",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\side-channel-list\\package.json",
+      "size": 2258,
+      "hash": "sha256:90f0c08c6c17f4a3fa3dd61873223957b89da4201f01dc0c8b95b0b9e6a2a59a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\side-channel-list\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:6346ee4c020f341387588479dd83740a65ab902a462b8c6b3b8bf51f032c6795",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\side-channel-map\\package.json",
+      "size": 2336,
+      "hash": "sha256:914a8bd732b82523d95bb697eec3e6d95badc5eb13b196fb0772e59354a3ab25",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\side-channel-map\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:6346ee4c020f341387588479dd83740a65ab902a462b8c6b3b8bf51f032c6795",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\side-channel-weakmap\\package.json",
+      "size": 2447,
+      "hash": "sha256:8c11f0a1c6cfa549588d991a5cb1b04d62953277ed29f47463d415d5946388a8",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\side-channel-weakmap\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:6346ee4c020f341387588479dd83740a65ab902a462b8c6b3b8bf51f032c6795",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\side-channel\\package.json",
+      "size": 2362,
+      "hash": "sha256:14da3b013c3762da85cfd8b173290285394dfa41870bc4a1e8243aaa38316f2a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\side-channel\\tsconfig.json",
+      "size": 116,
+      "hash": "sha256:6346ee4c020f341387588479dd83740a65ab902a462b8c6b3b8bf51f032c6795",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\standard-as-callback\\package.json",
+      "size": 934,
+      "hash": "sha256:37825a4ad24525bdd09e5dbd949266c75b369b266065ac153ae4a802f265c39d",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\statuses\\package.json",
+      "size": 1440,
+      "hash": "sha256:dc2508da5568ba768d94b73126cd20a5df934bc0c651ad681022236484ca156c",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\toidentifier\\package.json",
+      "size": 1142,
+      "hash": "sha256:f34c59f784d43da6e633390d85d14ca60539b4676159444f313c62fcfc3b68dc",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\tslib\\modules\\package.json",
+      "size": 26,
+      "hash": "sha256:f2a77d1fa2e7ee710b2835b2933d75d9c7f5dad4f1bab69e1679876e32b5e9eb",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\tslib\\package.json",
+      "size": 1219,
+      "hash": "sha256:f02b4851df316f29bdfcd404aa1eb41e4e216b5859015f81fcd3e91caf8be931",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\tsx\\package.json",
+      "size": 1663,
+      "hash": "sha256:ab5f14c4251638844ade3905d3cfc52fc1c833644694d655a05f6d0ca746b83c",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\type-is\\node_modules\\content-type\\package.json",
+      "size": 1126,
+      "hash": "sha256:33102772db7c8375395bdcc11e7004c597b4cdbe457d8dd0ae2e56f5a2d28637",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\type-is\\package.json",
+      "size": 1333,
+      "hash": "sha256:87b5f716ec743cdf6d610487698c8558a608b6e0adac522e1a4315b94b081694",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\typescript\\package.json",
+      "size": 3615,
+      "hash": "sha256:ebb0ce176c85ac13ce82f5be7e6f15114732ba0f064ccc893fd9051426d35d3a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\undici-types\\package.json",
+      "size": 1192,
+      "hash": "sha256:2d11a94d71962f63f234062ff20fd273e2ab7f66bdd931579e22c7e2c1cf5362",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\undici\\package.json",
+      "size": 6333,
+      "hash": "sha256:10e55f4adb6a43e72823ea235ff6a0c777db1ef68e3a1c810f0246e1b9332d8b",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\unpipe\\package.json",
+      "size": 770,
+      "hash": "sha256:28b717f978d2a4fc72cd08236931443b63fe6586102df3d1967e2b21ea8c5e11",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\uuid\\package.json",
+      "size": 3557,
+      "hash": "sha256:f7478df6f4ddaffacba855e97974626c264a0d022c02e4bcc1cdbc8471cbc6ee",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\vary\\package.json",
+      "size": 1215,
+      "hash": "sha256:73edaee964d527117a9f69d6360fbe6cec534abd9127794be01a6af58a139daa",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\which\\package.json",
+      "size": 1043,
+      "hash": "sha256:43010039ed5e89f7186960be682b3cb5cda5ab6cdfb06cbfd4f081cf0e7b4260",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\wrappy\\package.json",
+      "size": 606,
+      "hash": "sha256:712ac9c4c3cef8bc79f42cf6075ff18551f4cb768f35158214fd643853ad7abc",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\yaml\\browser\\package.json",
+      "size": 23,
+      "hash": "sha256:3ca9d4afd21425087cf31893b8f9f63c81b0b8408db5e343ca76e5f8aa26ab9a",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\yaml\\package.json",
+      "size": 3254,
+      "hash": "sha256:1c6441703d8204a23ded0d37ddf57c3b69d821dc392f20852d1f605bb9b8861c",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod-to-json-schema\\dist\\cjs\\package.json",
+      "size": 19,
+      "hash": "sha256:fa6944a20ca5e6fbaf98fd202eb8c7004d5b4ab786e36b9ed02ee31dbe196c9f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod-to-json-schema\\dist\\esm\\package.json",
+      "size": 35,
+      "hash": "sha256:9211af123fc17b2489ff3daabc3aac57681a1127b6692ad9c4839f5965156deb",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod-to-json-schema\\package.json",
+      "size": 2968,
+      "hash": "sha256:1f78f7c62913083878cd5bb0e9d10b8f5893d5799bbe1295068046707c24de3c",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod\\locales\\package.json",
+      "size": 127,
+      "hash": "sha256:3e3125b5a537a24c3632c1c5c09640ce7bcb3935901b127ad8ae3c37a27f133f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod\\mini\\package.json",
+      "size": 127,
+      "hash": "sha256:3e3125b5a537a24c3632c1c5c09640ce7bcb3935901b127ad8ae3c37a27f133f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod\\package.json",
+      "size": 4142,
+      "hash": "sha256:a046ed85fa09571dba539fee9ef236152d12dabd1f229b014ec3bd2ebaad9000",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod\\v3\\package.json",
+      "size": 127,
+      "hash": "sha256:3e3125b5a537a24c3632c1c5c09640ce7bcb3935901b127ad8ae3c37a27f133f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod\\v4-mini\\package.json",
+      "size": 127,
+      "hash": "sha256:3e3125b5a537a24c3632c1c5c09640ce7bcb3935901b127ad8ae3c37a27f133f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod\\v4\\classic\\package.json",
+      "size": 127,
+      "hash": "sha256:3e3125b5a537a24c3632c1c5c09640ce7bcb3935901b127ad8ae3c37a27f133f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod\\v4\\core\\package.json",
+      "size": 127,
+      "hash": "sha256:3e3125b5a537a24c3632c1c5c09640ce7bcb3935901b127ad8ae3c37a27f133f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod\\v4\\locales\\package.json",
+      "size": 127,
+      "hash": "sha256:3e3125b5a537a24c3632c1c5c09640ce7bcb3935901b127ad8ae3c37a27f133f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod\\v4\\mini\\package.json",
+      "size": 127,
+      "hash": "sha256:3e3125b5a537a24c3632c1c5c09640ce7bcb3935901b127ad8ae3c37a27f133f",
+      "category": "source"
+    },
+    {
+      "path": "node_modules\\zod\\v4\\package.json",
+      "size": 127,
+      "hash": "sha256:3e3125b5a537a24c3632c1c5c09640ce7bcb3935901b127ad8ae3c37a27f133f",
+      "category": "source"
+    },
+    {
+      "path": "operations\\agentcore.config.json",
+      "size": 2305,
+      "hash": "sha256:bd90a652727cc9441b73779aaf08faa3103fd4a6f6d3644593b3295f24e79270",
+      "category": "source"
+    },
+    {
+      "path": "operations\\artifacts\\iam-policy.json",
+      "size": 1528,
+      "hash": "sha256:ec2317d38af90902d37c1d067c51bc7e97a520612eafb1e75eba60f6c7d10705",
+      "category": "source"
+    },
+    {
+      "path": "operations\\artifacts\\otel-config.json",
+      "size": 2278,
+      "hash": "sha256:282cce9712beb8bf2808fb4ce5da2d30224117fcc421e425a834ec8f09d1ee7a",
+      "category": "source"
+    },
+    {
+      "path": "operations\\verify-deployment.mjs",
+      "size": 10393,
+      "hash": "sha256:a3e7fdf10660c03354b90fe2e509f0a695507ea9c50539429b9d0fea2fc93e7d",
+      "category": "source"
+    },
+    {
+      "path": "package-lock.json",
+      "size": 109096,
+      "hash": "sha256:d3c09a7c8b8c9511196c63b92de58bc12a65fed99a074d08633377f0f139a20f",
+      "category": "source"
+    },
+    {
+      "path": "package.json",
+      "size": 2846,
+      "hash": "sha256:6873b5b86805cd2564bb8b5b37686661deb6a6e6d1947fae938ac2be705fd664",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\ag-ui\\index.ts",
+      "size": 77,
+      "hash": "sha256:64b833dc8c6b90fe73db237d5fb7354edafadc33b5a863ec5d4d06d8a184fbb5",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\ag-ui\\server-adapter.ts",
+      "size": 8003,
+      "hash": "sha256:60c219587cfdec129d91eb1f31c5bec10bbefa77abc6a75fcb0d9001c2870189",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\agents\\deep-agent-todo-list.ts",
+      "size": 15738,
+      "hash": "sha256:74b1e4a3e8b5c5c328e74a3a020a1d07b8865b5524e08548c3de15fb5166f468",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\agents\\vercel-provider-adapter.ts",
+      "size": 2688,
+      "hash": "sha256:1e010ab53a03048e65121b2fb999d667dda87659d6dfa222e3da0b583fceae48",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\backends\\composite-backend.ts",
+      "size": 6646,
+      "hash": "sha256:d445493ec24adea439bba7afff9a16aa490735d3d514bf56f6285c0eda2f0346",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\backends\\filesystem-backend.ts",
+      "size": 8297,
+      "hash": "sha256:3a28e0d907a5e7fee2955264af1fde5764a80a199f61f10ec5321d8aa2054a78",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\backends\\index.ts",
+      "size": 319,
+      "hash": "sha256:2746cf6755e546fec7ae29c181ad37d590b1fccfce736d26bd1d116e55e72193",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\backends\\protocol.ts",
+      "size": 2211,
+      "hash": "sha256:54263cc58d8b89c18f9f5ba4a3026ab2569f49a38eae47f1d74c8931fde233a5",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\backends\\state-backend.ts",
+      "size": 7677,
+      "hash": "sha256:bd8b4f14628bf2c59883dc3cb7a5cc907300c4f5ffb4cb5abcfeddc6140041ce",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\handoffs\\handoff-tools.ts",
+      "size": 4167,
+      "hash": "sha256:efab074d70745b7b3b360cb5fd09e8a45e159e69464eaa967fa1d6a73db466a9",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\handoffs\\index.ts",
+      "size": 320,
+      "hash": "sha256:e0d365183a695792c04c6e0e87db989c2efedf0cff4a57395b4d37323d0d27ac",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\handoffs\\supervisor.ts",
+      "size": 3032,
+      "hash": "sha256:67dc128e29586da6f41cb887918fa2df0df7c185a0f0536c7494e1a3d4ec5d1c",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\handoffs\\types.ts",
+      "size": 1853,
+      "hash": "sha256:cedf4ca30acd45e04e044fc3f2c0ccf66ca14dd805ee40c8e347e65a42161200",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\index.ts",
+      "size": 1000,
+      "hash": "sha256:cb0c22ebdef194439dec33e6b13b8811186247fbe7a018df90a388a8ec66b442",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\media\\index.ts",
+      "size": 125,
+      "hash": "sha256:bd89548d3778cca7d06b174913647887519092844cb87e9caecf837f112ab7f7",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\media\\types.ts",
+      "size": 1168,
+      "hash": "sha256:d8b453f62548d328d5734de96584030d4d01579749f88e756a8b867d4fc496e1",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\media\\vision-tools.ts",
+      "size": 7138,
+      "hash": "sha256:01d1576ba38ee0e3ae25d3218ef2d0f10ffe4c4183996780fe31814c3cfc378e",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\models\\index.ts",
+      "size": 36,
+      "hash": "sha256:c97e5408d566a3df25db7d8b29828f55a068c2bcf7b85b40c24fe0d0dff173ab",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\models\\model-factory.ts",
+      "size": 3110,
+      "hash": "sha256:92bd6834f9a93a1fc9b7f9006a6c04259a80f55fe27adbf8659498b2a66c5e86",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\research\\index.ts",
+      "size": 64,
+      "hash": "sha256:aa6f718c03082c51c28ec5754dc32954da238a2808b90553f00ff78b4177bb1c",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\research\\tavily-search.ts",
+      "size": 4181,
+      "hash": "sha256:2e5488a388c603b727d1c182d51741cec08dd45ee262b267344d7870406396d6",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\research\\types.ts",
+      "size": 549,
+      "hash": "sha256:f5712561998fcebdb88d963edc73924bb1bde3cbfe3a2a02820fbe629bff6428",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\session\\index.ts",
+      "size": 65,
+      "hash": "sha256:5cd86814d3295150de3f6214777a819a75e7f45479b3e97122dfa2560acd8c47",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\session\\session-ledger.ts",
+      "size": 3239,
+      "hash": "sha256:9d5d5477da1ddbc140d43bd383ec9f14a1dd89397c67f97811417c346667541a",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\session\\types.ts",
+      "size": 594,
+      "hash": "sha256:b36fd6f831b051d8c2610bd5445f0f63c6e4d432bb2ce1189dea9f25050f8598",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\state\\index.ts",
+      "size": 64,
+      "hash": "sha256:85ca14ec6b2d47dacb545a2440fab1878f7da93b5823622dce673c6601456034",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\state\\state-manager.ts",
+      "size": 4837,
+      "hash": "sha256:69c2b0da58790a3959babc556fad1989aa4b5139ef06d8bce72ea118a31996aa",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\state\\types.ts",
+      "size": 1812,
+      "hash": "sha256:bc3c82d2866b09b73d5be768814dc2da13b61528b48a42ca027972f549d7fdb3",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\storage\\git-local-storage.ts",
+      "size": 6943,
+      "hash": "sha256:64a405a34b5b89bc02037caf8e69b919528dfd45448fc842457582447413b763",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\storage\\github-storage.ts",
+      "size": 6309,
+      "hash": "sha256:fcdfee983c47809051e98cb153b5f62e0a23966987fd45962439a0a99e53d304",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\storage\\index.ts",
+      "size": 158,
+      "hash": "sha256:97691fcf3000bc6fb764feb47b4848483c6274bb1332f595474e039a42dec99e",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\storage\\types.ts",
+      "size": 823,
+      "hash": "sha256:3fedb9ca1d71f2aa5d9f5211ab5546482d3bbc307ced431bf53779b0b34c340b",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\todos\\index.ts",
+      "size": 61,
+      "hash": "sha256:4d15589c588bfa48dc3322d3f399fee3595648c6450d0293922872dd2eab7da3",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\todos\\todo-chain.ts",
+      "size": 4868,
+      "hash": "sha256:b9c0654368c80265bfaf5910cb7d0b9a5af5007b64faecf37bb0599255115b87",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\todos\\types.ts",
+      "size": 529,
+      "hash": "sha256:f2cd098a340a77e1be8423c6a6109f84cee94064131f5b3273ed3608d962bbba",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\workflow\\engine.ts",
+      "size": 6109,
+      "hash": "sha256:0e82f1ea424500b32d758fc072f49ae65c5db3a99bfd298434b41543d56973ad",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\workflow\\index.ts",
+      "size": 57,
+      "hash": "sha256:50662ef89ca9a69be1663f30c33e2406c529341f7904c52e73d1beb51b6d3fbd",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\src\\workflow\\types.ts",
+      "size": 959,
+      "hash": "sha256:6254a2cf2d1e3501de3d5a2a06ba9f17ff1698d0f57382410472ee6991f317d9",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\tests\\ag-ui-server.test.mjs",
+      "size": 2564,
+      "hash": "sha256:d7b69ca1123aaaef112495350365870d2aca8be932ca7ffe0a2e3ba5e53b9550",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\tests\\backend-engine.test.mjs",
+      "size": 7445,
+      "hash": "sha256:f0c096a61b5a8aef64b7587fd298837c7c5fb5ec6cf385367036d05bdb9dc3c4",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\tests\\git-storage.test.mjs",
+      "size": 4972,
+      "hash": "sha256:4fc4b04c3bbd9c36c2627a921db32ebe6bc327ce3f7f28ed4fa5ed7615d7ea9a",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\tests\\model-factory-and-agents.test.mjs",
+      "size": 3110,
+      "hash": "sha256:d6a8b268eda5660c4b22af279f9390f85aa474e47d9c7166c1757fddf5bc5f79",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\tests\\strands-state.test.mjs",
+      "size": 7756,
+      "hash": "sha256:1e0ce9b054a6324ae31753ce1df9d75e6cf2005456910117c8d828a6c55e1578",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\tests\\vercel-integration.test.mjs",
+      "size": 3745,
+      "hash": "sha256:d1429fd2f8d012b31bbdcad31c323519ec90a1e2af020594d06cdb3171482a40",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\tests\\vision-media.test.mjs",
+      "size": 5261,
+      "hash": "sha256:8cbb74ff51c1680541c20fe5170f4ae21ca669bfca591584de6e330d1a8aa143",
+      "category": "source"
+    },
+    {
+      "path": "packages\\agent-runtime\\tsconfig.json",
+      "size": 440,
+      "hash": "sha256:ee1e3d92c072b7d7ad76997ef9e625b359f28c959a8a6887649b245b25e06bda",
+      "category": "source"
+    },
+    {
+      "path": "scripts\\lib\\colors.mjs",
+      "size": 2502,
+      "hash": "sha256:c7e9394226b34917b62c932bf796e551156785f90b165bdde8827391ddd8a67e",
+      "category": "source"
+    },
+    {
+      "path": "scripts\\test-network-connection.mjs",
+      "size": 4171,
+      "hash": "sha256:ab4b968601e571dc885785ef848d84657ff046f3e45f448b5748752bc94e9dd9",
+      "category": "source"
+    },
+    {
+      "path": "scripts\\validate-env.mjs",
+      "size": 2781,
+      "hash": "sha256:43efbd447fbe56bcc5a717c477a0e9a1e28107168fb6cd9dfa584896fd3990e7",
+      "category": "source"
+    },
+    {
+      "path": "test-results\\e2e-researcher-preview-One-013bb-onfirmation-Message-Actions\\error-context.md",
+      "size": 20662,
+      "hash": "sha256:b635e485057e97f087e9606588de6d500b9d84c7cbbc7691efcf14dfdf023a74",
+      "category": "source"
+    },
+    {
+      "path": "test-results\\e2e-researcher-preview-One-dd396--User-Driven-Tavily-Search-\\error-context.md",
+      "size": 23645,
+      "hash": "sha256:ddb13f619213d123ce37b38c488223289fa0c8dd13afd248cae3aec0a29e6792",
+      "category": "source"
+    },
+    {
+      "path": "tsconfig.build.json",
+      "size": 448,
+      "hash": "sha256:0326c159c4783e372a8d79cdf1de91013ba7d248f74f0370f484105e0cd6963f",
+      "category": "source"
+    },
+    {
+      "path": "tsconfig.json",
+      "size": 580,
+      "hash": "sha256:6640fd8d2d94ff733bf6dce68659f8e506ea299c20277b5ca333eb6e5a3f2709",
+      "category": "source"
+    },
+    {
+      "path": "tsconfig.test.json",
+      "size": 253,
+      "hash": "sha256:d5f2ec9f5e0b07639a7255febbd9cdb5ace96c70b116e0b2245313531e35630e",
+      "category": "source"
+    }
+  ],
+  "statistics": {
+    "total_files": 787,
+    "source_files": 787,
+    "total_size_bytes": 1767308,
+    "by_extension": {
+      ".yml": 1,
+      ".md": 12,
+      ".json": 645,
+      ".mjs": 20,
+      ".py": 4,
+      ".ts": 78,
+      ".css": 1,
+      ".tsx": 25,
+      ".html": 1
+    }
+  }
+}
