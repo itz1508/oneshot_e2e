@@ -118,7 +118,7 @@ describe("Action API v2 Unified RPC Dispatcher", () => {
     assert.ok(data.result, "Result payload must exist");
     assert.strictEqual(data.result.success, true);
     assert.strictEqual(data.result.fixture_id, "fix-action-api-01");
-    assert.strictEqual(data.result.status, "passed");
+    assert.strictEqual(data.result.status, "validated");
     assert.strictEqual(data.result.actualHash, testHash);
     assert.strictEqual(data.result.expectedHash, testHash);
   });
@@ -232,7 +232,7 @@ describe("Action API v2 Unified RPC Dispatcher", () => {
     assert.strictEqual(data.ok, true);
     assert.strictEqual(data.operation, "validateFixtures");
     assert.strictEqual(data.fixture_id, "fix-standalone-v2");
-    assert.strictEqual(data.status, "passed");
+    assert.strictEqual(data.status, "validated");
     assert.strictEqual(data.actualHash, testHash);
     assert.strictEqual(data.expectedHash, testHash);
   });

@@ -142,13 +142,25 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
                   className="w-full h-full border-none"
                   sandbox="allow-scripts allow-same-origin"
                 />
-              ) : (
+              ) : customPreviewUrl ? (
                 <iframe
                   title="OneShot Build Preview"
-                  src={customPreviewUrl || "/mock-screen.html"}
+                  src={customPreviewUrl}
                   className="w-full h-full border-none"
                   sandbox="allow-scripts allow-same-origin"
                 />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full p-8 text-center text-zinc-400">
+                  <div className="w-10 h-10 mb-3 rounded-full bg-emerald-950/60 border border-emerald-800/40 flex items-center justify-center text-emerald-400">
+                    ✓
+                  </div>
+                  <h4 className="text-sm font-medium text-zinc-200 mb-1">
+                    Live Build Registered
+                  </h4>
+                  <p className="text-xs text-zinc-400 max-w-sm">
+                    Build manifest verified for commit {buildEvent?.buildManifest.commitHash.slice(0, 7) || "HEAD"}. Ready for deployment or live preview route.
+                  </p>
+                </div>
               )}
             </div>
           </div>

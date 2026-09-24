@@ -1,241 +1,108 @@
-# Repository Guidelines — OneShot
+# AGENTS.md — OneShot Project Guidelines
 
-Repository-wide working guidance. Paths are relative to the repository root.
-Read nested `AGENTS.md` files before changing their subtree.
+Standard instructions for AI coding agents working on OneShot. Follow the open [agents.md](https://agents.md) specification stewarded by the Agentic AI Foundation (Linux Foundation).
 
-## Start here
+---
 
-1. Inspect the branch, working tree, relevant manifests, and actual callers.
-   Preserve existing edits; do not use a refactor to replace unrelated work.
-2. Find the responsible module using the map below. Read its implementation and
-   relevant authority document before proposing changes.
-3. **Mandatory Planning & Approval Gate**: Always create an implementation plan
-   and STOP to wait for explicit user review and approval before executing any
-   code changes. Never modify files or invent out-of-scope behaviors without prior approval.
-4. **Skill Standard Invocation**: Invoke official builtin skills (such as
-   `agy-customizations`) rather than inventing ad-hoc or unapproved processes.
-5. **Package Manager Standard**: Use `pnpm` exclusively across all development,
-   build, test, and lifecycle scripts. Do not use `npm`.
-6. Make a bounded change that completes the request. Preserve public imports,
-   artifact identities, resource paths, and launch behavior when moving code.
-7. Check the changed behavior at the appropriate scope and report what changed,
-   what was verified, and any remaining limitation.
+## 1. Core Operating Boundaries
 
-Use `rg` for searches. Keep source text LF-normalized. Do not hand-edit generated
-output or introduce dependencies solely to reformat files.
+- **Strict Workspace Confinement**: All work is strictly bounded to the workspace root: `d:\oneshot_e2e`. Never read, search, modify, or inspect files outside this directory (such as `C:\` or host-system directories).
+- **Package Manager Standard**: Use `pnpm` exclusively across all scripts, installs, builds, and tests. Never use `npm` or `yarn`.
+- **No Fake Progress or Hardcoded Mocks**: Never fabricate progress, fake timers, mock data, or synthetic success states. All UI states must reflect real backend SSE streams, records, and tool execution.
+- **Response Verification Invariant (No Bare 'Passed')**: A test or stage transition that merely asserts or returns a superficial `pass` or `passed` status is strictly invalid. Progress is valid ONLY when the actual HTTP response payload, body fields, status codes, and byte/hash equality are inspected and asserted against expected data contracts.
 
-## Authority and invariants
+---
 
-| Responsibility | Source of truth |
-| --- | --- |
-| Workflow order, ownership, and human gates | `packages/agent-runtime/src/workflow/` |
-| Required web behavior & invariants | `frontend/web/src/types/invariants.ts`, `frontend/web/src/lib/api.ts` |
-| Action API and backend routes | `backend/index.ts` |
-| Agent SOPs and model registry | `packages/agent-runtime/src/agents/`, `packages/agent-runtime/src/models/` |
-| Payload contracts | `backend/schema/` and its contract registry |
-| Executable transitions | `packages/agent-runtime/src/workflow/engine.ts` |
+## 2. Architecture & Module Map
 
-When documentation and implementation disagree, identify the discrepancy before
-changing either. Historical reports and green builds do not establish current
-runtime or deployment behavior.
+| Area | Location | Responsibilities |
+| :--- | :--- | :--- |
+| **Canonical Frontend** | `frontend/web/` | Next.js App Router (`app/`), React components (`src/components/`), reactive hooks (`src/lib/`). Builds via static export to `frontend/web/dist/`. |
+| **Browser Data & Streaming** | `frontend/web/src/lib/api.ts` | Real SSE client (`iterateAgentStream`), Action API v2 client (`OneShotPublicApi`), typed streaming hooks. |
+| **Server Entry & Configuration** | `backend/index.ts`, `backend/environment.ts` | Node.js backend entrypoint, Express/HTTP routes, environment loader, SSE streaming endpoint (`/api/agent/stream`). |
+| **Agent Operations & SOPs** | `backend/agents/`, `packages/agent-runtime/` | Researcher, Planner, Builder, and Refactor agents with their private tool bindings. |
+| **Provider & Runtime Integration** | `backend/integration/`, `app/integration/` | Multi-provider routing (Gemini, OpenAI, Nebius, Ollama), capability probes, gateway fallbacks. |
+| **Workspace Control Plane** | `app/workspace_api/` | FastAPI workspace control plane service (import root: `app`). |
+| **Pipeline & Workflow Engine** | `backend/pipeline/`, `backend/workflow/` | Transition logic, stage workers, checkpoints, and human review gates. |
+| **Deterministic Validation** | `backend/validation/python/validation/` | Python schema canonicalization, fixture validation, goal hashes, RPC service. |
+| **Manifest & Integrity** | `app/scripts/` | `generate_manifest.py` and `verify_manifest.py`. |
 
-- Preserve Research Review before Planner and hash/package-bound Build Ready
-  authorization before Builder. Do not replace either gate with automatic progress.
-- Preserve the same logical plan identity through refinement. Hash the canonical
-  comparable representation, `confirmed_package.core`.
-- UI state projects real backend records, IDs, events, and results. Do not fabricate
-  progress, evidence, successful execution, or hash equality.
-- Agent SOPs under `backend/agents/` are distinct from reusable skills discovered
-  under `backend/skills/`. Directory ownership does not establish IAM permission.
-- Credentials stay server-side and outside browser-readable output. Preserve
-  authentication, workspace path policy, and sandbox admission checks.
-- **Response Verification Invariant (No Bare 'Passed')**: A test or stage transition
-  that merely asserts or returns a superficial `pass` or `passed` status is strictly
-  invalid and rejected. Progress is valid ONLY when the actual response payload from
-  the call is inspected, asserted, and verified against expected data contracts
-  (verifying response body, actual payload fields, error codes, and byte/hash equality).
-  Any test or step relying solely on a bare 'pass'/'passed' flag without call response
-  verification must be reworked.
-- **24 Final Invariants**:
-  1. Session owns conversation.
-  2. Job owns execution.
-  3. `useStream(...)` owns conversation runtime.
-  4. `useTool(...)` owns capability runtime.
-  5. Explorer owns discovery.
-  6. Main owns response.
-  7. Task Rail owns execution visibility.
-  8. Runtime operates on `(...)`.
-  9. Persistence operates on `_id`.
-  10. Validation blocks promotion.
-  11. Manifest validates structure.
-  12. Expected must equal Observed.
-  13. No PASS without proof.
-  14. No Build Complete without Build Manifest.
-  15. No Event Out without Manifest VALID.
-  16. Session Label != `session_id`.
-  17. Job Title != `job_id`.
-  18. Every Artifact requires a Consumer.
-  19. Every Node requires a Manifest.
-  20. Every Validation requires: Expected, Observed, Assertion, Failure.
-  21. All workflow outputs eventually become persistence records.
-  22. Conversation flows through `useStream(...)`.
-  23. Capabilities execute through `useTool(...)`.
-  24. Only final persisted decisions become `*_id` artifacts.
+### Legacy Notice
+`app/web/` is retained only as a legacy/reference fallback UI. Do NOT add features or modifications to `app/web/`. All frontend work happens in `frontend/web/`.
 
-Before suggesting technology or changing responsibility boundaries, consult the
-relevant official specification or documentation and include its URL. Prefer
-specification → product/API docs → SDK docs → official repository/examples.
-Choose the owning layer from actual callers, not a presumed language sequence.
+---
 
-Useful references: [JSON Schema](https://json-schema.org/specification),
-[TypeScript modules](https://www.typescriptlang.org/docs/handbook/2/modules.html),
-[Python](https://docs.python.org/3/reference/index.html), and
-[Next.js static exports](https://nextjs.org/docs/app/guides/static-exports).
-Consult other technologies only when the task involves them.
+## 3. Streaming & Event Standard (DeepAgents Architecture)
 
-## Module map
+The frontend and backend follow the LangChain DeepAgents event streaming model:
 
-| Area | Implementation and navigation |
-| --- | --- |
-| Canonical frontend | `frontend/web/app/` routes (`chat`, `providers`); `frontend/web/src/components/` workspace, review cards, file browser, integrations drawer, skill panels |
-| Browser data access | `frontend/web/src/lib/api.ts` public exports; HTTP client, event stream, contracts, and projections beside it; typed API clients in `frontend/web/src/api/` |
-| Legacy web application | `app/web/`; pre-migration Next.js UI retained only as the legacy UI root fallback in `backend/index.ts`. Not the `build:ui` target; do not add features here |
-| Legacy/reference console | `app/web/src/`; retained HTML/CSS/JS and associated tests, not the Next.js production entrypoint |
-| Provider and runtime integration | `backend/integration/` provider/runtime/research registries, routing, capability probes; SDK-owned packages in `app/integration/` (strands, tavily, gemini) |
-| Server entry and configuration | `backend/index.ts`, `backend/environment.ts`, `backend/python-runtime.ts` |
-| HTTP and workspace access | `backend/server/`; routing, response helpers, workspace inspection, security, path policy |
-| Per-stage pipeline | `backend/pipeline/`; processors, workers, queues, checkpoints, transitions, review confirmation, stage scope |
-| Runtime state and gates | `backend/runtime/`; run repository, events, artifacts, plan/build review, target workspace |
-| Workflow execution | `backend/workflow/`; canonical transitions and ADK integration under `backend/workflow/adk/` |
-| Agent operations | `backend/agents/`; Researcher, Planner, Refactor, Gap Analysis, Evaluation, Builder and their private tools |
-| Reusable capabilities | `backend/skills/`; discovery, resolution, activation, and callable bindings |
-| Supporting domains | `backend/intent/`, `backend/task/`, `backend/sandbox/`, `backend/tool/`, `backend/graph/`, `backend/core/` |
-| Deterministic validation | `backend/validation/python/validation/`; schema, fixture, goal, references, canonicalization, hashing |
-| Standalone Python service | `backend/python/`; own package, dependencies, app, and tests |
-| Workspace control plane | `app/workspace_api/`; FastAPI package with import root `app` |
-| Bootstrap and packaging | `scripts/`, `app/bootstrap/`, `app/scripts/`; shared CLI colors in `scripts/lib/` |
-| Deployment | `docker/`, `app/deploy/`, cloud deployment/preflight/verification scripts in `scripts/` |
-| Fixtures and dependencies | `app/fixtures/`, `app/requirements/`, `app/vendor/`; local environment in `app/env/` |
-| Checks | `backend/tests/`, `frontend/web/tests/`, `app/workspace_api/tests/`, `scripts/e2e/browser/`, `.github/workflows/` |
+1. **Native Stream Projections**:
+   - `stream.messages`: Real-time text token deltas from the coordinator agent.
+   - `stream.subagents`: Real-time lifecycle and message streams for delegated subagents.
+   - `stream.tool_calls`: Real-time tool lifecycle:
+     - `tool_use` (invocation started with parameters)
+     - `tool_running` (tool actively executing)
+     - `tool_result` (successful execution with payload)
+     - `tool_error` (execution failure with error message)
+2. **State-Driven Progress (`stream.values.todos`)**:
+   - Progress is tracked via a real reactive `todos` list emitted from agent state (following `TodoListMiddleware` pattern: `pending` → `in_progress` → `completed`).
+   - No hardcoded percentages, artificial progress bars, or synthetic step delays.
+3. **Resilient Gateway Fallbacks**:
+   - Provider failures automatically fall back across the provider chain without stalling or breaking the stream.
 
-### Frontend boundary
+---
 
-The canonical frontend is `frontend/web`. The production build is
-Next.js App Router → static export → `frontend/web/dist/`, served by the
-existing Node backend. `backend/index.ts` retains `app/web/dist/` only as a
-legacy fallback UI root; `app/web/` is legacy/reference and must not receive
-new features. Read relevant installed Next.js guides before changing
-frontend code.
+## 4. Development & Verification Commands
 
-`frontend/web/scripts/export.mjs` publishes the export and externalizes
-trusted bootstrap scripts for the existing CSP. Preserve this build path and
-CSP. Do not edit `frontend/web/.next/`, `frontend/web/out/`, or
-`frontend/web/dist/` as source.
+All commands run from repository root (`d:\oneshot_e2e`) using PowerShell:
 
-### Root dependency ownership
+| Task | Command | Description |
+| :--- | :--- | :--- |
+| **Launch Full Stack** | `./scripts/start-web.ps1` | Windows launch script (port 8787). Supports `-Rebuild`, `-Sample`, `-Port`. |
+| **Bootstrap All** | `pnpm run oneshot` | Compiles backend, exports frontend, runs checks. |
+| **Build Frontend** | `pnpm run build:ui` | Runs Next.js build & export to `frontend/web/dist/`. |
+| **Build Backend** | `pnpm run build:backend` | Compiles TypeScript backend to `dist/`. |
+| **Build All** | `pnpm run build` | Builds both backend and frontend. |
+| **Frontend Dev Server** | `pnpm --prefix frontend/web run dev` | Runs Next.js local development server. |
+| **Frontend Typecheck** | `pnpm --prefix frontend/web run typecheck` | Validates TypeScript contracts across `frontend/web`. |
+| **Frontend Tests** | `pnpm --prefix frontend/web test` | Runs web test suite. |
+| **Backend Tests** | `pnpm test` | Compiles and runs backend test suite. |
+| **Runtime Tests** | `pnpm run test:runtime` | Runs agent runtime tests. |
+| **System Verification** | `pnpm run verify` | Runs full 7-step repository verification suite. |
+| **Regenerate Manifest**| `python app/scripts/generate_manifest.py` | Updates project manifest after builds. |
+| **Verify Manifest** | `python app/scripts/verify_manifest.py` | Verifies repository manifest integrity. |
 
-Dependency ownership is proven by actual importers (see the audit in this
-repository's history); do not move packages between manifests without it.
+---
 
-- `@strands-agents/sdk` and `openai` are intentionally installed at the
-  repository root. `app/integration/strands` is a source-imported package
-  (it ships no `node_modules`), so its SDK imports resolve through the root
-  install; its own `package.json` documents the intended versions. Do not
-  move them into the integration package merely for symmetry.
-- `@modelcontextprotocol/sdk` must stay at the root: it is a non-optional
-  peer dependency of `@strands-agents/sdk`, which re-exports `McpClient`
-  from its root entry, so ESM evaluation of the SDK barrel imports
-  `./mcp/config.node.js` and fails with `ERR_MODULE_NOT_FOUND` when the
-  package is absent.
-- `@tavily/core` resolves through the root install for the compiled
-  `dist/app/integration/tavily/src/index.js` tree; `app/integration/tavily`
-  additionally pins its own copy (0.7.11) in a package-local `node_modules`
-  as the version/provenance pin. The Researcher reaches Tavily only through
-  the `app/integration/tavily` boundary; no backend module imports
-  `@tavily/core` directly. Removing the root copy breaks the compiled
-  runtime, because Node resolves `@tavily/core` relative to
-  `dist/app/integration/tavily/src/` rather than the integration package.
-- `strands-agents-mcp-server` and its dependency `strands-agents` are removed.
-  They were declared at the root but imported nowhere in backend, frontend,
-  `app/`, `scripts/`, `docker/`, or `.github/`, and no manifest declared them
-  as a dependency (verified against the lock graph). The repository's own plan
-  notes already recorded them as "PACKAGE_PRESENT, imported nowhere". Do not
-  reintroduce them without a real MCP server caller.
-- `@ai-sdk/google` is owned by `app/integration/gemini` and installed there
-  by the root postinstall (and by `backend/integration/installer.ts` for
-  on-demand installs). It must never become a root dependency.
-- `ai`, `ajv`, `bullmq`, and `ioredis` are core backend runtime dependencies
-  and stay at the root.
-- `app/integration/gemini` is the one bundled integration; other curated
-  model packages install on demand. The root `postinstall` bootstrap is
-  contract-tested by `backend/tests/ts/integration-package-runtime.test.ts`.
+## 5. Dependency & Code Conventions
 
-### Language and contract conventions
+- **Strict ESM**: TypeScript modules use Node-compatible `.js` import specifiers.
+- **Indentation**: 2 spaces for backend/cloud, 4 spaces for frontend/Python.
+- **Line Endings**: LF-normalized.
+- **Root Dependency Ownership**:
+  - `@strands-agents/sdk`, `openai`, and `@modelcontextprotocol/sdk` must remain at the repository root.
+  - `@tavily/core` is resolved through root for compiled output and pinned locally in `app/integration/tavily`.
+  - `@ai-sdk/google` is owned by `app/integration/gemini` and must never become a root dependency.
+  - `ai`, `ajv`, `bullmq`, and `ioredis` are backend runtime core and remain at the root.
 
-TypeScript uses strict ESM. Keep Node-side relative imports compatible with the
-existing `.js` import convention. Use two-space backend/cloud indentation and
-four-space frontend/Python indentation; follow the surrounding module.
+---
 
-Contract changes begin in `backend/schema/`; update affected TypeScript/Python
-representations and consumers together. Preserve JSON field names and result
-vocabulary. Keep separate Python import roots intact when moving modules.
+## 6. Verification Lifecycle
 
-## Commands
-
-Run from the repository root unless a different directory is stated.
-Root package requirements: Node >=24.13.0 and pnpm >=10.0.0 (verified with pnpm 11.9.0).
-Use the relevant Python package/dependency files for its runtime requirements.
-
-| Purpose | Command |
-| --- | --- |
-| Windows launch | `./scripts/start-web.ps1` (default port 8787; supports `-Rebuild`, `-Sample`, `-NoBrowser`, `-Port`) |
-| Bootstrap through launch | `pnpm run oneshot` |
-| Build all / backend / frontend | `pnpm run build` / `pnpm run build:backend` / `pnpm run build:ui` |
-| Start compiled backend | `pnpm start`; `pnpm run dev` additionally loads `app/env/.env` |
-| Frontend development / types | `pnpm --prefix frontend/web run dev` / `pnpm --prefix frontend/web run typecheck` |
-| Backend tests | `pnpm test` (compiles backend and tests) |
-| Compile tests separately | `pnpm run build:test` |
-| Web tests | `pnpm --prefix frontend/web test` |
-| Repository verification | `pnpm run verify` |
-| Workspace API | `uvicorn --app-dir app workspace_api.main:app` |
-| Python reasoner tests | From `backend/python/`: `python -m pytest` |
-| Local Redis | `pnpm run redis:up`; see `docker/docker-compose.dev.yml` |
-| Pipeline E2E | `pnpm run test:pipeline:e2e`; requires the configured server, worker, and Redis |
-| Manifest | `python app/scripts/generate_manifest.py`, then `python app/scripts/verify_manifest.py` |
-
-For direct validation RPC in PowerShell, set
-`$env:PYTHONPATH = "backend/validation/python"`, then run
-`python -m validation.rpc`. This environment assignment applies to the current shell.
-
-## Verification and delivery
-
-Match verification to the change. Documentation-only work needs path/command
-checks and a diff review, not a full runtime suite. Refactors need relevant
-compilation and behavior checks; security changes need positive and negative cases.
-Avoid tests that depend only on whitespace or quote style.
-
-Before release-facing commits, run `pnpm run verify`, web tests, and manifest
-verification. Compile tests explicitly with `pnpm run build:test` when checking
-compiled test output; do not assume an old `dist/` proves current source.
-
-### Post-Build & Verification Lifecycle
-
-1. Stop active build, test, and background daemon processes.
-2. Run test suites with response verification:
-   - Backend tests: `pnpm test`
-   - Runtime engine tests: `pnpm run test:runtime`
-   - Web frontend tests: `pnpm --prefix frontend/web test`
-3. Regenerate repository manifest after builds finish:
-   `python app/scripts/generate_manifest.py`
-4. Verify manifest integrity:
-   `python app/scripts/verify_manifest.py`
-5. Run full system verification suite:
-   `pnpm run verify` (7/7 checks passed).
-6. Commit and push only when explicitly authorized by the user.
-
-Commit and push only when authorized by the user. Stage reviewed paths explicitly.
-Use a concise conventional commit title and record relevant validation in PRs.
-Before pushing, inspect branch/upstream divergence, including pre-existing local
-commits. After pushing, verify the remote SHA and working tree, and report CI for
-that exact commit. Distinguish local checks from live provider, Redis/BullMQ,
-browser, container, and deployment proof.
+Before completing any task or proposing commits:
+1. Stop all background dev or daemon processes.
+2. Run relevant unit and contract tests:
+   ```powershell
+   pnpm test
+   pnpm --prefix frontend/web test
+   ```
+3. Regenerate and verify repository manifest if files were added or modified:
+   ```powershell
+   python app/scripts/generate_manifest.py
+   python app/scripts/verify_manifest.py
+   ```
+4. Run full repository verification:
+   ```powershell
+   pnpm run verify
+   ```
+5. Report exact results, payload validations, and verification checks.

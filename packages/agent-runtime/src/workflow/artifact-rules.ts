@@ -304,7 +304,7 @@ export interface FixtureState extends Record<string, unknown> {
   expectedHash?: string;
   actualHash?: string;
   content?: string;
-  status: "draft" | "in_progress" | "passed" | "failed";
+  status: "draft" | "in_progress" | "validated" | "persisted" | "failed";
 }
 export class FixtureRuntime extends RuntimeArtifactBase<string, FixtureState> {
   constructor(fixture_id: string, session_id: string, initial: Partial<FixtureState> = {}) {
@@ -412,7 +412,7 @@ export interface ValidationState extends Record<string, unknown> {
   targetType: string;
   passed: boolean;
   errors: string[];
-  status: "pending" | "evaluating" | "passed" | "failed";
+  status: "pending" | "evaluating" | "validated" | "failed";
 }
 export class ValidationRuntimeEntity extends RuntimeArtifactBase<string, ValidationState> {
   constructor(validation_id: string, initial: Partial<ValidationState> = {}) {

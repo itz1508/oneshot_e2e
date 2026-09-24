@@ -366,7 +366,7 @@ test('Contract Schema', async (suite) => {
           path: 'app/fixtures/sample.json',
           expectedHash: 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
           actualHash: 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-          status: 'passed',
+          status: 'validated',
         },
       ],
     };
@@ -415,14 +415,14 @@ test('Contract Schema', async (suite) => {
 
     // 6. Validation Success & Freeze to Persistence Artifact (Stored Record)
     activeFixture.actualHash = 'sha256:matching_hash';
-    const passedResult = activeFixture.validate();
-    assert.strictEqual(passedResult.ok, true);
-    assert.strictEqual(activeFixture.status, 'passed');
+    const validatedResult = activeFixture.validate();
+    assert.strictEqual(validatedResult.ok, true);
+    assert.strictEqual(activeFixture.status, 'validated');
 
     const stored = activeFixture.toStoredRecord();
     assert.strictEqual(stored.fixture_id, 'fix-test-01');
     assert.strictEqual(stored.session_id, 'session-audit-999');
-    assert.strictEqual(stored.status, 'passed');
+    assert.strictEqual(stored.status, 'validated');
     assert.strictEqual(activeFixture.isInProgress, false);
     assert.ok(stored.auditTrail.length > 0);
   });
