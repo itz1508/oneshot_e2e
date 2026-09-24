@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-24T06:04:05Z",
+  "generated_at": "2026-09-24T06:38:13Z",
   "version": "1.3.0",
-  "commit": "4880ee53",
+  "commit": "fba1e235",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -5521,30 +5521,6 @@
       "path": "backend\\python\\app\\models\\reasoning.py",
       "size": 857,
       "hash": "sha256:b52c557ead4e6857fb33cc8a9a79b9d435ac6f60afbc99e780825b5d9c3bd6c6",
-      "category": "source"
-    },
-    {
-      "path": "backend\\python\\oneshot_reasoning.egg-info\\SOURCES.txt",
-      "size": 326,
-      "hash": "sha256:0d9a889ff75e3011df543650fb98f078e066c88407572ef57b658ed1e66ec493",
-      "category": "source"
-    },
-    {
-      "path": "backend\\python\\oneshot_reasoning.egg-info\\dependency_links.txt",
-      "size": 1,
-      "hash": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
-      "category": "source"
-    },
-    {
-      "path": "backend\\python\\oneshot_reasoning.egg-info\\requires.txt",
-      "size": 85,
-      "hash": "sha256:045d87732cb7b32c2283f5c2cbfa0a65c076c6274d1dfc86679ae5efec3aa661",
-      "category": "source"
-    },
-    {
-      "path": "backend\\python\\oneshot_reasoning.egg-info\\top_level.txt",
-      "size": 4,
-      "hash": "sha256:8a8f60ecb09b7e64c6d5214a8043865e608507db8c3f61f995eae6d078875901",
       "category": "source"
     },
     {
@@ -13619,9 +13595,9 @@
     }
   ],
   "statistics": {
-    "total_files": 2269,
-    "source_files": 2269,
-    "total_size_bytes": 14619224,
+    "total_files": 2265,
+    "source_files": 2265,
+    "total_size_bytes": 14618808,
     "by_extension": {
       ".yml": 1,
       ".md": 14,
@@ -13629,7 +13605,7 @@
       ".json": 1205,
       ".py": 871,
       ".ts": 89,
-      ".txt": 23,
+      ".txt": 19,
       ".toml": 1,
       ".css": 2,
       ".tsx": 33,
