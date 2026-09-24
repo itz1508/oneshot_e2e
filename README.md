@@ -46,7 +46,7 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
     <img src="public/demo/screen-4-interactive.png" alt="OneShot UI — Clean chat interface with real-time Python reasoning stream and Task Management Rail" width="100%" />
   </a>
   <br />
-  <sub>▶ <b><a href="public/demo/oneshot-demo.webm">Click to watch the full 60-second walkthrough video (oneshot-demo.webm)</a></b><br />Left: model picker & session navigation &nbsp;·&nbsp; Center: live streaming response with Python reasoner &nbsp;·&nbsp; Right: Task Rail with verified gates</sub>
+  <sub>▶ <b><a href="public/demo/oneshot-demo.webm">Click to watch the full 66-second walkthrough video (oneshot-demo.webm)</a></b><br />Left: model picker & session navigation &nbsp;·&nbsp; Center: live backend streaming response &nbsp;·&nbsp; Right: Task Rail with verified gates</sub>
 </div>
 
 ---
