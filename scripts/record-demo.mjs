@@ -1,3 +1,26 @@
+/**
+ * record-demo.mjs — REAL content demo recording
+ *
+ * Strategy: Load an existing completed chat session from sidebar history
+ * (which has real streamed content already saved), then show it on screen.
+ * Then open a new chat, type a prompt, submit it, and wait for real streaming.
+ *
+ * Confirmed from live inspection:
+ *   #sidebarNewChatBtn  → "New chat" button
+ *   Sidebar history buttons (no IDs) at y≈385,415,445 with real titles
+ *   #composerInput → textarea
+ *   #toggleDrawerBtn → Context Drawer
+ *   #toggleIntegrationBtn → Integrations
+ *
+ * Flow (60s):
+ *   0–4s   : Load UI, pan header
+ *   4–10s  : Click existing "Research validation flow" chat from sidebar
+ *  10–22s  : Show real existing conversation content (scroll through it)
+ *  22–34s  : Click "New chat", type prompt character by character
+ *  34–36s  : Submit, watch loading
+ *  36–55s  : Watch real SSE response render in new chat
+ *  55–60s  : Sweep to show Context Drawer + tool pills
+ */
 import { chromium } from "@playwright/test";
 import path from "node:path";
 import fs from "node:fs/promises";
@@ -13,13 +36,14 @@ await fs.mkdir(outputDir, { recursive: true });
 await fs.mkdir(webPublicDir, { recursive: true });
 await fs.mkdir(artifactDir, { recursive: true });
 
-console.log("🎬 Starting 60s High-Motion OneShot Demo Recording via Microsoft Edge...");
+console.log("🎬 Recording OneShot demo — real chat history + live streaming...");
 
 const edgePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 
 const browser = await chromium.launch({
   executablePath: edgePath,
   headless: true,
+  args: ["--disable-gpu"],
 });
 
 const context = await browser.newContext({
@@ -32,208 +56,225 @@ const context = await browser.newContext({
 
 const page = await context.newPage();
 
-async function smoothMoveTo(locator, steps = 15) {
-  try {
-    const box = await locator.boundingBox();
-    if (box) {
-      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps });
-      await page.waitForTimeout(100);
-    }
-  } catch {}
+async function moveTo(x, y, steps = 20) {
+  await page.mouse.move(x, y, { steps });
+  await page.waitForTimeout(80);
+}
+
+async function smoothScroll(dy, steps = 5) {
+  for (let i = 0; i < steps; i++) {
+    await page.mouse.wheel(0, dy / steps);
+    await page.waitForTimeout(110);
+  }
 }
 
 const startTime = Date.now();
+const elapsed = () => ((Date.now() - startTime) / 1000).toFixed(1);
 
-// [0s - 5s] 1. Initial Scene: Navigate and show loaded workspace
-try {
-  console.log("🌐 [0s] Navigating to http://127.0.0.1:8787/ ...");
-  await page.goto("http://127.0.0.1:8787/", { waitUntil: "networkidle", timeout: 15000 });
-  await page.waitForTimeout(1500);
-  await page.screenshot({ path: path.join(outputDir, "screen-1-initial.png") });
+// ── [0s–4s] Load UI ─────────────────────────────────────────────────────────
+console.log(`[${elapsed()}s] 🌐 Loading UI...`);
+await page.goto("http://127.0.0.1:8787/", { waitUntil: "domcontentloaded", timeout: 20000 });
+await page.waitForTimeout(3000);
+await page.screenshot({ path: path.join(outputDir, "screen-1-initial.png") });
+console.log(`[${elapsed()}s] ✅ UI loaded`);
 
-  // Move mouse across header
-  await page.mouse.move(250, 30, { steps: 15 });
-  await page.waitForTimeout(400);
-  await page.mouse.move(720, 30, { steps: 20 });
-  await page.waitForTimeout(400);
-  await page.mouse.move(1200, 30, { steps: 20 });
-  await page.waitForTimeout(600);
-} catch (e) {
-  console.log("Step 1 note:", e.message);
+// Pan across the UI to establish the scene
+await moveTo(80, 15, 15);
+await moveTo(400, 15, 25);
+await moveTo(800, 15, 20);
+await page.waitForTimeout(300);
+
+// ── [4s–10s] Click existing chat "Research validation flow" from sidebar ─────
+console.log(`[${elapsed()}s] 📂 Clicking existing chat from sidebar history...`);
+
+// The sidebar shows previous chats. Find one with real content.
+const existingChat = page.locator("button:has-text('Research validation flow')").first();
+if (await existingChat.count() > 0) {
+  const box = await existingChat.boundingBox();
+  if (box) {
+    await moveTo(box.x + box.width * 0.4, box.y + box.height / 2, 20);
+    await page.waitForTimeout(400);
+    await existingChat.click({ force: true });
+    console.log(`[${elapsed()}s] ✅ Clicked "Research validation flow" chat`);
+    await page.waitForTimeout(2500);  // wait for content to load
+  }
+} else {
+  // Try any sidebar chat button
+  const anyChat = page.locator(".sidebar-shell button").nth(4);
+  await anyChat.click({ force: true }).catch(() => {});
+  await page.waitForTimeout(2000);
+  console.log(`[${elapsed()}s] ✅ Clicked sidebar chat fallback`);
 }
 
-// [5s - 18s] 2. Start Prompt: Focus chat input, type character-by-character
-try {
-  console.log("💬 [5s] Focusing chat composer and typing user prompt character-by-character...");
-  const textarea = page.locator("textarea").first();
-  await smoothMoveTo(textarea, 20);
-  await textarea.click({ force: true });
-  await page.waitForTimeout(400);
+await page.screenshot({ path: path.join(outputDir, "screen-2-typing.png") });
 
-  const prompt1 = "validate fixtures and verify canonical stage gates";
-  await textarea.pressSequentially(prompt1, { delay: 65 });
+// ── [10s–22s] Scroll through real existing conversation content ────────────
+console.log(`[${elapsed()}s] 📜 Scrolling through real conversation content...`);
+
+// Move mouse to the main content area and scroll through it
+await moveTo(750, 400, 20);
+await page.waitForTimeout(500);
+
+// Slow scroll down to read through the content
+for (let i = 0; i < 7; i++) {
+  await smoothScroll(130, 4);
+  await moveTo(720 + Math.sin(i * 0.5) * 50, 350 + i * 15, 8);
+  await page.waitForTimeout(900);
+}
+
+await page.screenshot({ path: path.join(outputDir, "screen-3-streaming.png") });
+console.log(`[${elapsed()}s] ✅ Scrolled through existing content`);
+
+// Scroll back to top
+await smoothScroll(-700, 8);
+await page.waitForTimeout(800);
+
+// ── [22s–34s] Click "New Chat" and type prompt ────────────────────────────
+console.log(`[${elapsed()}s] ➕ Opening new chat and typing prompt...`);
+
+// Click "New chat" button (confirmed ID: sidebarNewChatBtn or newChatBtn)
+const newChatBtn = page.locator("#newChatBtn, #sidebarNewChatBtn").first();
+if (await newChatBtn.count() > 0) {
+  const box = await newChatBtn.boundingBox();
+  if (box) await moveTo(box.x + box.width / 2, box.y + box.height / 2, 15);
+  await newChatBtn.click({ force: true });
+  console.log(`[${elapsed()}s] ✅ New chat opened`);
+  await page.waitForTimeout(1200);
+}
+
+// Now type in the composer
+const composer = page.locator("#composerInput");
+await composer.click({ force: true });
+await page.waitForTimeout(300);
+
+const compBox = await composer.boundingBox();
+if (compBox) await moveTo(compBox.x + compBox.width * 0.3, compBox.y + compBox.height / 2, 10);
+
+// Shorter prompt for faster response
+const PROMPT = "show workflow gate status and active stage details";
+await composer.pressSequentially(PROMPT, { delay: 65 });
+await page.waitForTimeout(600);
+
+// ── [34s–56s] Submit and wait for REAL streaming ──────────────────────────
+console.log(`[${elapsed()}s] ⚡ Submitting prompt...`);
+await page.keyboard.press("Enter");
+await page.waitForTimeout(500);
+
+// Track /api/agent/stream request
+let streamRequestMade = false;
+page.on('request', req => {
+  if (req.url().includes('/api/agent/stream')) {
+    streamRequestMade = true;
+    console.log(`[${elapsed()}s] 🔗 /api/agent/stream called!`);
+  }
+});
+
+await moveTo(750, 500, 20);
+
+// Poll for DOM change
+const baselineLen = await page.evaluate(() => document.body.innerText.length);
+console.log(`[${elapsed()}s] Baseline: ${baselineLen} chars`);
+
+let responseFound = false;
+for (let i = 0; i < 20; i++) {
   await page.waitForTimeout(1000);
-  await page.screenshot({ path: path.join(outputDir, "screen-2-typing.png") });
-} catch (e) {
-  console.log("Step 2 note:", e.message);
-}
-
-// [18s - 30s] 3. Enter Prompt: Submit and watch loading indicator & streaming response
-try {
-  console.log("⚡ [18s] Submitting prompt, live loading & streaming response...");
-  await page.keyboard.press("Enter");
-  await page.waitForTimeout(1500);
-
-  // Follow the streamed response with mouse & scroll
-  for (let i = 0; i < 8; i++) {
-    await page.mouse.wheel(0, 100);
-    await page.waitForTimeout(800);
-  }
-  await page.screenshot({ path: path.join(outputDir, "screen-3-streaming.png") });
-} catch (e) {
-  console.log("Step 3 note:", e.message);
-}
-
-// [30s - 44s] 4. E2E Task Load on Screen: Inspect Right Task Rail at the same time
-try {
-  console.log("📋 [30s] Interacting with Task Rail on the right...");
+  const currentLen = await page.evaluate(() => document.body.innerText.length);
+  const delta = currentLen - baselineLen;
+  console.log(`[${elapsed()}s] [${i+1}s] body: ${currentLen} (Δ${delta > 0 ? '+' : ''}${delta})`);
   
-  // Validation tab
-  const validationTab = page.locator("button:has-text('Validation'), button:has-text('validation')").first();
-  if (await validationTab.count()) {
-    await smoothMoveTo(validationTab, 15);
-    await validationTab.click({ force: true });
-    console.log("   Clicked Validation tab in Task Rail");
-    await page.waitForTimeout(3000);
+  if (delta > 80) {
+    responseFound = true;
+    console.log(`[${elapsed()}s] ✅ Response rendered! +${delta} chars`);
+    await page.screenshot({ path: path.join(outputDir, "screen-3-streaming.png") });
+    break;
   }
-
-  // Active Task tab
-  const activeTab = page.locator("button:has-text('Active'), button:has-text('active')").first();
-  if (await activeTab.count()) {
-    await smoothMoveTo(activeTab, 15);
-    await activeTab.click({ force: true });
-    console.log("   Clicked Active Task tab in Task Rail");
-    await page.waitForTimeout(3000);
-  }
-
-  // Progress tab
-  const progressTab = page.locator("button:has-text('Progress'), button:has-text('progress')").first();
-  if (await progressTab.count()) {
-    await smoothMoveTo(progressTab, 15);
-    await progressTab.click({ force: true });
-    console.log("   Clicked Progress tab in Task Rail");
-    await page.waitForTimeout(3000);
-  }
-
-  // All tab
-  const allTab = page.locator("button:has-text('All'), button:has-text('all')").first();
-  if (await allTab.count()) {
-    await smoothMoveTo(allTab, 15);
-    await allTab.click({ force: true });
-    console.log("   Clicked All tab in Task Rail");
-    await page.waitForTimeout(2500);
-  }
-} catch (e) {
-  console.log("Step 4 note:", e.message);
+  
+  // Keep mouse moving while waiting
+  await moveTo(750 + Math.sin(i * 0.7) * 80, 400 + Math.cos(i * 0.9) * 60, 8);
 }
 
-// [44s - 52s] 5. Provider & Integrations Drawer
-try {
-  console.log("⚙️ [44s] Opening Integration & Provider settings drawer...");
-  const integrationBtn = page.locator("#toggleIntegrationBtn").first();
-  if (await integrationBtn.count()) {
-    await smoothMoveTo(integrationBtn, 15);
-    await integrationBtn.click({ force: true });
-    await page.waitForTimeout(2000);
-
-    // Hover through providers
-    await page.mouse.move(720, 450, { steps: 20 });
-    await page.waitForTimeout(1500);
-
-    // Close modal via Escape
-    await page.keyboard.press("Escape");
-    await page.waitForTimeout(1500);
-  }
-} catch (e) {
-  console.log("Step 5 note:", e.message);
+if (!responseFound) {
+  console.log(`[${elapsed()}s] ⚠ Response not in DOM — but video shows the attempt`);
+  await page.screenshot({ path: path.join(outputDir, "screen-3-streaming.png") });
 }
 
-// [52s - 60s] 6. Second Interaction: Human Gate Status & Panoramic Review
-try {
-  console.log("🚀 [52s] Triggering Human Gate status via Quick Tools...");
-  const textarea = page.locator("textarea").first();
-  if (await textarea.count()) {
-    await smoothMoveTo(textarea, 15);
-    await textarea.click({ force: true });
-    await textarea.pressSequentially("inspect workflow human gates: Gate 1 and Gate 2", { delay: 40 });
-    await page.waitForTimeout(500);
-    await page.keyboard.press("Enter");
-  }
+// Give a bit more time for full response
+await page.waitForTimeout(1500);
 
-  console.log("⚡ [55s] Observing gate review cards and active proofs...");
-  for (let i = 0; i < 4; i++) {
-    await page.mouse.wheel(0, 80);
+// Scroll through whatever is in the chat area  
+await smoothScroll(-400, 5);
+await page.waitForTimeout(500);
+for (let i = 0; i < 4; i++) {
+  await smoothScroll(120, 3);
+  await page.waitForTimeout(700);
+}
+
+// ── [56s–60s] Final: Context Drawer + tool pills ──────────────────────────
+console.log(`[${elapsed()}s] 🛠 Showing tool pills and Context Drawer...`);
+
+// Hover over tool pill buttons in the composer area (Tavily Research, Human Gate, etc.)
+await moveTo(540, 738, 20);
+await page.waitForTimeout(600);
+await moveTo(680, 738, 15);
+await page.waitForTimeout(600);
+await moveTo(985, 738, 15);
+await page.waitForTimeout(600);
+
+// Open Context Drawer
+const drawerBtn = page.locator("#toggleDrawerBtn");
+if (await drawerBtn.count() > 0) {
+  const box = await drawerBtn.boundingBox();
+  if (box) await moveTo(box.x + box.width / 2, box.y + box.height / 2, 15);
+  await drawerBtn.click({ force: true });
+  console.log(`[${elapsed()}s] 📂 Context Drawer opened`);
+  await page.waitForTimeout(1500);
+  await moveTo(1100, 350, 20);
+  await page.waitForTimeout(800);
+}
+
+await page.screenshot({ path: path.join(outputDir, "screen-4-interactive.png") });
+
+// ── Pad to 60s ────────────────────────────────────────────────────────────────
+const el = (Date.now() - startTime) / 1000;
+if (el < 60) {
+  const remainMs = (61 - el) * 1000;
+  console.log(`[${el.toFixed(1)}s] ⏳ Padding ${Math.round(remainMs / 1000)}s...`);
+  const ticks = Math.ceil(remainMs / 900);
+  for (let t = 0; t < ticks; t++) {
+    const a = (t / ticks) * Math.PI * 2;
+    await moveTo(720 + Math.cos(a) * 220, 450 + Math.sin(a) * 100, 10);
     await page.waitForTimeout(900);
   }
-
-  // Toggle Context Drawer
-  const drawerBtn = page.locator("#toggleDrawerBtn").first();
-  if (await drawerBtn.count()) {
-    await smoothMoveTo(drawerBtn, 12);
-    await drawerBtn.click({ force: true });
-    await page.waitForTimeout(1500);
-  }
-
-  await page.screenshot({ path: path.join(outputDir, "screen-4-interactive.png") });
-} catch (e) {
-  console.log("Step 6 note:", e.message);
 }
 
-// Ensure total duration reaches at least 60.5s of continuous video
-const elapsed = (Date.now() - startTime) / 1000;
-console.log(`⏱ Current elapsed time: ${elapsed.toFixed(1)}s`);
-if (elapsed < 60) {
-  const remainMs = Math.round((60.5 - elapsed) * 1000);
-  console.log(`⏳ Pacing video to reach exactly 60s (${remainMs}ms remaining)...`);
-  // Perform gentle mouse movement while completing the time
-  const steps = Math.floor(remainMs / 1000);
-  for (let s = 0; s < steps; s++) {
-    const x = 500 + Math.sin(s) * 200;
-    const y = 400 + Math.cos(s) * 150;
-    await page.mouse.move(x, y, { steps: 10 });
-    await page.waitForTimeout(1000);
-  }
-}
-
+// ── Save video ────────────────────────────────────────────────────────────────
+console.log(`[${elapsed()}s] 💾 Saving...`);
 await page.close();
 const video = page.video();
 let finalVideoPath = null;
 if (video) {
   finalVideoPath = await video.path();
-  console.log("🎥 Raw video recorded to:", finalVideoPath);
+  console.log("🎥 Raw video:", finalVideoPath);
 }
 await context.close();
 await browser.close();
 
 const totalSec = ((Date.now() - startTime) / 1000).toFixed(1);
-console.log(`✅ Recording completed! Total video duration: ${totalSec}s`);
+console.log(`✅ Done! ${totalSec}s total`);
 
-// Copy to named destination
 if (finalVideoPath) {
-  const targetVideo = path.join(outputDir, "oneshot-demo.webm");
-  const webTargetVideo = path.join(webPublicDir, "oneshot-demo.webm");
-  const artifactTargetVideo = path.join(artifactDir, "oneshot-demo.webm");
-
-  await fs.copyFile(finalVideoPath, targetVideo);
-  await fs.copyFile(finalVideoPath, webTargetVideo);
-  await fs.copyFile(finalVideoPath, artifactTargetVideo);
-
-  // Copy screenshots as well
+  const targets = [
+    path.join(outputDir, "oneshot-demo.webm"),
+    path.join(webPublicDir, "oneshot-demo.webm"),
+    path.join(artifactDir, "oneshot-demo.webm"),
+  ];
+  for (const t of targets) {
+    await fs.copyFile(finalVideoPath, t).catch(e => console.log("copy warn:", e.message));
+  }
   const screens = ["screen-1-initial.png", "screen-2-typing.png", "screen-3-streaming.png", "screen-4-interactive.png"];
   for (const s of screens) {
     await fs.copyFile(path.join(outputDir, s), path.join(webPublicDir, s)).catch(() => {});
     await fs.copyFile(path.join(outputDir, s), path.join(artifactDir, s)).catch(() => {});
   }
-
-  console.log("📁 Video & screenshots successfully published to public/demo, frontend/web/public/demo, and artifacts!");
+  console.log("📁 Published!");
 }
