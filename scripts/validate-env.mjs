@@ -6,13 +6,13 @@
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 
-const envPath = resolve("app/env/.env");
+const envFilePath = resolve("app/env/.env");
 
 console.log("OneShot Environment Validation");
 console.log("=".repeat(50));
 console.log("");
 
-if (!existsSync(envPath)) {
+if (!existsSync(envFilePath)) {
   console.log("❌ app/env/.env not found");
   console.log("");
   console.log("Create it:");
@@ -28,8 +28,8 @@ if (!existsSync(envPath)) {
 
 console.log("✓ app/env/.env exists");
 
-const env = readFileSync(envPath, "utf-8");
-const lines = env.split("\n");
+const envContent = readFileSync(envFilePath, "utf-8");
+const lines = envContent.split("\n");
 
 const config = {};
 for (const line of lines) {
@@ -97,8 +97,8 @@ console.log("");
 console.log("Configuration valid!");
 console.log("");
 console.log("Next steps:");
-console.log("  1. Test network: node scripts/test-network-connection.mjs");
-console.log("  2. Start server: npm start");
+console.log("  1. Test network: pnpm exec node scripts/test-network-connection.mjs");
+console.log("  2. Start server: pnpm run start");
 console.log("  3. Open browser: http://localhost:" + port);
 console.log("");
 

@@ -91,6 +91,7 @@ describe("OneShot Main Agent & Researcher Agent Construction", () => {
     const result = await runResearcherWorkflow({
       query: "OneShot deterministic verification",
       searchBackend,
+      deterministicFixture: true,
     });
 
     assert.ok(result);

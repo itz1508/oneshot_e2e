@@ -67,31 +67,20 @@ export class TavilySearchBackend {
           timestamp: new Date().toISOString(),
         };
       } catch (err) {
-        console.warn(`[TavilySearchBackend] Live API call failed, using verified evidence fallback: ${err instanceof Error ? err.message : String(err)}`);
+        throw new Error(
+          `Live research execution failed: ${err instanceof Error ? err.message : String(err)}`
+        );
       }
     }
 
-    // Deterministic test fixture or explicit fallback
-    if (options.deterministicFixture || process.env.NODE_ENV === "test" || !this.apiKey) {
+    if (options.deterministicFixture) {
       const normalized = encodeURIComponent(trimmedQuery.toLowerCase().replace(/\s+/g, "-"));
       const items: ResearchResultItem[] = [
         {
-          title: `${trimmedQuery} — Architecture and Invariants Analysis`,
-          url: `https://strandsagents.com/docs/research/${normalized}`,
-          content: `Verified evidence for '${trimmedQuery}'. Single-agent workflow with non-bypassable human gates (Research Review and Build Ready) ensures verified transitions and persistent state.`,
-          score: 0.98,
-        },
-        {
-          title: `Implementation Guidelines: ${trimmedQuery}`,
-          url: `https://docs.oneshot.dev/specs/${normalized}`,
-          content: `Deterministic pipeline contracts and AG-UI protocol integration for '${trimmedQuery}'. Contextual memory partitions maintain clear boundaries across execution phases.`,
-          score: 0.92,
-        },
-        {
-          title: `Empirical Benchmarks: ${trimmedQuery}`,
-          url: `https://benchmark.oneshot.dev/eval/${normalized}`,
-          content: `Performance evaluation and latency metrics for '${trimmedQuery}' comparing ESM native execution against traditional graph orchestrators.`,
-          score: 0.88,
+          title: `${trimmedQuery} — Deterministic Fixture`,
+          url: `https://fixture.oneshot.test/research/${normalized}`,
+          content: `Test fixture for '${trimmedQuery}'. This record is not live research.`,
+          score: 1,
         },
       ];
 
@@ -105,7 +94,7 @@ export class TavilySearchBackend {
     }
 
     throw new Error(
-      "Live research execution failed: TAVILY_API_KEY must be configured in environment for live web searches."
+      "Research search is unavailable: TAVILY_API_KEY is not configured for live web searches."
     );
   }
 

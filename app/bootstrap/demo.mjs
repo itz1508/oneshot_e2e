@@ -9,17 +9,19 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const rootDir = join(__dirname, '..');
+const modulePath = fileURLToPath(import.meta.url);
+const moduleDir = dirname(modulePath);
+const repoRoot = join(moduleDir, '..');
 
 console.log('OneShot Demo');
 console.log('============\n');
 
+const demoUrl = process.env.ONESHOT_DEMO_URL || 'http://127.0.0.1:8787';
+
 // Check if server is already running
 async function checkServer() {
   try {
-    const response = await fetch('http://localhost:8080/ping');
+    const response = await fetch(`${demoUrl}/ping`);
     return response.ok;
   } catch {
     return false;
@@ -30,10 +32,10 @@ async function checkServer() {
 async function startServer() {
   console.log('[1/3] Starting server...');
   
-  const server = spawn('npm', ['start'], {
+  const server = spawn('pnpm', ['run', 'start'], {
     stdio: 'inherit',
     shell: true,
-    cwd: rootDir
+    cwd: repoRoot
   });
   
   // Wait for server to start
@@ -52,7 +54,7 @@ async function startServer() {
 
 // Open browser
 function openBrowser() {
-  const url = 'http://localhost:8080';
+  const url = demoUrl;
   console.log('[2/3] Opening browser...');
   
   const command = process.platform === 'win32' ? 'start' :
@@ -85,7 +87,7 @@ async function main() {
   // Show info
   console.log('[3/3] Demo ready!');
   console.log();
-  console.log(`  Server: http://localhost:8080`);
+  console.log(`  Server: ${demoUrl}`);
   console.log(`  Status: Running`);
   console.log();
   console.log('Press Ctrl+C to stop the server');

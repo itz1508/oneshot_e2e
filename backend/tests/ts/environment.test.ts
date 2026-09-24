@@ -6,9 +6,15 @@
 
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, copyFileSync } from 'node:fs';
 
 describe('Environment Loading', () => {
+  before(() => {
+    if (!existsSync('app/env/.env') && existsSync('app/env/.env.example')) {
+      copyFileSync('app/env/.env.example', 'app/env/.env');
+    }
+  });
+
   it('loads .env file with dotenv', () => {
     // Verify dotenv is imported in backend/index.ts
     const backendSource = readFileSync('backend/index.ts', 'utf8');

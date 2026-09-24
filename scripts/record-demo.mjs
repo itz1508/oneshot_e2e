@@ -26,30 +26,34 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(__dirname, "..");
-const outputDir = path.join(repoRoot, "public", "demo");
-const webPublicDir = path.join(repoRoot, "frontend", "web", "public", "demo");
-const artifactDir = "C:\\Users\\itz15\\.gemini\\antigravity-ide\\brain\\57950c0e-0421-412a-958c-f5b02486dbbe\\demo";
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(moduleDir, "..");
+const demoOutputDir = path.join(repoRoot, "public", "demo");
+const frontendDemoDir = path.join(repoRoot, "frontend", "web", "public", "demo");
+const demoArtifactDir = path.join(
+  repoRoot,
+  "test-results",
+  "demo"
+);
 
-await fs.mkdir(outputDir, { recursive: true });
-await fs.mkdir(webPublicDir, { recursive: true });
-await fs.mkdir(artifactDir, { recursive: true });
+await fs.mkdir(demoOutputDir, { recursive: true });
+await fs.mkdir(frontendDemoDir, { recursive: true });
+await fs.mkdir(demoArtifactDir, { recursive: true });
 
 console.log("🎬 Recording OneShot demo — real chat history + live streaming...");
 
-const edgePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
-
+// Repository-local and environment-configured browser resolution
 const browser = await chromium.launch({
-  executablePath: edgePath,
   headless: true,
-  args: ["--disable-gpu"],
+  ...(process.env.ONESHOT_BROWSER_EXECUTABLE
+    ? { executablePath: process.env.ONESHOT_BROWSER_EXECUTABLE }
+    : {}),
 });
 
 const context = await browser.newContext({
   viewport: { width: 1440, height: 900 },
   recordVideo: {
-    dir: outputDir,
+    dir: demoOutputDir,
     size: { width: 1440, height: 900 },
   },
 });
@@ -75,7 +79,7 @@ const elapsed = () => ((Date.now() - startTime) / 1000).toFixed(1);
 console.log(`[${elapsed()}s] 🌐 Loading UI...`);
 await page.goto("http://127.0.0.1:8787/", { waitUntil: "domcontentloaded", timeout: 20000 });
 await page.waitForTimeout(3000);
-await page.screenshot({ path: path.join(outputDir, "screen-1-initial.png") });
+await page.screenshot({ path: path.join(demoOutputDir, "screen-1-initial.png") });
 console.log(`[${elapsed()}s] ✅ UI loaded`);
 
 // Pan across the UI to establish the scene
@@ -151,7 +155,7 @@ const PROMPT = "validate fixtures and run Python reasoning";
 await composer.pressSequentially(PROMPT, { delay: 65 });
 await page.waitForTimeout(400);
 
-await page.screenshot({ path: path.join(outputDir, "screen-2-typing.png") });
+await page.screenshot({ path: path.join(demoOutputDir, "screen-2-typing.png") });
 console.log(`[${elapsed()}s] 📸 Captured screen-2-typing.png`);
 
 // Record baseline length BEFORE submitting
@@ -177,7 +181,7 @@ for (let i = 0; i < 20; i++) {
     responseFound = true;
     console.log(`[${elapsed()}s] ✅ Response rendered! +${delta} chars`);
     await page.waitForTimeout(1500); // let more tokens stream in
-    await page.screenshot({ path: path.join(outputDir, "screen-3-streaming.png") });
+    await page.screenshot({ path: path.join(demoOutputDir, "screen-3-streaming.png") });
     console.log(`[${elapsed()}s] 📸 Captured screen-3-streaming.png`);
     break;
   }
@@ -188,7 +192,7 @@ for (let i = 0; i < 20; i++) {
 
 if (!responseFound) {
   console.log(`[${elapsed()}s] ⚠ Response not in DOM — but video shows the attempt`);
-  await page.screenshot({ path: path.join(outputDir, "screen-3-streaming.png") });
+  await page.screenshot({ path: path.join(demoOutputDir, "screen-3-streaming.png") });
 }
 
 // Give a bit more time for full response
@@ -225,7 +229,7 @@ if (await drawerBtn.count() > 0) {
   await page.waitForTimeout(800);
 }
 
-await page.screenshot({ path: path.join(outputDir, "screen-4-interactive.png") });
+await page.screenshot({ path: path.join(demoOutputDir, "screen-4-interactive.png") });
 
 // ── Pad to 60s ────────────────────────────────────────────────────────────────
 const el = (Date.now() - startTime) / 1000;
@@ -257,17 +261,17 @@ console.log(`✅ Done! ${totalSec}s total`);
 
 if (finalVideoPath) {
   const targets = [
-    path.join(outputDir, "oneshot-demo.webm"),
-    path.join(webPublicDir, "oneshot-demo.webm"),
-    path.join(artifactDir, "oneshot-demo.webm"),
+    path.join(demoOutputDir, "oneshot-demo.webm"),
+    path.join(frontendDemoDir, "oneshot-demo.webm"),
+    path.join(demoArtifactDir, "oneshot-demo.webm"),
   ];
   for (const t of targets) {
     await fs.copyFile(finalVideoPath, t).catch(e => console.log("copy warn:", e.message));
   }
   const screens = ["screen-1-initial.png", "screen-2-typing.png", "screen-3-streaming.png", "screen-4-interactive.png"];
   for (const s of screens) {
-    await fs.copyFile(path.join(outputDir, s), path.join(webPublicDir, s)).catch(() => {});
-    await fs.copyFile(path.join(outputDir, s), path.join(artifactDir, s)).catch(() => {});
+    await fs.copyFile(path.join(demoOutputDir, s), path.join(frontendDemoDir, s)).catch(() => {});
+    await fs.copyFile(path.join(demoOutputDir, s), path.join(demoArtifactDir, s)).catch(() => {});
   }
   console.log("📁 Published!");
 }

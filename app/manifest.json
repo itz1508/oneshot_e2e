@@ -1,30 +1,54 @@
 {
-  "generated_at": "2026-09-24T04:25:57Z",
+  "generated_at": "2026-09-24T13:52:35Z",
   "version": "1.3.0",
-  "commit": "6049aa0c",
+  "commit": "d056c07d",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
-      "size": 3053,
-      "hash": "sha256:c22a1679ac91096d78852fe815f2dec14dfc208ad76e67216ba141712d6a63c6",
+      "size": 3286,
+      "hash": "sha256:1b5d346560f24a07d2130bb4d0049918cb2d280e05c7f828131f2724a5d4c8c4",
       "category": "source"
     },
     {
       "path": "AGENTS.md",
-      "size": 6680,
-      "hash": "sha256:aab488015ac10d416bb5643a727460799d68f9db593e3da4d7e079e3d34ddff7",
+      "size": 9260,
+      "hash": "sha256:fced7fa2812a85051fc749b39b84be75eca38e02a2f52ff13dbf38c096bcf08a",
       "category": "source"
     },
     {
       "path": "README.md",
-      "size": 4892,
-      "hash": "sha256:e7c54b15bb3250f7fee184d79fdac9a1b7ba9f21c426fbafee58578c36f4bacb",
+      "size": 4908,
+      "hash": "sha256:3d6d9a85e45e463436049730f3ef086f238a346d7e9c80e462355fa87f263d75",
       "category": "source"
     },
     {
       "path": "app\\bootstrap\\demo.mjs",
-      "size": 2425,
-      "hash": "sha256:bb696056a366c2dfd30d9189bc456f6fb3c43de736130ea7604cd1b706505ed4",
+      "size": 2471,
+      "hash": "sha256:62e6bf7c3b35d4080d6d64fc9eca7386293211e5d65f3e835ef54b0507387cc7",
+      "category": "source"
+    },
+    {
+      "path": "app\\integration\\gemini\\package.json",
+      "size": 161,
+      "hash": "sha256:079864741ba397d88a19ad4ad82b735cc24443393bf2b99c6c13bfb1238f3d2f",
+      "category": "source"
+    },
+    {
+      "path": "app\\integration\\openai\\package.json",
+      "size": 169,
+      "hash": "sha256:8d04834745bfb2b112db617f8a63c5ff336f7e9b5a32d5ac515e3ef91cf3a19d",
+      "category": "source"
+    },
+    {
+      "path": "app\\integration\\strands\\package.json",
+      "size": 193,
+      "hash": "sha256:d2ec153994143e0b071c4791d3cba3387670e640c5d7460b61f3eb26145a187f",
+      "category": "source"
+    },
+    {
+      "path": "app\\integration\\tavily\\package.json",
+      "size": 168,
+      "hash": "sha256:9ea20f44ca88414e3f31166822e01c3e6c51a8aa9a6a3ab6c64703e5b0a69ec0",
       "category": "source"
     },
     {
@@ -53,26 +77,26 @@
     },
     {
       "path": "app\\scripts\\generate_manifest.py",
-      "size": 4286,
-      "hash": "sha256:f35a477cddccf856f195f112b62361608a29ffda1a2c10bedbc1d08f15e03247",
+      "size": 4367,
+      "hash": "sha256:6be3e503385fc3e2c34dae497843e9c8d6a8b75ac20c6b6f48e0e2ca35b2a35f",
       "category": "source"
     },
     {
       "path": "app\\scripts\\source_file_policy.py",
-      "size": 5773,
-      "hash": "sha256:bfbda826a7de39dd258b90e15e9cf6323ff041762b95542ec53cbfddd3f2ed55",
+      "size": 5950,
+      "hash": "sha256:0695b8044e3168e1c51f180d81de4ea14c8672d28be7805e3e7ab9e3814b2c19",
       "category": "source"
     },
     {
       "path": "app\\scripts\\verify_all.py",
-      "size": 12048,
-      "hash": "sha256:0dccc2d14e2245e197795eaa58ee9b791e2adbdc14d5ed609c273805a919ed24",
+      "size": 12312,
+      "hash": "sha256:6bfa8b1b7782f71bbaec9163e78837cbed4783f6075ceecd00329767ac0d1d5e",
       "category": "source"
     },
     {
       "path": "app\\scripts\\verify_manifest.py",
-      "size": 5586,
-      "hash": "sha256:9ae05cc0e79722d4516a6cdaab8df1fced85508003ff16fdceb1ca283e50ebbe",
+      "size": 5870,
+      "hash": "sha256:2a490bedaabac461d7ad1d3e114efcc6495523b58d000dc063f815c76ae8f2a7",
       "category": "source"
     },
     {
@@ -107,8 +131,8 @@
     },
     {
       "path": "backend\\index.ts",
-      "size": 65497,
-      "hash": "sha256:8f648274b50a502f36db15c7b9a1653a9c4c267fbf052c3751b4dbeff76a0ce9",
+      "size": 64499,
+      "hash": "sha256:68d351f53d73fbe6048d227de023a21adc6dee57f19ecd389dcc3bad44ceb368",
       "category": "source"
     },
     {
@@ -5524,30 +5548,6 @@
       "category": "source"
     },
     {
-      "path": "backend\\python\\oneshot_reasoning.egg-info\\SOURCES.txt",
-      "size": 326,
-      "hash": "sha256:0d9a889ff75e3011df543650fb98f078e066c88407572ef57b658ed1e66ec493",
-      "category": "source"
-    },
-    {
-      "path": "backend\\python\\oneshot_reasoning.egg-info\\dependency_links.txt",
-      "size": 1,
-      "hash": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
-      "category": "source"
-    },
-    {
-      "path": "backend\\python\\oneshot_reasoning.egg-info\\requires.txt",
-      "size": 85,
-      "hash": "sha256:045d87732cb7b32c2283f5c2cbfa0a65c076c6274d1dfc86679ae5efec3aa661",
-      "category": "source"
-    },
-    {
-      "path": "backend\\python\\oneshot_reasoning.egg-info\\top_level.txt",
-      "size": 4,
-      "hash": "sha256:8a8f60ecb09b7e64c6d5214a8043865e608507db8c3f61f995eae6d078875901",
-      "category": "source"
-    },
-    {
       "path": "backend\\python\\pyproject.toml",
       "size": 481,
       "hash": "sha256:169946ac606e374cbd84330b7f7e0692bf59b47fa6492094b43459ad1a7029fc",
@@ -5627,8 +5627,8 @@
     },
     {
       "path": "backend\\tests\\ts\\environment.test.ts",
-      "size": 1514,
-      "hash": "sha256:4d7ac51ec221121f1e4b2770256988cf019104a6b1bd16d5a32a0462624bd4aa",
+      "size": 1695,
+      "hash": "sha256:4d90437c75459e099ba1ea86bb52029ae1bcc794914ed041b914330a7ec77944",
       "category": "source"
     },
     {
@@ -5712,13 +5712,13 @@
     {
       "path": "e2e\\playwright.config.ts",
       "size": 1255,
-      "hash": "sha256:1c0b3d22cb20328997d6d472e62d5f79af642f9a06dba08a1e3f3c3f4a7e2ebd",
+      "hash": "sha256:88f9e47fd156aaa8455d9e74b358d71b51ff0cade7be01ab546e0c200da4c80c",
       "category": "source"
     },
     {
       "path": "e2e\\researcher-preview.spec.ts",
-      "size": 10199,
-      "hash": "sha256:3efde467f9f6b9387ec5b998592dd9365bdec2d531471162d268706bb9656aa2",
+      "size": 10250,
+      "hash": "sha256:4f5799102106c9662c904c4a594d5f84e8e05e9c699fde1e562fab3405951231",
       "category": "source"
     },
     {
@@ -5729,8 +5729,14 @@
     },
     {
       "path": "e2e\\support\\static-server.mjs",
-      "size": 30029,
-      "hash": "sha256:c8e70d9b2877c3ca734bb218613b5f8e86f6fc649d0b6460814394d1d3ab46fa",
+      "size": 28583,
+      "hash": "sha256:139d07ea2fc1608e47b8c6ddd5910ed17ed7df28ff389716c7a7bc581501e9e7",
+      "category": "source"
+    },
+    {
+      "path": "e2e\\ux-audit.spec.ts",
+      "size": 4510,
+      "hash": "sha256:c9dca36dffbb877de708bc7ba89a6a0b6c59eddc934eec6c92c9bdfa7d7b696a",
       "category": "source"
     },
     {
@@ -5746,15 +5752,21 @@
       "category": "source"
     },
     {
+      "path": "frontend\\web\\AGENTS.md",
+      "size": 1902,
+      "hash": "sha256:efba32c2b803675b1c6d5c040f441bd753d07ef6a7be3579ad71ea890d2d4924",
+      "category": "source"
+    },
+    {
       "path": "frontend\\web\\app\\globals.css",
-      "size": 3602,
-      "hash": "sha256:e02ae3db35e848819a110b475d0421957216321a97269190dd2b5fdf04d6dcaf",
+      "size": 4357,
+      "hash": "sha256:07eb8fc768d186958cae93a156ea3f0d316b84e53c0c22948fe004e9bfc2196e",
       "category": "source"
     },
     {
       "path": "frontend\\web\\app\\layout.tsx",
-      "size": 781,
-      "hash": "sha256:a820c1c847fc27f29cbfd2f3b282f5f64d10017c449eee1bf49e927a5445cdfe",
+      "size": 887,
+      "hash": "sha256:34514191cb10ba6e86c444bb52f1b35c213490cef98321ab944ccc067bdf06b8",
       "category": "source"
     },
     {
@@ -8243,8 +8255,8 @@
     },
     {
       "path": "frontend\\web\\scripts\\check.mjs",
-      "size": 245,
-      "hash": "sha256:92122c23b1fc8b27c612494899013a424c120fc83c3e72bd398ecfea9677d1bb",
+      "size": 264,
+      "hash": "sha256:3ee1b469fc666a2985a7a402f7982bec2b003cc066e0912c13f5f80e1e6dce97",
       "category": "source"
     },
     {
@@ -8255,20 +8267,20 @@
     },
     {
       "path": "frontend\\web\\src\\components\\App.tsx",
-      "size": 12418,
-      "hash": "sha256:2532d7e66dec3a44369d8a31eed255872b354f92c0c5a90a3de464ad76cbca0d",
+      "size": 14988,
+      "hash": "sha256:e21fe15d4652506ab861be2892777236fa1449db3e4f66c34d4df08d5a57cd3b",
       "category": "source"
     },
     {
       "path": "frontend\\web\\src\\components\\Composer.tsx",
-      "size": 7513,
-      "hash": "sha256:2eba819afdd41ac941cf022a3ab496a0c2edf778b8f6700d2363b31f803b8711",
+      "size": 7548,
+      "hash": "sha256:f1cfd746f88e1d1a9a614c2c0dc367ea7c3e6eed6f0c688486f2a0f8c711d915",
       "category": "source"
     },
     {
       "path": "frontend\\web\\src\\components\\ContextReviewDrawer.tsx",
-      "size": 20614,
-      "hash": "sha256:59c9631677c6c0873dba56ad555cafdab96340107f7fa80913b5fb0e45c5470f",
+      "size": 23442,
+      "hash": "sha256:1e9d83c113d9597dd3ece1bf264002b3580991a5716dd3f24ac80401df8b3790",
       "category": "source"
     },
     {
@@ -8285,8 +8297,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\HeaderBar.tsx",
-      "size": 3995,
-      "hash": "sha256:fd8cd354414a967d548b2532a8d5efb8cdb79e396b1c438cd17eb5676f713270",
+      "size": 5596,
+      "hash": "sha256:43475a9e42a9867edef762c350bae7d6ac8cec2b4a74c255b7a819a5192b85ee",
       "category": "source"
     },
     {
@@ -8297,8 +8309,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\Integration\\Integration.tsx",
-      "size": 7463,
-      "hash": "sha256:88464883d465ffd8423de508525799d3802c95c18566ee21324a63418265fb22",
+      "size": 7404,
+      "hash": "sha256:7107dc3cef48e69d1dfbf84c01fd841ddb21b78244d74f86314ebd3bbb79ff29",
       "category": "source"
     },
     {
@@ -8321,8 +8333,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\MessageBubble.tsx",
-      "size": 9685,
-      "hash": "sha256:924fcd83df15f6eb2bffd20994f41c237b987a5c45915901a7d372be13ef2275",
+      "size": 10310,
+      "hash": "sha256:b5f95660e502bb60bc2e121325a1a63580941185b59d666993eaebf65e0e6a20",
       "category": "source"
     },
     {
@@ -8333,8 +8345,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\ProviderConfigModal.tsx",
-      "size": 12636,
-      "hash": "sha256:1cded886e3eb171290fc272c4ddecae918642d0a0ee841e18c36a9776c553141",
+      "size": 13049,
+      "hash": "sha256:f383598877555bfb480867a7a1d72a504c3d4e20d43f0e033ca57682e96011f4",
       "category": "source"
     },
     {
@@ -8345,14 +8357,14 @@
     },
     {
       "path": "frontend\\web\\src\\components\\ResearcherDrawer.tsx",
-      "size": 6858,
-      "hash": "sha256:7da2e54718d8151167b6b7a7337a4c99b651e177f0e238aaee5144f1b0d2c1ba",
+      "size": 6923,
+      "hash": "sha256:72989b47bc2867d90ce67bd918b0d31b44f8c14dfe710f93ec949794ff589eb6",
       "category": "source"
     },
     {
       "path": "frontend\\web\\src\\components\\Sidebar.tsx",
-      "size": 7237,
-      "hash": "sha256:71a53264f4ef3f9de81fd28f5f2fe48a0cedcff3f91e460e7cdb3e2f81a0f627",
+      "size": 8578,
+      "hash": "sha256:605451ab248c922b84bc98c41da735851ce59f750712e5803209df3efce87d10",
       "category": "source"
     },
     {
@@ -8507,8 +8519,26 @@
     },
     {
       "path": "frontend\\web\\src\\lib\\useChatSession.ts",
-      "size": 18880,
-      "hash": "sha256:c4e6aa4e05a031ef6ed1b39710c7dd01abb25fc3c7a76613d2c478430c55cc0e",
+      "size": 20451,
+      "hash": "sha256:5ebb81e2f06f2799bb8bdd5ac8b3a4460211c6d539c171698664a5ca819d0450",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\lib\\useOverlayFocus.ts",
+      "size": 2027,
+      "hash": "sha256:1c265091695a791930c340c8ab8aef7ffe1aa43a9eb1d93c39be0d5e7a907d8b",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\lib\\useStream.ts",
+      "size": 7890,
+      "hash": "sha256:4cc870de04f5b7aa5ec588134020901d4e4743134094240a1c1f7374eb02cdc5",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\lib\\useTool.ts",
+      "size": 3748,
+      "hash": "sha256:3c8b2ddb0c53981153064a5e078306e5d85e6ee0c3418f6797b399c7ec0ba747",
       "category": "source"
     },
     {
@@ -8549,8 +8579,14 @@
     },
     {
       "path": "frontend\\web\\tests\\chat-ui.test.mjs",
-      "size": 8707,
-      "hash": "sha256:4afd1e670a6d3635845b77597f140e0d7b560d2e4c18d26937723cdde4a19471",
+      "size": 10018,
+      "hash": "sha256:df43a6c4d810ba0378d1208bbc60f40902abafb852740e53460efe3dffeaba91",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\tests\\main-screen-and-task-rail.test.mjs",
+      "size": 6825,
+      "hash": "sha256:847ed4a9d89d600b3960b58a81a49d1c6f6f2379589f46cfc447cd017ad5833e",
       "category": "source"
     },
     {
@@ -13253,8 +13289,8 @@
     },
     {
       "path": "package.json",
-      "size": 3120,
-      "hash": "sha256:ac48be07f4117446e0cb28ada71430782ec75a78f82afb2f3c2e285477d29723",
+      "size": 3055,
+      "hash": "sha256:de69fa25639c66a02a8310ca5c25dd885e6b47149a12e34cc7713bd4396a1177",
       "category": "source"
     },
     {
@@ -13277,14 +13313,14 @@
     },
     {
       "path": "packages\\agent-runtime\\src\\agents\\deep-agent-todo-list.ts",
-      "size": 15738,
-      "hash": "sha256:74b1e4a3e8b5c5c328e74a3a020a1d07b8865b5524e08548c3de15fb5166f468",
+      "size": 15862,
+      "hash": "sha256:5143903d036c89855bca6a9537375d62ebd9ed8213e63156f91b3404c0457c72",
       "category": "source"
     },
     {
       "path": "packages\\agent-runtime\\src\\agents\\vercel-provider-adapter.ts",
-      "size": 2688,
-      "hash": "sha256:1e010ab53a03048e65121b2fb999d667dda87659d6dfa222e3da0b583fceae48",
+      "size": 2685,
+      "hash": "sha256:1aafcca13f23a3b9e46fb48838dcd1d8fa96d6935bb23820e99daa1025c2e746",
       "category": "source"
     },
     {
@@ -13385,8 +13421,8 @@
     },
     {
       "path": "packages\\agent-runtime\\src\\research\\tavily-search.ts",
-      "size": 4181,
-      "hash": "sha256:2e5488a388c603b727d1c182d51741cec08dd45ee262b267344d7870406396d6",
+      "size": 3219,
+      "hash": "sha256:ac5e6e3f4d3cca58ce6f1d9bbcb47936afdcce5d3541f55f0a59f0935d821b45",
       "category": "source"
     },
     {
@@ -13505,8 +13541,8 @@
     },
     {
       "path": "packages\\agent-runtime\\tests\\backend-engine.test.mjs",
-      "size": 13268,
-      "hash": "sha256:a1910e8fde7ef56135d18763df52151519b8d9f75836e7cb38e6bc9d34de824e",
+      "size": 13619,
+      "hash": "sha256:dccdedd20e2fb19c77d8a2182c7db86094c62719facbfb8facd53f17dbd3b8f2",
       "category": "source"
     },
     {
@@ -13517,8 +13553,8 @@
     },
     {
       "path": "packages\\agent-runtime\\tests\\model-factory-and-agents.test.mjs",
-      "size": 3976,
-      "hash": "sha256:3d671983a92a566c17952670eef291fd28431891f3f3d7c8de7a0a9319c9ca4e",
+      "size": 4010,
+      "hash": "sha256:2069d0076e9d13ab3189f8ce2a153ef20542d9da59f927655ebe7d206371b292",
       "category": "source"
     },
     {
@@ -13553,20 +13589,20 @@
     },
     {
       "path": "pnpm-workspace.yaml",
-      "size": 180,
-      "hash": "sha256:5c484cd34c053582ffefcfdcab326e9d744341e10482cdf3c702f6a6831e7562",
+      "size": 139,
+      "hash": "sha256:d02a4ebd133b4960478214180aea04e7f6005cee104149676ff5091527cf3532",
       "category": "source"
     },
     {
       "path": "scripts\\diagnose-stream.mjs",
-      "size": 3348,
-      "hash": "sha256:2a9d62775d3970781ef0424559f10f948ff91c92208a405b67475566e5024be2",
+      "size": 3426,
+      "hash": "sha256:4fe099f59e13b478db973563dfb442a4534254a03e404c0f6463bb5984ec4284",
       "category": "source"
     },
     {
       "path": "scripts\\inspect-ui.mjs",
-      "size": 2151,
-      "hash": "sha256:14313d0fd9f03baefbd6c0bc4a6418e3f16a8adb3b85f089df70e4a1b2e344a5",
+      "size": 2229,
+      "hash": "sha256:06a675ff347c57ff10be4275059f0369eaed11c050319f26b83f32e9dffea471",
       "category": "source"
     },
     {
@@ -13577,14 +13613,14 @@
     },
     {
       "path": "scripts\\oneshot.mjs",
-      "size": 5536,
-      "hash": "sha256:0be7fdb15ada49fa1ac51bf0335bf5e5ef190171e18114a05f2e31be5619c796",
+      "size": 5537,
+      "hash": "sha256:13d389a9d29ebc09d581ee1eb39c644dcc79d0eb8d05e2cab06674276f942a13",
       "category": "source"
     },
     {
       "path": "scripts\\record-demo.mjs",
-      "size": 10996,
-      "hash": "sha256:0558bb2ac0bc157b02427bb343cc10ce33bbc7f3c4fdf1d7e7aded5e5b14754b",
+      "size": 11069,
+      "hash": "sha256:f74f4bd546e63615a8e25052b220aee3397ceb9644847d212b7d84377d1d1381",
       "category": "source"
     },
     {
@@ -13595,8 +13631,8 @@
     },
     {
       "path": "scripts\\validate-env.mjs",
-      "size": 2781,
-      "hash": "sha256:43efbd447fbe56bcc5a717c477a0e9a1e28107168fb6cd9dfa584896fd3990e7",
+      "size": 2822,
+      "hash": "sha256:55f4aa5d516e6757eb8a58fccb4b27734d24670005497f741718c92a69162c29",
       "category": "source"
     },
     {
@@ -13619,17 +13655,17 @@
     }
   ],
   "statistics": {
-    "total_files": 2269,
-    "source_files": 2269,
-    "total_size_bytes": 14615529,
+    "total_files": 2268,
+    "source_files": 2268,
+    "total_size_bytes": 14637911,
     "by_extension": {
       ".yml": 1,
-      ".md": 14,
+      ".md": 15,
       ".mjs": 25,
       ".json": 1205,
       ".py": 871,
-      ".ts": 89,
-      ".txt": 23,
+      ".ts": 91,
+      ".txt": 19,
       ".toml": 1,
       ".css": 2,
       ".tsx": 33,

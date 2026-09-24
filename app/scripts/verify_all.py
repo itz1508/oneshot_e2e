@@ -7,6 +7,7 @@ configuration, manifest, tests, and security.
 """
 
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -86,22 +87,24 @@ def check_environment() -> bool:
         print_check("Node.js", False, str(e))
         passed = False
     
-    # Check npm
-    try:
-        result = subprocess.run(['npm', '--version'], capture_output=True, text=True, timeout=5)
-        version = result.stdout.strip()
-        # Extract major version
-        major = int(version.split('.')[0])
-        if major >= 11:
-            print_check("npm", True, f"{version} (required: >=11.8.0)")
-        else:
-            print_check("npm", True, f"{version} (required: >=11.8.0)")
-    except FileNotFoundError:
-        # Try npm via node_modules/.bin or via npm command via node
-        # On some Windows setups, npm is not in PATH
-        print_check("npm", True, "installed via npm run (not in PATH)")
-    except Exception as e:
-        print_check("npm", True, f"installed via npm run (not in PATH)")
+    # Check pnpm
+    pnpm_command = shutil.which('pnpm') or shutil.which('pnpm.cmd')
+    if not pnpm_command:
+        print_check("pnpm", False, "not found; enable Corepack or install pnpm 11.9.0")
+        passed = False
+    else:
+        try:
+            result = subprocess.run([pnpm_command, '--version'], capture_output=True, text=True, timeout=5)
+            version = result.stdout.strip()
+            major = int(version.split('.')[0])
+            if major >= 11:
+                print_check("pnpm", True, f"{version} (required: >=11.9.0)")
+            else:
+                print_check("pnpm", False, f"{version} (required: >=11.9.0)")
+                passed = False
+        except Exception as e:
+            print_check("pnpm", False, str(e))
+            passed = False
     
     # Check Python
     try:
@@ -123,10 +126,10 @@ def check_dependencies() -> bool:
     print_section("2. Dependencies")
     
     passed = True
-    root = Path('.')
+    repository_root = Path('.')
     
     # Check node_modules
-    node_modules = root / 'node_modules'
+    node_modules = repository_root / 'node_modules'
     if node_modules.exists():
         print_check("node_modules", True, "exists")
     else:
@@ -154,7 +157,7 @@ def check_dependencies() -> bool:
     
     critical_packages = root_critical_packages
     
-    package_json = root / 'package.json'
+    package_json = repository_root / 'package.json'
     if package_json.exists():
         import json
         with open(package_json, 'r') as f:
@@ -178,7 +181,7 @@ def check_dependencies() -> bool:
                 passed = False
         
         # Check frontend dependencies
-        frontend_package_json = root / 'frontend/web/package.json'
+        frontend_package_json = repository_root / 'frontend/web/package.json'
         if frontend_package_json.exists():
             with open(frontend_package_json, 'r') as f:
                 frontend_deps = json.load(f).get('dependencies', {})
@@ -210,7 +213,7 @@ def check_build_outputs() -> bool:
     if backend_js.exists():
         print_check("dist/backend/index.js", True, "exists")
     else:
-        print_check("dist/backend/index.js", False, "not found (run: npm run build:backend)")
+        print_check("dist/backend/index.js", False, "not found (run: pnpm run build:backend)")
         passed = False
     
     # Check frontend
@@ -218,7 +221,7 @@ def check_build_outputs() -> bool:
     if frontend_dist.exists():
         print_check("frontend/web/dist", True, "exists")
     else:
-        print_check("frontend/web/dist", False, "not found (run: npm run build:ui)")
+        print_check("frontend/web/dist", False, "not found (run: pnpm run build:ui)")
         passed = False
     
     return passed
@@ -287,26 +290,26 @@ def check_tests() -> bool:
     print_section("6. Tests")
     
     passed = True
-    root = Path('.')
+    repository_root = Path('.')
     
     # Check backend tests
-    backend_tests = root / 'backend/tests/ts'
+    backend_tests = repository_root / 'backend/tests/ts'
     if backend_tests.exists():
-        test_files = list(backend_tests.glob('*.test.ts'))
-        print_check("backend/tests/ts", True, f"{len(test_files)} test files")
+        backend_test_files = list(backend_tests.glob('*.test.ts'))
+        print_check("backend/tests/ts", True, f"{len(backend_test_files)} test files")
     else:
         print_check("backend/tests/ts", True, "not found (tests may be elsewhere)")
     
     # Check frontend tests
-    frontend_tests = root / 'frontend/web/tests'
+    frontend_tests = repository_root / 'frontend/web/tests'
     if frontend_tests.exists():
-        test_files = list(frontend_tests.glob('*.test.mjs'))
-        print_check("frontend/web/tests", True, f"{len(test_files)} test files")
+        frontend_test_files = list(frontend_tests.glob('*.test.mjs'))
+        print_check("frontend/web/tests", True, f"{len(frontend_test_files)} test files")
     else:
         print_check("frontend/web/tests", True, "not found")
     
     # Check e2e tests
-    e2e_tests = root / 'e2e'
+    e2e_tests = repository_root / 'e2e'
     if e2e_tests.exists() and any(e2e_tests.glob('*.spec.ts')):
         print_check("e2e tests", True, "found")
     else:
@@ -320,10 +323,10 @@ def check_security() -> bool:
     print_section("7. Security")
     
     passed = True
-    root = Path('.')
+    repository_root = Path('.')
     
     # Check .env is not in git
-    gitignore = root / '.gitignore'
+    gitignore = repository_root / '.gitignore'
     if gitignore.exists():
         content = gitignore.read_text()
         if '.env' in content or 'app/env/.env' in content:
@@ -342,15 +345,15 @@ def check_security() -> bool:
         (r'sk-[a-zA-Z0-9]{48,}', 'OpenAI API key pattern'),
     ]
     
-    source_files = list(root.glob('**/*.ts'))
+    source_file_paths = list(repository_root.glob('**/*.ts'))
     secrets_found = []
     
-    for f in source_files:
+    for source_file_path in source_file_paths:
         try:
-            content = f.read_text()
+            content = source_file_path.read_text()
             for pattern, name in secret_patterns:
                 if re.search(pattern, content):
-                    secrets_found.append((str(f), name))
+                    secrets_found.append((str(source_file_path), name))
         except:
             pass
     

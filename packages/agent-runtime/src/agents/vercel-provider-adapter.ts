@@ -66,7 +66,7 @@ export async function resolveVercelModel(
     if (errorMsg.includes("Cannot find package '@ai-sdk/provider'")) {
       throw new Error(
         `VercelModel integration requires optional peer dependency '@ai-sdk/provider'. ` +
-          `Install it alongside your chosen provider (e.g., npm install @ai-sdk/google @ai-sdk/provider) ` +
+          `Install it alongside your chosen provider (e.g., pnpm add @ai-sdk/google @ai-sdk/provider) ` +
           `to enable Vercel AI SDK integration in Strands Agents.`
       );
     }

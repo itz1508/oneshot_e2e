@@ -47,7 +47,7 @@ def verify_manifest(manifest_path: str, root: str = '.') -> bool:
     Returns:
         True if manifest matches, False if differences found
     """
-    root_path = Path(root)
+    repository_root = Path(root)
     
     # Load manifest
     print(f"Loading manifest: {manifest_path}")
@@ -66,17 +66,17 @@ def verify_manifest(manifest_path: str, root: str = '.') -> bool:
     
     # Get current source files
     print("Scanning current repository...")
-    current_files = get_source_files(root)
-    print(f"Found {len(current_files)} source files")
+    current_source_files = get_source_files(root)
+    print(f"Found {len(current_source_files)} source files")
     print()
     
     # Build manifest hash lookup
     manifest_hashes = {}
-    for f in manifest.get('files', []):
-        path = f.get('path')
-        hash_val = f.get('hash')
-        if path:
-            manifest_hashes[path] = hash_val
+    for manifest_entry in manifest.get('files', []):
+        manifest_relative_path = manifest_entry.get('path')
+        file_hash_value = manifest_entry.get('hash')
+        if manifest_relative_path:
+            manifest_hashes[manifest_relative_path] = file_hash_value
     
     # Check for differences
     added = []
@@ -85,25 +85,25 @@ def verify_manifest(manifest_path: str, root: str = '.') -> bool:
     unchanged = 0
     
     # Check current files
-    for rel_path in current_files:
-        if rel_path not in manifest_hashes:
-            added.append(rel_path)
+    for relative_path in current_source_files:
+        if relative_path not in manifest_hashes:
+            added.append(relative_path)
         else:
             # Check hash
-            current_hash = compute_file_hash(root_path / rel_path)
-            if current_hash and current_hash != manifest_hashes[rel_path]:
+            current_hash = compute_file_hash(repository_root / relative_path)
+            if current_hash and current_hash != manifest_hashes[relative_path]:
                 modified.append({
-                    'path': rel_path,
-                    'expected': manifest_hashes[rel_path],
+                    'path': relative_path,
+                    'expected': manifest_hashes[relative_path],
                     'actual': current_hash
                 })
             else:
                 unchanged += 1
     
     # Check for removed files
-    for path in manifest_hashes:
-        if path not in current_files:
-            removed.append(path)
+    for manifest_relative_path in manifest_hashes:
+        if manifest_relative_path not in current_source_files:
+            removed.append(manifest_relative_path)
     
     # Print results
     print("=" * 60)
@@ -116,8 +116,8 @@ def verify_manifest(manifest_path: str, root: str = '.') -> bool:
     
     if added:
         print(f"Added ({len(added)}):")
-        for f in sorted(added)[:10]:
-            print(f"  + {f}")
+        for relative_path in sorted(added)[:10]:
+            print(f"  + {relative_path}")
         if len(added) > 10:
             print(f"  ... and {len(added) - 10} more")
         print()
@@ -134,8 +134,8 @@ def verify_manifest(manifest_path: str, root: str = '.') -> bool:
     
     if removed:
         print(f"Removed ({len(removed)}):")
-        for f in sorted(removed)[:10]:
-            print(f"  - {f}")
+        for relative_path in sorted(removed)[:10]:
+            print(f"  - {relative_path}")
         if len(removed) > 10:
             print(f"  ... and {len(removed) - 10} more")
         print()

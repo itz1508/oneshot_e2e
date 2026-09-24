@@ -31,20 +31,27 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.9.0
+          standalone: true
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Root Dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Typecheck Agent Runtime
-        run: npx tsc -p packages/agent-runtime/tsconfig.json --noEmit
+        run: pnpm exec tsc -p packages/agent-runtime/tsconfig.json --noEmit
 
-      - name: Run Backend & Runtime Tests (50 Tests)
-        run: node --test packages/agent-runtime/tests/*.mjs
+      - name: Run Backend & Runtime Tests (61 Tests)
+        run: pnpm run test:runtime
 
   # Job 2: Test & Build Frontend
   build-and-test-frontend:
@@ -55,15 +62,20 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.9.0
+          standalone: true
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: 'pnpm'
-          cache-dependency-path: 'frontend/web/package.json'
+          cache-dependency-path: pnpm-lock.yaml
 
-      - name: Install Frontend Dependencies
-        working-directory: frontend/web
+      - name: Install Workspace Dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Typecheck Frontend

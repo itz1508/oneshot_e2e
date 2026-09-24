@@ -3,17 +3,17 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const distDir = path.resolve(__dirname, "../../frontend/web/dist");
-const publicDir = path.resolve(__dirname, "../../frontend/web/public");
-const serveDir = fs.existsSync(distDir) ? distDir : publicDir;
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+const frontendDistDir = path.resolve(moduleDir, "../../frontend/web/dist");
+const frontendPublicDir = path.resolve(moduleDir, "../../frontend/web/public");
+const servedDir = fs.existsSync(frontendDistDir) ? frontendDistDir : frontendPublicDir;
 const port = Number(process.env.PORT || 4173);
 
 // Load app/env/.env on startup if present
-const envPath = path.resolve(__dirname, "../../app/env/.env");
-if (fs.existsSync(envPath)) {
+const envFilePath = path.resolve(moduleDir, "../../app/env/.env");
+if (fs.existsSync(envFilePath)) {
     try {
-        const content = fs.readFileSync(envPath, "utf-8");
+        const content = fs.readFileSync(envFilePath, "utf-8");
         for (const line of content.split(/\r?\n/)) {
             const trimmed = line.trim();
             if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
@@ -150,7 +150,7 @@ const server = http.createServer(async (req, res) => {
                 }
 
                 // Persist to app/env/.env
-                const envDir = path.resolve(__dirname, "../../app/env");
+                const envDir = path.resolve(moduleDir, "../../app/env");
                 if (!fs.existsSync(envDir)) fs.mkdirSync(envDir, { recursive: true });
                 const envFile = path.join(envDir, ".env");
                 let existing = fs.existsSync(envFile) ? fs.readFileSync(envFile, "utf-8") : "";
@@ -226,35 +226,15 @@ const server = http.createServer(async (req, res) => {
                         }));
                         return;
                     } catch (tavilyErr) {
-                        console.error("[tavily] Live call failed, falling back:", tavilyErr.message);
+                        console.error("[tavily] Live call failed:", tavilyErr.message);
                     }
                 }
 
-                // High-fidelity structured research results
-                res.writeHead(200, { "Content-Type": "application/json" });
+                res.writeHead(503, { "Content-Type": "application/json" });
                 res.end(JSON.stringify({
-                    query,
-                    results: [
-                        {
-                            title: `${query} — Architecture and Invariants Analysis`,
-                            url: `https://strandsagents.com/docs/research/${encodeURIComponent(query.toLowerCase().replace(/\\s+/g, "-"))}`,
-                            content: `Verified evidence for '${query}'. Single-agent workflow with non-bypassable human gates (Research Review and Build Ready) ensures verified transitions and persistent state.`,
-                            score: 0.98
-                        },
-                        {
-                            title: `Implementation Guidelines: ${query}`,
-                            url: `https://docs.oneshot.dev/specs/${encodeURIComponent(query.toLowerCase().replace(/\\s+/g, "-"))}`,
-                            content: `Deterministic pipeline contracts and AG-UI protocol integration for '${query}'. Contextual memory partitions maintain clear boundaries across execution phases.`,
-                            score: 0.92
-                        },
-                        {
-                            title: `Empirical Benchmarks: ${query}`,
-                            url: `https://benchmark.oneshot.dev/eval/${encodeURIComponent(query.toLowerCase().replace(/\\s+/g, "-"))}`,
-                            content: `Performance evaluation and latency metrics for '${query}' comparing ESM native execution against traditional graph orchestrators.`,
-                            score: 0.88
-                        }
-                    ]
+                    error: "Research search is currently unavailable because TAVILY_API_KEY is not configured.",
                 }));
+                return;
             } catch (err) {
                 res.writeHead(500, { "Content-Type": "application/json" });
                 res.end(JSON.stringify({ error: err.message }));
@@ -584,7 +564,7 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === "/") pathname = "/index.html";
 
-    let filePath = path.join(serveDir, pathname);
+    let filePath = path.join(servedDir, pathname);
 
     // Fallback resolution for SPA / Next.js export routes
     if (!fs.existsSync(filePath)) {
@@ -592,15 +572,15 @@ const server = http.createServer(async (req, res) => {
             filePath = filePath + ".html";
         } else if (fs.existsSync(path.join(serveDir, "embed", pathname))) {
             filePath = path.join(serveDir, "embed", pathname);
-        } else if (fs.existsSync(path.join(publicDir, pathname))) {
+        } else if (fs.existsSync(path.join(frontendPublicDir, pathname))) {
             filePath = path.join(publicDir, pathname);
-        } else if (fs.existsSync(path.join(serveDir, "index.html"))) {
+        } else if (fs.existsSync(path.join(servedDir, "index.html"))) {
             filePath = path.join(serveDir, "index.html");
         }
     }
 
     // Security check: ensure path is inside serveDir or publicDir
-    if (!filePath.startsWith(serveDir) && !filePath.startsWith(publicDir)) {
+    if (!filePath.startsWith(servedDir) && !filePath.startsWith(frontendPublicDir)) {
         res.writeHead(403, { "Content-Type": "text/plain" });
         res.end("Forbidden");
         return;
@@ -626,7 +606,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, "127.0.0.1", () => {
-    console.log(`[static-server] Serving ${serveDir} at http://127.0.0.1:${port}`);
+    console.log(`[static-server] Serving ${servedDir} at http://127.0.0.1:${port}`);
 });
 
 // Also serve on port 8787 (default OneShot URL) if different from primary port

@@ -43,12 +43,14 @@ export function useChatSession() {
   const [isGate1Confirmed, setIsGate1Confirmed] = useState(false);
   const [isConfirmingGate, setIsConfirmingGate] = useState(false);
   const [systemStatusText, setSystemStatusText] = useState<string>("System Online");
+  const [startupError, setStartupError] = useState<string | null>(null);
+  const [isStarting, setIsStarting] = useState(true);
 
   useEffect(() => {
     const loaded = loadStoredSessions();
     setSessions(loaded);
     const activeId = getActiveSessionId();
-    if (loaded.some((s) => s.id === activeId)) {
+    if (loaded.some((session) => session.id === activeId)) {
       setActiveSessionIdState(activeId);
     } else if (loaded.length > 0) {
       setActiveSessionIdState(loaded[0].id);
@@ -60,41 +62,54 @@ export function useChatSession() {
       setRunStatus("COMPLETED");
     }
 
-    fetch("/api/session/checkpoints")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.checkpoints?.length) {
-          const mapped: EarlierContextItem[] = data.checkpoints.map((cp: any) => ({
-            id: cp.restoreId || cp.id,
-            title: cp.title,
-            source: cp.payload?.source || cp.payload?.concept || "System preserved checkpoint in SessionLedger",
-            category: cp.category || "General",
-            date: cp.timestamp ? cp.timestamp.slice(0, 10) : "2026-09-11",
-            time: cp.timestamp ? cp.timestamp.slice(11, 16) : "10:00",
-            agent: cp.agent || "OneShot",
-            restoreId: cp.restoreId,
+    const requests: Promise<void>[] = [
+      fetch("/api/session/checkpoints")
+        .then((response) => {
+          if (!response.ok) throw new Error(`Checkpoint request failed: ${response.status}`);
+          return response.json();
+        })
+        .then((data) => {
+          if (!data.checkpoints?.length) return;
+          const mapped: EarlierContextItem[] = data.checkpoints.map((checkpoint: any) => ({
+            id: checkpoint.restoreId || checkpoint.id,
+            title: checkpoint.title,
+            source: checkpoint.payload?.source || checkpoint.payload?.concept || "System preserved checkpoint in SessionLedger",
+            category: checkpoint.category || "General",
+              date: checkpoint.timestamp ? checkpoint.timestamp.slice(0, 10) : "Unknown",
+              time: checkpoint.timestamp ? checkpoint.timestamp.slice(11, 16) : "Unknown",
+            agent: checkpoint.agent || "OneShot",
+            restoreId: checkpoint.restoreId,
           }));
-          setSessions((prev) => prev.map((s) => ({ ...s, earlierContext: mapped })));
-        }
-      })
-      .catch(() => {});
-
-    fetch("/api/pipeline/plan")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data) {
+          setSessions((previous) => previous.map((session) => ({ ...session, earlierContext: mapped })));
+        }),
+      fetch("/api/pipeline/plan")
+        .then((response) => {
+          if (!response.ok) throw new Error(`Plan request failed: ${response.status}`);
+          return response.json();
+        })
+        .then((data) => {
+          if (!data) return;
           setPlanData(data);
           if (data.status === "CONFIRMED") setIsGate1Confirmed(true);
-        }
-      })
-      .catch(() => {});
+        }),
+      fetch("/api/system/status")
+        .then((response) => {
+          if (!response.ok) throw new Error(`Status request failed: ${response.status}`);
+          return response.json();
+        })
+        .then((data) => {
+          if (data?.status && data.currentStage) {
+            setSystemStatusText(`Stage: ${data.currentStage.toUpperCase()}`);
+          }
+        }),
+    ];
 
-    fetch("/api/system/status")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.status) setSystemStatusText(`Stage: ${data.currentStage.toUpperCase()}`);
-      })
-      .catch(() => {});
+    void Promise.allSettled(requests).then((results) => {
+      if (results.some((result) => result.status === "rejected")) {
+        setStartupError("Some workspace data could not be loaded. Retry the connection or continue with available local state.");
+      }
+      setIsStarting(false);
+    });
   }, []);
 
   const addDeduplicatedEvent = (stage: string, message: string, type: "info" | "step" | "done" | "error" = "info") => {
@@ -122,7 +137,9 @@ export function useChatSession() {
       const res = await fetch("/api/session/new", { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (data.sessionId) newId = data.sessionId;
-    } catch {}
+    } catch (error) {
+      setStartupError(error instanceof Error ? `Could not create a new session: ${error.message}` : "Could not create a new session.");
+    }
 
     const newSession: Session = {
       id: newId,
@@ -148,7 +165,10 @@ export function useChatSession() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: activeSessionId }),
       });
-    } catch {}
+    } catch (error) {
+      setStartupError(error instanceof Error ? `Could not clear chat history: ${error.message}` : "Could not clear chat history.");
+      return;
+    }
     const updated = sessions.map((s) => (s.id === activeSessionId ? { ...s, messages: [] } : s));
     setSessions(updated);
     saveStoredSessions(updated);
@@ -207,8 +227,9 @@ export function useChatSession() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setSessions((prev) => prev.map((s) => (s.id === activeSessionId ? { ...s, messages: [...s.messages, backendConfirmMsg] } : s)));
-    } catch {
-      setIsGate1Confirmed(true);
+    } catch (error) {
+      setIsGate1Confirmed(false);
+      setStartupError(error instanceof Error ? `Could not confirm Gate 1: ${error.message}` : "Could not confirm Gate 1.");
     } finally {
       setIsConfirmingGate(false);
     }
@@ -404,6 +425,7 @@ export function useChatSession() {
           }
         },
         onDone: (fullContent: string) => {
+          const finalContent = fullContent || "No response was returned by the provider.";
           setIsRunning(false);
           setRunStatus("COMPLETED");
           addDeduplicatedEvent("Review", "Research synthesis completed and verified", "done");
@@ -416,7 +438,7 @@ export function useChatSession() {
                       m.id === assistantMsgId
                         ? {
                             ...m,
-                            content: fullContent,
+                            content: finalContent,
                             isStreaming: false,
                           }
                         : m
@@ -479,6 +501,8 @@ export function useChatSession() {
     isGate1Confirmed,
     isConfirmingGate,
     systemStatusText,
+    startupError,
+    isStarting,
     handleSelectSession,
     handleNewSession,
     handleClearHistory,

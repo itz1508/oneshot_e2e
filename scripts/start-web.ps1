@@ -27,6 +27,12 @@ try {
 }
 
 # 2. Check / Install Dependencies
+$envPath = Join-Path $RepoRoot "app\env\.env"
+$envExample = Join-Path $RepoRoot "app\env\.env.example"
+if (-not (Test-Path $envPath) -and (Test-Path $envExample)) {
+    Copy-Item $envExample $envPath
+}
+
 $nodeModules = Join-Path $RepoRoot "node_modules"
 if (-not (Test-Path $nodeModules)) {
     Write-Host "[2/4] Fresh repository detected. Installing dependencies (pnpm install)..." -ForegroundColor Yellow

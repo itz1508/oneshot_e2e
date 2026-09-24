@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useOverlayFocus } from "../lib/useOverlayFocus";
 
 interface SearchResult {
   title: string;
@@ -22,6 +23,7 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const drawerRef = useOverlayFocus<HTMLDivElement>(isOpen, onClose);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -35,34 +37,17 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
         body: JSON.stringify({ query: query.trim() }),
       });
       const data = await res.json();
-      if (res.ok && data.results) {
+      if (res.ok && Array.isArray(data.results)) {
         setResults(data.results);
       } else {
-        // Fallback standard high-fidelity research results if offline
-        setResults([
-          {
-            title: "Architecture and Invariants Analysis",
-            url: "https://oneshot.dev/docs/invariants",
-            content: "OneShot mandates immutable human review gates (Research Review and Build Ready) with hash-bound confirmed_package.core validation.",
-            score: 0.98,
-          },
-          {
-            title: "DeepAgents Partition Isolation Specification",
-            url: "https://docs.langchain.com/deepagents/backends",
-            content: "Prefix routing across /workspace/, /scratch/, /memories/, and /artifacts/ ensures zero path traversal vulnerabilities under virtual_mode.",
-            score: 0.94,
-          },
-        ]);
+        setResults([]);
+        setError(res.status === 401 || res.status === 403
+          ? "Research authentication is required before searching."
+          : "Research search is currently unavailable. Check the server connection and try again.");
       }
     } catch {
-      setResults([
-        {
-          title: "Architecture and Invariants Analysis",
-          url: "https://oneshot.dev/docs/invariants",
-          content: "OneShot mandates immutable human review gates (Research Review and Build Ready) with hash-bound confirmed_package.core validation.",
-          score: 0.98,
-        },
-      ]);
+      setResults([]);
+      setError("Research search is currently unavailable. Check the server connection and try again.");
     } finally {
       setIsSearching(false);
     }
@@ -77,9 +62,14 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
 
   return (
     <div
+      ref={drawerRef}
       id="researcherDrawer"
       className={`context-review-drawer ${isOpen ? "open" : ""}`}
       aria-hidden={!isOpen}
+      aria-label="Standalone researcher drawer"
+      role="dialog"
+      aria-modal="true"
+      inert={!isOpen}
     >
       {/* Header */}
       <div className="min-h-[52px] px-4 flex items-center justify-between border-b border-white/[0.075] bg-[#141416]">
@@ -109,11 +99,13 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
             <input
               id="tavilySearchInput"
               type="text"
+              name="research-query"
+              autoComplete="off"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search Tavily or OneShot codebase..."
-              className="flex-1 h-8 px-2.5 rounded-md border border-white/15 bg-[#181b21] text-white text-xs outline-none focus:border-[#79a8ea] font-mono-code"
+              className="min-w-0 flex-1 h-8 px-2.5 rounded-md border border-white/15 bg-[#181b21] text-white text-xs outline-none focus:border-[#79a8ea] focus-visible:ring-2 focus-visible:ring-[#79a8ea]/50 font-mono-code"
             />
             <button
               id="tavilySearchBtn"
@@ -122,13 +114,21 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
               disabled={isSearching || !query.trim()}
               className="h-8 px-3 rounded-md bg-[#3f6ba8] hover:bg-[#4d7fc4] disabled:opacity-40 text-white text-xs font-medium cursor-pointer transition-colors"
             >
-              {isSearching ? "Searching..." : "Search"}
+              {isSearching ? "Searching…" : "Search"}
             </button>
           </div>
         </div>
 
         {/* Results List */}
-        <div className="space-y-3 pt-2 border-t border-white/10">
+        <div className="space-y-3 pt-2 border-t border-white/10" aria-live="polite">
+          {error && (
+            <div className="rounded-lg border border-[#e5a84b]/30 bg-[#e5a84b]/10 p-3 text-[11px] text-[#e5a84b]" role="alert">
+              {error}
+              <button type="button" onClick={handleSearch} className="mt-2 block underline hover:text-white">
+                Retry search
+              </button>
+            </div>
+          )}
           <div className="text-[10px] font-semibold uppercase tracking-wider text-[#6e6e73]">
             Verified Research Sources ({results.length})
           </div>

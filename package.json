@@ -4,9 +4,10 @@
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
+  "packageManager": "pnpm@11.9.0",
   "engines": {
     "node": ">=24.13.0",
-    "npm": ">=11.8.0"
+    "pnpm": ">=11.9.0"
   },
   "bin": {
     "oneshot": "./scripts/oneshot.mjs"
@@ -52,12 +53,6 @@
     "ioredis": "^6.0.0",
     "openai": "^6.49.0",
     "zod": "^4.6.4"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "msgpackr-extract"
-    ]
   },
   "overrides": {
     "@opentelemetry/core": "^2.8.0",

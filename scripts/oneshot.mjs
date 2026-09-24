@@ -5,7 +5,7 @@
  * Usage:
  *   oneshot [options]
  *   pnpm oneshot [options]
- *   npx oneshot [options]
+ *   pnpm oneshot [options]
  *
  * Options:
  *   -h, --help        Show this help message and exit

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: dark;
   --os-bg: #0d0d0e;
   --os-panel: #111113;
   --os-panel-soft: #151517;
@@ -35,7 +36,7 @@ html, body {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   background: var(--os-bg);
   overflow: hidden;
   transition: grid-template-columns 0.2s ease;
@@ -45,7 +46,35 @@ html, body {
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* Sidebar */
+.app-sidebar-nav {
+  position: relative;
+  z-index: 40;
+  width: 248px;
+  height: 100dvh;
+}
+
+@media (max-width: 767px) {
+  .app-shell {
+    display: block;
+  }
+
+  .app-content {
+    height: 100dvh;
+  }
+
+  .app-sidebar-nav {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(86vw, 320px);
+    transform: translateX(-105%);
+    transition: transform 0.2s ease;
+    box-shadow: 18px 0 48px rgba(0, 0, 0, 0.45);
+  }
+
+  .app-sidebar-nav.mobile-open {
+    transform: translateX(0);
+  }
+}
 .sidebar-shell {
   position: relative;
   display: flex;
@@ -124,13 +153,14 @@ html, body {
   position: fixed;
   top: 0;
   right: 0;
-  width: min(420px, 92vw);
-  height: 100vh;
+  width: min(420px, 100vw);
+  height: 100dvh;
   z-index: 260;
   display: flex;
   flex-direction: column;
   background: #111113;
   border-left: 1px solid var(--os-line);
+  overscroll-behavior: contain;
   box-shadow: -18px 0 48px rgba(0, 0, 0, 0.35);
   transform: translateX(105%);
   transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
@@ -163,7 +193,17 @@ html, body {
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
-/* Monospace font utility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .font-mono-code {
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
