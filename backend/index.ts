@@ -77,27 +77,27 @@ const gitStorage = new GitLocalStorage({ rootDir: path.resolve(process.cwd(), ".
 // Seed initial UX / Memory / Research checkpoints in SessionLedger
 sessionLedger.createCheckpoint({
   restoreId: "restore-ui-001",
-  timestamp: "2026-09-11T10:42:00Z",
-  title: "Frontend and backend direction",
-  agent: "Researcher-A",
-  category: "UX/UI",
-  payload: { source: "Keep the interface familiar while deeper processing happens behind the conversation." },
+  timestamp: "2026-09-24T11:40:00Z",
+  title: "Google Agent Framework (ADK) State Machine",
+  agent: "WorkflowCoordinator",
+  category: "ADK Runtime",
+  payload: { source: "Autonomous multi-agent lifecycle: Researcher -> Planner -> Builder -> Validator with deterministic state transitions." },
 });
 sessionLedger.createCheckpoint({
   restoreId: "restore-memory-002",
-  timestamp: "2026-09-11T10:18:00Z",
-  title: "Keeping earlier context available",
-  agent: "Memory-Agent",
-  category: "Memory",
-  payload: { source: "Hide older discussion from the main flow without losing the original conversation context." },
+  timestamp: "2026-09-24T10:15:00Z",
+  title: "Gemini 3.5 Flash Streaming & Gateway Fallback",
+  agent: "StreamingGateway",
+  category: "DeepAgents",
+  payload: { source: "Zero-stall token streaming and automated gateway fallback across Google Gemini, OpenAI, and Ollama providers." },
 });
 sessionLedger.createCheckpoint({
   restoreId: "restore-research-003",
-  timestamp: "2026-09-11T09:54:00Z",
-  title: "Research validation approach",
-  agent: "Validator",
-  category: "Research",
-  payload: { source: "Check important findings and cross-verify with independent sources before presenting the final result." },
+  timestamp: "2026-09-24T09:30:00Z",
+  title: "Cloud Run Containerization & Verification Gates",
+  agent: "DeployValidator",
+  category: "Cloud Run",
+  payload: { source: "Single-step multi-stage Docker build, OpenTelemetry tracing, and cryptographic manifest verification." },
 });
 
 // ── In-memory chat session store ─────────────────────────────────────────────

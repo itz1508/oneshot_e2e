@@ -3,32 +3,32 @@ import { Session, EarlierContextItem } from "../types";
 export const INITIAL_EARLIER_CONTEXT: EarlierContextItem[] = [
   {
     id: "ctx-ui-001",
-    title: "Frontend and backend direction",
-    source: "Keep the interface familiar while deeper processing happens behind the conversation.",
-    category: "UX/UI",
-    date: "2026-09-11",
-    time: "10:42",
-    agent: "Researcher-A",
+    title: "Google Agent Framework (ADK) State Machine",
+    source: "Autonomous multi-agent lifecycle: Researcher -> Planner -> Builder -> Validator with deterministic state transitions.",
+    category: "ADK Runtime",
+    date: "2026-09-24",
+    time: "11:40",
+    agent: "WorkflowCoordinator",
     restoreId: "restore-ui-001",
   },
   {
     id: "ctx-memory-002",
-    title: "Keeping earlier context available",
-    source: "Hide older discussion from the main flow without losing the original conversation context.",
-    category: "Memory",
-    date: "2026-09-11",
-    time: "10:18",
-    agent: "Memory-Agent",
+    title: "Gemini 3.5 Flash Streaming & Gateway Fallback",
+    source: "Zero-stall token streaming and automated gateway fallback across Google Gemini, OpenAI, and Ollama providers.",
+    category: "DeepAgents",
+    date: "2026-09-24",
+    time: "10:15",
+    agent: "StreamingGateway",
     restoreId: "restore-memory-002",
   },
   {
     id: "ctx-research-003",
-    title: "Research validation approach",
-    source: "Check important findings and cross-verify with independent sources before presenting the final result.",
-    category: "Research",
-    date: "2026-09-11",
-    time: "09:54",
-    agent: "Validator",
+    title: "Cloud Run Containerization & Verification Gates",
+    source: "Single-step multi-stage Docker build, OpenTelemetry tracing, and cryptographic manifest verification.",
+    category: "Cloud Run",
+    date: "2026-09-24",
+    time: "09:30",
+    agent: "DeployValidator",
     restoreId: "restore-research-003",
   },
 ];
@@ -36,7 +36,7 @@ export const INITIAL_EARLIER_CONTEXT: EarlierContextItem[] = [
 export const INITIAL_SESSIONS: Session[] = [
   {
     id: "session-101",
-    title: "Conversation collapse behavior",
+    title: "OneShot Enterprise Fleet Architecture",
     timestamp: "11:42",
     dateGroup: "Today",
     earlierContext: INITIAL_EARLIER_CONTEXT,
@@ -45,71 +45,70 @@ export const INITIAL_SESSIONS: Session[] = [
         id: "m-1",
         role: "assistant",
         timestamp: "11:43",
-        content: `### Tokyo plan, validated against your existing preferences
+        content: `### OneShot Autonomous Software Engineering Fleet
 
-Based on the preferences already established in this conversation, the strongest approach is to keep one hotel base and group each day by neighborhood rather than crossing the city repeatedly.
+**System Online & Ready** — Powered by the Google Agent Development Kit (ADK) workflow engine, Gemini 3.5 Flash streaming, DeepAgents real-time event protocol, and Google Cloud Run.
 
-* **Day 1:** Arrival, easy neighborhood walk, early dinner in Shinjuku.
-* **Day 2:** West Tokyo cluster (Shibuya, Harajuku, Meiji Shrine) with minimal transit backtracking.
-* **Day 3:** Central and East Tokyo cluster (Ginza, Asakusa, Ueno) and evening activity.
-* **Day 4:** Flexible day for high-priority day trips (Hakone or Kamakura).
-* **Day 5:** Light final morning near the departure route.
+* **Multi-Agent SOP Engine:** Coordinated \`Researcher\` → \`Planner\` → \`Builder\` → \`Validator\` agents with deterministic transitions and private tool bindings.
+* **DeepAgents Event Standard:** Native token deltas (\`stream.messages\`), delegated agent events (\`stream.subagents\`), lifecycle tool executions (\`stream.tool_calls\`), and reactive task state (\`stream.values.todos\`).
+* **Human-in-the-Loop Governance:** Enforces **Gate 1** (Research Review) and **Gate 2** (Package Core Hash) before autonomous code modification.
+* **Resilient Multi-Provider Integration:** Ultra-fast local Python Reasoner with automated gateway failover across Google Gemini, OpenAI, and local LLMs.
 
-Current details that matter to booking or opening hours should come from external sources only when needed; the rest of the answer can continue from the conversation without restarting the research context.`,
+Choose a starter action below or enter a prompt to begin autonomous execution.`,
         citations: [
-          { id: "c-1", num: 1, title: "Official source", subtitle: "Primary validation" },
-          { id: "c-2", num: 2, title: "Independent cross-check", subtitle: "Transit & timing" },
-          { id: "c-3", num: 3, title: "Supporting reference", subtitle: "Context confirmation" },
+          { id: "c-1", num: 1, title: "Google Gemini 3.5 Flash", subtitle: "Multi-modal streaming & gateway fallbacks" },
+          { id: "c-2", num: 2, title: "Google ADK Workflow", subtitle: "Deterministic stage machine & human gates" },
+          { id: "c-3", num: 3, title: "Google Cloud Run Ready", subtitle: "Containerized deployment & OTel telemetry" },
         ],
       },
     ],
   },
   {
     id: "session-100",
-    title: "Research validation flow",
+    title: "DeepAgents Reactive Todo Pipeline",
     timestamp: "10:18",
     dateGroup: "Today",
     messages: [],
   },
   {
     id: "session-099",
-    title: "Ephemeral progress display",
+    title: "Deterministic Manifest Verification",
     timestamp: "09:51",
     dateGroup: "Today",
     messages: [],
   },
   {
     id: "session-094",
-    title: "External search context reuse",
+    title: "Cloud Run Multi-Stage Docker Spec",
     timestamp: "Yesterday",
     dateGroup: "Yesterday",
     messages: [],
   },
   {
     id: "session-090",
-    title: "Chat-first layout direction",
+    title: "Gate 1 Spec Review & Gate 2 Deployment",
     timestamp: "Yesterday",
     dateGroup: "Yesterday",
     messages: [],
   },
   {
     id: "session-084",
-    title: "Integration provider setup",
+    title: "Gemini 3.5 Flash Provider Benchmark",
     timestamp: "Sep 9",
     dateGroup: "Previous",
     messages: [],
   },
   {
     id: "session-079",
-    title: "Builder reference structure",
+    title: "Builder Reference Structure",
     timestamp: "Sep 8",
     dateGroup: "Previous",
     messages: [],
   },
 ];
 
-const SESSIONS_STORAGE_KEY = "oneshot_sessions_v1";
-const ACTIVE_SESSION_STORAGE_KEY = "oneshot_active_session_id_v1";
+const SESSIONS_STORAGE_KEY = "oneshot_sessions_v2";
+const ACTIVE_SESSION_STORAGE_KEY = "oneshot_active_session_id_v2";
 
 export function loadStoredSessions(): Session[] {
   if (typeof window === "undefined") return INITIAL_SESSIONS;
@@ -117,7 +116,15 @@ export function loadStoredSessions(): Session[] {
     const raw = localStorage.getItem(SESSIONS_STORAGE_KEY);
     if (!raw) return INITIAL_SESSIONS;
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_SESSIONS;
+    if (!Array.isArray(parsed) || parsed.length === 0) return INITIAL_SESSIONS;
+    const hasLegacy = parsed.some(
+      (s: any) =>
+        s?.title?.includes("Tokyo") ||
+        s?.title?.includes("Conversation collapse") ||
+        s?.messages?.some((m: any) => m?.content?.includes("Tokyo"))
+    );
+    if (hasLegacy) return INITIAL_SESSIONS;
+    return parsed;
   } catch {
     return INITIAL_SESSIONS;
   }
