@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-24T01:28:38Z",
+  "generated_at": "2026-09-24T03:56:29Z",
   "version": "1.3.0",
-  "commit": "e7739b7d",
+  "commit": "ba7ca25e",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -11,8 +11,8 @@
     },
     {
       "path": "AGENTS.md",
-      "size": 14671,
-      "hash": "sha256:14da2372ba458163eeef3cf7db0e8462e867b69e0b60e1769e575ad3ee477a9d",
+      "size": 6680,
+      "hash": "sha256:aab488015ac10d416bb5643a727460799d68f9db593e3da4d7e079e3d34ddff7",
       "category": "source"
     },
     {
@@ -83,8 +83,8 @@
     },
     {
       "path": "backend\\artifact\\fixture.ts",
-      "size": 7674,
-      "hash": "sha256:04f5a9b087c48749c4dd950a3ab5213b10e8f268c9d7d3a7cab040337a84c9f3",
+      "size": 7694,
+      "hash": "sha256:0f6be35d01f0b582705a1f64b5ec67c7246fbe6467f2dd65a7f49bebe74bcb09",
       "category": "source"
     },
     {
@@ -107,8 +107,8 @@
     },
     {
       "path": "backend\\index.ts",
-      "size": 65302,
-      "hash": "sha256:b5d2778acc97def6fae144e3f2b6d5bb6cc5db623f1e775b5668f63d0e0e26f6",
+      "size": 65375,
+      "hash": "sha256:44c9b1d878814c37407626da58ac5ea1695799ea466e2ba15c0675c10d07f326",
       "category": "source"
     },
     {
@@ -127,12 +127,6 @@
       "path": "backend\\python-runtime.ts",
       "size": 5885,
       "hash": "sha256:2db3f64a6e4533524fc5196e6b02a1575aab341c584f4cef7ca73615475f7f36",
-      "category": "source"
-    },
-    {
-      "path": "backend\\python\\.pytest_cache\\README.md",
-      "size": 302,
-      "hash": "sha256:73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad",
       "category": "source"
     },
     {
@@ -5603,8 +5597,8 @@
     },
     {
       "path": "backend\\tests\\ts\\action-api.test.ts",
-      "size": 12047,
-      "hash": "sha256:0b81a2a0243d627aba8123f3387cf7815171f6737d14a68554e96eac5002b668",
+      "size": 12053,
+      "hash": "sha256:bf141e2f67c32e02e1601937ce4be413d61b0a47e704670f17b3eb77af16d7b5",
       "category": "source"
     },
     {
@@ -5627,8 +5621,8 @@
     },
     {
       "path": "backend\\tests\\ts\\contract-schema.test.ts",
-      "size": 14666,
-      "hash": "sha256:049f5c42cb8875f415008d8484eeb3965f3e2b9481a9caf81451266e9af7655b",
+      "size": 14681,
+      "hash": "sha256:7d8971ee32c9c22cdb9e1343e8b9e73370a8718e6da540546062d0c382c6f018",
       "category": "source"
     },
     {
@@ -5651,8 +5645,8 @@
     },
     {
       "path": "backend\\tests\\ts\\health-endpoint.test.ts",
-      "size": 3858,
-      "hash": "sha256:d477aaedafa0cff41bd03537b947ff3a952237e706f469c87ffeb26e58fddb14",
+      "size": 3861,
+      "hash": "sha256:76860683c3aec1f23e3dfa20635f165ff55c6fb079dd09f461d71f063d8f3e9c",
       "category": "source"
     },
     {
@@ -8429,8 +8423,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\main-screen\\PreviewView.tsx",
-      "size": 6415,
-      "hash": "sha256:e82ec4f457aee5d7498332937bf51bec49335cec172826abccea66912e0511b1",
+      "size": 7166,
+      "hash": "sha256:d5435300c33ebabbf4712aa68e4937782abf3ec4572a174f96f8fee7f4ab28f4",
       "category": "source"
     },
     {
@@ -8447,8 +8441,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\task-rail\\ProgressTracker.tsx",
-      "size": 4529,
-      "hash": "sha256:51cf1bdc8774a6cc0942d0de9faf526857dedacdd5a8229d743cd89043020195",
+      "size": 5049,
+      "hash": "sha256:4fc0c6f47527ce5dd47b0c612aae25a1ee589dbb4fab18266defeadf0cac57ca",
       "category": "source"
     },
     {
@@ -8537,8 +8531,8 @@
     },
     {
       "path": "frontend\\web\\src\\types\\invariants.ts",
-      "size": 4408,
-      "hash": "sha256:8916b591e2e11e93d377c1724ffd223c90f220f56299b65bcddb84f00cbcae17",
+      "size": 3522,
+      "hash": "sha256:8c6886f1a10ad253efc026bf31cc039abcb0ca871843a8ff04623415b65bda70",
       "category": "source"
     },
     {
@@ -8561,8 +8555,8 @@
     },
     {
       "path": "frontend\\web\\tests\\main-screen-and-task-rail.test.mjs",
-      "size": 7158,
-      "hash": "sha256:618d82318ff69662d2ed1067c9eb7b37d3cdab1596307e6e029dcdb003245a2e",
+      "size": 6825,
+      "hash": "sha256:847ed4a9d89d600b3960b58a81a49d1c6f6f2379589f46cfc447cd017ad5833e",
       "category": "source"
     },
     {
@@ -13259,8 +13253,8 @@
     },
     {
       "path": "package.json",
-      "size": 2927,
-      "hash": "sha256:35bce0032da936058fa563fed8413a99bf297d779f0db360d29a31d88b5ae881",
+      "size": 3120,
+      "hash": "sha256:ac48be07f4117446e0cb28ada71430782ec75a78f82afb2f3c2e285477d29723",
       "category": "source"
     },
     {
@@ -13481,8 +13475,8 @@
     },
     {
       "path": "packages\\agent-runtime\\src\\workflow\\artifact-rules.ts",
-      "size": 15809,
-      "hash": "sha256:d2deb9b994a1916d9b441d93419ff2832b1a40c44b072108bb7bd93476a6e214",
+      "size": 15829,
+      "hash": "sha256:89a9ed8d3b6ae768ea35f90f64991b68991a7e2f162fdfdb7c14fcd403299854",
       "category": "source"
     },
     {
@@ -13511,8 +13505,8 @@
     },
     {
       "path": "packages\\agent-runtime\\tests\\backend-engine.test.mjs",
-      "size": 13212,
-      "hash": "sha256:756b1a9fb98b022a54e995aac857b2ff0d79aea26c2bb1cd44130191aa256517",
+      "size": 13268,
+      "hash": "sha256:a1910e8fde7ef56135d18763df52151519b8d9f75836e7cb38e6bc9d34de824e",
       "category": "source"
     },
     {
@@ -13625,12 +13619,12 @@
     }
   ],
   "statistics": {
-    "total_files": 2270,
-    "source_files": 2270,
-    "total_size_bytes": 14622124,
+    "total_files": 2269,
+    "source_files": 2269,
+    "total_size_bytes": 14614269,
     "by_extension": {
       ".yml": 1,
-      ".md": 15,
+      ".md": 14,
       ".mjs": 25,
       ".json": 1205,
       ".py": 871,

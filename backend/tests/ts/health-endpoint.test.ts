@@ -83,7 +83,7 @@ describe('Health Endpoints', () => {
     assert.strictEqual(data.toolName, 'validate_fixtures');
     assert.strictEqual(data.result.success, true);
     assert.strictEqual(data.result.fixture_id, 'fix-test-101');
-    assert.strictEqual(data.result.status, 'passed');
+    assert.strictEqual(data.result.status, 'validated');
     assert.strictEqual(data.result.actualHash, data.result.expectedHash);
   });
 

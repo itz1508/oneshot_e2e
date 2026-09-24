@@ -7,18 +7,35 @@
  */
 
 import React from "react";
-import { TasksCreatedEvent, PlanUpdatedEvent } from "../../types/invariants";
+import { TasksCreatedEvent, PlanUpdatedEvent, TodoItem } from "../../types/invariants";
 
 export interface ProgressTrackerProps {
   tasksEvent?: TasksCreatedEvent | null;
   planEvent?: PlanUpdatedEvent | null;
+  todos?: TodoItem[] | null;
 }
 
 export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   tasksEvent,
   planEvent,
+  todos,
 }) => {
-  const tasks = tasksEvent?.tasks || [];
+  // Support both LangChain DeepAgents stream.values.todos and TasksCreatedEvent
+  const rawTasks = tasksEvent?.tasks || [];
+  const normalizedTodos: Array<{
+    task_id: string;
+    title: string;
+    stage: string;
+    status: "pending" | "in_progress" | "completed" | "failed";
+  }> = (todos && todos.length > 0)
+    ? todos.map((t) => ({
+        task_id: t.id,
+        title: t.title,
+        stage: t.stage || "execution",
+        status: t.status,
+      }))
+    : rawTasks;
+  const tasks = normalizedTodos;
   const planSteps = planEvent?.steps || [];
 
   return (

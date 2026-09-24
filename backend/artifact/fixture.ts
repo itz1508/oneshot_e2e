@@ -12,7 +12,7 @@
 
 import { ValidationResult, validationSuccess, validationError, FailureType, FailureSeverity } from "../validation/failure-taxonomy.js";
 
-export type FixtureStatus = "draft" | "in_progress" | "passed" | "failed";
+export type FixtureStatus = "draft" | "in_progress" | "validated" | "persisted" | "failed";
 
 export interface StoredFixtureRecord {
   readonly fixture_id: string; // Immutable Persistence Reference
@@ -191,7 +191,7 @@ export class FixtureRuntime {
       });
     }
 
-    this.status = "passed";
+    this.status = "validated";
     this.emit("fixture:validated", {
       path: this.path,
       expectedHash: this.expectedHash,

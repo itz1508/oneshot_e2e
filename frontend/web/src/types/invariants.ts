@@ -1,31 +1,26 @@
 /**
- * OneShot Canonical 24 Invariants Type System & Contracts
+ * OneShot Streaming & Execution Contracts
  *
- * Implements the 24 authoritative invariants governing Session, Job,
- * Conversation runtime, Tool capabilities, Validation proof ledger, and Artifact duality.
+ * Implements typed contracts for Session, Job, Conversation runtime,
+ * Tool capabilities, DeepAgents event streaming, and State-driven progress.
  */
 
-// Invariant 1: Session owns conversation.
-// Invariant 16: Session Label != session_id.
+// Core Session & Conversation Contracts
 export interface SessionEntity {
-  readonly session_id: string; // Persistence Artifact (_id)
-  sessionLabel: string;        // Human-readable display label (Session Label != session_id)
-  conversation: ConversationState; // Session owns conversation
+  readonly session_id: string;
+  sessionLabel: string;
+  conversation: ConversationState;
   createdAt: string;
 }
 
-// Invariant 2: Job owns execution.
-// Invariant 17: Job Title != job_id.
+// Job & Execution Contracts
 export interface JobEntity {
-  readonly job_id: string; // Persistence Artifact (_id)
-  jobTitle: string;        // Human-readable title (Job Title != job_id)
-  execution: JobExecutionState; // Job owns execution
+  readonly job_id: string;
+  jobTitle: string;
+  execution: JobExecutionState;
   session_id: string;
 }
 
-// Invariant 19: Every Node requires a Manifest.
-// Invariant 11: Manifest validates structure.
-// Invariant 15: No Event Out without Manifest VALID.
 export interface NodeManifest {
   nodeId: string;
   nodeType: string;
@@ -34,7 +29,6 @@ export interface NodeManifest {
   structureValid: boolean;
 }
 
-// Invariant 14: No Build Complete without Build Manifest.
 export interface BuildManifest {
   readonly build_id: string;
   commitHash: string;
@@ -43,24 +37,17 @@ export interface BuildManifest {
   isValid: boolean;
 }
 
-// Invariant 18: Every Artifact requires a Consumer.
-// Invariant 8: Runtime operates on (...).
-// Invariant 9: Persistence operates on _id.
-// Invariant 24: Only final persisted decisions become *_id artifacts.
 export interface ArtifactEntity {
-  readonly artifact_id?: string; // Defined only when persisted (_id)
-  runtimeName: string;          // artifact(...)
+  readonly artifact_id?: string;
+  runtimeName: string;
   isMutable: boolean;
   isInProgress: boolean;
-  consumer: string;             // Strictly required: Every Artifact requires a Consumer
+  consumer: string;
   content?: unknown;
   status: "draft" | "evolving" | "validated" | "persisted";
 }
 
-// Invariant 10: Validation blocks promotion.
-// Invariant 12: Expected must equal Observed.
-// Invariant 13: No PASS without proof.
-// Invariant 20: Every Validation requires: Expected, Observed, Assertion, Failure.
+// Verification & Contract Proof Record
 export interface ValidationRecord {
   id: string;
   assertion: string;
@@ -73,10 +60,7 @@ export interface ValidationRecord {
   timestamp: string;
 }
 
-// Event Contracts Consumed
-// Consumed by Main Screen: useStream(...), BuildCompleted, ValidationConfirmed
-// Consumed by Task Rail: TasksCreated, PlanUpdated, ValidationConfirmed
-
+// Event Contracts Consumed by UI Components
 export interface BuildCompletedEvent {
   type: "BuildCompleted";
   build_id: string;
@@ -90,6 +74,14 @@ export interface ValidationConfirmedEvent {
   validations: ValidationRecord[];
   allPassed: boolean;
   timestamp: number;
+}
+
+// State-Driven Progress Contracts (DeepAgents TodoListMiddleware Pattern)
+export interface TodoItem {
+  id: string;
+  title: string;
+  status: "pending" | "in_progress" | "completed" | "failed";
+  stage?: string;
 }
 
 export interface TasksCreatedEvent {
@@ -113,8 +105,7 @@ export interface PlanUpdatedEvent {
   timestamp: number;
 }
 
-// Invariant 3: useStream(...) owns conversation runtime.
-// Invariant 22: Conversation flows through useStream(...).
+// Stream Messages & Runtime State
 export interface StreamMessage {
   id: string;
   role: "user" | "assistant" | "system";
@@ -131,8 +122,7 @@ export interface ConversationState {
   isStreaming: boolean;
 }
 
-// Invariant 4: useTool(...) owns capability runtime.
-// Invariant 23: Capabilities execute through useTool(...).
+// Tool Capability Execution
 export interface ToolCapabilityExecution {
   callId: string;
   toolName: string;
@@ -144,7 +134,7 @@ export interface ToolCapabilityExecution {
   endTime?: number;
 }
 
-// Invariant 2: Job owns execution.
+// Job Execution State
 export interface JobExecutionState {
   job_id: string;
   currentStep: string;
@@ -152,4 +142,14 @@ export interface JobExecutionState {
   progress: number;
   activeCapabilities: ToolCapabilityExecution[];
   status: "queued" | "running" | "completed" | "failed";
+}
+
+// Subagent Projection Contract (DeepAgents stream.subagents)
+export interface SubagentProjection {
+  name: string;
+  path: string;
+  status: "started" | "running" | "completed" | "failed" | "interrupted";
+  messages?: StreamMessage[];
+  tool_calls?: ToolCapabilityExecution[];
+  output?: unknown;
 }

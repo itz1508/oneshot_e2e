@@ -313,8 +313,9 @@ describe("OneShot Runtime Artifact Rule (...) and Persistence Artifact Rule (_id
     // 8. validation(...) ↔ validation_id
     const v = validation("validation-701", { targetId: "fixture-401" });
     assert.strictEqual(v.id, "validation-701");
-    v.evolve({ passed: true, status: "passed" });
+    v.evolve({ passed: true, status: "validated" });
     assert.strictEqual(v.state.passed, true);
+    assert.strictEqual(v.state.status, "validated");
 
     // 9. task(...) ↔ task_id
     const t = task("task-801", { title: "Implement Auth" });

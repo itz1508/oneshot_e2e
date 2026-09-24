@@ -126,21 +126,18 @@ describe("OneShot Main Screen, Task Rail & 24 Canonical Invariants Suite", () =>
     assert.match(railSrc, /ValidationConfirmedEvent/);
   });
 
-  it("verifies 24 Final Invariants documented in AGENTS.md", () => {
+  it("verifies market-standard AGENTS.md guidelines and operating boundaries", () => {
     const agentsSrc = read("AGENTS.md");
-    assert.match(agentsSrc, /24 Final Invariants/);
-    assert.match(agentsSrc, /1\. Session owns conversation\./);
-    assert.match(agentsSrc, /2\. Job owns execution\./);
-    assert.match(agentsSrc, /3\. `useStream\(\.\.\.\)` owns conversation runtime\./);
-    assert.match(agentsSrc, /4\. `useTool\(\.\.\.\)` owns capability runtime\./);
-    assert.match(agentsSrc, /10\. Validation blocks promotion\./);
-    assert.match(agentsSrc, /12\. Expected must equal Observed\./);
-    assert.match(agentsSrc, /13\. No PASS without proof\./);
-    assert.match(agentsSrc, /14\. No Build Complete without Build Manifest\./);
-    assert.match(agentsSrc, /16\. Session Label != `session_id`\./);
-    assert.match(agentsSrc, /17\. Job Title != `job_id`\./);
-    assert.match(agentsSrc, /18\. Every Artifact requires a Consumer\./);
-    assert.match(agentsSrc, /20\. Every Validation requires: Expected, Observed, Assertion, Failure\./);
-    assert.match(agentsSrc, /24\. Only final persisted decisions become `\*_id` artifacts\./);
+    assert.match(agentsSrc, /AGENTS\.md — OneShot Project Guidelines/);
+    assert.match(agentsSrc, /Strict Workspace Confinement/);
+    assert.match(agentsSrc, /Package Manager Standard/);
+    assert.match(agentsSrc, /No Fake Progress or Hardcoded Mocks/);
+    assert.match(agentsSrc, /Response Verification Invariant/);
+    assert.match(agentsSrc, /Streaming & Event Standard \(DeepAgents Architecture\)/);
+    assert.match(agentsSrc, /stream\.messages/);
+    assert.match(agentsSrc, /stream\.subagents/);
+    assert.match(agentsSrc, /stream\.tool_calls/);
+    assert.match(agentsSrc, /stream\.values\.todos/);
+    assert.match(agentsSrc, /Verification Lifecycle/);
   });
 });

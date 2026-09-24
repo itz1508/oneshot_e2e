@@ -802,7 +802,7 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           const fpath = input?.path || "app/fixtures/sample.json";
           const expHash = input?.expectedHash || "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069";
           const actFixture = fixture(fid, sid, fpath, expHash);
-          actFixture.evolve({ actualHash: expHash, status: "passed" });
+          actFixture.evolve({ actualHash: expHash, status: "validated" });
           const valRes = actFixture.validate();
           const stored = actFixture.toStoredRecord();
           result = {
@@ -943,7 +943,7 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             const fpath = input?.path || "app/fixtures/sample.json";
             const expHash = input?.expectedHash || "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069";
             const actFixture = fixture(fid, sid, fpath, expHash);
-            actFixture.evolve({ actualHash: expHash, status: "passed" });
+            actFixture.evolve({ actualHash: expHash, status: "validated" });
             const valRes = actFixture.validate();
             const stored = actFixture.toStoredRecord();
             res.writeHead(200, { "Content-Type": "application/json" });
@@ -1060,7 +1060,7 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           const fpath = body.path || "app/fixtures/sample.json";
           const expHash = body.expectedHash || "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069";
           const actFixture = fixture(fid, sid, fpath, expHash);
-          actFixture.evolve({ actualHash: expHash, status: "passed" });
+          actFixture.evolve({ actualHash: expHash, status: "validated" });
           const valRes = actFixture.validate();
           const stored = actFixture.toStoredRecord();
           res.writeHead(200, { "Content-Type": "application/json" });
@@ -1340,11 +1340,15 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
               type: "ValidationConfirmed",
               validation_id: `val_${Date.now().toString(36)}`,
               validations: [{
-                target: "app/fixtures/sample.json",
-                expectedHash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
-                observedHash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
-                status: "passed",
-                fixture_id: storedRecord.fixture_id,
+                id: `val_${storedRecord.fixture_id}`,
+                assertion: "Deterministic SHA-256 fixture checksum match",
+                expected: activeFix.expectedHash,
+                observed: activeFix.actualHash,
+                failure: null,
+                hasProof: true,
+                passed: true,
+                blocksPromotion: false,
+                timestamp: new Date().toISOString(),
               }],
               allPassed: true,
               timestamp: Date.now(),
