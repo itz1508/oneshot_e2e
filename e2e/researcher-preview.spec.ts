@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { attachNetworkGuard } from "./support/network-guard.ts";
 
-const screenshotsDir = path.resolve(
+const screenshotsOutputDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../test-results/screenshots"
 );
@@ -33,7 +33,7 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await expect(page.locator("#earlierDetailView")).toBeVisible();
         await expect(page.locator("#earlierSummaryView")).toBeHidden();
 
-        await page.screenshot({ path: path.join(screenshotsDir, "01-layout-and-earlier-toggle.png"), fullPage: true });
+        await page.screenshot({ path: path.join(screenshotsOutputDir, "01-layout-and-earlier-toggle.png"), fullPage: true });
         await guard.dispose();
     });
 
@@ -63,7 +63,7 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await expect(page.locator("text=/artifacts/").first()).toBeVisible();
         await expect(page.locator("text=virtual_mode").first()).toBeVisible();
 
-        await page.screenshot({ path: path.join(screenshotsDir, "02-drawer-backends-and-gates.png") });
+        await page.screenshot({ path: path.join(screenshotsOutputDir, "02-drawer-backends-and-gates.png") });
         await guard.dispose();
     });
 
@@ -92,7 +92,7 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await testBtn.click();
         await expect(page.locator("#modalStatusText")).not.toBeEmpty();
 
-        await page.screenshot({ path: path.join(screenshotsDir, "03-server-security-boundary-modal.png") });
+        await page.screenshot({ path: path.join(screenshotsOutputDir, "03-server-security-boundary-modal.png") });
         await guard.dispose();
     });
 
@@ -117,7 +117,7 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await expect(asstMessage).not.toContainText("Backend Service Unavailable (503)");
         await expect(asstMessage).not.toContainText("Credentials remain server-side per security policy.");
 
-        await page.screenshot({ path: path.join(screenshotsDir, "04-ag-ui-stream-safe-unavailable.png") });
+        await page.screenshot({ path: path.join(screenshotsOutputDir, "04-ag-ui-stream-safe-unavailable.png") });
         await guard.dispose();
     });
 
@@ -173,7 +173,7 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await page.locator("#closeResearcherDrawerBtn").click();
         await expect(researcherDrawer).not.toHaveClass(/open/);
 
-        await page.screenshot({ path: path.join(screenshotsDir, "05-standalone-researcher-tavily.png") });
+        await page.screenshot({ path: path.join(screenshotsOutputDir, "05-standalone-researcher-tavily.png") });
         await guard.dispose();
     });
 
@@ -224,7 +224,7 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await forkBtn.click();
         await expect(forkBtn).toHaveText(/Branch|Fork unavailable/);
 
-        await page.screenshot({ path: path.join(screenshotsDir, "06-flipcard-todos-and-gate-confirm.png") });
+        await page.screenshot({ path: path.join(screenshotsOutputDir, "06-flipcard-todos-and-gate-confirm.png") });
         await guard.dispose();
     });
 });

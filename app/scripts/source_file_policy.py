@@ -67,12 +67,12 @@ def is_source_file(path: str) -> bool:
     Returns:
         True if the file should be included in the manifest as a source file
     """
-    rel_path = Path(path)
-    name = rel_path.name
-    ext = rel_path.suffix.lower()
+    relative_path = Path(path)
+    name = relative_path.name
+    ext = relative_path.suffix.lower()
     
     # Exclude manifest.json (self-referential) - BEFORE whitelist check
-    if rel_path.as_posix().endswith('manifest.json'):
+    if relative_path.as_posix().endswith('manifest.json'):
         return False
     
     # Whitelist: always source
@@ -84,7 +84,7 @@ def is_source_file(path: str) -> bool:
         return False
     
     # Check if in any generated path
-    for segment in rel_path.parts:
+    for segment in relative_path.parts:
         if segment in GENERATED_PATTERNS:
             return False
     
@@ -109,11 +109,11 @@ def is_generated_file(path: str) -> bool:
     Returns:
         True if the file is generated output
     """
-    rel_path = Path(path)
-    name = rel_path.name
+    relative_path = Path(path)
+    name = relative_path.name
     
     # Check if in generated directory
-    for segment in rel_path.parts:
+    for segment in relative_path.parts:
         if segment in GENERATED_PATTERNS:
             return True
     
@@ -130,8 +130,8 @@ def is_excluded_file(path: str) -> bool:
     Returns:
         True if the file should not be tracked
     """
-    rel_path = Path(path)
-    name = rel_path.name
+    relative_path = Path(path)
+    name = relative_path.name
     
     # Check excluded patterns
     for pattern in EXCLUDED_PATTERNS:
@@ -155,24 +155,24 @@ def get_source_files(root: str = '.') -> List[str]:
         List of relative paths to source files, sorted alphabetically
     """
     source_files = []
-    root_path = Path(root)
+    repository_root = Path(root)
     
-    for path in root_path.rglob('*'):
+    for source_file_path in repository_root.rglob('*'):
         # Skip directories
-        if path.is_dir():
+        if source_file_path.is_dir():
             continue
         
         # Skip hidden files (except .gitignore, .env.example)
-        name = path.name
+        name = source_file_path.name
         if name.startswith('.') and name not in ('.gitignore', '.env.example'):
             continue
         
         # Get relative path
-        rel_path = str(path.relative_to(root_path))
+        relative_path = str(source_file_path.relative_to(repository_root))
         
         # Check if source file
-        if is_source_file(rel_path):
-            source_files.append(rel_path)
+        if is_source_file(relative_path):
+            source_files.append(relative_path)
     
     return sorted(source_files)
 
@@ -192,12 +192,12 @@ def get_source_statistics(root: str = '.') -> dict:
     total_size = 0
     by_extension = {}
     
-    for f in source_files:
+    for relative_path in source_files:
         try:
-            size = (Path(root) / f).stat().st_size
-            total_size += size
+            file_size = (Path(root) / relative_path).stat().st_size
+            total_size += file_size
             
-            ext = Path(f).suffix.lower() or '(no extension)'
+            ext = Path(relative_path).suffix.lower() or '(no extension)'
             by_extension[ext] = by_extension.get(ext, 0) + 1
         except (OSError, IOError):
             pass

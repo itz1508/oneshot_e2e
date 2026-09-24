@@ -71,7 +71,7 @@ def generate_manifest(root: str = '.', output: str = 'app/manifest.json') -> dic
     Returns:
         Manifest dictionary
     """
-    root_path = Path(root)
+    repository_root = Path(root)
     
     print(f"Scanning source files in {root}...")
     source_files = get_source_files(root)
@@ -85,17 +85,17 @@ def generate_manifest(root: str = '.', output: str = 'app/manifest.json') -> dic
     
     # Build manifest
     files = []
-    for rel_path in source_files:
-        abs_path = root_path / rel_path
-        file_hash = compute_sha256(abs_path)
+    for relative_path in source_files:
+        absolute_path = repository_root / relative_path
+        file_hash = compute_sha256(absolute_path)
         
         try:
-            file_size = abs_path.stat().st_size
+            file_size = absolute_path.stat().st_size
         except OSError:
             file_size = 0
         
         files.append({
-            'path': rel_path,
+            'path': relative_path,
             'size': file_size,
             'hash': file_hash,
             'category': 'source'
@@ -119,11 +119,11 @@ def generate_manifest(root: str = '.', output: str = 'app/manifest.json') -> dic
     }
     
     # Write manifest
-    output_path = Path(output)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_file_path = Path(output)
+    output_file_path.parent.mkdir(parents=True, exist_ok=True)
     
-    with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(manifest, f, indent=2)
+    with open(output_file_path, 'w', encoding='utf-8') as manifest_file:
+        json.dump(manifest, manifest_file, indent=2)
     
     print(f"\nManifest written to {output}")
     print(f"  Files: {stats['total_files']}")

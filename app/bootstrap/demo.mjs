@@ -9,9 +9,9 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const rootDir = join(__dirname, '..');
+const modulePath = fileURLToPath(import.meta.url);
+const moduleDir = dirname(modulePath);
+const repoRoot = join(moduleDir, '..');
 
 console.log('OneShot Demo');
 console.log('============\n');
@@ -35,7 +35,7 @@ async function startServer() {
   const server = spawn('pnpm', ['run', 'start'], {
     stdio: 'inherit',
     shell: true,
-    cwd: rootDir
+    cwd: repoRoot
   });
   
   // Wait for server to start

@@ -86,7 +86,15 @@ A test or stage transition is not valid merely because it returns `pass` or `pas
 
 `app/web/` is retained only as a legacy/reference fallback. Do not add production frontend features there. Do not edit `node_modules/`, `.next/`, or generated `dist/` output.
 
-## Frontend UX Contract
+## Path and Variable Naming
+
+Use explicit, consistent names for local path variables:
+
+- JavaScript/TypeScript: `moduleDir`, `repoRoot`, `outputFilePath`, `artifactDir`, `relativePath`, `absolutePath`.
+- Python: `repository_root`, `relative_path`, `absolute_path`, `output_file_path`, `source_file_path`.
+- Keep public API and CLI names stable: `rootDir`, `path`, `--root`, and manifest JSON keys are compatibility contracts.
+- Distinguish URL paths, virtual backend namespaces, and filesystem paths in names and documentation.
+
 
 - `frontend/web/` is the canonical frontend.
 - `App.tsx` and `Composer.tsx` are the canonical chat runtime path.

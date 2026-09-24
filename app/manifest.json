@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-24T10:30:09Z",
+  "generated_at": "2026-09-24T10:57:08Z",
   "version": "1.3.0",
-  "commit": "4d72feae",
+  "commit": "61729a94",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -11,8 +11,8 @@
     },
     {
       "path": "AGENTS.md",
-      "size": 8755,
-      "hash": "sha256:6be4a0cbfca6d7c229ccfa6bf0c8466d80f0b7a7ed95423b016956ac98c88ed5",
+      "size": 9260,
+      "hash": "sha256:fced7fa2812a85051fc749b39b84be75eca38e02a2f52ff13dbf38c096bcf08a",
       "category": "source"
     },
     {
@@ -23,8 +23,8 @@
     },
     {
       "path": "app\\bootstrap\\demo.mjs",
-      "size": 2469,
-      "hash": "sha256:c9adb6f5760bf938d03ed5a29f637b77a098f118a0b3890d3267827b41d526fc",
+      "size": 2471,
+      "hash": "sha256:62e6bf7c3b35d4080d6d64fc9eca7386293211e5d65f3e835ef54b0507387cc7",
       "category": "source"
     },
     {
@@ -53,26 +53,26 @@
     },
     {
       "path": "app\\scripts\\generate_manifest.py",
-      "size": 4286,
-      "hash": "sha256:f35a477cddccf856f195f112b62361608a29ffda1a2c10bedbc1d08f15e03247",
+      "size": 4367,
+      "hash": "sha256:6be3e503385fc3e2c34dae497843e9c8d6a8b75ac20c6b6f48e0e2ca35b2a35f",
       "category": "source"
     },
     {
       "path": "app\\scripts\\source_file_policy.py",
-      "size": 5773,
-      "hash": "sha256:bfbda826a7de39dd258b90e15e9cf6323ff041762b95542ec53cbfddd3f2ed55",
+      "size": 5950,
+      "hash": "sha256:0695b8044e3168e1c51f180d81de4ea14c8672d28be7805e3e7ab9e3814b2c19",
       "category": "source"
     },
     {
       "path": "app\\scripts\\verify_all.py",
-      "size": 12102,
-      "hash": "sha256:ac8637b5b42cb936b119afbacd520cbcc3da34088c9372c647b2b77773d0f418",
+      "size": 12312,
+      "hash": "sha256:6bfa8b1b7782f71bbaec9163e78837cbed4783f6075ceecd00329767ac0d1d5e",
       "category": "source"
     },
     {
       "path": "app\\scripts\\verify_manifest.py",
-      "size": 5586,
-      "hash": "sha256:9ae05cc0e79722d4516a6cdaab8df1fced85508003ff16fdceb1ca283e50ebbe",
+      "size": 5870,
+      "hash": "sha256:2a490bedaabac461d7ad1d3e114efcc6495523b58d000dc063f815c76ae8f2a7",
       "category": "source"
     },
     {
@@ -5688,13 +5688,13 @@
     {
       "path": "e2e\\playwright.config.ts",
       "size": 1255,
-      "hash": "sha256:1c0b3d22cb20328997d6d472e62d5f79af642f9a06dba08a1e3f3c3f4a7e2ebd",
+      "hash": "sha256:88f9e47fd156aaa8455d9e74b358d71b51ff0cade7be01ab546e0c200da4c80c",
       "category": "source"
     },
     {
       "path": "e2e\\researcher-preview.spec.ts",
-      "size": 10208,
-      "hash": "sha256:ede8ae27926d64a6507f9c633726c86574458cfee13b4553d81109ec2523c6dd",
+      "size": 10250,
+      "hash": "sha256:4f5799102106c9662c904c4a594d5f84e8e05e9c699fde1e562fab3405951231",
       "category": "source"
     },
     {
@@ -5705,8 +5705,8 @@
     },
     {
       "path": "e2e\\support\\static-server.mjs",
-      "size": 28510,
-      "hash": "sha256:b6aad23dc239b60315dfa9277904eae0c530ace79d3e643a671b07b2eb4ee413",
+      "size": 28583,
+      "hash": "sha256:139d07ea2fc1608e47b8c6ddd5910ed17ed7df28ff389716c7a7bc581501e9e7",
       "category": "source"
     },
     {
@@ -13577,8 +13577,8 @@
     },
     {
       "path": "scripts\\record-demo.mjs",
-      "size": 10997,
-      "hash": "sha256:8d745665c6aa5e239caa73a543d705b5eeaa88c815938669b011a3ddf247ecdd",
+      "size": 11069,
+      "hash": "sha256:f74f4bd546e63615a8e25052b220aee3397ceb9644847d212b7d84377d1d1381",
       "category": "source"
     },
     {
@@ -13589,8 +13589,8 @@
     },
     {
       "path": "scripts\\validate-env.mjs",
-      "size": 2796,
-      "hash": "sha256:7df249c6dee7ddf94c4bbb1cf0734a0dd5a5e08f7f352291bfb20f00bf41c1ec",
+      "size": 2822,
+      "hash": "sha256:55f4aa5d516e6757eb8a58fccb4b27734d24670005497f741718c92a69162c29",
       "category": "source"
     },
     {
@@ -13615,7 +13615,7 @@
   "statistics": {
     "total_files": 2268,
     "source_files": 2268,
-    "total_size_bytes": 14636452,
+    "total_size_bytes": 14637924,
     "by_extension": {
       ".yml": 1,
       ".md": 15,
