@@ -53,12 +53,6 @@
     "openai": "^6.49.0",
     "zod": "^4.6.4"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "msgpackr-extract"
-    ]
-  },
   "overrides": {
     "@opentelemetry/core": "^2.8.0",
     "adm-zip": "^0.6.0"
