@@ -27,9 +27,28 @@ fi
 
 cd "$INSTALL_DIR"
 
+# 3. Ensure pnpm is installed
+if ! command -v pnpm >/dev/null 2>&1; then
+    echo "[2/3] Enabling pnpm package manager..."
+    if command -v corepack >/dev/null 2>&1; then
+        corepack enable >/dev/null 2>&1 || true
+    elif command -v npm >/dev/null 2>&1; then
+        npm install -g pnpm >/dev/null 2>&1 || true
+    fi
+fi
+
+# 4. Initialize .env if missing
+if [ ! -f "app/env/.env" ] && [ -f "app/env/.env.example" ]; then
+    cp "app/env/.env.example" "app/env/.env"
+fi
+
 echo ""
 echo "📍 Project Folder: $(pwd)"
 echo "🌐 Starting OneShot console..."
 echo ""
+
+if [ ! -d "node_modules" ]; then
+    pnpm install
+fi
 
 pnpm run oneshot

@@ -136,7 +136,7 @@ export GEMINI_API_KEY="your-gemini-api-key"
 pnpm run oneshot
 ```
 
-Or configure **OpenAI**, **Anthropic**, and other providers directly in the **Integrations** drawer inside the web UI — no restart required.
+Or configure **Google Gemini**, **OpenAI**, **Nebius**, **Mistral**, or local **Ollama** directly in the **Integrations** drawer inside the web UI — no restart required.
 
 ---
 

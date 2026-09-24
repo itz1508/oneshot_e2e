@@ -1,7 +1,10 @@
 # OneShot E2E — Automated Windows 1-Line Installer & Launcher
 [CmdletBinding()]
 param (
-    [string]$InstallDir = (Join-Path $HOME "oneshot_e2e")
+    [string]$InstallDir = (Join-Path $HOME "oneshot_e2e"),
+    [switch]$Force,
+    [switch]$Quiet,
+    [switch]$Yes
 )
 
 $ErrorActionPreference = "Stop"
@@ -19,20 +22,25 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-# Confirmation hook / popup
-$installPrompt = "Do you want to install and launch OneShot E2E at '$InstallDir'?"
-try {
-    Add-Type -AssemblyName PresentationFramework -ErrorAction SilentlyContinue
-    $msgResult = [System.Windows.MessageBox]::Show($installPrompt, "OneShot Installation", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
-    if ($msgResult -ne [System.Windows.MessageBoxResult]::Yes) {
-        Write-Host "Installation cancelled by user." -ForegroundColor Yellow
-        exit 0
-    }
-} catch {
-    $confirm = Read-Host "$installPrompt [Y/n]"
-    if ($confirm -and $confirm.Trim().ToLower() -notmatch '^(y|yes)$') {
-        Write-Host "Installation cancelled by user." -ForegroundColor Yellow
-        exit 0
+# Confirmation hook / popup (bypassed if -Force, -Quiet, -Yes, or CI environment)
+if (-not ($Force -or $Quiet -or $Yes -or $env:CI -eq "true" -or $env:DEBIAN_FRONTEND -eq "noninteractive")) {
+    $installPrompt = "Do you want to install and launch OneShot E2E at '$InstallDir'?"
+    $shouldPromptGui = [Environment]::UserInteractive -and [System.IntPtr]::Size -gt 0 -and (-not [Console]::IsInputRedirected)
+    if ($shouldPromptGui) {
+        try {
+            Add-Type -AssemblyName PresentationFramework -ErrorAction SilentlyContinue
+            $msgResult = [System.Windows.MessageBox]::Show($installPrompt, "OneShot Installation", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+            if ($msgResult -ne [System.Windows.MessageBoxResult]::Yes) {
+                Write-Host "Installation cancelled by user." -ForegroundColor Yellow
+                exit 0
+            }
+        } catch {
+            $confirm = Read-Host "$installPrompt [Y/n]"
+            if ($confirm -and $confirm.Trim().ToLower() -notmatch '^(y|yes)$') {
+                Write-Host "Installation cancelled by user." -ForegroundColor Yellow
+                exit 0
+            }
+        }
     }
 }
 
