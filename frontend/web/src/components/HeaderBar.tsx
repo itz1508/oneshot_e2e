@@ -9,6 +9,7 @@ interface HeaderBarProps {
   onNewSession?: () => void;
   onClearHistory?: () => void;
   onOpenIntegration?: () => void;
+  onOpenArchitecture?: () => void;
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -20,6 +21,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   onNewSession,
   onClearHistory,
   onOpenIntegration,
+  onOpenArchitecture,
 }) => {
   return (
     <header className="h-[54px] min-h-[54px] px-4 flex items-center justify-between border-b border-white/5 bg-[#0d0d0e]/95 backdrop-blur-md z-20">
@@ -73,6 +75,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         <span className="text-[#65656a] hidden sm:inline">Context-aware</span>
 
         <button
+          id="openArchitectureBtn"
+          type="button"
+          onClick={onOpenArchitecture || (() => onToggleDrawer())}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-medium text-[#c7c7cc] hover:text-white transition-colors cursor-pointer"
+          title="View System Architecture Diagram"
+          aria-label="View System Architecture Diagram"
+        >
+          <span>🏛️</span>
+          <span className="hidden sm:inline">Architecture</span>
+        </button>
+
+        <button
           id="toggleIntegrationBtn"
           type="button"
           onClick={onOpenIntegration}
@@ -87,7 +101,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         <button
           id="toggleDrawerBtn"
           type="button"
-          onClick={onToggleDrawer}
+          onClick={() => onToggleDrawer()}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
             isDrawerOpen
               ? "bg-[#62c48d]/15 border-[#62c48d]/40 text-[#62c48d]"

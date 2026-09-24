@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-24T04:25:57Z",
+  "generated_at": "2026-09-24T04:41:32Z",
   "version": "1.3.0",
-  "commit": "6049aa0c",
+  "commit": "3deeb1f8",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -8255,8 +8255,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\App.tsx",
-      "size": 12418,
-      "hash": "sha256:2532d7e66dec3a44369d8a31eed255872b354f92c0c5a90a3de464ad76cbca0d",
+      "size": 12528,
+      "hash": "sha256:fe3b5c6101dc2611519f5214edf94809b71727cb7709bfea8a0919b002a43862",
       "category": "source"
     },
     {
@@ -8267,8 +8267,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\ContextReviewDrawer.tsx",
-      "size": 20614,
-      "hash": "sha256:59c9631677c6c0873dba56ad555cafdab96340107f7fa80913b5fb0e45c5470f",
+      "size": 23483,
+      "hash": "sha256:1aef1d3b49af0f7faaf354ac69638e63bc372c9ee787a7f3303142cbc57cfbc0",
       "category": "source"
     },
     {
@@ -8285,8 +8285,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\HeaderBar.tsx",
-      "size": 3995,
-      "hash": "sha256:fd8cd354414a967d548b2532a8d5efb8cdb79e396b1c438cd17eb5676f713270",
+      "size": 4642,
+      "hash": "sha256:199b49c7a816c30b9a2ab7b7695f9240f864c6eeedc2e9bb18f96e17e53c5d0d",
       "category": "source"
     },
     {
@@ -13621,7 +13621,7 @@
   "statistics": {
     "total_files": 2269,
     "source_files": 2269,
-    "total_size_bytes": 14615529,
+    "total_size_bytes": 14619155,
     "by_extension": {
       ".yml": 1,
       ".md": 14,

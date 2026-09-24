@@ -14,7 +14,7 @@ interface ContextReviewDrawerProps {
   item: EarlierContextItem | null;
   isOpen: boolean;
   onClose: () => void;
-  activeTab?: "context" | "task" | "backends";
+  activeTab?: "context" | "task" | "backends" | "architecture";
   runId?: string | null;
   runStatus?: "IDLE" | "RUNNING" | "COMPLETED" | "CANCELLED" | "FAILED";
   activitySteps?: ActivityStep[];
@@ -41,7 +41,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
   activitySteps = [],
   taskEvents = [],
 }) => {
-  const [tab, setTab] = useState<"context" | "task" | "backends">(activeTab);
+  const [tab, setTab] = useState<"context" | "task" | "backends" | "architecture">(activeTab);
   const [isTasksFlipped, setIsTasksFlipped] = useState(false);
   const [stages, setStages] = useState<any[]>([]);
   const [activeSkills, setActiveSkills] = useState<any[]>([]);
@@ -139,6 +139,18 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
           >
             <span>Backends</span>
             <span className="text-[10px] text-[#6e6e73]">4</span>
+          </button>
+          <button
+            id="tabArchitectureBtn"
+            type="button"
+            onClick={() => setTab("architecture")}
+            className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+              tab === "architecture"
+                ? "bg-white/10 text-white"
+                : "text-[#8e8e93] hover:text-white"
+            }`}
+          >
+            <span>🏛️ Architecture</span>
           </button>
         </div>
 
@@ -407,7 +419,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
               </div>
             )}
           </div>
-        ) : (
+        ) : tab === "backends" ? (
           /* BACKENDS & PARTITIONS TAB */
           <div className="space-y-4">
             <div>
@@ -465,7 +477,48 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
               ))}
             </div>
           </div>
-        )}
+        ) : tab === "architecture" ? (
+          /* ARCHITECTURE TAB */
+          <div className="space-y-4">
+            <div>
+              <strong className="block text-xs font-semibold text-[#dedede]">
+                OneShot Fleet Architecture
+              </strong>
+              <small className="block text-[9px] text-[#6e6e73]">
+                Google ADK Workflow · DeepAgents SSE · Gemini 3.5 Flash · Cloud Run
+              </small>
+            </div>
+
+            <div className="rounded-xl border border-white/10 overflow-hidden bg-[#0d0d11] p-1.5 shadow-xl">
+              <img
+                src="/demo/architecture-diagram.svg"
+                alt="OneShot Enterprise Architecture"
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+
+            <div className="p-3 rounded-lg border border-blue-500/20 bg-blue-500/5 space-y-1">
+              <span className="text-xs font-semibold text-blue-300">Layer 1: Canonical Web UI</span>
+              <p className="text-[11px] text-[#b0b0b8] leading-relaxed">
+                Next.js 16 App Router with DeepAgents SSE reactive projections (<code>stream.messages</code>, <code>stream.subagents</code>, <code>stream.tool_calls</code>, <code>stream.values.todos</code>) and Action API v2 client.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 space-y-1">
+              <span className="text-xs font-semibold text-emerald-300">Layer 2: ADK Runtime &amp; Reasoner</span>
+              <p className="text-[11px] text-[#b0b0b8] leading-relaxed">
+                Google ADK transition state machine, Gate 1 &amp; Gate 2 human review, offline Python Reasoner with SHA-256 fixture proof, and SessionLedger memory bank.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-lg border border-purple-500/20 bg-purple-500/5 space-y-1">
+              <span className="text-xs font-semibold text-purple-300">Layer 3: Google Cloud &amp; Models</span>
+              <p className="text-[11px] text-[#b0b0b8] leading-relaxed">
+                Gemini 3.5 Flash streaming with resilient gateway failover, Google Cloud Run serverless containerization, and OpenTelemetry telemetry.
+              </p>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
