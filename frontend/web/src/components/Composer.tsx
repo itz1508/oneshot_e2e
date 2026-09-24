@@ -57,6 +57,22 @@ export const Composer: React.FC<ComposerProps> = ({
     []
   );
 
+  // Auto-resize textarea for every text source: typing, quick tools, and external citations.
+  const resizeTextarea = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(
+      Math.max(textarea.scrollHeight, MIN_TEXTAREA_HEIGHT),
+      MAX_TEXTAREA_HEIGHT
+    )}px`;
+  }, []);
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [resizeTextarea, text]);
+
   useEffect(() => {
     if (externalText !== undefined) {
       setText(externalText);
@@ -68,9 +84,6 @@ export const Composer: React.FC<ComposerProps> = ({
     if (!text.trim() || isRunning || disabled) return;
     onSend(text.trim());
     setText("");
-    if (textareaRef.current) {
-      textareaRef.current.style.height = `${MIN_TEXTAREA_HEIGHT}px`;
-    }
   }, [text, isRunning, disabled, onSend]);
 
   // Memoized keyboard handler
@@ -84,16 +97,8 @@ export const Composer: React.FC<ComposerProps> = ({
     [handleSubmit]
   );
 
-  // Auto-resize textarea with memoized callback
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(
-        textareaRef.current.scrollHeight,
-        MAX_TEXTAREA_HEIGHT
-      )}px`;
-    }
   }, []);
 
   // Memoized quick tool handler
@@ -112,12 +117,7 @@ export const Composer: React.FC<ComposerProps> = ({
   const canSend = !isTextEmpty && !isRunning && !disabled;
 
   return (
-    <div
-      className={`fixed bottom-0 right-0 z-10 px-6 py-5 pointer-events-none transition-[left] duration-200 ${
-        isSidebarCollapsed ? "left-0" : "left-[248px]"
-      }`}
-      style={gradientStyle}
-    >
+      <div className="relative shrink-0 px-3 py-3 sm:px-6 sm:py-5" style={gradientStyle}>
       <div className="w-full max-w-[732px] mx-auto flex flex-col gap-2 pointer-events-auto">
         {/* Quick Tools Bar */}
         <section
@@ -147,6 +147,8 @@ export const Composer: React.FC<ComposerProps> = ({
         >
           <textarea
             id="composerInput"
+            name="message"
+            autoComplete="off"
             ref={textareaRef}
             value={text}
             onChange={handleTextChange}
@@ -156,7 +158,7 @@ export const Composer: React.FC<ComposerProps> = ({
             }
             rows={1}
             disabled={disabled || isRunning}
-            className="w-full min-h-[38px] max-h-[160px] bg-transparent border-0 outline-none resize-none text-sm text-white placeholder-[#77777d] leading-relaxed py-1 focus-visible:outline-none"
+            className="w-full min-h-[38px] max-h-[160px] overflow-y-auto bg-transparent border-0 outline-none resize-none text-sm text-white placeholder-[#77777d] leading-relaxed py-1 focus-visible:outline-none"
             aria-label="Message input"
             aria-describedby={isRunning ? "running-status" : undefined}
           />

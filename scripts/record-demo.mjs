@@ -30,7 +30,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const outputDir = path.join(repoRoot, "public", "demo");
 const webPublicDir = path.join(repoRoot, "frontend", "web", "public", "demo");
-const artifactDir = "C:\\Users\\itz15\\.gemini\\antigravity-ide\\brain\\57950c0e-0421-412a-958c-f5b02486dbbe\\demo";
+const artifactDir = path.join(
+  repoRoot,
+  "test-results",
+  "demo"
+);
 
 await fs.mkdir(outputDir, { recursive: true });
 await fs.mkdir(webPublicDir, { recursive: true });
@@ -38,12 +42,12 @@ await fs.mkdir(artifactDir, { recursive: true });
 
 console.log("🎬 Recording OneShot demo — real chat history + live streaming...");
 
-const edgePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
-
+// Repository-local and environment-configured browser resolution
 const browser = await chromium.launch({
-  executablePath: edgePath,
   headless: true,
-  args: ["--disable-gpu"],
+  ...(process.env.ONESHOT_BROWSER_EXECUTABLE
+    ? { executablePath: process.env.ONESHOT_BROWSER_EXECUTABLE }
+    : {}),
 });
 
 const context = await browser.newContext({

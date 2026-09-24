@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Session, ProviderId, ProviderConfig } from "../types";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
 
@@ -24,6 +24,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCollapse,
 }) => {
   const groups: ("Today" | "Yesterday" | "Previous")[] = ["Today", "Yesterday", "Previous"];
+  const [searchQuery, setSearchQuery] = useState("");
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const visibleSessions = normalizedSearch
+    ? sessions.filter((session) => session.title.toLowerCase().includes(normalizedSearch))
+    : sessions;
 
   return (
     <aside className="sidebar-shell">
@@ -68,11 +73,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>Restart &amp; Clear Chat</span>
           </button>
         )}
-        <div className="w-full h-8 flex items-center gap-2.5 px-2.5 rounded-lg text-sm text-[#8e8e93] hover:bg-white/5 transition-colors cursor-pointer">
-          <span className="text-sm">⌕</span>
-          <span className="text-xs">Search chats</span>
-        </div>
+        <div className="px-2 mt-2 space-y-1">
+          <label htmlFor="sidebarSearchInput" className="sr-only">Search chats</label>
+          <div className="w-full h-8 flex items-center gap-2.5 px-2.5 rounded-lg text-sm text-[#8e8e93] bg-white/[0.03] border border-white/5 focus-within:border-white/20">
+            <span aria-hidden="true" className="text-sm">⌕</span>
+            <input
+              id="sidebarSearchInput"
+              name="search-chats"
+              autoComplete="off"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search chats"
+              className="min-w-0 flex-1 bg-transparent text-xs text-[#d0d0d5] outline-none placeholder:text-[#65656a]"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear chat search"
+                className="text-[#77777d] hover:text-white"
+              >
+                ×
+              </button>
+            )}
+          </div>
       </div>
+       </div>
 
       {/* Integrations Section */}
       <div className="px-2 mt-3 pt-2 border-t border-white/5">
@@ -120,8 +146,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sessions History List */}
       <div className="flex-1 overflow-y-auto px-2 mt-3 pt-2 border-t border-white/5 space-y-3">
+        {normalizedSearch && visibleSessions.length === 0 ? (
+          <div className="px-2 py-3 text-xs text-[#8e8e93]">No chats match “{searchQuery}”.</div>
+        ) : null}
         {groups.map((group) => {
-          const groupSessions = sessions.filter((s) => s.dateGroup === group);
+          const groupSessions = visibleSessions.filter((s) => s.dateGroup === group);
           if (groupSessions.length === 0) return null;
 
           return (
@@ -143,7 +172,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           : "text-[#b0b0b5] hover:bg-white/5 hover:text-[#ececec]"
                       }`}
                     >
-                      <span className="truncate pr-2">{session.title}</span>
+                      <span className="truncate pr-2" title={session.title}>{session.title}</span>
                       <span className="text-[10px] text-[#65656a] shrink-0 font-mono-code">
                         {session.timestamp}
                       </span>

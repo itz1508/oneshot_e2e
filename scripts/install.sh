@@ -32,8 +32,9 @@ if ! command -v pnpm >/dev/null 2>&1; then
     echo "[2/3] Enabling pnpm package manager..."
     if command -v corepack >/dev/null 2>&1; then
         corepack enable >/dev/null 2>&1 || true
-    elif command -v npm >/dev/null 2>&1; then
-        npm install -g pnpm >/dev/null 2>&1 || true
+    else
+        echo "[ERROR] pnpm is required; enable Corepack or install pnpm 11.9.0." >&2
+        exit 1
     fi
 fi
 
@@ -48,7 +49,7 @@ echo "🌐 Starting OneShot console..."
 echo ""
 
 if [ ! -d "node_modules" ]; then
-    pnpm install
+    pnpm install --frozen-lockfile
 fi
 
 pnpm run oneshot

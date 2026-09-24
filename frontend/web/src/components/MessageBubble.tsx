@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, FC } from "react";
+import React, { useMemo, useCallback, useState, FC } from "react";
 import { Message } from "../types";
 import {
   extractStructuredOutput,
@@ -166,46 +166,41 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onSelectCitation,
 }) => {
   const isUser = message.role === "user";
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "unavailable">("idle");
+  const [forkStatus, setForkStatus] = useState<"idle" | "branched" | "unavailable">("idle");
 
   // Memoized copy handler
-  const handleCopy = useCallback(
-    async (e: React.MouseEvent<HTMLButtonElement>) => {
-      try {
-        await navigator.clipboard.writeText(message.content);
-        const target = e.currentTarget;
-        const originalText = target.textContent;
-        target.textContent = "✓ Copied";
-        setTimeout(() => {
-          target.textContent = originalText;
-        }, 1500);
-      } catch (err) {
-        console.error("Failed to copy:", err);
-      }
-    },
-    [message.content]
-  );
+  const handleCopy = useCallback(async () => {
+    try {
+      if (!navigator.clipboard) throw new Error("Clipboard API is unavailable");
+      await Promise.race([
+        navigator.clipboard.writeText(message.content),
+        new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("Clipboard permission timed out")), 750)),
+      ]);
+      setCopyStatus("copied");
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      setCopyStatus("unavailable");
+    }
+    window.setTimeout(() => setCopyStatus("idle"), 1500);
+  }, [message.content]);
 
   // Memoized fork handler
-  const handleFork = useCallback(
-    async (e: React.MouseEvent<HTMLButtonElement>) => {
-      try {
-        await fetch("/api/session/fork", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messageId: message.id }),
-        });
-        const target = e.currentTarget;
-        const originalText = target.textContent;
-        target.textContent = "⑂ Branch";
-        setTimeout(() => {
-          target.textContent = originalText;
-        }, 1500);
-      } catch (err) {
-        console.error("Failed to fork:", err);
-      }
-    },
-    [message.id]
-  );
+  const handleFork = useCallback(async () => {
+    try {
+      const response = await fetch("/api/session/fork", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId: message.id }),
+      });
+      if (!response.ok) throw new Error(`Fork request failed: ${response.status}`);
+      setForkStatus("branched");
+    } catch (err) {
+      console.error("Failed to fork:", err);
+      setForkStatus("unavailable");
+    }
+    window.setTimeout(() => setForkStatus("idle"), 1500);
+  }, [message.id]);
 
   // Memoized citation handler
   const handleCitationClick = useCallback(
@@ -228,7 +223,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         role="article"
         aria-label="User message"
       >
-        <div className="max-w-[82%] px-3.5 py-2.5 rounded-2xl rounded-br-sm border border-white/10 bg-[#171719] text-[#f2f2f3] text-sm leading-relaxed shadow-sm">
+        <div className="max-w-[82%] min-w-0 break-words overflow-wrap-anywhere px-3.5 py-2.5 rounded-2xl rounded-br-sm border border-white/10 bg-[#171719] text-[#f2f2f3] text-sm leading-relaxed shadow-sm">
           {message.content}
         </div>
       </article>
@@ -246,7 +241,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       </header>
       <div
         id={isLatest ? "asstContent" : undefined}
-        className="text-sm leading-relaxed text-[#d0d0d5]"
+        className="min-w-0 max-w-full break-words overflow-wrap-anywhere text-sm leading-relaxed text-[#d0d0d5]"
         role="region"
         aria-live={isLatest ? "polite" : "off"}
         aria-atomic="false"
@@ -270,20 +265,24 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         aria-label="Message actions"
       >
         <button
+          data-action="copy"
           type="button"
           onClick={handleCopy}
           className="px-2 py-1 rounded hover:bg-white/5 transition-colors cursor-pointer text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded-md"
           aria-label="Copy message to clipboard"
+          aria-live="polite"
         >
-          □ Copy
+          {copyStatus === "copied" ? "✓ Copied" : copyStatus === "unavailable" ? "Clipboard unavailable" : "□ Copy"}
         </button>
         <button
+          data-action="fork"
           type="button"
           onClick={handleFork}
           className="px-2 py-1 rounded hover:bg-white/5 transition-colors cursor-pointer text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded-md"
           aria-label="Fork conversation from this message"
+          aria-live="polite"
         >
-          ⑂ Fork
+          {forkStatus === "branched" ? "⑂ Branch" : forkStatus === "unavailable" ? "Fork unavailable" : "⑂ Fork"}
         </button>
       </div>
 

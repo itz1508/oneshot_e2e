@@ -387,6 +387,7 @@ export interface ResearcherWorkflowInput {
   vercelModel?: unknown;
   researcherAgent?: Agent;
   searchBackend?: TavilySearchBackend;
+  deterministicFixture?: boolean;
 }
 
 export interface ResearcherWorkflowOutput {
@@ -411,6 +412,7 @@ export async function runResearcherWorkflow(
     {
       depth: input.depth || "basic",
       maxResults: input.maxResults || 5,
+      deterministicFixture: input.deterministicFixture,
     },
     "agent"
   );
@@ -439,7 +441,7 @@ export async function runResearcherWorkflow(
   }
 
   if (!summary) {
-    summary = searchResult.results[0]?.content || "Research synthesis verified.";
+    summary = searchResult.results[0]?.content || "No research synthesis was returned.";
   }
 
   return {
@@ -447,7 +449,7 @@ export async function runResearcherWorkflow(
     summary,
     response: searchResult,
     citationsMarkdown,
-    verified: true,
+    verified: searchResult.results.length > 0,
   };
 }
 

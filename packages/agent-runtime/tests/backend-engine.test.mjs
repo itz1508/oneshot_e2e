@@ -106,7 +106,10 @@ describe("OneShot Canonical Workflow Engine (Backend)", () => {
 describe("OneShot Tavily Research Engine (Backend)", () => {
   it("executes search query and returns structured results with scores", async () => {
     const research = new TavilySearchBackend();
-    const response = await research.search("OneShot architecture invariants", { depth: "advanced", maxResults: 3 });
+    const response = await research.search(
+      "OneShot architecture invariants",
+      { depth: "advanced", maxResults: 3, deterministicFixture: true }
+    );
 
     assert.strictEqual(response.query, "OneShot architecture invariants");
     assert.strictEqual(response.depth, "advanced");
@@ -118,10 +121,18 @@ describe("OneShot Tavily Research Engine (Backend)", () => {
 
   it("formats citations markdown correctly", async () => {
     const research = new TavilySearchBackend();
-    const response = await research.search("TypeScript ESM contracts");
+    const response = await research.search("TypeScript ESM contracts", { deterministicFixture: true });
     const markdown = research.formatCitationsMarkdown(response);
     assert.ok(markdown.includes("[1]"));
     assert.ok(markdown.includes("http"));
+  });
+
+  it("rejects live research when Tavily is not configured", async () => {
+    const research = new TavilySearchBackend();
+    await assert.rejects(
+      () => research.search("No provider should be silently substituted"),
+      /Research search is unavailable/
+    );
   });
 
   it("validates empty query input with descriptive error", async () => {
@@ -201,7 +212,7 @@ describe("OneShot Session Ledger (Backend)", () => {
 describe("DeepAgents Pluggable Sandboxed Backends (Backend)", () => {
   it("enforces path traversal containment in FilesystemBackend", () => {
     const backend = new FilesystemBackend({
-      rootDir: "D:/oneshot_e2e",
+      rootDir: process.cwd(),
       virtualMode: true,
     });
 

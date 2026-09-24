@@ -7,6 +7,7 @@ configuration, manifest, tests, and security.
 """
 
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -86,22 +87,24 @@ def check_environment() -> bool:
         print_check("Node.js", False, str(e))
         passed = False
     
-    # Check npm
-    try:
-        result = subprocess.run(['npm', '--version'], capture_output=True, text=True, timeout=5)
-        version = result.stdout.strip()
-        # Extract major version
-        major = int(version.split('.')[0])
-        if major >= 11:
-            print_check("npm", True, f"{version} (required: >=11.8.0)")
-        else:
-            print_check("npm", True, f"{version} (required: >=11.8.0)")
-    except FileNotFoundError:
-        # Try npm via node_modules/.bin or via npm command via node
-        # On some Windows setups, npm is not in PATH
-        print_check("npm", True, "installed via npm run (not in PATH)")
-    except Exception as e:
-        print_check("npm", True, f"installed via npm run (not in PATH)")
+    # Check pnpm
+    pnpm_command = shutil.which('pnpm') or shutil.which('pnpm.cmd')
+    if not pnpm_command:
+        print_check("pnpm", False, "not found; enable Corepack or install pnpm 11.9.0")
+        passed = False
+    else:
+        try:
+            result = subprocess.run([pnpm_command, '--version'], capture_output=True, text=True, timeout=5)
+            version = result.stdout.strip()
+            major = int(version.split('.')[0])
+            if major >= 11:
+                print_check("pnpm", True, f"{version} (required: >=11.9.0)")
+            else:
+                print_check("pnpm", False, f"{version} (required: >=11.9.0)")
+                passed = False
+        except Exception as e:
+            print_check("pnpm", False, str(e))
+            passed = False
     
     # Check Python
     try:
@@ -210,7 +213,7 @@ def check_build_outputs() -> bool:
     if backend_js.exists():
         print_check("dist/backend/index.js", True, "exists")
     else:
-        print_check("dist/backend/index.js", False, "not found (run: npm run build:backend)")
+        print_check("dist/backend/index.js", False, "not found (run: pnpm run build:backend)")
         passed = False
     
     # Check frontend
@@ -218,7 +221,7 @@ def check_build_outputs() -> bool:
     if frontend_dist.exists():
         print_check("frontend/web/dist", True, "exists")
     else:
-        print_check("frontend/web/dist", False, "not found (run: npm run build:ui)")
+        print_check("frontend/web/dist", False, "not found (run: pnpm run build:ui)")
         passed = False
     
     return passed

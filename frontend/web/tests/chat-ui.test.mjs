@@ -26,6 +26,39 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
     }
   });
 
+  it("keeps executable and test paths portable", () => {
+    const executableFiles = [
+      "e2e/researcher-preview.spec.ts",
+      "scripts/inspect-ui.mjs",
+      "scripts/diagnose-stream.mjs",
+      "scripts/record-demo.mjs",
+      "app/bootstrap/demo.mjs",
+      "app/bootstrap/setup.sh",
+      "scripts/install.sh",
+      "scripts/validate-env.mjs",
+      "frontend/web/scripts/check.mjs",
+    ];
+    const forbidden = /(?:[A-Za-z]:\\Users\\|[A-Za-z]:\\Program Files\\|\/home\/runner\/|\/Users\/)/;
+
+    for (const file of executableFiles) {
+      assert.doesNotMatch(read(file), forbidden, `${file} must not contain workstation paths`);
+    }
+  });
+
+  it("verifies the canonical composer auto-growing for typed, quick-tool, and citation text", () => {
+    const composerSrc = read("frontend/web/src/components/Composer.tsx");
+
+    assert.match(composerSrc, /resizeTextarea/);
+    assert.match(composerSrc, /scrollHeight/);
+    assert.match(composerSrc, /MAX_TEXTAREA_HEIGHT/);
+    assert.match(composerSrc, /\[resizeTextarea, text\]/);
+    assert.match(composerSrc, /setText\(prompt\)/);
+    assert.match(composerSrc, /setText\(externalText\)/);
+    assert.match(composerSrc, /overflow-y-auto/);
+    assert.match(composerSrc, /name="message"/);
+    assert.match(composerSrc, /autoComplete="off"/);
+  });
+
   it("verifies Next.js App Router entrypoints exist", () => {
     assert.ok(existsSync(join(root, "frontend/web/app/layout.tsx")), "layout.tsx must exist");
     assert.ok(existsSync(join(root, "frontend/web/app/page.tsx")), "page.tsx must exist");

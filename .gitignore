@@ -27,6 +27,9 @@ app/env/.env.local
 server.log
 server-err.log
 test-results/
+screenshots/
+artifacts/
+demo-artifacts/
 coverage/
 .nyc_output/
 test.txt

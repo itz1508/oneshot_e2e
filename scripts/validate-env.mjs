@@ -97,8 +97,8 @@ console.log("");
 console.log("Configuration valid!");
 console.log("");
 console.log("Next steps:");
-console.log("  1. Test network: node scripts/test-network-connection.mjs");
-console.log("  2. Start server: npm start");
+console.log("  1. Test network: pnpm exec node scripts/test-network-connection.mjs");
+console.log("  2. Start server: pnpm run start");
 console.log("  3. Open browser: http://localhost:" + port);
 console.log("");
 

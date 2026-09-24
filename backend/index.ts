@@ -855,33 +855,18 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             }));
             return;
           } catch (tavilyErr: any) {
-            console.error("[tavily] Live call failed, falling back to structured citations:", tavilyErr.message);
+            console.error("[tavily] Live call failed:", tavilyErr.message);
+            res.writeHead(503, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({
+              error: "Research search is currently unavailable because the live provider request failed.",
+            }));
+            return;
           }
         }
 
-        res.writeHead(200, { "Content-Type": "application/json" });
+        res.writeHead(503, { "Content-Type": "application/json" });
         res.end(JSON.stringify({
-          query,
-          results: [
-            {
-              title: `${query} — Architecture and Invariants Analysis`,
-              url: `https://strandsagents.com/docs/research/${encodeURIComponent(query.toLowerCase().replace(/\\s+/g, "-"))}`,
-              content: `Verified evidence for '${query}'. Single-agent workflow with non-bypassable human gates (Research Review and Build Ready) ensures verified transitions and persistent state.`,
-              score: 0.98,
-            },
-            {
-              title: `Implementation Guidelines: ${query}`,
-              url: `https://docs.oneshot.dev/specs/${encodeURIComponent(query.toLowerCase().replace(/\\s+/g, "-"))}`,
-              content: `Deterministic pipeline contracts and AG-UI protocol integration for '${query}'. Contextual memory partitions maintain clear boundaries across execution phases.`,
-              score: 0.92,
-            },
-            {
-              title: `Empirical Benchmarks: ${query}`,
-              url: `https://benchmark.oneshot.dev/eval/${encodeURIComponent(query.toLowerCase().replace(/\\s+/g, "-"))}`,
-              content: `Performance evaluation and latency metrics for '${query}' comparing ESM native execution against traditional graph orchestrators.`,
-              score: 0.88,
-            },
-          ],
+          error: "Research search is currently unavailable because TAVILY_API_KEY is not configured.",
         }));
         return;
       }

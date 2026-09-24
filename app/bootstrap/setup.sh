@@ -21,25 +21,25 @@ if [ "$NODE_MAJOR" -lt 24 ]; then
 fi
 echo "[OK] Node.js $NODE_VERSION"
 
-# Check npm
-echo "[2/7] Checking npm..."
-if ! command -v npm &> /dev/null; then
-    echo "[ERROR] npm not found"
+# Check pnpm
+if ! command -v pnpm &> /dev/null; then
+    echo "[ERROR] pnpm not found"
+    echo "Install Node.js >= 24.13.0 and enable Corepack, then run: corepack enable"
     exit 1
 fi
-echo "[OK] npm found"
+echo "[OK] pnpm found"
 
 # Install dependencies
 echo "[3/7] Installing dependencies..."
-npm install
+pnpm install --frozen-lockfile
 
 # Build backend
 echo "[4/7] Building backend..."
-npm run build:backend
+pnpm run build:backend
 
 # Build frontend
 echo "[5/7] Building frontend..."
-npm run build:ui
+pnpm run build:ui
 
 # Generate manifest
 echo "[6/7] Generating manifest..."
@@ -52,7 +52,7 @@ python3 app/scripts/verify_all.py || echo "[WARNING] Verification reported issue
 echo ""
 echo "Setup complete!"
 echo ""
-echo "Start server: npm start"
+echo "Start server: pnpm run start"
 echo ""
-echo "Open browser: http://localhost:8080"
+echo "Open browser: http://localhost:8787"
 echo ""

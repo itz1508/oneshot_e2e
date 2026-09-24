@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useOverlayFocus } from "../lib/useOverlayFocus";
 import { EarlierContextItem, ActivityStep } from "../types";
 import { CANONICAL_BACKEND_PARTITIONS } from "../lib/api";
 
@@ -46,6 +47,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
   const [stages, setStages] = useState<any[]>([]);
   const [activeSkills, setActiveSkills] = useState<any[]>([]);
   const [serverAuditLogs, setServerAuditLogs] = useState<any[]>([]);
+  const drawerRef = useOverlayFocus<HTMLDivElement>(isOpen, onClose);
 
   const fetchAuditLogs = () => {
     fetch("/api/session/audit-logs")
@@ -80,21 +82,16 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
     if (activeTab) setTab(activeTab);
   }, [activeTab]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
   return (
     <div
+      ref={drawerRef}
       id="contextDrawer"
       className={`context-review-drawer ${isOpen ? "open" : ""}`}
       aria-hidden={!isOpen}
+      aria-label="Context review drawer"
+      role="dialog"
+      aria-modal="true"
+      inert={!isOpen}
       data-testid="context-review-drawer"
     >
       {/* Header with Tab Switcher */}

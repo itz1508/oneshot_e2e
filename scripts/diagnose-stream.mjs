@@ -3,8 +3,13 @@
  */
 import { chromium } from "@playwright/test";
 
-const edgePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
-const browser = await chromium.launch({ executablePath: edgePath, headless: true });
+// Repository-local and environment-configured browser resolution
+const browser = await chromium.launch({
+  headless: true,
+  ...(process.env.ONESHOT_BROWSER_EXECUTABLE
+    ? { executablePath: process.env.ONESHOT_BROWSER_EXECUTABLE }
+    : {}),
+});
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await context.newPage();
 

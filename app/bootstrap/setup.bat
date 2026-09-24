@@ -19,31 +19,28 @@ if %NODE_MAJOR% LSS 24 (
 )
 echo [OK] Node.js %NODE_VER%
 
-:: Check npm
-echo [2/7] Checking npm...
-npm --version >nul 2>&1
+:: Check pnpm
+echo [2/7] Checking pnpm...
+pnpm --version >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] npm not found
+    echo [ERROR] pnpm not found
+    echo Enable Corepack or install pnpm 11.9.0, then try again.
     exit /b 1
 )
-for /f "tokens=1 delims=." %%a in ('npm --version') do set NPM_MAJOR=%%a
-if %NPM_MAJOR% LSS 11 (
-    echo [WARNING] npm version may be too old
-)
-echo [OK] npm found
+echo [OK] pnpm found
 
 :: Install dependencies
 echo [3/7] Installing dependencies...
-call npm install
+call pnpm install --frozen-lockfile
 if errorlevel 1 (
-    echo [ERROR] npm install failed
+    echo [ERROR] pnpm install failed
     exit /b 1
 )
 echo [OK] Dependencies installed
 
 :: Build backend
 echo [4/7] Building backend...
-call npm run build:backend
+call pnpm run build:backend
 if errorlevel 1 (
     echo [ERROR] Backend build failed
     exit /b 1
@@ -52,7 +49,7 @@ echo [OK] Backend built
 
 :: Build frontend
 echo [5/7] Building frontend...
-call npm run build:ui
+call pnpm run build:ui
 if errorlevel 1 (
     echo [ERROR] Frontend build failed
     exit /b 1
@@ -80,7 +77,7 @@ if errorlevel 1 (
 echo.
 echo Setup complete!
 echo.
-echo Start server: npm start
+echo Start server: pnpm run start
 echo.
-echo Open browser: http://localhost:8080
+echo Open browser: http://localhost:8787
 echo.

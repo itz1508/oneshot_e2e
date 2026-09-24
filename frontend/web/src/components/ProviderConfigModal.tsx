@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useOverlayFocus } from "../lib/useOverlayFocus";
 import { ProviderId, ProviderConfig } from "../types";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
 
@@ -38,6 +39,7 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const [statusText, setStatusText] = useState("Checking server readiness...");
   const [isChecking, setIsChecking] = useState(false);
   const [serverStatus, setServerStatus] = useState<Record<string, { configured: boolean }>>({});
+  const modalRef = useOverlayFocus<HTMLDivElement>(isOpen, onClose);
 
   const def = PROVIDER_DEFINITIONS[activeProvider];
 
@@ -138,18 +140,22 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
   return (
     <div
+      ref={modalRef}
       id="providerModal"
       className={`modal-veil ${isOpen ? "open" : ""}`}
       onClick={(e) => e.target === e.currentTarget && onClose()}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") onClose();
+      }}
     >
-      <div className="provider-modal p-5" role="dialog" aria-labelledby="modal-title">
+      <div className="provider-modal p-5" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description">
         {/* Modal Head */}
         <div className="flex items-start justify-between pb-3.5 border-b border-white/10">
           <div>
             <h2 id="modal-title" className="text-sm font-semibold text-[#f2f2f3]">
               Integration &amp; Provider Status
             </h2>
-            <p className="text-xs text-[#838d9a] mt-0.5">
+            <p id="modal-description" className="text-xs text-[#838d9a] mt-0.5">
               Select active model &amp; configure credentials. Credentials are saved directly to server environment.
             </p>
           </div>
@@ -240,11 +246,14 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             <div className="flex items-center gap-2">
               <input
                 id="apiKeyInput"
+                name="api-key"
+                autoComplete="off"
+                spellCheck={false}
                 data-testid="api-key-input"
-                type="text"
                 value={apiKey}
+                type="text"
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder={`Enter ${def.name} API Key (e.g. AIzaSy... or sk-...)`}
+                placeholder={`Enter ${def.name} API Key (e.g. AIzaSy… or sk-…)`}
                 className="flex-1 h-8 px-2.5 rounded-md border border-white/15 bg-[#101216] text-white text-xs outline-none focus:border-[#79a8ea] font-mono-code placeholder-[#555]"
               />
               <button
@@ -254,7 +263,7 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                 disabled={isSavingKey || !apiKey.trim()}
                 className="h-8 px-3 rounded-md bg-[#3f6ba8] hover:bg-[#4d7fc4] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium cursor-pointer transition-colors whitespace-nowrap"
               >
-                {isSavingKey ? "Saving..." : "Save Key"}
+                {isSavingKey ? "Saving…" : "Save Key"}
               </button>
             </div>
             {saveSuccessMsg && (
@@ -298,7 +307,7 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
               disabled={isChecking}
               className="h-8 px-3 rounded-md border border-white/15 bg-[#262b34] hover:bg-[#323944] text-[#f2f2f3] text-xs font-medium cursor-pointer transition-colors"
             >
-              {isChecking ? "Probing server..." : "Check server status"}
+              {isChecking ? "Probing server…" : "Check server status"}
             </button>
             <button
               type="button"

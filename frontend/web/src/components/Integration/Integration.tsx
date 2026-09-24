@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useOverlayFocus } from "../../lib/useOverlayFocus";
 import { AuthloginGemini } from "./Authlogin/Gemini";
 import { ModelGemini } from "./Model/Gemini";
 import { ModelOpenAI } from "./Model/OpenAI";
@@ -30,6 +31,7 @@ export const Integration: React.FC<IntegrationProps> = ({
     const [activeTab, setActiveTab] = useState<Tab>("models");
     const [activeProvider, setActiveProvider] = useState<ProviderId>(currentProvider || "gemini");
     const [activeModel, setActiveModel] = useState<string | undefined>(currentModel);
+    const integrationRef = useOverlayFocus<HTMLElement>(isOpen, onClose);
 
     // Sync with external props
     useEffect(() => {
@@ -46,15 +48,7 @@ export const Integration: React.FC<IntegrationProps> = ({
         [onProviderSwitch]
     );
 
-    // Trap focus and handle Escape key
-    useEffect(() => {
-        if (!isOpen) return;
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, onClose]);
+    // Focus is managed by the shared overlay hook.
 
     if (!isOpen) return null;
 
@@ -69,9 +63,12 @@ export const Integration: React.FC<IntegrationProps> = ({
 
             {/* Drawer panel */}
             <aside
-                className="fixed right-0 top-0 h-full w-[360px] z-50 bg-[#0f1117] border-l border-white/10 flex flex-col shadow-2xl"
-                role="complementary"
-                aria-label="Integration settings"
+              ref={integrationRef}
+              className="fixed right-0 top-0 h-[100dvh] w-[min(360px,100vw)] z-50 bg-[#0f1117] border-l border-white/10 flex flex-col shadow-2xl"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Integration settings"
+              inert={!isOpen}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
@@ -123,7 +120,7 @@ export const Integration: React.FC<IntegrationProps> = ({
                 </div>
 
                 {/* Scrollable content */}
-                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 overscroll-contain">
                     {activeTab === "models" && (
                         <>
                             <p className="text-[10px] text-[#838d9a] leading-relaxed">

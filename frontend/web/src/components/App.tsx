@@ -73,9 +73,11 @@ const AppContent: React.FC = () => {
     planData, isGate1Confirmed, isConfirmingGate, systemStatusText,
     handleSelectSession, handleNewSession, handleClearHistory, handleRefreshSystemStatus,
     handleSyncPlan, handleConfirmGate1, handleAbort, handleSendMessage, handleConfigSaved,
+    startupError, isStarting,
   } = session;
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerTab, setDrawerTab] = useState<"context" | "task" | "backends" | "architecture">("context");
   const [selectedContext, setSelectedContext] = useState<EarlierContextItem | null>(null);
@@ -92,6 +94,16 @@ const AppContent: React.FC = () => {
     () => sessions.find((s) => s.id === activeSessionId) || sessions[0],
     [sessions, activeSessionId]
   );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)')
+    const handleChange = () => {
+      if (mediaQuery.matches) setIsMobileSidebarOpen(false)
+    }
+    handleChange()
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, []);
 
   useEffect(() => {
     if (!chatScrollRef.current) return;
@@ -147,6 +159,11 @@ const AppContent: React.FC = () => {
     [isDrawerOpen, drawerTab, selectedContext, activeSession?.earlierContext]
   );
 
+  const handleClearHistoryWithConfirmation = useCallback(() => {
+    if (!window.confirm("Clear the current chat history? This action cannot be undone.")) return;
+    void handleClearHistory();
+  }, [handleClearHistory]);
+
   const onSend = useCallback(
     (text: string) => {
       setDrawerTab("task");
@@ -168,44 +185,68 @@ const AppContent: React.FC = () => {
 
   return (
     <ErrorBoundary>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[400] focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:text-black"
+      >
+        Skip to conversation
+      </a>
       <div
         className={`app-shell ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}
         role="application"
         aria-label="OneShot Agent Chat"
       >
+        <h1 className="sr-only">OneShot Agent Chat</h1>
         {!isSidebarCollapsed && (
-          <nav
-            className="relative h-screen w-[248px] z-40"
-            aria-label="Session Navigation"
-          >
+          <>
+            {isMobileSidebarOpen && (
+              <button
+                type="button"
+                className="fixed inset-0 z-[35] bg-black/55 md:hidden"
+                aria-label="Close navigation"
+                onClick={() => setIsMobileSidebarOpen(false)}
+              />
+            )}
+            <nav
+              className={`app-sidebar-nav ${isMobileSidebarOpen ? 'mobile-open' : ''}`}
+              aria-label="Session Navigation"
+            >
             <Sidebar
               sessions={sessions}
               activeSessionId={activeSessionId}
               onSelectSession={handleSelectSession}
               onNewSession={handleNewSession}
-              onClearHistory={handleClearHistory}
+              onClearHistory={handleClearHistoryWithConfirmation}
               onOpenProviderModal={(p) => {
                 setModalProviderId(p);
                 setIsProviderModalOpen(true);
               }}
               providerConfigs={providerConfigs}
-              onCollapse={() => setIsSidebarCollapsed(true)}
+              onCollapse={() => {
+                setIsSidebarCollapsed(true)
+                setIsMobileSidebarOpen(false)
+              }}
             />
           </nav>
+           </>
         )}
 
-        <div className="relative flex flex-col h-screen min-w-0 bg-[#0d0d0e] overflow-hidden">
+        <div className="app-content relative flex min-h-0 flex-1 flex-col bg-[#0d0d0e] overflow-hidden">
           <header className="flex-shrink-0 z-30">
             <HeaderBar
               isSidebarCollapsed={isSidebarCollapsed}
-              onExpandSidebar={() => setIsSidebarCollapsed(false)}
+              onExpandSidebar={() => {
+                setIsSidebarCollapsed(false)
+                setIsMobileSidebarOpen(true)
+              }}
+              onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
               isDrawerOpen={isDrawerOpen}
               onToggleDrawer={() => handleToggleDrawer()}
               activeModelName={
                 PROVIDER_DEFINITIONS[modalProviderId]?.models[0] || "OneShot"
               }
               onNewSession={handleNewSession}
-              onClearHistory={handleClearHistory}
+              onClearHistory={handleClearHistoryWithConfirmation}
               onOpenIntegration={() => setIsIntegrationOpen(true)}
               onOpenArchitecture={() => handleToggleDrawer("architecture")}
             />
@@ -213,11 +254,26 @@ const AppContent: React.FC = () => {
 
           <main
             ref={chatScrollRef}
-            className="flex-1 overflow-y-auto px-5 pt-4 pb-36"
+            className="min-h-0 flex-1 overflow-y-auto px-5 pt-4 pb-4"
             role="main"
             aria-label="Chat Messages and Activity"
+            id="main-content"
+            tabIndex={-1}
           >
             <div className="w-full max-w-[780px] mx-auto space-y-4">
+              {isStarting && (
+                <div className="rounded-xl border border-white/10 bg-[#141416] p-3 text-xs text-[#b0b0b5]" role="status" aria-live="polite">
+                  Loading workspace state…
+                </div>
+              )}
+              {startupError && (
+                <div className="rounded-xl border border-[#e5a84b]/30 bg-[#e5a84b]/10 p-3 text-xs text-[#e5a84b]" role="alert">
+                  <div>{startupError}</div>
+                  <button type="button" onClick={() => window.location.reload()} className="mt-2 underline hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20">
+                    Retry connection
+                  </button>
+                </div>
+              )}
               <ResearchBanner
                 systemStatusText={systemStatusText}
                 onRefreshStatus={handleRefreshSystemStatus}
