@@ -1258,17 +1258,19 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           };
 
           const pLower = prompt.toLowerCase();
-          const isFixture = /fixture|test|validat|proof|rule|schema|pass/i.test(pLower);
+          const isFixture = /fixture|test|validat|proof|rule|schema|pass|gap/i.test(pLower);
           const isGate = /gate|status|stage|plan|review/i.test(pLower);
           const isResearch = /research|search|tavily|find/i.test(pLower);
           const isBuild = /build|compile|deploy|finish/i.test(pLower);
+          const isGap = /gap|reconcil|diff/i.test(pLower);
 
           if (isFixture) {
             await emitDelta("Operating in **OneShot Zero-Config Local Mode** (No API Key Required).\n");
             await emitDelta("Executing **Standalone Python Reasoning Engine** (`backend/python/`):\n\n");
 
             try {
-              for await (const pyDelta of streamPythonReasoning({ runId, prompt, task: isGate ? "planner" : isResearch ? "researcher" : "general" }, ac.signal)) {
+              const pyTask = isGap ? "gap-analysis" : isGate ? "planner" : isResearch ? "researcher" : "general";
+              for await (const pyDelta of streamPythonReasoning({ runId, prompt, task: pyTask }, ac.signal)) {
                 if (ac.signal.aborted) break;
                 await emitDelta(pyDelta);
               }

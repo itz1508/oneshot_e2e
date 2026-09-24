@@ -36,7 +36,7 @@ await composer.click({ force: true });
 await composer.fill("validate fixtures and show workflow stage status");
 await page.waitForTimeout(500);
 
-console.log("=== Typed, about to submit...");
+console.log("=== Typed, about to submit by pressing ENTER key...");
 await page.keyboard.press("Enter");
 
 // Poll for 20s to detect any DOM change
@@ -60,6 +60,12 @@ for (let i = 0; i < 20; i++) {
   if (delta > 100) {
     detected = true;
     console.log("✅ DOM CHANGED! Content detected.");
+    const content = await page.evaluate(() => {
+      const main = document.querySelector('main');
+      return main ? main.innerText : document.body.innerText;
+    });
+    console.log("--- Visible Text ---");
+    console.log(content.slice(-800));
     break;
   }
 }

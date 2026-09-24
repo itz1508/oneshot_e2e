@@ -106,8 +106,6 @@ if (await existingChat.count() > 0) {
   console.log(`[${elapsed()}s] ✅ Clicked sidebar chat fallback`);
 }
 
-await page.screenshot({ path: path.join(outputDir, "screen-2-typing.png") });
-
 // ── [10s–22s] Scroll through real existing conversation content ────────────
 console.log(`[${elapsed()}s] 📜 Scrolling through real conversation content...`);
 
@@ -121,8 +119,6 @@ for (let i = 0; i < 7; i++) {
   await moveTo(720 + Math.sin(i * 0.5) * 50, 350 + i * 15, 8);
   await page.waitForTimeout(900);
 }
-
-await page.screenshot({ path: path.join(outputDir, "screen-3-streaming.png") });
 console.log(`[${elapsed()}s] ✅ Scrolled through existing content`);
 
 // Scroll back to top
@@ -150,31 +146,26 @@ await page.waitForTimeout(300);
 const compBox = await composer.boundingBox();
 if (compBox) await moveTo(compBox.x + compBox.width * 0.3, compBox.y + compBox.height / 2, 10);
 
-// Shorter prompt for faster response
-const PROMPT = "show workflow gate status and active stage details";
+// Prompt that activates local zero-config Python reasoning & fixture validation
+const PROMPT = "validate fixtures and run Python reasoning";
 await composer.pressSequentially(PROMPT, { delay: 65 });
-await page.waitForTimeout(600);
+await page.waitForTimeout(400);
+
+await page.screenshot({ path: path.join(outputDir, "screen-2-typing.png") });
+console.log(`[${elapsed()}s] 📸 Captured screen-2-typing.png`);
+
+// Record baseline length BEFORE submitting
+const baselineLen = await page.evaluate(() => document.body.innerText.length);
+console.log(`[${elapsed()}s] Baseline before submit: ${baselineLen} chars`);
 
 // ── [34s–56s] Submit and wait for REAL streaming ──────────────────────────
-console.log(`[${elapsed()}s] ⚡ Submitting prompt...`);
+console.log(`[${elapsed()}s] ⚡ Submitting prompt via Enter key...`);
 await page.keyboard.press("Enter");
-await page.waitForTimeout(500);
 
-// Track /api/agent/stream request
-let streamRequestMade = false;
-page.on('request', req => {
-  if (req.url().includes('/api/agent/stream')) {
-    streamRequestMade = true;
-    console.log(`[${elapsed()}s] 🔗 /api/agent/stream called!`);
-  }
-});
-
-await moveTo(750, 500, 20);
+// Move mouse to center viewing area
+await moveTo(750, 450, 15);
 
 // Poll for DOM change
-const baselineLen = await page.evaluate(() => document.body.innerText.length);
-console.log(`[${elapsed()}s] Baseline: ${baselineLen} chars`);
-
 let responseFound = false;
 for (let i = 0; i < 20; i++) {
   await page.waitForTimeout(1000);
@@ -182,14 +173,16 @@ for (let i = 0; i < 20; i++) {
   const delta = currentLen - baselineLen;
   console.log(`[${elapsed()}s] [${i+1}s] body: ${currentLen} (Δ${delta > 0 ? '+' : ''}${delta})`);
   
-  if (delta > 80) {
+  if (delta > 80 && !responseFound) {
     responseFound = true;
     console.log(`[${elapsed()}s] ✅ Response rendered! +${delta} chars`);
+    await page.waitForTimeout(1500); // let more tokens stream in
     await page.screenshot({ path: path.join(outputDir, "screen-3-streaming.png") });
+    console.log(`[${elapsed()}s] 📸 Captured screen-3-streaming.png`);
     break;
   }
   
-  // Keep mouse moving while waiting
+  // Keep mouse moving smoothly while waiting
   await moveTo(750 + Math.sin(i * 0.7) * 80, 400 + Math.cos(i * 0.9) * 60, 8);
 }
 
