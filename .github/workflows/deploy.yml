@@ -35,10 +35,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install Root Dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck Agent Runtime
         run: npx tsc -p packages/agent-runtime/tsconfig.json --noEmit
@@ -59,24 +59,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
           cache-dependency-path: 'frontend/web/package.json'
 
       - name: Install Frontend Dependencies
         working-directory: frontend/web
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck Frontend
         working-directory: frontend/web
-        run: npm run typecheck
+        run: pnpm run typecheck
 
       - name: Run Frontend Contract Tests
         working-directory: frontend/web
-        run: npm test
+        run: pnpm test
 
       - name: Build Next.js Static Export
         working-directory: frontend/web
-        run: npm run build
+        run: pnpm run build
 
       - name: Setup GitHub Pages
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/rebuild-researcher-only'
