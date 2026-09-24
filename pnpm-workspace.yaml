@@ -4,6 +4,6 @@ packages:
   - "frontend/web"
   - "app/integration/*"
 
-onlyBuiltDependencies:
-  - esbuild
-  - msgpackr-extract
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: true
