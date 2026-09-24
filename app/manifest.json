@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-23T23:59:17Z",
+  "generated_at": "2026-09-24T00:08:20Z",
   "version": "1.3.0",
-  "commit": "ec36558b",
+  "commit": "4aa26e0c",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -8189,8 +8189,8 @@
     },
     {
       "path": "scripts\\record-demo.mjs",
-      "size": 3186,
-      "hash": "sha256:bf29598fbad10f23b2f334fcfbd7701a15ea09a2362b8c43ad1f7a610104f80e",
+      "size": 8615,
+      "hash": "sha256:13e3fcd79c05c061f865366151594db5e731546201ae376fda6e6e87066797b0",
       "category": "source"
     },
     {
@@ -8227,7 +8227,7 @@
   "statistics": {
     "total_files": 1370,
     "source_files": 1370,
-    "total_size_bytes": 2485494,
+    "total_size_bytes": 2490923,
     "by_extension": {
       ".yml": 1,
       ".md": 3,
