@@ -175,7 +175,7 @@ const AppContent: React.FC = () => {
       >
         {!isSidebarCollapsed && (
           <nav
-            className="fixed left-0 top-0 h-screen w-[248px] z-40"
+            className="relative h-screen w-[248px] z-40"
             aria-label="Session Navigation"
           >
             <Sidebar

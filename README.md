@@ -43,11 +43,23 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 <div align="center">
   <a href="public/demo/oneshot-demo.webm">
-    <img src="public/demo/ui-mock.jpg" alt="OneShot UI — Prompt composer on the left, real-time streaming response in the center, Task Rail with live stage events on the right" width="100%" />
+    <img src="public/demo/screen-4-interactive.png" alt="OneShot UI — Clean chat interface with real-time Python reasoning stream and Task Management Rail" width="100%" />
   </a>
   <br />
-  <sub>▶ Click to watch the full walkthrough video &nbsp;|&nbsp; Left: prompt input &nbsp;·&nbsp; Center: live streaming response &nbsp;·&nbsp; Right: Task Rail with real stage events</sub>
+  <sub>▶ <b><a href="public/demo/oneshot-demo.webm">Click to watch the full 60-second walkthrough video (oneshot-demo.webm)</a></b><br />Left: model picker & session navigation &nbsp;·&nbsp; Center: live streaming response with Python reasoner &nbsp;·&nbsp; Right: Task Rail with verified gates</sub>
 </div>
+
+---
+
+### 📸 Live Event Progression
+
+| 1. Context & Workspace | 2. Prompt & Planning Gate |
+|:---:|:---:|
+| <img src="public/demo/screen-1-initial.png" width="100%" alt="Clean workspace view" /><br /><sub><b>Initial UI</b>: Preserved context & model selection</sub> | <img src="public/demo/screen-2-typing.png" width="100%" alt="Prompt composer" /><br /><sub><b>Composer</b>: Architecture plan & human review gate</sub> |
+
+| 3. Live Python Reasoning Stream | 4. Deterministic Proof & Task Rail |
+|:---:|:---:|
+| <img src="public/demo/screen-3-streaming.png" width="100%" alt="Live stream deltas" /><br /><sub><b>Zero-Config Stream</b>: Real Python reasoning tokens</sub> | <img src="public/demo/screen-4-interactive.png" width="100%" alt="Task Management Rail" /><br /><sub><b>Task Rail</b>: Gate 1 & 2 approved, proof confirmed</sub> |
 
 ---
 
@@ -56,10 +68,10 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 | Step | What happens |
 |------|-------------|
 | **1. Enter prompt** | Type your task in the Prompt Composer and press Enter |
-| **2. Research streams** | Agent starts, real-time tokens stream into the response panel |
+| **2. Python Reasoner streams** | Zero-config standalone Python reasoner streams real tokens without requiring API keys |
 | **3. Task Rail fires** | Right panel shows live stage events: Research → Planning → Build → Review |
-| **4. Human gates** | Review cards appear at each stage boundary — inspect, approve, or reject |
-| **5. Result persists** | Final artifacts, logs, and hashes saved — verifiable, not fabricated |
+| **4. Human gates** | Review cards enforce Gate 1 (Research Review) and Gate 2 (Build Ready) before transitions |
+| **5. Result persists** | Deterministic fixture validation (`Expected == Observed`) and immutable records saved |
 
 ---
 

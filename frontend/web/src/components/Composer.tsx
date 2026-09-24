@@ -51,17 +51,6 @@ export const Composer: React.FC<ComposerProps> = ({
     }
   }, [externalText]);
 
-  // Memoized keyboard handler
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSubmit();
-      }
-    },
-    []
-  );
-
   // Memoized submit handler
   const handleSubmit = useCallback(() => {
     if (!text.trim() || isRunning || disabled) return;
@@ -71,6 +60,17 @@ export const Composer: React.FC<ComposerProps> = ({
       textareaRef.current.style.height = `${MIN_TEXTAREA_HEIGHT}px`;
     }
   }, [text, isRunning, disabled, onSend]);
+
+  // Memoized keyboard handler
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSubmit();
+      }
+    },
+    [handleSubmit]
+  );
 
   // Auto-resize textarea with memoized callback
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {

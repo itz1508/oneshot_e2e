@@ -54,5 +54,11 @@ Write-Host ""
 Write-Host "📍 Project Folder: $(Get-Location)" -ForegroundColor Cyan
 Write-Host "🌐 Launching OneShot console..." -ForegroundColor Cyan
 Write-Host ""
-
-& "$PSScriptRoot\start-web.ps1"
+$startScript = Join-Path $InstallDir "scripts\start-web.ps1"
+if (Test-Path $startScript) {
+    & $startScript
+} elseif ($PSScriptRoot -and (Test-Path (Join-Path $PSScriptRoot "start-web.ps1"))) {
+    & (Join-Path $PSScriptRoot "start-web.ps1")
+} else {
+    & .\scripts\start-web.ps1
+}

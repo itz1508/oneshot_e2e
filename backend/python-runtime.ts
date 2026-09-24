@@ -11,8 +11,17 @@
  */
 
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+export function resolvePythonBinary(pythonDir: string): string {
+  const venvWin = path.resolve(pythonDir, ".venv/Scripts/python.exe");
+  const venvUnix = path.resolve(pythonDir, ".venv/bin/python");
+  if (existsSync(venvWin)) return venvWin;
+  if (existsSync(venvUnix)) return venvUnix;
+  return "python";
+}
 
 export interface PythonReasoningInput {
   runId: string;
@@ -44,8 +53,9 @@ export async function* streamPythonReasoning(
   const rootDir = process.cwd();
   const pythonScript = path.resolve(rootDir, "backend/python/app/main.py");
   const pythonDir = path.resolve(rootDir, "backend/python");
+  const pythonCmd = resolvePythonBinary(pythonDir);
 
-  const pyProcess = spawn("python", [pythonScript, "--stream"], {
+  const pyProcess = spawn(pythonCmd, [pythonScript, "--stream"], {
     cwd: pythonDir,
     env: {
       ...process.env,
