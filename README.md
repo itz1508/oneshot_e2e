@@ -63,6 +63,14 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
+## 🏛️ System Architecture
+
+<div align="center">
+  <img src="public/demo/architecture-diagram.svg" alt="OneShot Enterprise Architecture — Google ADK, Gemini 3.5 Flash, DeepAgents SSE, and Cloud Run" width="100%" />
+</div>
+
+---
+
 ## 🔄 How It Works
 
 | Step | What happens |

@@ -30,17 +30,29 @@ export const Composer: React.FC<ComposerProps> = ({
   const QUICK_TOOLS = useMemo(
     () => [
       {
-        label: "🔍 Tavily Research",
-        prompt: "Research OneShot architecture and human gates",
+        label: "⚡ Audit System",
+        prompt: "Run complete system verification and audit all contracts",
       },
-      { label: "🎨 Generate UI Mockup", prompt: "Generate UI mockup for modern dashboard" },
       {
-        label: "📸 Capture Screenshot",
-        prompt: "Capture screenshot of active application viewport",
+        label: "🏗️ ADK Workflow",
+        prompt: "Inspect Google ADK multi-agent stage orchestration and human gates",
       },
-      { label: "📋 Human Gate Status", prompt: "Inspect workflow human gates status" },
-      { label: "🚀 Stage Transition", prompt: "Transition workflow stage to planning" },
-      { label: "💾 Git Snapshot", prompt: "Create git storage snapshot of workspace" },
+      {
+        label: "☁️ Cloud Run Deploy",
+        prompt: "Verify Cloud Run Docker container specification and deployment readiness",
+      },
+      {
+        label: "🔍 DeepAgents Stream",
+        prompt: "Research DeepAgents event streaming and real-time TodoList middleware",
+      },
+      {
+        label: "📋 Human Gate Status",
+        prompt: "Inspect workflow human gates status (Gate 1 & Gate 2)",
+      },
+      {
+        label: "💾 Snapshot State",
+        prompt: "Create immutable SessionLedger checkpoint of current workspace",
+      },
     ],
     []
   );
