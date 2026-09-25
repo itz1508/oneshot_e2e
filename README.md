@@ -127,6 +127,8 @@ pnpm run verify
 ```
 
 > **Requirements:** Node.js `>= 24.21.0` · pnpm `>= 11.27.1`
+>
+> These are minimum supported versions. CI pins Node.js `24.21.0` and pnpm `11.27.1` exactly for reproducible builds. Newer local versions are allowed when they satisfy the minimums and the lockfile remains reproducible.
 
 ---
 

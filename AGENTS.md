@@ -16,6 +16,17 @@ Never fabricate progress, assistant responses, tool execution, research results,
 - Git
 - Docker only for services that explicitly require containers
 
+The `engines` fields and local verification/bootstrap checks define minimum supported versions. The root `packageManager` field and CI use exact Node.js 24.21.0 and pnpm 11.27.1 pins so builds and lockfile resolution are reproducible; those pins do not prohibit locally using a newer version that satisfies the declared minimums.
+
+Current compatibility holds in `pnpm outdated` are intentional:
+
+- `openai` stays on 6.x because `@strands-agents/sdk@1.19.0` declares the peer range `^6.45.0`.
+- `@types/node` stays on 24.x to match the supported Node.js 24 runtime.
+- TypeScript stays on 5.9; TypeScript 7 is a separate compiler-major migration.
+- `undici-types` stays on 7.x, the line used by the Node.js 24 type definitions.
+
+A newer major reported by `pnpm outdated` is not, by itself, a reason to upgrade a dependency. Update held majors only as a coordinated compatibility change with tests and lockfile verification.
+
 ```powershell
 pnpm install --frozen-lockfile
 ```
