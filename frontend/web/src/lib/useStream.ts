@@ -14,6 +14,8 @@ import {
   BuildCompletedEvent,
   ValidationConfirmedEvent,
 } from "../types/invariants";
+import { streamAgentExecution } from "./api";
+import { ProviderId, ProviderConfig } from "../types";
 
 export interface UseStreamOptions {
   sessionId: string;
@@ -103,117 +105,54 @@ export function useStream({
       abortControllerRef.current = new AbortController();
 
       try {
-        const response = await fetch("/api/agent/stream", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "text/event-stream",
-          },
-          body: JSON.stringify({
-            sessionId,
-            prompt: content,
-            provider: providerId,
-          }),
-          signal: abortControllerRef.current.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Stream request failed with status: ${response.status}`);
-        }
-
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error("Response body is not readable");
-        }
-
-        const decoder = new TextDecoder();
+        const selectedProvider: ProviderId = providerId === "openai" || providerId === "nebius" ? providerId : "gemini";
+        const providerConfig: ProviderConfig = {
+          key: "",
+          model: "",
+          baseUrl: "",
+          temperature: "0.4",
+          configured: true,
+        };
         let accumulatedAssistantText = "";
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const rawData = line.slice(6).trim();
-              if (rawData === "[DONE]") continue;
-
-              try {
-                const parsed = JSON.parse(rawData);
-
-                // Handle text delta
-                if (parsed.type === "text-delta" || parsed.delta) {
-                  const delta = parsed.delta || parsed.text || "";
-                  accumulatedAssistantText += delta;
-                  setStreamingChunk(accumulatedAssistantText);
-                }
-
-                // Handle BuildCompleted event
-                if (parsed.type === "BuildCompleted" || parsed.event === "BuildCompleted") {
-                  const bEvent: BuildCompletedEvent = {
-                    type: "BuildCompleted",
-                    build_id: parsed.build_id || parsed.id || `build_${Date.now()}`,
-                    buildManifest: parsed.buildManifest || {
-                      build_id: parsed.build_id || `build_${Date.now()}`,
-                      commitHash: parsed.commitHash || "HEAD",
-                      artifacts: parsed.artifacts || [],
-                      manifestHash: parsed.manifestHash || "hash_valid",
-                      isValid: true,
-                    },
-                    timestamp: parsed.timestamp || Date.now(),
-                  };
-                  setLatestBuildEvent(bEvent);
-                  onBuildCompleted?.(bEvent);
-                }
-
-                // Handle ValidationConfirmed event
-                if (parsed.type === "ValidationConfirmed" || parsed.event === "ValidationConfirmed") {
-                  const vEvent: ValidationConfirmedEvent = {
-                    type: "ValidationConfirmed",
-                    validation_id: parsed.validation_id || parsed.id || `val_${Date.now()}`,
-                    validations: parsed.validations || [],
-                    allPassed: parsed.allPassed !== false,
-                    timestamp: parsed.timestamp || Date.now(),
-                  };
-                  setLatestValidationEvent(vEvent);
-                  onValidationConfirmed?.(vEvent);
-                }
-              } catch {
-                // Raw text stream chunk fallback
-                accumulatedAssistantText += rawData;
-                setStreamingChunk(accumulatedAssistantText);
+        await streamAgentExecution(
+          content,
+          {
+            onChunk: (delta) => {
+              accumulatedAssistantText += delta;
+              setStreamingChunk(accumulatedAssistantText);
+            },
+            onActivityStep: () => {
+              // Reference-only consumers do not project activity steps.
+            },
+            onDone: (fullContent) => {
+              if (!fullContent) {
+                setError("Agent stream completed without text output");
+                return;
               }
-            }
-          }
-        }
-
-        // Commit final assistant message
-        if (accumulatedAssistantText) {
-          const asstMsg: StreamMessage = {
-            id: assistantMessageId,
-            role: "assistant",
-            content: accumulatedAssistantText,
-            timestamp: new Date().toISOString(),
-          };
-          setMessages((prev) => [...prev, asstMsg]);
-        }
-      } catch (err: unknown) {
-        if ((err as Error)?.name === "AbortError") {
-          // Aborted gracefully by user
-        } else {
-          const errorMsg = err instanceof Error ? err.message : "Stream connection failed";
-          setError(errorMsg);
-        }
+              const asstMsg: StreamMessage = {
+                id: assistantMessageId,
+                role: "assistant",
+                content: fullContent,
+                timestamp: new Date().toISOString(),
+              };
+              setMessages((prev) => [...prev, asstMsg]);
+            },
+            onError: (streamError) => {
+              if (streamError.name !== "AbortError") setError(streamError.message);
+            },
+          },
+          abortControllerRef.current.signal,
+          { provider: selectedProvider, config: providerConfig },
+          sessionId,
+        );
       } finally {
         setIsStreaming(false);
         setStreamingChunk("");
         abortControllerRef.current = null;
       }
     },
-    [sessionId, isStreaming, onBuildCompleted, onValidationConfirmed]
+    [sessionId, isStreaming]
   );
 
   const conversation: ConversationState = {

@@ -47,10 +47,12 @@ describe("Action API v2 Frontend Client & SecurityWorker Interceptor", () => {
 
         if (url.includes("/api/v2/getStatus")) {
           return {
+            headers: { get: () => "application/json" },
             ok: true,
             status: 200,
             json: async () => ({
               ok: true,
+              operation: "getStatus",
               status: "healthy",
               currentStage: "research",
               gate1: { status: "pending" },
@@ -63,6 +65,7 @@ describe("Action API v2 Frontend Client & SecurityWorker Interceptor", () => {
 
         if (url.includes("/api/v2/errorOp")) {
           return {
+            headers: { get: () => "application/json" },
             ok: false,
             status: 400,
             statusText: "Bad Request",
@@ -71,6 +74,7 @@ describe("Action API v2 Frontend Client & SecurityWorker Interceptor", () => {
         }
 
         return {
+          headers: { get: () => "application/json" },
           ok: true,
           status: 200,
           json: async () => ({ ok: true, url, body: capturedBody }),

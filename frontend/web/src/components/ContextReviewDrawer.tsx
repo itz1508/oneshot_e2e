@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useOverlayFocus } from "../lib/useOverlayFocus";
 import { EarlierContextItem, ActivityStep } from "../types";
-import { CANONICAL_BACKEND_PARTITIONS } from "../lib/api";
+import { CANONICAL_BACKEND_PARTITIONS, isRecord, readJsonResponse } from "../lib/api";
 
 export interface TaskEvent {
   id: string;
@@ -46,32 +46,42 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
   const [isTasksFlipped, setIsTasksFlipped] = useState(false);
   const [gate1, setGate1] = useState<{ status: string; confirmedAt?: string } | null>(null);
   const [gate2, setGate2] = useState<{ status: string; confirmedAt?: string; packageHash?: string } | null>(null);
-  const [serverAuditLogs, setServerAuditLogs] = useState<any[]>([]);
+  const [serverAuditLogs, setServerAuditLogs] = useState<unknown[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const drawerRef = useOverlayFocus<HTMLDivElement>(isOpen, onClose);
 
-  const fetchAuditLogs = () => {
-    fetch("/api/session/audit-logs")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.logs) setServerAuditLogs(data.logs);
-      })
-      .catch(() => {});
+  const fetchAuditLogs = async () => {
+    const response = await fetch("/api/session/audit-logs");
+    const data = await readJsonResponse<{ logs?: unknown[] }>(response, "Audit log request");
+    if (!Array.isArray(data.logs)) {
+      throw new Error("Audit log response is missing logs array");
+    }
+    setServerAuditLogs(data.logs);
   };
 
   useEffect(() => {
     if (isOpen) {
-      fetch("/api/system/status")
-        .then((res) => res.json())
-        .then((data) => {
-          setGate1(data.gate1 || null);
-          setGate2(data.gate2 || null);
-        })
-        .catch(() => {
+      const loadDrawerState = async () => {
+        setLoadError(null);
+        try {
+          const response = await fetch("/api/system/status");
+          const statusData = await readJsonResponse<{ status?: string; currentStage?: string; gate1?: unknown; gate2?: unknown }>(response, "System status request");
+          const gate1 = statusData.gate1;
+          const gate2 = statusData.gate2;
+          if (!isRecord(gate1) || typeof gate1.status !== "string" || !isRecord(gate2) || typeof gate2.status !== "string") {
+            throw new Error("System status response has invalid gate payloads");
+          }
+          setGate1({ status: gate1.status, confirmedAt: typeof gate1.confirmedAt === "string" ? gate1.confirmedAt : undefined });
+          setGate2({ status: gate2.status, confirmedAt: typeof gate2.confirmedAt === "string" ? gate2.confirmedAt : undefined, packageHash: typeof gate2.packageHash === "string" ? gate2.packageHash : undefined });
+          await fetchAuditLogs();
+        } catch (error) {
           setGate1(null);
           setGate2(null);
-        });
-
-      fetchAuditLogs();
+          setServerAuditLogs([]);
+          setLoadError(error instanceof Error ? error.message : "Context data is currently unavailable.");
+        }
+      };
+      void loadDrawerState();
     }
   }, [isOpen]);
 
@@ -160,6 +170,11 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {loadError && (
+          <div role="alert" className="rounded-lg border border-[#e5a84b]/30 bg-[#e5a84b]/10 p-3 text-[11px] text-[#e5a84b]">
+            {loadError}
+          </div>
+        )}
         {tab === "context" ? (
           /* CONTEXT REVIEW TAB */
           <div className="space-y-4">

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { PROVIDER_DEFINITIONS } from "../../../lib/providers";
+import { readJsonResponse } from "../../../lib/api";
 
 interface ModelGeminiProps {
     sessionId?: string;
@@ -41,12 +42,9 @@ export const ModelGemini: React.FC<ModelGeminiProps> = ({
                 }),
             });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                setStatus("error");
-                setError(data.error || "Failed to switch provider");
-                return;
+            const data = await readJsonResponse<{ ok?: boolean; success?: boolean; provider?: string; model?: string }>(res, "Provider model request");
+            if (data.ok !== true || data.success !== true || data.provider !== "gemini" || data.model !== selectedModel) {
+                throw new Error("Provider model response did not confirm the requested model");
             }
 
             setStatus("saved");
@@ -62,11 +60,15 @@ export const ModelGemini: React.FC<ModelGeminiProps> = ({
     const handleCheckStatus = async () => {
         try {
             const res = await fetch("/api/providers/status");
-            const data = await res.json();
+            const data = await readJsonResponse<Record<string, { configured?: boolean; available?: boolean; latency?: number }>>(res, "Provider status request");
             const info = data.gemini;
-            setServerInfo({ available: info?.available, latency: info?.latency });
-        } catch {
+            if (!info || typeof info.configured !== "boolean") {
+                throw new Error("Gemini status response is missing configured");
+            }
+            setServerInfo({ available: info.available, latency: info.latency });
+        } catch (error) {
             setServerInfo({ available: false });
+            setError(error instanceof Error ? error.message : "Gemini status request failed");
         }
     };
 
@@ -106,9 +108,11 @@ export const ModelGemini: React.FC<ModelGeminiProps> = ({
                         aria-hidden="true"
                     />
                     <span className="text-[#838d9a]">
-                        {serverInfo.available
+                        {serverInfo.available === true
                             ? `Connected · ${serverInfo.latency}ms`
-                            : "Not reachable — check GEMINI_API_KEY in app/env/.env"}
+                            : serverInfo.available === false
+                                ? "Not reachable — check GEMINI_API_KEY in app/env/.env"
+                                : "Configured on server; availability not reported"}
                     </span>
                 </div>
             )}

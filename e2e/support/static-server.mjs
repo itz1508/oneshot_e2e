@@ -155,6 +155,8 @@ const server = http.createServer(async (req, res) => {
                     ok: true,
                     configured: true,
                     provider,
+                    model: model || `(default for ${provider})`,
+                    persisted: true,
                     message: `Credentials for ${provider} active and persisted to app/env/.env.`
                 }));
             } catch (err) {
@@ -189,16 +191,24 @@ const server = http.createServer(async (req, res) => {
                             searchDepth: parsed.searchDepth || "basic",
                             maxResults: parsed.maxResults || 5,
                         });
+                        if (!Array.isArray(response.results)) {
+                            throw new Error("Tavily response is missing results array");
+                        }
+                        const results = response.results.map((result) => {
+                            if (!result || typeof result.title !== "string" || !result.title || typeof result.url !== "string" || !result.url || typeof result.content !== "string" || !result.content) {
+                                throw new Error("Tavily response contains an invalid result record");
+                            }
+                            const url = new URL(result.url);
+                            if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("Tavily response contains a non-HTTP result URL");
+                            return {
+                                title: result.title,
+                                url: result.url,
+                                content: result.content,
+                                ...(typeof result.score === "number" ? { score: result.score } : {})
+                            };
+                        });
                         res.writeHead(200, { "Content-Type": "application/json" });
-                        res.end(JSON.stringify({
-                            query,
-                            results: (response.results || []).map(r => ({
-                                title: r.title,
-                                url: r.url,
-                                content: r.content,
-                                score: r.score || 0.95
-                            }))
-                        }));
+                        res.end(JSON.stringify({ query, results }));
                         return;
                     } catch (tavilyErr) {
                         console.error("[tavily] Live call failed:", tavilyErr.message);

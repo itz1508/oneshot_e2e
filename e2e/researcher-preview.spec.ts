@@ -112,8 +112,15 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
 
         // Trigger health endpoint and provider status
         await page.evaluate(async () => {
-            await fetch("/api/health").catch(() => {});
-            await fetch("/api/providers/status").catch(() => {});
+            const [healthResponse, statusResponse] = await Promise.all([
+                fetch("/api/health"),
+                fetch("/api/providers/status"),
+            ]);
+            if (!healthResponse.ok || !statusResponse.ok) throw new Error("Local API health probe failed");
+            const [health, status] = await Promise.all([healthResponse.json(), statusResponse.json()]);
+            if (health?.ok !== true || health?.status !== "healthy" || !status || typeof status !== "object") {
+                throw new Error("Local API health payload failed validation");
+            }
         });
 
         // Verify zero forbidden external network requests were made by the browser

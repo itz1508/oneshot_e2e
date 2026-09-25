@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { ApiResponseError, readJsonResponse } from "../../../lib/api";
 
 interface GeminiAuthState {
     status: "idle" | "checking" | "authenticated" | "unauthenticated" | "error";
@@ -35,17 +36,19 @@ export const AuthloginGemini: React.FC<AuthloginGeminiProps> = ({
             if (sessionId) headers["X-Session-Id"] = sessionId;
 
             const res = await fetch("/api/auth/google/status", { headers });
-            const data = await res.json();
-
-            if (data.isAuthenticated) {
-                setState({ status: "authenticated", user: data.user });
-                onAuthChange?.(true);
-            } else {
+            const data = await readJsonResponse<{ isAuthenticated?: boolean; user?: { email: string; name: string } }>(res, "Google auth status request");
+            if (data.isAuthenticated !== true || !data.user) {
+                throw new Error("Google auth status response is missing an authenticated user");
+            }
+            setState({ status: "authenticated", user: data.user });
+            onAuthChange?.(true);
+        } catch (error) {
+            if (error instanceof ApiResponseError && error.status === 401) {
                 setState({ status: "unauthenticated" });
                 onAuthChange?.(false);
+                return;
             }
-        } catch {
-            setState({ status: "unauthenticated" });
+            setState({ status: "error", error: error instanceof Error ? error.message : "Unable to read Google authentication status." });
         }
     };
 
@@ -55,14 +58,9 @@ export const AuthloginGemini: React.FC<AuthloginGeminiProps> = ({
         try {
             // Get the OAuth redirect URI from backend
             const res = await fetch("/api/auth/google/init");
-            const data = await res.json();
-
-            if (!data.redirectUri) {
-                setState({
-                    status: "error",
-                    error: "OAuth not configured. Add GOOGLE_OAUTH_CLIENT_ID to app/env/.env",
-                });
-                return;
+            const data = await readJsonResponse<{ redirectUri?: string; state?: string }>(res, "Google OAuth init request");
+            if (!data.redirectUri || !data.state) {
+                throw new Error("Google OAuth init response is missing redirectUri or state");
             }
 
             // If client_id is the placeholder, show config message
@@ -91,7 +89,11 @@ export const AuthloginGemini: React.FC<AuthloginGeminiProps> = ({
             const headers: Record<string, string> = { "Content-Type": "application/json" };
             if (sessionId) headers["X-Session-Id"] = sessionId;
 
-            await fetch("/api/auth/google/logout", { method: "POST", headers });
+            const response = await fetch("/api/auth/google/logout", { method: "POST", headers });
+            const data = await readJsonResponse<{ success?: boolean; message?: string }>(response, "Google logout request");
+            if (data.success !== true) {
+                throw new Error("Google logout response did not confirm logout");
+            }
             setState({ status: "unauthenticated" });
             onAuthChange?.(false);
         } catch (err: any) {

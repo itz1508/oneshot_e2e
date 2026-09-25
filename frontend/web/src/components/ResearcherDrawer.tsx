@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useOverlayFocus } from "../lib/useOverlayFocus";
 
+import { readJsonResponse } from "../lib/api";
+
 interface SearchResult {
   title: string;
   url: string;
@@ -36,18 +38,14 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: query.trim() }),
       });
-      const data = await res.json();
-      if (res.ok && Array.isArray(data.results)) {
-        setResults(data.results);
-      } else {
-        setResults([]);
-        setError(res.status === 401 || res.status === 403
-          ? "Research authentication is required before searching."
-          : "Research search is currently unavailable. Check the server connection and try again.");
+      const data = await readJsonResponse<{ query: string; results: SearchResult[] }>(res, "Research search request");
+      if (data.query !== query.trim() || !Array.isArray(data.results) || data.results.some((result) => !result.title || !result.url || !result.content)) {
+        throw new Error("Research search response failed its result contract");
       }
-    } catch {
+      setResults(data.results);
+    } catch (error) {
       setResults([]);
-      setError("Research search is currently unavailable. Check the server connection and try again.");
+      setError(error instanceof Error ? error.message : "Research search is currently unavailable. Check the server connection and try again.");
     } finally {
       setIsSearching(false);
     }
@@ -130,12 +128,12 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
             </div>
           )}
           <div className="text-[10px] font-semibold uppercase tracking-wider text-[#6e6e73]">
-            Verified Research Sources ({results.length})
+            Research Sources ({results.length})
           </div>
 
           {results.length === 0 && !isSearching && (
             <div className="text-[11px] text-[#6e6e73] italic py-2">
-              Enter a research query above to perform deep web search with verified citations.
+              Enter a research query above to perform live web sources and inspect the returned citations.
             </div>
           )}
 

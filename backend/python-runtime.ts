@@ -43,6 +43,39 @@ export interface PythonReasoningResponse {
   recommendation: string;
 }
 
+function parsePythonReasoningResponse(
+  value: unknown,
+  expectedRunId: string,
+  expectedTask: string,
+): PythonReasoningResponse {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Python reasoning response must be a JSON object");
+  }
+  const payload = value as Record<string, unknown>;
+  if (payload.run_id !== expectedRunId || payload.task !== expectedTask) {
+    throw new Error(`Python reasoning correlation mismatch: expected ${expectedRunId}/${expectedTask}, received ${String(payload.run_id)}/${String(payload.task)}`);
+  }
+  if (payload.success !== true || typeof payload.confidence !== "number" || payload.confidence < 0 || payload.confidence > 1) {
+    throw new Error("Python reasoning response failed its success/confidence contract");
+  }
+  if (!Array.isArray(payload.analysis) || !payload.analysis.every((item) => typeof item === "string")) {
+    throw new Error("Python reasoning response analysis must be a string array");
+  }
+  if (!Array.isArray(payload.findings) || !payload.findings.every((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return false;
+    const finding = item as Record<string, unknown>;
+    return typeof finding.code === "string" && typeof finding.severity === "string" && typeof finding.message === "string";
+  })) {
+    throw new Error("Python reasoning response findings failed their object contract");
+  }
+  if (!Array.isArray(payload.risks) || !payload.risks.every((item) => typeof item === "string") ||
+      !Array.isArray(payload.missing_evidence) || !payload.missing_evidence.every((item) => typeof item === "string") ||
+      typeof payload.recommendation !== "string" || !payload.recommendation) {
+    throw new Error("Python reasoning response risks/evidence/recommendation failed their contract");
+  }
+  return payload as unknown as PythonReasoningResponse;
+}
+
 /**
  * Execute Python reasoning via child process and yield real-time text deltas.
  */
@@ -147,16 +180,22 @@ export async function* streamPythonReasoning(
       const line = linesQueue.shift();
       if (!line) continue;
 
+      let parsed: unknown;
       try {
-        const parsed = JSON.parse(line);
-        if (parsed.type === "delta" && parsed.text) {
-          yield parsed.text;
-        } else if (parsed.type === "done" && parsed.response) {
-          finalResponse = parsed.response;
-        }
-      } catch {
-        // Raw text line fallback
-        yield `\n${line}`;
+        parsed = JSON.parse(line);
+      } catch (error) {
+        throw new Error(`Python reasoning stream returned invalid JSON: ${error instanceof Error ? error.message : "parse error"}`);
+      }
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("Python reasoning stream event must be a JSON object");
+      }
+      const event = parsed as Record<string, unknown>;
+      if (event.type === "delta" && typeof event.text === "string") {
+        yield event.text;
+      } else if (event.type === "done") {
+        finalResponse = parsePythonReasoningResponse(event.response, input.runId, input.task || "general");
+      } else {
+        throw new Error(`Python reasoning stream returned unsupported event ${String(event.type)}`);
       }
     }
   } finally {
@@ -193,7 +232,17 @@ export async function executePythonReasoning(
     if (!res.ok) {
       throw new Error(`Python reasoning HTTP failed with status ${res.status}`);
     }
-    return (await res.json()) as PythonReasoningResponse;
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error(`Python reasoning HTTP returned non-JSON content (HTTP ${res.status})`);
+    }
+    let payload: unknown;
+    try {
+      payload = await res.json();
+    } catch (error) {
+      throw new Error(`Python reasoning HTTP returned invalid JSON: ${error instanceof Error ? error.message : "parse error"}`);
+    }
+    return parsePythonReasoningResponse(payload, input.runId, input.task || "general");
   }
 
   // CLI fallback
@@ -208,17 +257,7 @@ export async function executePythonReasoning(
   }
 
   if (!finalResp) {
-    return {
-      run_id: input.runId,
-      task: input.task || "general",
-      success: true,
-      confidence: 0.9,
-      analysis: ["Reasoning completed."],
-      findings: [],
-      risks: [],
-      missing_evidence: [],
-      recommendation: "Proceed.",
-    };
+    throw new Error("Python reasoning process ended without a final response");
   }
   return finalResp;
 }

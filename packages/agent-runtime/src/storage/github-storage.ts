@@ -49,6 +49,34 @@ export class GitHubStorage implements Storage {
     return `${prefix}${key}`.replace(/\/+/g, "/").replace(/^\/+/, "");
   }
 
+  private async readJsonResponse<T extends Record<string, unknown>>(response: Response, operation: string): Promise<T> {
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error(`${operation} returned non-JSON content (HTTP ${response.status})`);
+    }
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch (error) {
+      throw new Error(`${operation} returned invalid JSON: ${error instanceof Error ? error.message : "parse error"}`);
+    }
+    if (!response.ok) {
+      const message = payload && typeof payload === "object" && "message" in payload && typeof payload.message === "string"
+        ? payload.message
+        : `${operation} failed with HTTP ${response.status}`;
+      throw new Error(message);
+    }
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw new Error(`${operation} response must be a JSON object`);
+    }
+    return payload as T;
+  }
+
+  private isResponseContractError(error: unknown): boolean {
+    return error instanceof Error && error.message.startsWith("GitHub ") &&
+      (error.message.includes(" response") || error.message.includes(" returned"));
+  }
+
   async write(key: string, data: Uint8Array): Promise<void> {
     if (!this.isOnline) {
       return this.fallbackStorage.write(key, data);
@@ -58,18 +86,22 @@ export class GitHubStorage implements Storage {
     const url = `https://api.github.com/repos/${this.config.owner}/${this.config.repo}/contents/${repoPath}`;
     const contentBase64 = Buffer.from(data).toString("base64");
 
-    // Check if file already exists to get SHA for updates
+    // Check if file already exists to get SHA for updates.
     let sha: string | undefined;
+    let getRes: Response;
     try {
-      const getRes = await fetch(`${url}?ref=${this.config.branch}`, {
-        headers: this.headers,
-      });
-      if (getRes.ok) {
-        const json = (await getRes.json()) as { sha?: string };
-        sha = json.sha;
-      }
+      getRes = await fetch(`${url}?ref=${this.config.branch}`, { headers: this.headers });
     } catch {
-      // ignore
+      await this.fallbackStorage.write(key, data);
+      return;
+    }
+    if (getRes.ok) {
+      const json = await this.readJsonResponse<{ sha?: string }>(getRes, "GitHub content lookup");
+      if (typeof json.sha !== "string" || !json.sha) throw new Error("GitHub content lookup response is missing sha");
+      sha = json.sha;
+    } else if (getRes.status !== 404) {
+      await this.fallbackStorage.write(key, data);
+      return;
     }
 
     const payload: Record<string, unknown> = {
@@ -80,15 +112,24 @@ export class GitHubStorage implements Storage {
       ...(this.config.commitAuthor ? { author: this.config.commitAuthor } : {}),
     };
 
-    const res = await fetch(url, {
-      method: "PUT",
-      headers: this.headers,
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      // Fallback to local storage if network or auth error occurs
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "PUT",
+        headers: this.headers,
+        body: JSON.stringify(payload),
+      });
+    } catch {
       await this.fallbackStorage.write(key, data);
+      return;
+    }
+    if (!res.ok) {
+      await this.fallbackStorage.write(key, data);
+      return;
+    }
+    const commit = await this.readJsonResponse<{ content?: { sha?: string; path?: string }; commit?: { sha?: string } }>(res, "GitHub content write");
+    if (typeof commit.content?.sha !== "string" || !commit.content.sha || typeof commit.commit?.sha !== "string" || !commit.commit.sha || commit.content?.path !== repoPath) {
+      throw new Error("GitHub content write response did not confirm the content and commit SHAs");
     }
   }
 
@@ -102,16 +143,18 @@ export class GitHubStorage implements Storage {
 
     try {
       const res = await fetch(url, { headers: this.headers });
-      if (!res.ok) {
-        return this.fallbackStorage.read(key);
+      if (!res.ok) return this.fallbackStorage.read(key);
+      const json = await this.readJsonResponse<{ content?: string; encoding?: string; sha?: string; path?: string }>(res, "GitHub content read");
+      if (json.path !== repoPath || typeof json.sha !== "string" || !json.sha || json.encoding !== "base64" || typeof json.content !== "string") {
+        throw new Error("GitHub content read response failed its path/sha/base64 contract");
       }
-      const json = (await res.json()) as { content?: string; encoding?: string };
-      if (json.content && json.encoding === "base64") {
-        const clean = json.content.replace(/\n/g, "");
-        return new Uint8Array(Buffer.from(clean, "base64"));
+      const clean = json.content.replace(/\n/g, "");
+      if (clean.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(clean)) {
+        throw new Error("GitHub content read response contains invalid base64");
       }
-      return null;
-    } catch {
+      return new Uint8Array(Buffer.from(clean, "base64"));
+    } catch (error) {
+      if (this.isResponseContractError(error)) throw error;
       return this.fallbackStorage.read(key);
     }
   }
@@ -127,12 +170,13 @@ export class GitHubStorage implements Storage {
     try {
       const getRes = await fetch(`${url}?ref=${this.config.branch}`, { headers: this.headers });
       if (!getRes.ok) {
-        return this.fallbackStorage.delete(key);
+        await this.fallbackStorage.delete(key);
+        return;
       }
-      const json = (await getRes.json()) as { sha?: string };
-      if (!json.sha) return;
+      const json = await this.readJsonResponse<{ sha?: string; path?: string }>(getRes, "GitHub delete lookup");
+      if (json.path !== repoPath || typeof json.sha !== "string" || !json.sha) throw new Error("GitHub delete lookup response is missing path or sha");
 
-      await fetch(url, {
+      const deleteRes = await fetch(url, {
         method: "DELETE",
         headers: this.headers,
         body: JSON.stringify({
@@ -141,7 +185,14 @@ export class GitHubStorage implements Storage {
           branch: this.config.branch,
         }),
       });
-    } catch {
+      if (!deleteRes.ok) {
+        await this.fallbackStorage.delete(key);
+        return;
+      }
+      const commit = await this.readJsonResponse<{ commit?: { sha?: string } }>(deleteRes, "GitHub content delete");
+      if (typeof commit.commit?.sha !== "string" || !commit.commit.sha) throw new Error("GitHub content delete response is missing commit sha");
+    } catch (error) {
+      if (this.isResponseContractError(error)) throw error;
       await this.fallbackStorage.delete(key);
     }
   }
@@ -156,11 +207,12 @@ export class GitHubStorage implements Storage {
 
     try {
       const res = await fetch(url, { headers: this.headers });
-      if (!res.ok) {
-        return this.fallbackStorage.list(prefixQuery);
+      if (!res.ok) return this.fallbackStorage.list(prefixQuery);
+      const json = await this.readJsonResponse<{ tree?: Array<{ path: string; type: string }>; truncated?: boolean }>(res, "GitHub tree listing");
+      if (json.truncated === true) throw new Error("GitHub tree listing response is truncated; refusing an incomplete result");
+      if (!Array.isArray(json.tree) || !json.tree.every((item) => item && typeof item.path === "string" && typeof item.type === "string")) {
+        throw new Error("GitHub tree listing response is missing valid tree entries");
       }
-      const json = (await res.json()) as { tree?: Array<{ path: string; type: string }> };
-      if (!Array.isArray(json.tree)) return [];
 
       const prefix = this.resolveRepoPath(prefixQuery);
       const keys: string[] = [];
@@ -175,7 +227,8 @@ export class GitHubStorage implements Storage {
       }
 
       return keys.sort();
-    } catch {
+    } catch (error) {
+      if (this.isResponseContractError(error)) throw error;
       return this.fallbackStorage.list(prefixQuery);
     }
   }

@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { ToolCapabilityExecution } from "../types/invariants";
+import { readJsonResponse } from "./api";
 
 export interface UseToolReturn {
   // Invariant 4: useTool(...) owns capability runtime
@@ -73,27 +74,25 @@ export function useTool(): UseToolReturn {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            callId,
             toolName,
-            args,
+            input: args,
           }),
           signal: options.signal,
         });
 
-        if (!response.ok) {
-          throw new Error(`Capability execution failed with status: ${response.status}`);
+        const data = await readJsonResponse<{ success?: boolean; toolName?: string; result?: unknown }>(response, "Capability execution request");
+        if (data.success !== true || data.toolName !== toolName || !("result" in data)) {
+          throw new Error("Capability execution response did not confirm the tool result");
         }
-
-        const data = await response.json();
         const endTime = Date.now();
 
         updateExecution(callId, {
           status: "finished",
-          result: data.result ?? data,
+          result: data.result,
           endTime,
         });
 
-        return data.result ?? data;
+        return data.result;
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : "Capability execution failed";
         updateExecution(callId, {

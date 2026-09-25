@@ -14,7 +14,7 @@ import {
   setActiveSessionId,
 } from "./storage";
 import { getStoredProviderConfig, saveProviderConfig } from "./providers";
-import { streamAgentExecution, StrandsStreamEvent } from "./api";
+import { readJsonResponse, isRecord, streamAgentExecution, StrandsStreamEvent } from "./api";
 import { TaskEvent } from "../components/ContextReviewDrawer";
 
 const ACTIVE_RUN_ID_KEY = "oneshot_active_run_id_v1";
@@ -55,41 +55,46 @@ export function useChatSession() {
       setActiveSessionIdState(loaded[0].id);
     }
 
-    const savedRunId = sessionStorage.getItem(ACTIVE_RUN_ID_KEY) || localStorage.getItem(ACTIVE_RUN_ID_KEY);
-    if (savedRunId) {
-      setActiveRunId(savedRunId);
-      setRunStatus("COMPLETED");
-    }
+    sessionStorage.removeItem(ACTIVE_RUN_ID_KEY);
+    localStorage.removeItem(ACTIVE_RUN_ID_KEY);
+    setActiveRunId(null);
+    setRunStatus("IDLE");
 
     const requests: Promise<void>[] = [
       fetch("/api/session/checkpoints")
-        .then((response) => {
-          if (!response.ok) throw new Error(`Checkpoint request failed: ${response.status}`);
-          return response.json();
-        })
+        .then((response) => readJsonResponse<{ checkpoints?: unknown[] }>(response, "Checkpoint request"))
         .then((data) => {
-          if (!data.checkpoints?.length) return;
-          const mapped: EarlierContextItem[] = data.checkpoints.map((checkpoint: any) => ({
-            id: checkpoint.restoreId || checkpoint.id,
-            title: checkpoint.title,
-            source: checkpoint.payload?.source || checkpoint.payload?.concept || "System preserved checkpoint in SessionLedger",
-            category: checkpoint.category || "General",
-            date: checkpoint.timestamp ? checkpoint.timestamp.slice(0, 10) : "Unknown",
-            time: checkpoint.timestamp ? checkpoint.timestamp.slice(11, 16) : "Unknown",
-            agent: checkpoint.agent || "OneShot",
-            restoreId: checkpoint.restoreId,
-          }));
+          if (!Array.isArray(data.checkpoints)) {
+            throw new Error("Checkpoint response is missing checkpoints array");
+          }
+          if (!data.checkpoints.length) return;
+          const mapped: EarlierContextItem[] = data.checkpoints.map((checkpoint) => {
+            if (!isRecord(checkpoint) || ((typeof checkpoint.restoreId !== "string") && (typeof checkpoint.id !== "string")) || (!checkpoint.restoreId && !checkpoint.id) || typeof checkpoint.title !== "string") {
+              throw new Error("Checkpoint response contains an invalid checkpoint record");
+            }
+            const payload = isRecord(checkpoint.payload) ? checkpoint.payload : {};
+            const id = typeof checkpoint.restoreId === "string" ? checkpoint.restoreId : String(checkpoint.id);
+            const timestamp = typeof checkpoint.timestamp === "string" ? checkpoint.timestamp : "";
+            return {
+              id,
+              title: checkpoint.title,
+              source: typeof payload.source === "string" ? payload.source : typeof payload.concept === "string" ? payload.concept : "System preserved checkpoint in SessionLedger",
+              category: typeof checkpoint.category === "string" ? checkpoint.category : "General",
+              date: timestamp ? timestamp.slice(0, 10) : "Unknown",
+              time: timestamp ? timestamp.slice(11, 16) : "Unknown",
+              agent: typeof checkpoint.agent === "string" ? checkpoint.agent : "OneShot",
+              restoreId: typeof checkpoint.restoreId === "string" ? checkpoint.restoreId : id,
+            };
+          });
           setSessions((previous) => previous.map((session) => ({ ...session, earlierContext: mapped })));
         }),
       fetch("/api/system/status")
-        .then((response) => {
-          if (!response.ok) throw new Error(`Status request failed: ${response.status}`);
-          return response.json();
-        })
+        .then((response) => readJsonResponse<{ status?: string; currentStage?: string }>(response, "Status request"))
         .then((data) => {
-          if (data?.status && data.currentStage) {
-            setSystemStatusText(`Stage: ${data.currentStage.toUpperCase()}`);
+          if (!data.status || !data.currentStage) {
+            throw new Error("System status response is missing status or currentStage");
           }
+          setSystemStatusText(`Stage: ${data.currentStage.toUpperCase()}`);
         }),
     ];
 
@@ -121,13 +126,17 @@ export function useChatSession() {
   };
 
   const handleNewSession = async () => {
-    let newId = `session-${Date.now().toString().slice(-4)}`;
+    let newId: string;
     try {
       const res = await fetch("/api/session/new", { method: "POST" });
-      const data = await res.json().catch(() => ({}));
-      if (data.sessionId) newId = data.sessionId;
+      const data = await readJsonResponse<{ ok?: boolean; sessionId?: string }>(res, "New session request");
+      if (data.ok !== true || !data.sessionId) {
+        throw new Error("New session response is missing ok=true or sessionId");
+      }
+      newId = data.sessionId;
     } catch (error) {
       setStartupError(error instanceof Error ? `Could not create a new session: ${error.message}` : "Could not create a new session.");
+      return;
     }
 
     const newSession: Session = {
@@ -149,11 +158,15 @@ export function useChatSession() {
 
   const handleClearHistory = async () => {
     try {
-      await fetch("/api/session/clear", {
+      const res = await fetch("/api/session/clear", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: activeSessionId }),
       });
+      const data = await readJsonResponse<{ ok?: boolean; cleared?: boolean }>(res, "Clear history request");
+      if (data.ok !== true || data.cleared !== true) {
+        throw new Error("Clear history response did not confirm cleared=true");
+      }
     } catch (error) {
       setStartupError(error instanceof Error ? `Could not clear chat history: ${error.message}` : "Could not clear chat history.");
       return;
@@ -169,12 +182,15 @@ export function useChatSession() {
   const handleRefreshSystemStatus = async () => {
     try {
       const res = await fetch("/api/system/status");
-      const data = await res.json();
-      if (data?.status) {
-        setSystemStatusText(`Stage: ${data.currentStage.toUpperCase()} (${Math.round(data.uptimeSeconds)}s)`);
-        addDeduplicatedEvent("System Health", `Backend singletons online. Current stage: ${data.currentStage}`, "info");
+      const data = await readJsonResponse<{ status?: string; currentStage?: string; uptimeSeconds?: number }>(res, "Status request");
+      if (!data.status || !data.currentStage || typeof data.uptimeSeconds !== "number") {
+        throw new Error("System status response is missing required status fields");
       }
-    } catch {
+      setSystemStatusText(`Stage: ${data.currentStage.toUpperCase()} (${Math.round(data.uptimeSeconds)}s)`);
+      addDeduplicatedEvent("System Health", `Backend singletons online. Current stage: ${data.currentStage}`, "info");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Backend status request failed";
+      setStartupError(`Could not refresh system status: ${message}`);
       setSystemStatusText("Offline");
     }
   };
@@ -182,13 +198,20 @@ export function useChatSession() {
   const handleSyncPlan = async () => {
     try {
       const res = await fetch("/api/pipeline/plan");
-      const data = await res.json();
-      if (data) {
-        setPlanData(data);
-        if (data.status === "CONFIRMED") setIsGate1Confirmed(true);
-        addDeduplicatedEvent("Workflow Engine", `Active plan synced: ${data.status}`, "step");
+      const data = await readJsonResponse<{ title?: string; summary?: string; steps?: string[]; status?: string } | null>(res, "Plan request");
+      if (data === null) {
+        setPlanData(null);
+        return;
       }
-    } catch {}
+      if (!data.title || !data.summary || !Array.isArray(data.steps) || !data.status) {
+        throw new Error("Plan response is missing required plan fields");
+      }
+      setPlanData(data as { title: string; summary: string; steps: string[]; status: string });
+      if (data.status === "CONFIRMED") setIsGate1Confirmed(true);
+      addDeduplicatedEvent("Workflow Engine", `Active plan synced: ${data.status}`, "step");
+    } catch (error) {
+      setStartupError(error instanceof Error ? `Could not sync plan: ${error.message}` : "Could not sync plan.");
+    }
   };
 
   const handleConfirmGate1 = async () => {
@@ -199,20 +222,26 @@ export function useChatSession() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ gateId: "gate-1", stage: "research" }),
       });
-      const confirmData = await confirmRes.json().catch(() => ({}));
+      const confirmData = await readJsonResponse<{ status?: string; confirmedAt?: string }>(confirmRes, "Gate confirmation request");
+      if (confirmData.status !== "CONFIRMED" || !confirmData.confirmedAt) {
+        throw new Error("Gate confirmation response did not confirm the gate");
+      }
       const transitionRes = await fetch("/api/tools/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toolName: "workflow_transition", input: { targetStage: "planning" } }),
       });
-      const transitionData = await transitionRes.json().catch(() => ({}));
+      const transitionData = await readJsonResponse<{ success?: boolean; result?: unknown }>(transitionRes, "Workflow transition request");
+      if (transitionData.success !== true || typeof transitionData.result !== "string" || !transitionData.result.startsWith("STAGE_TRANSITION_SUCCESS")) {
+        throw new Error("Workflow transition response did not confirm a successful stage transition");
+      }
       setIsGate1Confirmed(true);
-      addDeduplicatedEvent("Gate 1 Confirmed", `Human invariant confirmed: ${confirmData.status || "CONFIRMED"}`, "done");
+      addDeduplicatedEvent("Gate 1 Confirmed", `Human invariant confirmed: ${confirmData.status}`, "done");
 
       const backendConfirmMsg: Message = {
         id: `msg-confirm-${Date.now()}`,
         role: "assistant",
-        content: `### 📋 Human Review Gate 1 Confirmed & Verified\n\n- **Verification Status**: \`${confirmData.status || "CONFIRMED"}\`\n- **Confirmed Core Hash**: \`${confirmData.coreHash || "sha256:7f83b1657ff1fc53..."}\`\n- **Transition Tool Output**: \`${typeof transitionData.result === "string" ? transitionData.result : "STAGE_TRANSITION_SUCCESS: Moved from research to planning"}\`\n- **Timestamp**: \`${confirmData.confirmedAt || new Date().toISOString()}\`\n\n*Gate 1 verified against backend schema. Single-agent workflow engine transitioned to Planner.*`,
+        content: `### 📋 Human Review Gate 1 Confirmed & Verified\n\n- **Verification Status**: \`${confirmData.status}\`\n- **Confirmed At**: \`${confirmData.confirmedAt}\`\n- **Transition Tool Output**: \`${transitionData.result}\`\n\n*Gate 1 and stage transition were confirmed by backend responses.*`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setSessions((prev) => prev.map((s) => (s.id === activeSessionId ? { ...s, messages: [...s.messages, backendConfirmMsg] } : s)));
@@ -265,10 +294,9 @@ export function useChatSession() {
     setSessions(updated);
     saveStoredSessions(updated);
 
-    const newRunId = `run-${Date.now().toString().slice(-6)}`;
-    setActiveRunId(newRunId);
-    sessionStorage.setItem(ACTIVE_RUN_ID_KEY, newRunId);
-    localStorage.setItem(ACTIVE_RUN_ID_KEY, newRunId);
+    sessionStorage.removeItem(ACTIVE_RUN_ID_KEY);
+    localStorage.removeItem(ACTIVE_RUN_ID_KEY);
+    setActiveRunId(null);
     setIsRunning(true);
     setRunStatus("RUNNING");
     setActivityStartTime(Date.now());
@@ -284,6 +312,11 @@ export function useChatSession() {
     await streamAgentExecution(
       text,
       {
+        onRunStart: (runId) => {
+          setActiveRunId(runId);
+          sessionStorage.setItem(ACTIVE_RUN_ID_KEY, runId);
+          localStorage.setItem(ACTIVE_RUN_ID_KEY, runId);
+        },
         onChunk: (chunk: string) => {
           setSessions((prev) =>
             prev.map((s) =>
@@ -409,7 +442,7 @@ export function useChatSession() {
           }
         },
         onDone: (fullContent: string) => {
-          const finalContent = fullContent || "No response was returned by the provider.";
+          const finalContent = fullContent;
           setIsRunning(false);
           setRunStatus("COMPLETED");
           addDeduplicatedEvent("Review", "Backend agent stream completed", "done");
@@ -461,7 +494,8 @@ export function useChatSession() {
         },
       },
       abortCtrl.signal,
-      activeCfg
+      activeCfg,
+      activeSession.id,
     );
   };
 

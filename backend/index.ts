@@ -375,9 +375,10 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
         const sessionId = (req.headers["x-session-id"] as string) || "default";
         const { provider, apiKey, model } = body;
 
-        if (!provider || !apiKey) {
+        const validProviders = ["gemini", "openai", "mistral", "tavily", "nebius"];
+        if (!validProviders.includes(provider) || !isConfiguredKey(apiKey)) {
           res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "provider and apiKey are required" }));
+          res.end(JSON.stringify({ error: `provider must be one of ${validProviders.join(", ")} and apiKey must be configured` }));
           return;
         }
 
@@ -395,15 +396,9 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
         };
 
         const envVar = keyMap[provider];
-        if (envVar && apiKey) {
-          process.env[envVar] = apiKey.trim();
-        }
         const modelVar = modelMap[provider];
-        if (modelVar && model) {
-          process.env[modelVar] = model.trim();
-        }
 
-        // Persist to app/env/.env
+        // Persist to app/env/.env before acknowledging configuration.
         try {
           const envDir = path.resolve(process.cwd(), "app/env");
           await fs.mkdir(envDir, { recursive: true });
@@ -411,7 +406,9 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           let existing = "";
           try {
             existing = await fs.readFile(envFile, "utf-8");
-          } catch {}
+          } catch (error: any) {
+            if (error?.code !== "ENOENT") throw error;
+          }
 
           if (envVar && apiKey) {
             const regex = new RegExp(`^${envVar}=.*$`, "m");
@@ -430,17 +427,23 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             }
           }
           await fs.writeFile(envFile, existing, "utf-8");
-        } catch (e: any) {
-          console.error("[OneShot] Error saving app/env/.env:", e.message);
+        } catch (error: any) {
+          console.error("[OneShot] Error saving app/env/.env:", error.message);
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: `Provider configuration was not persisted: ${error.message}` }));
+          return;
         }
 
-        providerConfigs.set(sessionId, { provider, apiKey, model });
+        if (envVar) process.env[envVar] = apiKey.trim();
+        if (modelVar && model) process.env[modelVar] = model.trim();
+        providerConfigs.set(sessionId, { provider, apiKey: apiKey.trim(), model });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({
           ok: true,
           configured: true,
           provider,
           model: model || `(default for ${provider})`,
+          persisted: true,
           message: `Credentials for ${provider} active and persisted to app/env/.env.`,
         }));
         return;
@@ -805,16 +808,24 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
               searchDepth: body.searchDepth || "basic",
               maxResults: body.maxResults || 5,
             });
+            if (!Array.isArray(response.results)) {
+              throw new Error("Tavily response is missing results array");
+            }
+            const results = response.results.map((result: any) => {
+              if (!result || typeof result.title !== "string" || !result.title || typeof result.url !== "string" || !result.url || typeof result.content !== "string" || !result.content) {
+                throw new Error("Tavily response contains an invalid result record");
+              }
+              const url = new URL(result.url);
+              if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("Tavily response contains a non-HTTP result URL");
+              return {
+                title: result.title,
+                url: result.url,
+                content: result.content,
+                ...(typeof result.score === "number" ? { score: result.score } : {}),
+              };
+            });
             res.writeHead(200, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({
-              query,
-              results: (response.results || []).map((r: any) => ({
-                title: r.title,
-                url: r.url,
-                content: r.content,
-                score: r.score || 0.95,
-              })),
-            }));
+            res.end(JSON.stringify({ query, results }));
             return;
           } catch (tavilyErr: any) {
             console.error("[tavily] Live call failed:", tavilyErr.message);
@@ -844,6 +855,7 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({
             ok: true,
+            operation: "getStatus",
             status: "healthy",
             currentStage: workflowEngine.getCurrentStage(),
             gate1: workflowEngine.getGate1(),
@@ -931,9 +943,10 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
         // Operation 4: configureProvider
         if (operation === "configureProvider") {
           const { provider, apiKey, model } = body;
-          if (!provider || !apiKey) {
+          const validProviders = ["gemini", "openai", "mistral", "tavily", "nebius"];
+          if (!validProviders.includes(provider) || !isConfiguredKey(apiKey)) {
             res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ error: "provider and apiKey are required" }));
+            res.end(JSON.stringify({ error: `provider must be one of ${validProviders.join(", ")} and apiKey must be configured` }));
             return;
           }
           const keyMap: Record<string, string> = {
@@ -957,7 +970,9 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({
             ok: true,
+            operation: "configureProvider",
             configured: true,
+            sessionId,
             provider,
             model: model || `(default for ${provider})`,
           }));
@@ -977,6 +992,7 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({
             ok: true,
+            operation: "switchProvider",
             success: true,
             sessionId,
             provider,

@@ -14,6 +14,7 @@ import { Integration } from "./Integration";
 import { EarlierContextItem, ProviderId } from "../types";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
 import { useChatSession } from "../lib/useChatSession";
+import { readJsonResponse } from "../lib/api";
 
 // Error boundary component for graceful error handling
 class ErrorBoundary extends React.Component<
@@ -122,13 +123,18 @@ const AppContent: React.FC = () => {
     async (item: EarlierContextItem) => {
       try {
         setApiError(null);
-        await fetch("/api/session/restore", {
+        const res = await fetch("/api/session/restore", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ restoreId: item.restoreId || item.id }),
         });
+        const data = await readJsonResponse<{ restored?: boolean; restoreId?: string }>(res, "Context restore request");
+        if (data.restored !== true || data.restoreId !== (item.restoreId || item.id)) {
+          throw new Error("Context restore response did not confirm the requested checkpoint");
+        }
       } catch (err) {
         setApiError(`Failed to restore context: ${err instanceof Error ? err.message : "Unknown error"}`);
+        return;
       }
       if (isDrawerOpen && drawerTab === "context" && selectedContext?.id === item.id) {
         setIsDrawerOpen(false);
