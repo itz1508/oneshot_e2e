@@ -93,7 +93,7 @@ A test or stage transition is not valid merely because it returns `pass` or `pas
 | Manifest and integrity | `app/scripts/` |
 | Root package manager config | `package.json` and `pnpm-workspace.yaml` |
 | Root lockfile | `pnpm-lock.yaml` |
-| CI and deployment | `.github/workflows/deploy.yml` |
+| CI and deployment | `.github/deploy.yml` |
 
 `app/web/` is not present in the current tree and must not be recreated as a second production frontend. Alternate `main-screen/` files under `frontend/web/src/` are reference-only until migrated. Do not edit `node_modules/`, `.next/`, or generated `dist/` output.
 
