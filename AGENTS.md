@@ -20,22 +20,15 @@ The `engines` fields and local verification/bootstrap checks define minimum supp
 
 ### Known `engines` discrepancy: the Node 22 line
 
-Six of the eight workspace packages declare `engines.node: >=24.21.0` —
-`backend`, `packages/agent-runtime`, and the four `app/integration/*`
-packages. That is the real enforced floor: those packages fail an engine check
-below it, both CI jobs pin `node-version: 24.21.0`, and `@types/node` targets
-24.x.
+All eight workspace manifests declare `engines.node: >=24.21.0`, matching the
+prerequisite above. That floor is enforced rather than aspirational: the six
+library packages fail an engine check below it, both CI jobs pin
+`node-version: 24.21.0`, and `@types/node` targets 24.x.
 
-Two manifests still advertise a Node 22 alternate that nothing else supports:
-
-- `package.json` — `"node": "22.x || >=24.21.0"`
-- `frontend/web/package.json` — `"node": "22.x || >=24.21.0"`
-
-Treat **`>= 24.21.0`** — the prerequisite above — as authoritative. The
-`22.x || ` alternates are a known inconsistency, not a supported runtime: Node
-22 is never exercised by CI and falls outside the Node 24 type definitions. Do
-not advertise or rely on Node 22 support until those two `engines` fields are
-corrected.
+Do not reintroduce a `22.x || ` alternate in `package.json` or
+`frontend/web/package.json`. Those two manifests previously advertised
+`22.x || >=24.21.0` — a runtime nothing else supported, since Node 22 is never
+exercised by CI and falls outside the Node 24 type definitions.
 
 Current compatibility holds in `pnpm outdated` are intentional:
 

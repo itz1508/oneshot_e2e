@@ -24,7 +24,7 @@ If your Vercel project uses the repo root as its Root Directory instead, this
 file is **not read** — set Install/Build/Output on the dashboard
 (`pnpm run build` from root, output `frontend/web/dist`).
 
-- Node.js: `>=24.21.0` — CI pins `24.21.0`, and six of the eight workspace packages enforce it. (Root and `frontend/web` still carry a `22.x || ` alternate; treat `>=24.21.0` as authoritative — see the `AGENTS.md` engines note.)
+- Node.js: `>=24.21.0` — all eight workspace manifests enforce it and CI pins `24.21.0` (see the `AGENTS.md` engines note)
 - Env var: `NEXT_PUBLIC_BACKEND_URL=https://<backend-host>` (no trailing path)
 
 > **`NEXT_PUBLIC_*` is inlined at build time.** Next.js substitutes it into the

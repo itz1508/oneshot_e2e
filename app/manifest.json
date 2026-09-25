@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-25T22:26:05Z",
+  "generated_at": "2026-09-25T22:37:36Z",
   "version": "1.3.0",
-  "commit": "ea681f81",
+  "commit": "52dbea50",
   "files": [
     {
       "path": ".github\\deploy.yml",
@@ -11,8 +11,8 @@
     },
     {
       "path": "AGENTS.md",
-      "size": 12304,
-      "hash": "sha256:0ed614b55f601430c4967086a812d342cb85acf3a8768ead2b6e23889536bcd5",
+      "size": 12035,
+      "hash": "sha256:ea0a4216f779b11a17d8324841ae8bf7e3a1f9edc11fc78975f9001f44c8d520",
       "category": "source"
     },
     {
@@ -5741,8 +5741,8 @@
     },
     {
       "path": "frontend\\web\\VERCEL_DEPLOY.md",
-      "size": 3279,
-      "hash": "sha256:a4dab2e27abbd85053c026075ef8846a863e357715edd28df5cfdc62178fded6",
+      "size": 3171,
+      "hash": "sha256:11955d9001298dfb66688cf3ceabff50e9740ffd034b72043940acd26515720d",
       "category": "source"
     },
     {
@@ -5777,8 +5777,8 @@
     },
     {
       "path": "frontend\\web\\package.json",
-      "size": 1165,
-      "hash": "sha256:1e80857044b7dbaca0816c0d773c12fb7c8f4b67c68f631f280b55a4fe842f83",
+      "size": 1157,
+      "hash": "sha256:a359c1fdb9c3859defa5c1e8cb0f2b334916df01bb61fc939a27fd3c2c6fdd1f",
       "category": "source"
     },
     {
@@ -6113,8 +6113,8 @@
     },
     {
       "path": "package.json",
-      "size": 3388,
-      "hash": "sha256:960961ad5ac6e3920a50c37cbdbf65c5f2d1a6f025dd56117f140bf968db2eff",
+      "size": 3380,
+      "hash": "sha256:710309d7a160ceea6e14e015ef40f1232e562f4029a3c3a261877eec36f9d449",
       "category": "source"
     },
     {
@@ -6511,7 +6511,7 @@
   "statistics": {
     "total_files": 1084,
     "source_files": 1084,
-    "total_size_bytes": 13264328,
+    "total_size_bytes": 13263935,
     "by_extension": {
       ".yml": 1,
       ".md": 17,
