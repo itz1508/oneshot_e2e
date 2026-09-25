@@ -5,9 +5,9 @@
 This file applies to `frontend/web/`.
 
 - Production frontend work belongs in `frontend/web/app/` and `frontend/web/src/`.
-- `app/web/` is legacy/reference only.
+- `app/web/` is not present; do not recreate it as a second production frontend.
 - `App.tsx` and `Composer.tsx` are the canonical chat runtime path.
-- `chat/` and `main-screen/` are alternate surfaces until explicitly migrated.
+- `main-screen/` and the invariant-oriented `useStream`/`useTool` contracts are reference-only until migrated; do not import them from production components.
 
 ## Commands
 

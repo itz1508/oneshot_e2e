@@ -7,14 +7,14 @@ echo [1/7] Checking Node.js...
 node --version >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Node.js not found
-    echo Please install Node.js >= 24.13.0 from https://nodejs.org/
+    echo Please install Node.js >= 24.21.0 from https://nodejs.org/
     exit /b 1
 )
 for /f "tokens=2 delims=v" %%a in ('node --version') do set NODE_VER=%%a
-for /f "tokens=1 delims=." %%a in ("%NODE_VER%") do set NODE_MAJOR=%%a
-if %NODE_MAJOR% LSS 24 (
+node -e "const v=process.versions.node.split('.').map(Number),r=[24,21,0];process.exit(v[0]!==r[0]?v[0]-r[0]:v[1]!==r[1]?v[1]-r[1]:v[2]-r[2])"
+if errorlevel 1 (
     echo [ERROR] Node.js version %NODE_VER% is too old
-    echo Please install Node.js >= 24.13.0
+    echo Please install Node.js >= 24.21.0
     exit /b 1
 )
 echo [OK] Node.js %NODE_VER%
@@ -24,10 +24,17 @@ echo [2/7] Checking pnpm...
 pnpm --version >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] pnpm not found
-    echo Enable Corepack or install pnpm 11.9.0, then try again.
+    echo Enable Corepack or install pnpm >= 11.27.1, then try again.
     exit /b 1
 )
-echo [OK] pnpm found
+for /f %%v in ('pnpm --version') do set PNPM_VER=%%v
+node -e "const v=process.argv[1].split('.').map(Number),r=[11,27,1];process.exit(v[0]!==r[0]?v[0]-r[0]:v[1]!==r[1]?v[1]-r[1]:v[2]-r[2])" %PNPM_VER%
+if errorlevel 1 (
+    echo [ERROR] pnpm version %PNPM_VER% is too old
+    echo Please install pnpm >= 11.27.1
+    exit /b 1
+)
+echo [OK] pnpm %PNPM_VER%
 
 :: Install dependencies
 echo [3/7] Installing dependencies...

@@ -63,22 +63,30 @@ def print_check(name: str, passed: bool, details: str = ''):
             print(f"       {YELLOW}WARNING: {details}{RESET}")
 
 
+def parse_version(version: str) -> tuple[int, int, int]:
+    """Parse a semantic version into a comparable tuple."""
+    parts = version.lstrip('v').split('.')
+    return tuple(int(part) for part in parts[:3])
+
+
 def check_environment() -> bool:
     """Check environment requirements."""
     print_section("1. Environment")
-    
+
     passed = True
+    node_minimum = (24, 21, 0)
+    pnpm_minimum = (11, 27, 1)
+    node_required = '>=24.21.0'
+    pnpm_required = '>=11.27.1'
     
     # Check Node.js
     try:
         result = subprocess.run(['node', '--version'], capture_output=True, text=True, timeout=5)
         version = result.stdout.strip()
-        # Extract major version
-        major = int(version.lstrip('v').split('.')[0])
-        if major >= 24:
-            print_check("Node.js", True, f"{version} (required: >=24.13.0)")
+        if parse_version(version) >= node_minimum:
+            print_check("Node.js", True, f"{version} (required: {node_required})")
         else:
-            print_check("Node.js", False, f"{version} (required: >=24.13.0)")
+            print_check("Node.js", False, f"{version} (required: {node_required})")
             passed = False
     except FileNotFoundError:
         print_check("Node.js", False, "not found")
@@ -90,17 +98,16 @@ def check_environment() -> bool:
     # Check pnpm
     pnpm_command = shutil.which('pnpm') or shutil.which('pnpm.cmd')
     if not pnpm_command:
-        print_check("pnpm", False, "not found; enable Corepack or install pnpm 11.9.0")
+        print_check("pnpm", False, f"not found; enable Corepack or install pnpm {pnpm_required}")
         passed = False
     else:
         try:
             result = subprocess.run([pnpm_command, '--version'], capture_output=True, text=True, timeout=5)
             version = result.stdout.strip()
-            major = int(version.split('.')[0])
-            if major >= 11:
-                print_check("pnpm", True, f"{version} (required: >=11.9.0)")
+            if parse_version(version) >= pnpm_minimum:
+                print_check("pnpm", True, f"{version} (required: {pnpm_required})")
             else:
-                print_check("pnpm", False, f"{version} (required: >=11.9.0)")
+                print_check("pnpm", False, f"{version} (required: {pnpm_required})")
                 passed = False
         except Exception as e:
             print_check("pnpm", False, str(e))

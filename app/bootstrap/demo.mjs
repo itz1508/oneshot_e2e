@@ -22,7 +22,10 @@ const demoUrl = process.env.ONESHOT_DEMO_URL || 'http://127.0.0.1:8787';
 async function checkServer() {
   try {
     const response = await fetch(`${demoUrl}/ping`);
-    return response.ok;
+    const contentType = response.headers.get('content-type') || '';
+    if (!response.ok || !contentType.includes('application/json')) return false;
+    const payload = await response.json();
+    return payload?.ok === true && payload?.status === 'healthy';
   } catch {
     return false;
   }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useOverlayFocus } from "../lib/useOverlayFocus";
 import { ProviderId, ProviderConfig } from "../types";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
+import { readJsonResponse } from "../lib/api";
 
 interface ProviderConfigModalProps {
   isOpen: boolean;
@@ -62,21 +63,20 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     setIsChecking(true);
     setStatusText("Probing server environment...");
     try {
-      const res = await fetch("/api/providers/status").catch(() => null);
-      if (res && res.ok) {
-        const data = await res.json();
-        setServerStatus(data);
-        const isConfigured = data[activeProvider]?.configured;
-        setStatusText(
-          isConfigured
-            ? `Server ready: ${def.name} credentials configured in server environment.`
-            : `Server note: ${def.name} not detected in server environment (check app/env/.env).`
-        );
-      } else {
-        setStatusText("Server endpoint reachable. Provider credentials managed server-side.");
+      const res = await fetch("/api/providers/status");
+      const data = await readJsonResponse<Record<string, { configured?: boolean }>>(res, "Provider status request");
+      const providerStatus = data[activeProvider];
+      if (!providerStatus || typeof providerStatus.configured !== "boolean") {
+        throw new Error(`Provider status response is missing ${activeProvider}.configured`);
       }
-    } catch {
-      setStatusText("Server endpoint reachable. Provider credentials managed server-side.");
+      setServerStatus(data as Record<string, { configured: boolean }>);
+      setStatusText(
+        providerStatus.configured
+          ? `Server ready: ${def.name} credentials configured in server environment.`
+          : `Server note: ${def.name} not detected in server environment (check app/env/.env).`
+      );
+    } catch (error) {
+      setStatusText(error instanceof Error ? `Server status unavailable: ${error.message}` : "Server status unavailable.");
     } finally {
       setIsChecking(false);
     }
@@ -96,42 +96,59 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           model,
         }),
       });
-      const data = await res.json();
-      if (res.ok && data.ok) {
-        setSaveSuccessMsg(`✓ ${def.name} API key saved & loaded into runtime.`);
-        setStatusText(`Server ready: ${def.name} credentials configured in server environment.`);
-        setServerStatus((prev) => ({
-          ...prev,
-          [activeProvider]: { configured: true },
-        }));
-        setApiKey("");
-        onConfigSaved(activeProvider, {
-          key: "configured",
-          model,
-          baseUrl: def.baseUrl,
-          temperature: "0.4",
-          configured: true,
-        });
-      } else {
-        setSaveSuccessMsg(`Error: ${data.error || "Failed to save key"}`);
+      const data = await readJsonResponse<{ ok?: boolean; configured?: boolean; persisted?: boolean; provider?: string; model?: string }>(res, "Provider configuration request");
+      if (data.ok !== true || data.configured !== true || data.persisted !== true || data.provider !== activeProvider) {
+        throw new Error("Provider configuration response did not confirm the active provider");
       }
+      setSaveSuccessMsg(`✓ ${def.name} API key saved & loaded into runtime.`);
+      setStatusText(`Server ready: ${def.name} credentials configured in server environment.`);
+      setServerStatus((prev) => ({
+        ...prev,
+        [activeProvider]: { configured: true },
+      }));
+      setApiKey("");
+      onConfigSaved(activeProvider, {
+        key: "configured",
+        model,
+        baseUrl: def.baseUrl,
+        temperature: "0.4",
+        configured: true,
+      });
     } catch (e: any) {
-      setSaveSuccessMsg(`Error: ${e.message}`);
+      setSaveSuccessMsg(`Error: ${e.message || "Failed to save key"}`);
     } finally {
       setIsSavingKey(false);
     }
   };
 
-  const handleSave = () => {
-    const updated: ProviderConfig = {
-      key: "", // Credentials stay strictly server-side
-      model,
-      baseUrl: def.baseUrl,
-      temperature: "0.4",
-      configured: true,
-    };
-    onConfigSaved(activeProvider, updated);
-    onClose();
+  const handleSave = async () => {
+    setIsSavingKey(true);
+    setSaveSuccessMsg(null);
+    try {
+      const res = await fetch("/api/config/provider", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: activeProvider, model }),
+      });
+      const data = await readJsonResponse<{ ok?: boolean; success?: boolean; provider?: string; model?: string }>(res, "Provider selection request");
+      if (data.ok !== true || data.success !== true || data.provider !== activeProvider || data.model !== model) {
+        throw new Error("Provider selection response did not confirm the requested provider and model");
+      }
+      const updated: ProviderConfig = {
+        key: "", // Credentials stay strictly server-side
+        model,
+        baseUrl: def.baseUrl,
+        temperature: "0.4",
+        configured: true,
+      };
+      onConfigSaved(activeProvider, updated);
+      setSaveSuccessMsg(`✓ ${def.name} ${model} applied to this session.`);
+      onClose();
+    } catch (error) {
+      setSaveSuccessMsg(`Error: ${error instanceof Error ? error.message : "Failed to apply provider selection"}`);
+    } finally {
+      setIsSavingKey(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -312,7 +329,8 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             <button
               type="button"
               onClick={handleSave}
-              className="h-8 px-4 rounded-md border-0 bg-[#3f6ba8] hover:bg-[#4d7fc4] text-white text-xs font-semibold cursor-pointer transition-colors"
+              disabled={isSavingKey}
+              className="h-8 px-4 rounded-md border-0 bg-[#3f6ba8] hover:bg-[#4d7fc4] text-white text-xs font-semibold cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Apply selection
             </button>

@@ -12,13 +12,8 @@ export * from "./ResearchBanner";
 export * from "./PlanReviewCard";
 export * from "./ToolCallList";
 
-// Main Screen Components
-export * from "./main-screen/ChatShell";
-export * from "./main-screen/Conversation";
-export * from "./main-screen/ArtifactView";
-export * from "./main-screen/PreviewView";
-
-// Task Management Rail Components
+// Reference-only surfaces are intentionally not exported from the canonical
+// component barrel. See frontend/web/AGENTS.md for the migration boundary.
 export * from "./task-rail/TaskRail";
 export * from "./task-rail/ActiveTask";
 export * from "./task-rail/ProgressTracker";

@@ -10,11 +10,22 @@ Never fabricate progress, assistant responses, tool execution, research results,
 
 ## Prerequisites and Installation
 
-- Node.js >= 24.13.0
-- pnpm 11.9.0
+- Node.js >= 24.21.0
+- pnpm >= 11.27.1
 - Python 3.12+ for Python validation services
 - Git
 - Docker only for services that explicitly require containers
+
+The `engines` fields and local verification/bootstrap checks define minimum supported versions. The root `packageManager` field and CI use exact Node.js 24.21.0 and pnpm 11.27.1 pins so builds and lockfile resolution are reproducible; those pins do not prohibit locally using a newer version that satisfies the declared minimums.
+
+Current compatibility holds in `pnpm outdated` are intentional:
+
+- `openai` stays on 6.x because `@strands-agents/sdk@1.19.0` declares the peer range `^6.45.0`.
+- `@types/node` stays on 24.x to match the supported Node.js 24 runtime.
+- TypeScript stays on 5.9; TypeScript 7 is a separate compiler-major migration.
+- `undici-types` stays on 7.x, the line used by the Node.js 24 type definitions.
+
+A newer major reported by `pnpm outdated` is not, by itself, a reason to upgrade a dependency. Update held majors only as a coordinated compatibility change with tests and lockfile verification.
 
 ```powershell
 pnpm install --frozen-lockfile
@@ -72,7 +83,7 @@ A test or stage transition is not valid merely because it returns `pass` or `pas
 | Concern | Canonical location |
 | :--- | :--- |
 | Production frontend | `frontend/web/app/` and `frontend/web/src/` |
-| Legacy/reference UI | `app/web/` |
+| Reference-only alternate frontend | `frontend/web/src/components/main-screen/` |
 | Backend HTTP/SSE entry | `backend/index.ts` |
 | Environment loading | `backend/environment.ts` |
 | Agent runtime | `packages/agent-runtime/` |
@@ -84,7 +95,7 @@ A test or stage transition is not valid merely because it returns `pass` or `pas
 | Root lockfile | `pnpm-lock.yaml` |
 | CI and deployment | `.github/workflows/deploy.yml` |
 
-`app/web/` is retained only as a legacy/reference fallback. Do not add production frontend features there. Do not edit `node_modules/`, `.next/`, or generated `dist/` output.
+`app/web/` is not present in the current tree and must not be recreated as a second production frontend. Alternate `main-screen/` files under `frontend/web/src/` are reference-only until migrated. Do not edit `node_modules/`, `.next/`, or generated `dist/` output.
 
 ## Path and Variable Naming
 
@@ -98,7 +109,7 @@ Use explicit, consistent names for local path variables:
 
 - `frontend/web/` is the canonical frontend.
 - `App.tsx` and `Composer.tsx` are the canonical chat runtime path.
-- `chat/` and `main-screen/` are alternate surfaces until explicitly migrated.
+- `main-screen/` and the invariant-oriented `useStream`/`useTool` contracts are reference-only until migrated; do not import them from production components.
 - The composer must support Enter to send, Shift+Enter for newline, auto-grow from 44px to 160px, and internal scrolling above 160px.
 - Composer growth must occur for typing, quick tools, and externally inserted citations.
 - The composer must not cover the final conversation message.
@@ -150,6 +161,7 @@ The frontend and backend follow the DeepAgents event streaming model:
 | Full verification | `pnpm run verify` |
 | Generate manifest | `python app/scripts/generate_manifest.py` |
 | Verify manifest | `python app/scripts/verify_manifest.py` |
+| Verify demo assets | `pnpm run verify:demo` |
 
 ## CI and Deployment
 

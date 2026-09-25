@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - rebuild-researcher-only
     tags:
       - 'v*'
   pull_request:
@@ -34,13 +33,13 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 11.9.0
+          version: 11.27.1
           standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 24.21.0
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
@@ -50,7 +49,7 @@ jobs:
       - name: Typecheck Agent Runtime
         run: pnpm exec tsc -p packages/agent-runtime/tsconfig.json --noEmit
 
-      - name: Run Backend & Runtime Tests (61 Tests)
+      - name: Run Backend & Runtime Tests
         run: pnpm run test:runtime
 
   # Job 2: Test & Build Frontend
@@ -65,13 +64,13 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 11.9.0
+          version: 11.27.1
           standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 24.21.0
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
@@ -91,11 +90,11 @@ jobs:
         run: pnpm run build
 
       - name: Setup GitHub Pages
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/rebuild-researcher-only'
+        if: github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v5
 
       - name: Upload Pages Artifact
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/rebuild-researcher-only'
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/web/dist
@@ -107,7 +106,7 @@ jobs:
           path: frontend/web/dist
           retention-days: 14
 
-  # Job 3: Deploy to GitHub Pages (on push to main or active branch)
+  # Job 3: Deploy to GitHub Pages (only from the default branch)
   deploy:
     name: Deploy to GitHub Pages
     environment:
@@ -115,7 +114,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build-and-test-frontend
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/rebuild-researcher-only'
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback, useState, FC } from "react";
+import { readJsonResponse } from "../lib/api";
 import { Message } from "../types";
 import {
   extractStructuredOutput,
@@ -193,7 +194,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messageId: message.id }),
       });
-      if (!response.ok) throw new Error(`Fork request failed: ${response.status}`);
+      const data = await readJsonResponse<{ forked?: boolean; newSessionId?: string }>(response, "Session fork request");
+      if (data.forked !== true || !data.newSessionId) {
+        throw new Error("Session fork response did not confirm a new session");
+      }
       setForkStatus("branched");
     } catch (err) {
       console.error("Failed to fork:", err);
