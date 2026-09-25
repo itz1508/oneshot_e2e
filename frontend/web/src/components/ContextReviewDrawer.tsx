@@ -44,8 +44,8 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
 }) => {
   const [tab, setTab] = useState<"context" | "task" | "backends" | "architecture">(activeTab);
   const [isTasksFlipped, setIsTasksFlipped] = useState(false);
-  const [stages, setStages] = useState<any[]>([]);
-  const [activeSkills, setActiveSkills] = useState<any[]>([]);
+  const [gate1, setGate1] = useState<{ status: string; confirmedAt?: string } | null>(null);
+  const [gate2, setGate2] = useState<{ status: string; confirmedAt?: string; packageHash?: string } | null>(null);
   const [serverAuditLogs, setServerAuditLogs] = useState<any[]>([]);
   const drawerRef = useOverlayFocus<HTMLDivElement>(isOpen, onClose);
 
@@ -60,19 +60,16 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      fetch("/api/pipeline/stages")
+      fetch("/api/system/status")
         .then((res) => res.json())
         .then((data) => {
-          if (data.stages) setStages(data.stages);
+          setGate1(data.gate1 || null);
+          setGate2(data.gate2 || null);
         })
-        .catch(() => {});
-
-      fetch("/api/todos/active")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.skills) setActiveSkills(data.skills);
-        })
-        .catch(() => {});
+        .catch(() => {
+          setGate1(null);
+          setGate2(null);
+        });
 
       fetchAuditLogs();
     }
@@ -267,17 +264,17 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
                     <span className="font-semibold text-[#dedede]">Gate 1: Research Review</span>
                     <span className="block text-[9px] text-[#8e8e93]">Mandatory before Planner</span>
                   </div>
-                  <span className="px-1.5 py-0.5 text-[9px] font-mono-code rounded bg-[#62c48d]/15 text-[#62c48d] border border-[#62c48d]/30">
-                    APPROVED
+                  <span className={`px-1.5 py-0.5 text-[9px] font-mono-code rounded ${gate1?.status === "CONFIRMED" ? "bg-[#62c48d]/15 text-[#62c48d] border border-[#62c48d]/30" : "bg-[#e5a84b]/10 text-[#e5a84b] border border-[#e5a84b]/30"}`}>
+                    {gate1?.status || "UNAVAILABLE"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded bg-black/30 border border-white/5">
                   <div>
                     <span className="font-semibold text-[#dedede]">Gate 2: Build Ready</span>
-                    <span className="block text-[9px] text-[#8e8e93]">Bound to confirmed_package.core hash</span>
+                    <span className="block text-[9px] text-[#8e8e93]">{gate2?.packageHash || "No package hash recorded"}</span>
                   </div>
-                  <span className="px-1.5 py-0.5 text-[9px] font-mono-code rounded bg-[#62c48d]/15 text-[#62c48d] border border-[#62c48d]/30">
-                    VERIFIED
+                  <span className={`px-1.5 py-0.5 text-[9px] font-mono-code rounded ${gate2?.status === "CONFIRMED" && gate2.packageHash ? "bg-[#62c48d]/15 text-[#62c48d] border border-[#62c48d]/30" : "bg-[#e5a84b]/10 text-[#e5a84b] border border-[#e5a84b]/30"}`}>
+                    {gate2?.status || "UNAVAILABLE"}
                   </span>
                 </div>
               </div>
@@ -307,58 +304,24 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
                 {!isTasksFlipped ? (
                   /* FRONT: Active-Only Todo Chain */
                   <div className="space-y-1.5">
-                    {activeSkills.length > 0 ? (
-                      activeSkills.map((sk: any, idx: number) => {
-                        const isCurrent = sk.state === "active" || (idx === 0 && !activeSkills.some((s: any) => s.state === "active"));
+                    {activitySteps.length > 0 ? (
+                      activitySteps.map((step) => {
+                        const statusLabel = step.status.replace("_", " ").toUpperCase();
+                        const isCurrent = step.status === "in_progress";
                         return (
                           <div
-                            key={sk.id || sk.name}
-                            className={`todo-skill p-2.5 rounded-lg border text-xs transition-colors ${
-                              isCurrent
-                                ? "active bg-[#62c48d]/10 border-[#62c48d]/30 text-[#62c48d]"
-                                : "bg-transparent border-transparent text-[#6e6e73]"
-                            }`}
+                            key={step.id}
+                            className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs ${isCurrent ? "border-[#62c48d]/30 bg-[#62c48d]/10 text-[#62c48d]" : step.status === "completed" ? "border-white/10 bg-[#151517] text-[#dedede]" : "border-white/5 bg-transparent text-[#8e8e93]"}`}
                           >
-                            <div className="flex items-center justify-between font-medium">
-                              <span>{sk.name}</span>
-                              <span className="font-mono-code text-[10px]">
-                                {isCurrent ? "ACTIVE" : sk.state?.toUpperCase() || "—"}
-                              </span>
-                            </div>
-                            {sk.todos && sk.todos.length > 0 && (
-                              <div className="mt-1.5 pl-2 space-y-1 border-l border-white/10 text-[10px]">
-                                {sk.todos.map((td: any) => (
-                                  <div key={td.id || td.text} className="flex items-center gap-1.5 text-[#a0a0a5]">
-                                    <span className="font-mono-code text-[9px] text-[#6e6e73]">
-                                      {td.state === "done" ? "✓" : td.state === "active" ? "▶" : "○"}
-                                    </span>
-                                    <span>{td.text}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                            <span className="font-medium">{step.label}</span>
+                            <span className="font-mono-code text-[10px]">{statusLabel}</span>
                           </div>
                         );
                       })
                     ) : (
-                      CANONICAL_TASK_GROUPS.map((group, idx) => {
-                        const isCurrent = idx === 0;
-                        return (
-                          <div
-                            key={group}
-                            className={`todo-skill flex items-center justify-between px-3 py-2 rounded-lg border text-xs transition-colors ${
-                              isCurrent
-                                ? "active bg-[#62c48d]/10 border-[#62c48d]/30 text-[#62c48d]"
-                                : "bg-transparent border-transparent text-[#6e6e73]"
-                            }`}
-                          >
-                            <span className="font-medium">{group}</span>
-                            <span className="font-mono-code text-[10px]">
-                              {isCurrent ? "ACTIVE" : "—"}
-                            </span>
-                          </div>
-                        );
-                      })
+                      <div className="rounded-lg border border-white/10 bg-[#151517] px-3 py-3 text-xs text-[#8e8e93]">
+                        No activity steps have been emitted for this run.
+                      </div>
                     )}
                   </div>
                 ) : (
@@ -368,25 +331,20 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
                     className="space-y-1.5 p-3 rounded-lg border border-white/10 bg-[#121316] max-h-60 overflow-y-auto font-mono-code text-[10px]"
                   >
                     <div className="text-[#6e6e73] font-semibold mb-1">Hook Audit &amp; Dispatch Ledger</div>
-                    {serverAuditLogs.length > 0 ? (
-                      serverAuditLogs.map((log: any) => (
-                        <div key={log.id} className="text-[#dedede]">
-                          <span className="text-[#62c48d]">[{new Date(log.timestamp).toLocaleTimeString()}]</span> {log.hookName}: {JSON.stringify(log.data || {})}
-                        </div>
-                      ))
-                    ) : taskEvents.length > 0 ? (
+                    {taskEvents.length > 0 ? (
                       taskEvents.map((evt) => (
                         <div key={evt.id} className="text-[#dedede]">
                           <span className="text-[#62c48d]">[{evt.timestamp}]</span> {evt.stage}: {evt.message}
                         </div>
                       ))
+                    ) : serverAuditLogs.length > 0 ? (
+                      serverAuditLogs.map((log: any) => (
+                        <div key={log.id} className="text-[#dedede]">
+                          <span className="text-[#62c48d]">[{new Date(log.timestamp).toLocaleTimeString()}]</span> {log.hookName}: {JSON.stringify(log.data || {})}
+                        </div>
+                      ))
                     ) : (
-                      <>
-                        <div className="text-[#62c48d]">[00:01] onPreCall: initialized researcher context</div>
-                        <div className="text-[#79a8ea]">[00:02] onToolInvoke: verified partition /workspace/</div>
-                        <div className="text-[#dedede]">[00:03] onGateAudit: Gate 1 invariant passed</div>
-                        <div className="text-[#a0a0a5]">[00:04] onPostCall: snapshot committed to git storage</div>
-                      </>
+                      <div className="text-[#8e8e93]">No backend audit events have been recorded for this run.</div>
                     )}
                   </div>
                 )}

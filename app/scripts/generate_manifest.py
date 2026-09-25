@@ -122,7 +122,7 @@ def generate_manifest(root: str = '.', output: str = 'app/manifest.json') -> dic
     output_file_path = Path(output)
     output_file_path.parent.mkdir(parents=True, exist_ok=True)
     
-    with open(output_file_path, 'w', encoding='utf-8') as manifest_file:
+    with open(output_file_path, 'w', encoding='utf-8', newline='\n') as manifest_file:
         json.dump(manifest, manifest_file, indent=2)
     
     print(f"\nManifest written to {output}")

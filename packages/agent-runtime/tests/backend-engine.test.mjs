@@ -186,13 +186,19 @@ describe("OneShot Hierarchical Todo & Subtask Engine (Backend)", () => {
 describe("OneShot Session Ledger (Backend)", () => {
   it("manages session checkpoints and rewinds state", () => {
     const ledger = new SessionLedger("session-primary-01");
-    const initCp = ledger.getCheckpoint("RES-7702-INIT");
-    assert.ok(initCp);
-    assert.strictEqual(initCp?.restoreId, "RES-7702-INIT");
+    assert.strictEqual(ledger.getAllCheckpoints().length, 0);
 
-    const restoreResult = ledger.restoreToCheckpoint("RES-7702-INIT");
+    ledger.createCheckpoint({
+      restoreId: "restore-test-checkpoint",
+      timestamp: new Date().toISOString(),
+      title: "Test checkpoint",
+      agent: "Runtime test",
+      category: "Test",
+      payload: { source: "Created by the runtime test" },
+    });
+    const restoreResult = ledger.restoreToCheckpoint("restore-test-checkpoint");
     assert.strictEqual(restoreResult.success, true);
-    assert.strictEqual(restoreResult.checkpoint?.restoreId, "RES-7702-INIT");
+    assert.strictEqual(restoreResult.checkpoint?.restoreId, "restore-test-checkpoint");
   });
 
   it("forks conversation branch while maintaining audit log", () => {

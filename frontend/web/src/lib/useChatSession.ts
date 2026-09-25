@@ -12,7 +12,6 @@ import {
   saveStoredSessions,
   getActiveSessionId,
   setActiveSessionId,
-  INITIAL_EARLIER_CONTEXT,
 } from "./storage";
 import { getStoredProviderConfig, saveProviderConfig } from "./providers";
 import { streamAgentExecution, StrandsStreamEvent } from "./api";
@@ -22,7 +21,7 @@ const ACTIVE_RUN_ID_KEY = "oneshot_active_run_id_v1";
 
 export function useChatSession() {
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [activeSessionId, setActiveSessionIdState] = useState<string>("session-101");
+  const [activeSessionId, setActiveSessionIdState] = useState<string>("");
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [runStatus, setRunStatus] = useState<"IDLE" | "RUNNING" | "COMPLETED" | "CANCELLED" | "FAILED">("IDLE");
   const [isRunning, setIsRunning] = useState(false);
@@ -75,22 +74,12 @@ export function useChatSession() {
             title: checkpoint.title,
             source: checkpoint.payload?.source || checkpoint.payload?.concept || "System preserved checkpoint in SessionLedger",
             category: checkpoint.category || "General",
-              date: checkpoint.timestamp ? checkpoint.timestamp.slice(0, 10) : "Unknown",
-              time: checkpoint.timestamp ? checkpoint.timestamp.slice(11, 16) : "Unknown",
+            date: checkpoint.timestamp ? checkpoint.timestamp.slice(0, 10) : "Unknown",
+            time: checkpoint.timestamp ? checkpoint.timestamp.slice(11, 16) : "Unknown",
             agent: checkpoint.agent || "OneShot",
             restoreId: checkpoint.restoreId,
           }));
           setSessions((previous) => previous.map((session) => ({ ...session, earlierContext: mapped })));
-        }),
-      fetch("/api/pipeline/plan")
-        .then((response) => {
-          if (!response.ok) throw new Error(`Plan request failed: ${response.status}`);
-          return response.json();
-        })
-        .then((data) => {
-          if (!data) return;
-          setPlanData(data);
-          if (data.status === "CONFIRMED") setIsGate1Confirmed(true);
         }),
       fetch("/api/system/status")
         .then((response) => {
@@ -147,7 +136,7 @@ export function useChatSession() {
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       dateGroup: "Today",
       messages: [],
-      earlierContext: sessions.find((s) => s.id === activeSessionId)?.earlierContext || INITIAL_EARLIER_CONTEXT,
+      earlierContext: [],
     };
     const updated = [newSession, ...sessions];
     setSessions(updated);
@@ -197,7 +186,7 @@ export function useChatSession() {
       if (data) {
         setPlanData(data);
         if (data.status === "CONFIRMED") setIsGate1Confirmed(true);
-        addDeduplicatedEvent("Workflow Engine", `Active plan synced: ${data.status} (Gate 1 verified)`, "step");
+        addDeduplicatedEvent("Workflow Engine", `Active plan synced: ${data.status}`, "step");
       }
     } catch {}
   };
@@ -286,12 +275,7 @@ export function useChatSession() {
     seenEventIdsRef.current.clear();
     setTaskEvents([]);
     setToolEvents([]);
-
-    addDeduplicatedEvent("Researcher", `Run ${newRunId} initialized for query: "${text.slice(0, 30)}..."`, "info");
-    setActivitySteps([
-      { id: "step-1", label: "Conversation context loaded", status: "in_progress" },
-      { id: "step-2", label: "Executing real model stream & tool loop", status: "pending" },
-    ]);
+    setActivitySteps([]);
 
     const abortCtrl = new AbortController();
     abortControllerRef.current = abortCtrl;
@@ -428,7 +412,7 @@ export function useChatSession() {
           const finalContent = fullContent || "No response was returned by the provider.";
           setIsRunning(false);
           setRunStatus("COMPLETED");
-          addDeduplicatedEvent("Review", "Research synthesis completed and verified", "done");
+          addDeduplicatedEvent("Review", "Backend agent stream completed", "done");
           setSessions((prev) => {
             const final = prev.map((s) =>
               s.id === activeSession.id

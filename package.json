@@ -27,6 +27,7 @@
     "test:all": "pnpm test && pnpm run test:runtime && pnpm run test:web",
     "build:test": "node --max-semi-space-size=16 --max-old-space-size=1024 ./node_modules/typescript/bin/tsc -p tsconfig.test.json",
     "verify": "python app/scripts/verify_all.py",
+    "verify:demo": "node scripts/verify-demo-assets.mjs",
     "judge": "node scripts/judge.mjs",
     "bootstrap": "node scripts/bootstrap.mjs",
     "guard:layout": "node scripts/guard/layout.mjs",

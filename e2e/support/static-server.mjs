@@ -60,36 +60,11 @@ import {
     GitLocalStorage,
 } from "../../packages/agent-runtime/src/index.ts";
 import { streamStrandsToAgUi, formatAgUiSse } from "../../packages/agent-runtime/src/ag-ui/server-adapter.ts";
+import { streamPythonReasoning } from "../../backend/python-runtime.ts";
 
 let workflowEngine = new OneShotWorkflowEngine();
 let sessionLedger = new SessionLedger("session-101");
-let todoManager = new TodoChainManager();
-
-// Seed initial system checkpoints in session ledger
-sessionLedger.createCheckpoint({
-    restoreId: "restore-ui-001",
-    timestamp: "2026-09-11T10:42:00Z",
-    title: "Frontend and backend direction",
-    agent: "Researcher-A",
-    category: "UX/UI",
-    payload: { source: "Keep the interface familiar while deeper processing happens behind the conversation." }
-});
-sessionLedger.createCheckpoint({
-    restoreId: "restore-memory-002",
-    timestamp: "2026-09-11T10:18:00Z",
-    title: "Keeping earlier context available",
-    agent: "Memory-Agent",
-    category: "Memory",
-    payload: { source: "Hide older discussion from the main flow without losing the original conversation context." }
-});
-sessionLedger.createCheckpoint({
-    restoreId: "restore-research-003",
-    timestamp: "2026-09-11T09:54:00Z",
-    title: "Research validation approach",
-    agent: "Validator",
-    category: "Research",
-    payload: { source: "Check important findings and cross-verify with independent sources before presenting the final result." }
-});
+let todoManager = new TodoChainManager([]);
 
 const server = http.createServer(async (req, res) => {
     const reqUrl = new URL(req.url, `http://${req.headers.host}`);
@@ -263,25 +238,10 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    // ── API Route: /api/pipeline/plan (Live Plan State) ─────────────────
+    // A workflow plan appears only after the backend creates one.
     if (pathname === "/api/pipeline/plan" && req.method === "GET") {
-        const gate1 = workflowEngine.getGate1();
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-            id: "plan-arch-v1",
-            title: "Architecture & Execution Plan",
-            status: gate1.status,
-            coreHash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
-            summary: "5 atomic execution steps validated. Dependencies resolved within DeepAgents sandbox boundaries.",
-            stage: workflowEngine.getCurrentStage(),
-            steps: [
-                "1. Research synthesis & evidence gathering (completed)",
-                "2. Gate 1 Human Review Invariant verification",
-                "3. Planning & schema validation within sandbox boundaries",
-                "4. Automated E2E verification across Playwright suite",
-                "5. Gate 2 Build Ready package authorization"
-            ]
-        }));
+        res.end(JSON.stringify(null));
         return;
     }
 
@@ -316,15 +276,13 @@ const server = http.createServer(async (req, res) => {
             sessionLedger.recordAuditHook("on_gate_confirmed", {
                 gateId,
                 status: "CONFIRMED",
-                confirmedAt: gate1.confirmedAt,
-                coreHash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069"
+                confirmedAt: gate1.confirmedAt
             });
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end(JSON.stringify({
                 gateId,
                 status: "CONFIRMED",
-                confirmedAt: gate1.confirmedAt || new Date().toISOString(),
-                coreHash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069"
+                confirmedAt: gate1.confirmedAt || new Date().toISOString()
             }));
         });
         return;
@@ -366,7 +324,12 @@ const server = http.createServer(async (req, res) => {
         req.on("data", (chunk) => { body += chunk; });
         req.on("end", () => {
             const parsed = JSON.parse(body || "{}");
-            const restoreId = parsed.restoreId || "RES-7702-INIT";
+            const restoreId = parsed.restoreId;
+            if (typeof restoreId !== "string" || !restoreId) {
+                res.writeHead(400, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ error: "restoreId is required" }));
+                return;
+            }
             const restoreRes = sessionLedger.restoreToCheckpoint(restoreId);
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end(JSON.stringify({
@@ -473,12 +436,14 @@ const server = http.createServer(async (req, res) => {
                         ? `STAGE_TRANSITION_SUCCESS: Moved from ${transitionRes.fromStage} to ${transitionRes.toStage}`
                         : `STAGE_TRANSITION_FAILED: ${transitionRes.error}`;
                 } else if (toolName === "workflow_gate_status") {
+                    const currentGate2 = workflowEngine.getGate2();
+                    const latestCheckpoint = sessionLedger.getAllCheckpoints().at(-1);
                     result = {
                         workflowStage: workflowEngine.getCurrentStage(),
                         gate1Status: workflowEngine.getGate1().status,
-                        gate2Status: workflowEngine.getGate2().status,
-                        confirmedPackageCore: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
-                        restorePoint: "RES-7702-INIT"
+                        gate2Status: currentGate2.status,
+                        confirmedPackageCore: currentGate2.packageHash || null,
+                        restorePoint: latestCheckpoint?.restoreId || null
                     };
                 } else if (toolName === "tavily_search") {
                     result = await tavilySearchBackend.search(input?.query || "OneShot architecture");
@@ -501,7 +466,7 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    // ── API Route: /api/agent/stream (Authoritative AG-UI Stream with Real Tools) ───────
+    // ── API Route: /api/agent/stream (Real local Python bridge) ──────────
     if (pathname === "/api/agent/stream" && req.method === "POST") {
         let body = "";
         req.on("data", (chunk) => { body += chunk; });
@@ -515,18 +480,6 @@ const server = http.createServer(async (req, res) => {
                     return;
                 }
 
-                const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY);
-
-                // Invariant: A missing provider fails immediately (503) instead of switching paths to simulated execution.
-                if (!hasKey) {
-                    res.writeHead(503, { "Content-Type": "application/json" });
-                    res.end(JSON.stringify({
-                        error: "Backend Service Unavailable (503): Server provider credentials not configured. Configure GEMINI_API_KEY or OPENAI_API_KEY in server environment. Credentials remain server-side per security policy.",
-                        code: "SERVER_CREDENTIALS_UNAVAILABLE"
-                    }));
-                    return;
-                }
-
                 res.writeHead(200, {
                     "Content-Type": "text/event-stream; charset=utf-8",
                     "Cache-Control": "no-cache, no-transform",
@@ -534,21 +487,29 @@ const server = http.createServer(async (req, res) => {
                 });
 
                 const ac = new AbortController();
-                req.on("close", () => ac.abort());
+                req.on("aborted", () => ac.abort());
+                res.on("close", () => {
+                    if (!res.writableEnded) ac.abort();
+                });
+                const runId = `run-${Date.now().toString(36)}`;
+                const nowIso = () => new Date().toISOString();
+                const emit = (event) => {
+                    if (!ac.signal.aborted) res.write(formatAgUiSse(event));
+                };
 
-                // Production real LLM execution via Strands SDK & explicit Model Injection
-                const liveModel = createLiveModel({
-                    apiKey: process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY,
-                    modelId: parsed.model || process.env.GEMINI_MODEL,
-                });
-                const agent = createMainAgent({
-                    model: liveModel,
-                });
-                for await (const event of streamStrandsToAgUi({ agent, prompt, signal: ac.signal })) {
+                emit({ type: "RUN_START", runId, timestamp: nowIso(), agentName: "OneShot Local Python Reasoner" });
+                emit({ type: "STEP_START", runId, timestamp: nowIso(), stepId: "python-reasoning", label: "Python reasoning subprocess" });
+                const task = /gap|reconcil|diff/i.test(prompt) ? "gap-analysis"
+                    : /plan|gate|review|stage/i.test(prompt) ? "planner"
+                    : /research|search|find|index/i.test(prompt) ? "researcher" : "general";
+                let receivedDelta = false;
+                for await (const delta of streamPythonReasoning({ runId, prompt, task }, ac.signal)) {
                     if (ac.signal.aborted) break;
-                    res.write(formatAgUiSse(event));
+                    receivedDelta = true;
+                    emit({ type: "TEXT_MESSAGE_DELTA", runId, timestamp: nowIso(), delta });
                 }
-
+                emit({ type: "STEP_FINISH", runId, timestamp: nowIso(), stepId: "python-reasoning", label: "Python reasoning subprocess", status: receivedDelta ? "completed" : "failed" });
+                emit({ type: "RUN_FINISH", runId, timestamp: nowIso(), status: receivedDelta ? "COMPLETED" : "FAILED", error: receivedDelta ? undefined : "The local Python reasoner returned no output." });
                 res.end();
             } catch (err) {
                 if (!res.headersSent) {

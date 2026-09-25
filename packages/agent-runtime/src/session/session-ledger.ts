@@ -18,32 +18,6 @@ export class SessionLedger {
 
   constructor(sessionId: string = `session-${Date.now()}`) {
     this.activeSessionId = sessionId;
-    this.initDefaultCheckpoints();
-  }
-
-  private initDefaultCheckpoints(): void {
-    this.createCheckpoint({
-      restoreId: "RES-7702-INIT",
-      timestamp: "2026-09-22T09:30:00Z",
-      title: "Initial Verified Product Architecture",
-      agent: "OneShot",
-      category: "Architecture",
-      payload: {
-        stage: "research",
-        gates: { gate1: "APPROVED", gate2: "VERIFIED" },
-      },
-    });
-
-    this.createCheckpoint({
-      restoreId: "restore-ui-001",
-      timestamp: "2026-09-11T10:42:00Z",
-      title: "Frontend and backend direction",
-      agent: "OneShot",
-      category: "UX/UI",
-      payload: {
-        concept: "Keep interface familiar while deep processing happens behind conversation",
-      },
-    });
   }
 
   getActiveSessionId(): string {

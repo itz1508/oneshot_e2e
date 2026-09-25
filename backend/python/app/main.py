@@ -60,7 +60,7 @@ def execute_reasoning_core(request: ReasoningRequest) -> ReasoningResponse:
             "Indexed repository invariants and API endpoints.",
             "Cross-referenced local fixtures and execution context.",
         ])
-        recommendation = "Research synthesis verified."
+        recommendation = "Local deterministic analysis completed; no external research source was used."
     elif task == "gap-analysis":
         findings.append(
             Finding(

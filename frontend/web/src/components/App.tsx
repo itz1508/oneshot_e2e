@@ -12,7 +12,6 @@ import { ResearchBanner } from "./ResearchBanner";
 import { PlanReviewCard } from "./PlanReviewCard";
 import { Integration } from "./Integration";
 import { EarlierContextItem, ProviderId } from "../types";
-import { INITIAL_EARLIER_CONTEXT } from "../lib/storage";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
 import { useChatSession } from "../lib/useChatSession";
 
@@ -262,9 +261,24 @@ const AppContent: React.FC = () => {
           >
             <div className="w-full max-w-[780px] mx-auto space-y-4">
               {isStarting && (
-                <div className="rounded-xl border border-white/10 bg-[#141416] p-3 text-xs text-[#b0b0b5]" role="status" aria-live="polite">
-                  Loading workspace state…
-                </div>
+                <section
+                  id="workspace-loading-state"
+                  data-testid="workspace-loading-state"
+                  className="rounded-xl border border-[#79a8ea]/30 bg-[#141b24] p-4 text-[#c7d9ee] shadow-[0_0_0_1px_rgba(121,168,234,0.04)]"
+                  role="status"
+                  aria-live="polite"
+                  aria-busy="true"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="activity-pulse shrink-0" aria-hidden="true" />
+                    <div>
+                      <h2 className="text-sm font-semibold">Loading workspace state</h2>
+                      <p className="mt-1 text-xs text-[#91a9c4]">
+                        Waiting for the real checkpoint and system-status responses.
+                      </p>
+                    </div>
+                  </div>
+                </section>
               )}
               {startupError && (
                 <div className="rounded-xl border border-[#e5a84b]/30 bg-[#e5a84b]/10 p-3 text-xs text-[#e5a84b]" role="alert">
@@ -280,19 +294,21 @@ const AppContent: React.FC = () => {
                 onOpenResearcher={() => setIsResearcherDrawerOpen(true)}
               />
               <EarlierConversation
-                items={activeSession?.earlierContext || INITIAL_EARLIER_CONTEXT}
+                items={activeSession?.earlierContext || []}
                 onSelectContext={handleSelectContext}
                 selectedContextId={
                   isDrawerOpen && drawerTab === "context" ? selectedContext?.id : null
                 }
               />
-              <PlanReviewCard
-                planData={planData}
-                isGate1Confirmed={isGate1Confirmed}
-                isConfirmingGate={isConfirmingGate}
-                onSyncPlan={handleSyncPlan}
-                onConfirmGate1={handleConfirmGate1}
-              />
+              {planData && (
+                <PlanReviewCard
+                  planData={planData}
+                  isGate1Confirmed={isGate1Confirmed}
+                  isConfirmingGate={isConfirmingGate}
+                  onSyncPlan={handleSyncPlan}
+                  onConfirmGate1={handleConfirmGate1}
+                />
+              )}
               {apiError && (
                 <div
                   className="p-4 rounded-lg border border-red-500/30 bg-red-500/10 text-red-300 text-sm flex items-center justify-between"
@@ -315,6 +331,12 @@ const AppContent: React.FC = () => {
                 className="space-y-4 pt-2"
               >
                 {memoizedMessages}
+                {!isStarting && !isRunning && (activeSession?.messages.length ?? 0) === 0 && (
+                  <div className="rounded-xl border border-white/10 bg-[#141416] px-5 py-8 text-center" role="status">
+                    <h2 className="text-sm font-semibold text-[#ececec]">Start a real OneShot run</h2>
+                    <p className="mt-1 text-xs text-[#8e8e93]">Enter a request in the composer. Responses, tools, and task state appear only after the backend emits them.</p>
+                  </div>
+                )}
                 {isRunning && (
                   <EphemeralActivity
                     steps={activitySteps}

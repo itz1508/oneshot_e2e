@@ -1,8 +1,6 @@
-<div align="center">
+<div align="left">
 
 # OneShot
-
-**Automatic end-to-end agent testing — one command to install, run, and verify.**
 
 <p>
   <a href="https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1">
@@ -12,7 +10,7 @@
 
 <p>
   <img src="https://img.shields.io/badge/Node.js-%3E%3D24.13.0-339933?style=flat-square&logo=node.js&logoColor=white" />
-  <img src="https://img.shields.io/badge/pnpm-%3E%3D10.0.0-F69220?style=flat-square&logo=pnpm&logoColor=white" />
+  <img src="https://img.shields.io/badge/pnpm-%3E%3D11.9.0-F69220?style=flat-square&logo=pnpm&logoColor=white" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square" />
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square" />
 </p>
@@ -41,31 +39,35 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ## 🖥️ Live UI — Prompt · Stream · Task Rail
 
-<div align="center">
+<div align="left">
   <a href="public/demo/oneshot-demo.webm">
-    <img src="public/demo/screen-4-interactive.png" alt="OneShot UI — Clean chat interface with real-time Python reasoning stream and Task Management Rail" width="100%" />
+    <img src="public/demo/screen-4-interactive.png" alt="OneShot live run showing the real prompt, Python reasoning response, and Task drawer" width="100%" />
   </a>
   <br />
-  <sub>▶ <b><a href="public/demo/oneshot-demo.webm">Click to watch the full 66-second walkthrough video (oneshot-demo.webm)</a></b><br />Left: model picker & session navigation &nbsp;·&nbsp; Center: live backend streaming response &nbsp;·&nbsp; Right: Task Rail with verified gates</sub>
+  <sub>▶ <b><a href="public/demo/oneshot-demo.webm">Watch the live capture</a></b><br />Fresh prompt → real backend HTTP stream → Python reasoning deltas → completed response → live Task drawer. The recording ends when the real run completes.</sub>
 </div>
 
 ---
 
 ### 📸 Live Event Progression
 
-| 1. Context & Workspace | 2. Prompt & Planning Gate |
-|:---:|:---:|
-| <img src="public/demo/screen-1-initial.png" width="100%" alt="Clean workspace view" /><br /><sub><b>Initial UI</b>: Preserved context & model selection</sub> | <img src="public/demo/screen-2-typing.png" width="100%" alt="Prompt composer" /><br /><sub><b>Composer</b>: Architecture plan & human review gate</sub> |
+| 1. Loading Workspace | 2. Prompt Composer |
+|:---|:---|
+| <img src="public/demo/screen-1-loading.png" width="100%" alt="Real OneShot workspace loading state" /><br /><sub><b>Loading state</b>: Workspace is fetching real backend state</sub> | <img src="public/demo/screen-2-typing.png" width="100%" alt="Real OneShot prompt entry" /><br /><sub><b>Prompt entry</b>: Actual user request in the composer</sub> |
 
-| 3. Live Python Reasoning Stream | 4. Deterministic Proof & Task Rail |
-|:---:|:---:|
-| <img src="public/demo/screen-3-streaming.png" width="100%" alt="Live stream deltas" /><br /><sub><b>Zero-Config Stream</b>: Real Python reasoning tokens</sub> | <img src="public/demo/screen-4-interactive.png" width="100%" alt="Task Management Rail" /><br /><sub><b>Task Rail</b>: Gate 1 & 2 approved, proof confirmed</sub> |
+| 3. Live Python Reasoning Stream | 4. Completed Response |
+|:---|:---|
+| <img src="public/demo/screen-3-streaming.png" width="100%" alt="Real OneShot backend stream state" /><br /><sub><b>Live state</b>: Backend stream and Python reasoning deltas</sub> | <img src="public/demo/screen-4-interactive.png" width="100%" alt="Completed OneShot response" /><br /><sub><b>Completed run</b>: The backend stream finished</sub> |
+
+| 5. Task and Hook State |
+|:---|
+| <img src="public/demo/screen-5-task-state.png" width="100%" alt="OneShot Task and hook state" /><br /><sub><b>Task state</b>: Real run lifecycle, pending gates, and emitted events</sub> |
 
 ---
 
 ## 🏛️ System Architecture
 
-<div align="center">
+<div align="left">
   <img src="public/demo/architecture-diagram.svg" alt="OneShot Enterprise Architecture — Google ADK, Gemini 3.5 Flash, DeepAgents SSE, and Cloud Run" width="100%" />
 </div>
 
@@ -76,10 +78,10 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 | Step | What happens |
 |------|-------------|
 | **1. Enter prompt** | Type your task in the Prompt Composer and press Enter |
-| **2. Python Reasoner streams** | Zero-config standalone Python reasoner streams real tokens without requiring API keys |
-| **3. Task Rail fires** | Right panel shows live stage events: Research → Planning → Build → Review |
-| **4. Human gates** | Review cards enforce Gate 1 (Research Review) and Gate 2 (Build Ready) before transitions |
-| **5. Result persists** | Deterministic fixture validation (`Expected == Observed`) and immutable records saved |
+| **2. Python Reasoner streams** | The local Python reasoning subprocess streams real output without requiring API keys |
+| **3. Task state updates** | The task drawer shows the active run, lifecycle steps, pending gates, and emitted events |
+| **4. Human gates** | Gate 1 and Gate 2 remain explicit until a real human confirmation changes backend state |
+| **5. Run completes** | The stream ends with the backend’s actual `RUN_FINISH` event |
 
 ---
 
@@ -124,7 +126,7 @@ pnpm --prefix frontend/web test
 pnpm run verify
 ```
 
-> **Requirements:** Node.js `>= 24.13.0` · pnpm `>= 10.0.0`
+> **Requirements:** Node.js `>= 24.13.0` · pnpm `>= 11.9.0`
 
 ---
 

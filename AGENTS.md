@@ -72,7 +72,7 @@ A test or stage transition is not valid merely because it returns `pass` or `pas
 | Concern | Canonical location |
 | :--- | :--- |
 | Production frontend | `frontend/web/app/` and `frontend/web/src/` |
-| Legacy/reference UI | `app/web/` |
+| Reference-only alternate frontend | `frontend/web/src/components/main-screen/` |
 | Backend HTTP/SSE entry | `backend/index.ts` |
 | Environment loading | `backend/environment.ts` |
 | Agent runtime | `packages/agent-runtime/` |
@@ -84,7 +84,7 @@ A test or stage transition is not valid merely because it returns `pass` or `pas
 | Root lockfile | `pnpm-lock.yaml` |
 | CI and deployment | `.github/workflows/deploy.yml` |
 
-`app/web/` is retained only as a legacy/reference fallback. Do not add production frontend features there. Do not edit `node_modules/`, `.next/`, or generated `dist/` output.
+`app/web/` is not present in the current tree and must not be recreated as a second production frontend. Alternate `main-screen/` files under `frontend/web/src/` are reference-only until migrated. Do not edit `node_modules/`, `.next/`, or generated `dist/` output.
 
 ## Path and Variable Naming
 
@@ -98,7 +98,7 @@ Use explicit, consistent names for local path variables:
 
 - `frontend/web/` is the canonical frontend.
 - `App.tsx` and `Composer.tsx` are the canonical chat runtime path.
-- `chat/` and `main-screen/` are alternate surfaces until explicitly migrated.
+- `main-screen/` and the invariant-oriented `useStream`/`useTool` contracts are reference-only until migrated; do not import them from production components.
 - The composer must support Enter to send, Shift+Enter for newline, auto-grow from 44px to 160px, and internal scrolling above 160px.
 - Composer growth must occur for typing, quick tools, and externally inserted citations.
 - The composer must not cover the final conversation message.
@@ -150,6 +150,7 @@ The frontend and backend follow the DeepAgents event streaming model:
 | Full verification | `pnpm run verify` |
 | Generate manifest | `python app/scripts/generate_manifest.py` |
 | Verify manifest | `python app/scripts/verify_manifest.py` |
+| Verify demo assets | `pnpm run verify:demo` |
 
 ## CI and Deployment
 

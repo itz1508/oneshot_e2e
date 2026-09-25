@@ -71,34 +71,8 @@ function getSessionProvider(sessionId: string): ProviderConfig {
 // ── Authoritative Engine Singletons ──────────────────────────────────────────
 let workflowEngine = new OneShotWorkflowEngine();
 let sessionLedger = new SessionLedger("session-101");
-let todoManager = new TodoChainManager();
+let todoManager = new TodoChainManager([]);
 const gitStorage = new GitLocalStorage({ rootDir: path.resolve(process.cwd(), ".oneshot/storage") });
-
-// Seed initial UX / Memory / Research checkpoints in SessionLedger
-sessionLedger.createCheckpoint({
-  restoreId: "restore-ui-001",
-  timestamp: "2026-09-24T11:40:00Z",
-  title: "Google Agent Framework (ADK) State Machine",
-  agent: "WorkflowCoordinator",
-  category: "ADK Runtime",
-  payload: { source: "Autonomous multi-agent lifecycle: Researcher -> Planner -> Builder -> Validator with deterministic state transitions." },
-});
-sessionLedger.createCheckpoint({
-  restoreId: "restore-memory-002",
-  timestamp: "2026-09-24T10:15:00Z",
-  title: "Gemini 3.5 Flash Streaming & Gateway Fallback",
-  agent: "StreamingGateway",
-  category: "DeepAgents",
-  payload: { source: "Zero-stall token streaming and automated gateway fallback across Google Gemini, OpenAI, and Ollama providers." },
-});
-sessionLedger.createCheckpoint({
-  restoreId: "restore-research-003",
-  timestamp: "2026-09-24T09:30:00Z",
-  title: "Cloud Run Containerization & Verification Gates",
-  agent: "DeployValidator",
-  category: "Cloud Run",
-  payload: { source: "Single-step multi-stage Docker build, OpenTelemetry tracing, and cryptographic manifest verification." },
-});
 
 // ── In-memory chat session store ─────────────────────────────────────────────
 const sessions = new Map<string, { id: string; title: string; messages: unknown[] }>();
@@ -590,27 +564,10 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
         return;
       }
 
-      // === AUTHORITATIVE PIPELINE & WORKFLOW ENDPOINTS ===
-
-      // Live Plan State
+      // A workflow plan appears only after the backend creates one.
       if (pathname === "/api/pipeline/plan" && req.method === "GET") {
-        const gate1 = workflowEngine.getGate1();
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          id: "plan-arch-v1",
-          title: "Architecture & Execution Plan",
-          status: gate1.status,
-          coreHash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
-          summary: "5 atomic execution steps validated. Dependencies resolved within DeepAgents sandbox boundaries.",
-          stage: workflowEngine.getCurrentStage(),
-          steps: [
-            "1. Research synthesis & evidence gathering (completed)",
-            "2. Gate 1 Human Review Invariant verification",
-            "3. Planning & schema validation within sandbox boundaries",
-            "4. Automated E2E verification across Playwright suite",
-            "5. Gate 2 Build Ready package authorization",
-          ],
-        }));
+        res.end(JSON.stringify(null));
         return;
       }
 
@@ -643,14 +600,12 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           gateId,
           status: "CONFIRMED",
           confirmedAt: gate1.confirmedAt,
-          coreHash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
         });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({
           gateId,
           status: "CONFIRMED",
           confirmedAt: gate1.confirmedAt || new Date().toISOString(),
-          coreHash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
         }));
         return;
       }
@@ -687,7 +642,12 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
 
       if (pathname === "/api/session/restore" && req.method === "POST") {
         const body = await parseBody(req);
-        const restoreId = body.restoreId || "RES-7702-INIT";
+        const restoreId = body.restoreId;
+        if (typeof restoreId !== "string" || !restoreId) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "restoreId is required" }));
+          return;
+        }
         const restoreRes = sessionLedger.restoreToCheckpoint(restoreId);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({
@@ -784,12 +744,14 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             ? `STAGE_TRANSITION_SUCCESS: Moved from ${transitionRes.fromStage} to ${transitionRes.toStage}`
             : `STAGE_TRANSITION_FAILED: ${transitionRes.error}`;
         } else if (toolName === "workflow_gate_status") {
+          const currentGate2 = workflowEngine.getGate2();
+          const latestCheckpoint = sessionLedger.getAllCheckpoints().at(-1);
           result = {
             workflowStage: workflowEngine.getCurrentStage(),
             gate1Status: workflowEngine.getGate1().status,
-            gate2Status: workflowEngine.getGate2().status,
-            confirmedPackageCore: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
-            restorePoint: "RES-7702-INIT",
+            gate2Status: currentGate2.status,
+            confirmedPackageCore: currentGate2.packageHash || null,
+            restorePoint: latestCheckpoint?.restoreId || null,
           };
         } else if (toolName === "tavily_search") {
           result = await tavilySearchBackend.search(input?.query || "OneShot architecture");
@@ -1180,8 +1142,11 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           Connection: "keep-alive",
         });
 
-        const ac = new AbortController();
-        req.on("close", () => ac.abort());
+                const ac = new AbortController();
+                req.on("aborted", () => ac.abort());
+                res.on("close", () => {
+                    if (!res.writableEnded) ac.abort();
+                });
 
         if (isLive) {
           try {
@@ -1209,30 +1174,13 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           return;
         }
 
-        // === NON-API KEY LOCAL STYLE CHAT BOT MODE ===
-        // Autonomous local engine: streams real AG-UI SSE tokens, triggers tools, validates fixtures
+        // === LOCAL PYTHON REASONER FALLBACK ===
+        // No external provider credentials are configured. Stream only the
+        // subprocess output and lifecycle events produced by the local reasoner.
         try {
           const runId = `run-${Date.now().toString(36)}`;
           const nowIso = () => new Date().toISOString();
-
-          // 1. RUN_START
-          res.write(formatAgUiSse({
-            type: "RUN_START",
-            runId,
-            timestamp: nowIso(),
-            agentName: "OneShot Style Agent (Local Mode)",
-          }));
-
-          // 2. STEP_START
-          res.write(formatAgUiSse({
-            type: "STEP_START",
-            runId,
-            timestamp: nowIso(),
-            stepId: "step-1",
-            label: "Local Autonomous Processing",
-          }));
-
-          const emitDelta = async (text: string) => {
+          const emitDelta = (text: string) => {
             if (ac.signal.aborted) return;
             res.write(formatAgUiSse({
               type: "TEXT_MESSAGE_DELTA",
@@ -1242,240 +1190,54 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             }));
           };
 
-          const pLower = prompt.toLowerCase();
-          const isFixture = /fixture|test|validat|proof|rule|schema|pass|gap/i.test(pLower);
-          const isGate = /gate|status|stage|plan|review/i.test(pLower);
-          const isResearch = /research|search|tavily|find/i.test(pLower);
-          const isBuild = /build|compile|deploy|finish/i.test(pLower);
-          const isGap = /gap|reconcil|diff/i.test(pLower);
+          res.write(formatAgUiSse({
+            type: "RUN_START",
+            runId,
+            timestamp: nowIso(),
+            agentName: "OneShot Local Python Reasoner",
+          }));
+          res.write(formatAgUiSse({
+            type: "STEP_START",
+            runId,
+            timestamp: nowIso(),
+            stepId: "python-reasoning",
+            label: "Python reasoning subprocess",
+          }));
 
-          if (isFixture) {
-            await emitDelta("Operating in **OneShot Zero-Config Local Mode** (No API Key Required).\n");
-            await emitDelta("Executing **Standalone Python Reasoning Engine** (`backend/python/`):\n\n");
-
-            try {
-              const pyTask = isGap ? "gap-analysis" : isGate ? "planner" : isResearch ? "researcher" : "general";
-              for await (const pyDelta of streamPythonReasoning({ runId, prompt, task: pyTask }, ac.signal)) {
-                if (ac.signal.aborted) break;
-                await emitDelta(pyDelta);
-              }
-            } catch (err: any) {
-              await emitDelta(`\n*(Python Reasoner note: ${err.message})*\n`);
-            }
-
-            await emitDelta("\n\nEnforcing **Runtime Artifact Rule (`(...)`)** and **Persistence Artifact Rule (`_id`)** with deterministic proof:\n\n");
-
-            // Execute validate_fixtures tool
-            const toolUseId = `tool-${Date.now().toString(36)}`;
-            res.write(formatAgUiSse({
-              type: "TOOL_CALL_START",
-              runId,
-              timestamp: nowIso(),
-              toolName: "validate_fixtures",
-              toolUseId,
-              parameters: {
-                fixture_id: "fix-sample-01",
-                sessionId,
-                path: "app/fixtures/sample.json",
-                expectedHash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
-              },
-            }));
-
-            res.write(formatAgUiSse({
-              type: "TOOL_CALL_RUNNING",
-              runId,
-              timestamp: nowIso(),
-              toolUseId,
-            }));
-
-            // Instantiate active mutable runtime fixture(...)
-            const activeFix = fixture(
-              "fix-sample-01",
-              sessionId,
-              "app/fixtures/sample.json",
-              "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069"
-            );
-
-            // Evolve and validate
-            activeFix.evolve({
-              status: "in_progress",
-              actualHash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
-            });
-            const vResult = activeFix.validate();
-            const storedRecord = activeFix.toStoredRecord();
-
-            res.write(formatAgUiSse({
-              type: "TOOL_CALL_FINISH",
-              runId,
-              timestamp: nowIso(),
-              toolUseId,
-              result: {
-                success: vResult.ok,
-                fixture_id: storedRecord.fixture_id,
-                session_id: storedRecord.session_id,
-                status: storedRecord.status,
-                actualHash: activeFix.actualHash,
-                expectedHash: activeFix.expectedHash,
-                auditTrail: storedRecord.auditTrail,
-              },
-            }));
-
-            // Emit ValidationConfirmed SSE event for useStream & Task Rail
-            res.write(`event: ValidationConfirmed\ndata: ${JSON.stringify({
-              type: "ValidationConfirmed",
-              validation_id: `val_${Date.now().toString(36)}`,
-              validations: [{
-                id: `val_${storedRecord.fixture_id}`,
-                assertion: "Deterministic SHA-256 fixture checksum match",
-                expected: activeFix.expectedHash,
-                observed: activeFix.actualHash,
-                failure: null,
-                hasProof: true,
-                passed: true,
-                blocksPromotion: false,
-                timestamp: new Date().toISOString(),
-              }],
-              allPassed: true,
-              timestamp: Date.now(),
-            })}\n\n`);
-
-            await emitDelta("\n### Deterministic Fixture Validation Confirmed\n" +
-              "- **Runtime Artifact:** `fixture(\"fix-sample-01\")` evolved through evaluation in progress.\n" +
-              "- **Verification Proof:** `Expected == Observed` (`sha256:7f83b1...d9069`).\n" +
-              "- **Persistence Artifact:** Frozen to immutable stored record `fixture_id` (`fix-sample-01`).\n" +
-              "- **Invariant Enforced:** *Invariant 13: No PASS without proof.* All assertions verified.\n\n" +
-              "Dispatched `ValidationConfirmed` to the Task Management Rail!");
-          } else if (isGate) {
-            await emitDelta("Inspecting canonical workflow gates and invariants:\n\n");
-
-            const toolUseId = `tool-${Date.now().toString(36)}`;
-            res.write(formatAgUiSse({
-              type: "TOOL_CALL_START",
-              runId,
-              timestamp: nowIso(),
-              toolName: "workflow_gate_status",
-              toolUseId,
-              parameters: {},
-            }));
-
-            res.write(formatAgUiSse({
-              type: "TOOL_CALL_RUNNING",
-              runId,
-              timestamp: nowIso(),
-              toolUseId,
-            }));
-
-            const gateStatus = {
-              workflowStage: workflowEngine.getCurrentStage(),
-              gate1Status: workflowEngine.getGate1().status,
-              gate2Status: workflowEngine.getGate2().status,
-              confirmedPackageCore: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
-            };
-
-            res.write(formatAgUiSse({
-              type: "TOOL_CALL_FINISH",
-              runId,
-              timestamp: nowIso(),
-              toolUseId,
-              result: gateStatus,
-            }));
-
-            await emitDelta(`\n### Canonical Workflow Gate Status\n` +
-              `- **Stage:** \`${gateStatus.workflowStage}\`\n` +
-              `- **Gate 1 (Research Review):** \`${gateStatus.gate1Status}\` (Human confirmation required)\n` +
-              `- **Gate 2 (Build Ready):** \`${gateStatus.gate2Status}\` (Hash & package binding required)\n` +
-              `- **Confirmed Package Core:** \`${gateStatus.confirmedPackageCore.slice(0, 20)}...\`\n\n` +
-              `Adheres to *Invariant 10: Validation blocks promotion* without automatic bypasses.`);
-          } else if (isResearch) {
-            await emitDelta(`Executing researched analysis for: *"${prompt}"*...\n\n`);
-
-            const toolUseId = `tool-${Date.now().toString(36)}`;
-            res.write(formatAgUiSse({
-              type: "TOOL_CALL_START",
-              runId,
-              timestamp: nowIso(),
-              toolName: "tavily_search",
-              toolUseId,
-              parameters: { query: prompt },
-            }));
-
-            res.write(formatAgUiSse({
-              type: "TOOL_CALL_RUNNING",
-              runId,
-              timestamp: nowIso(),
-              toolUseId,
-            }));
-
-            const searchRes = await tavilySearchBackend.search(prompt);
-
-            res.write(formatAgUiSse({
-              type: "TOOL_CALL_FINISH",
-              runId,
-              timestamp: nowIso(),
-              toolUseId,
-              result: searchRes,
-            }));
-
-            await emitDelta("\n### Research Evidence & Invariant Analysis\n" +
-              `- **Query:** "${prompt}"\n` +
-              `- **Verified Sources:** ${searchRes.results?.length || 3} citations retrieved.\n` +
-              `- **Finding:** Single-agent workflow with human gates ensures verifiable state transitions.`);
-          } else if (isBuild) {
-            // Emit BuildCompleted SSE event
-            const buildId = `build_${Date.now().toString(36)}`;
-            res.write(`event: BuildCompleted\ndata: ${JSON.stringify({
-              type: "BuildCompleted",
-              build_id: buildId,
-              buildManifest: {
-                build_id: buildId,
-                commitHash: "HEAD",
-                artifacts: ["dist/backend/index.js", "frontend/web/dist/index.html"],
-                manifestHash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
-                isValid: true,
-              },
-              timestamp: Date.now(),
-            })}\n\n`);
-
-            await emitDelta(`### Build Completed\n` +
-              `- **Build ID:** \`${buildId}\`\n` +
-              `- **Build Manifest:** Validated & Linked\n` +
-              `- **Invariant Enforced:** *Invariant 14: No Build Complete without Build Manifest.*\n\n` +
-              `Build completed and recorded to persistence store.`);
-          } else {
-            // General Conversational Response
-            await emitDelta("Hello! I am **OneShot Assistant** running in **Zero-Config Local Autonomous Mode**.\n\n" +
-              "You can interact with OneShot and test all capabilities without configuring any external API keys:\n\n" +
-              "1. **Deterministic Fixture Testing**: Try typing *\"validate fixtures\"* or *\"run tests\"* to watch `fixture(...)` evolve, verify Expected == Observed proof, and freeze into `fixture_id`.\n" +
-              "2. **Workflow Gates**: Ask *\"check workflow gates\"* to review Gate 1 (Research Review) and Gate 2 (Build Ready).\n" +
-              "3. **Task Rail Live Visibility**: Live execution events, task cards, and progress updates synchronize automatically.\n" +
-              "4. **Live LLM Providers (Optional)**: If you'd like to use live Gemini, OpenAI, or Nebius models, you can configure your key anytime in `app/env/.env` or via the **Integrations** drawer.\n\n" +
-              "How would you like to begin?");
+          const task = /gap|reconcil|diff/i.test(prompt)
+            ? "gap-analysis"
+            : /plan|gate|review|stage/i.test(prompt)
+              ? "planner"
+              : /research|search|find|index/i.test(prompt)
+                ? "researcher"
+                : "general";
+          let receivedDelta = false;
+          for await (const delta of streamPythonReasoning({ runId, prompt, task }, ac.signal)) {
+            if (ac.signal.aborted) break;
+            receivedDelta = true;
+            emitDelta(delta);
           }
 
-          // 3. STEP_FINISH
           res.write(formatAgUiSse({
             type: "STEP_FINISH",
             runId,
             timestamp: nowIso(),
-            stepId: "step-1",
-            label: "Local Autonomous Processing",
-            status: "completed",
+            stepId: "python-reasoning",
+            label: "Python reasoning subprocess",
+            status: receivedDelta ? "completed" : "failed",
           }));
-
-          // 4. RUN_FINISH
           res.write(formatAgUiSse({
             type: "RUN_FINISH",
             runId,
             timestamp: nowIso(),
-            status: "COMPLETED",
-            finalMessage: "",
+            status: receivedDelta ? "COMPLETED" : "FAILED",
+            error: receivedDelta ? undefined : "The local Python reasoner returned no output.",
           }));
-
           res.end();
-        } catch (botErr: any) {
+        } catch (err: any) {
           if (!res.headersSent) {
             res.writeHead(500, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ error: botErr.message }));
+            res.end(JSON.stringify({ error: err.message }));
           } else {
             res.end();
           }

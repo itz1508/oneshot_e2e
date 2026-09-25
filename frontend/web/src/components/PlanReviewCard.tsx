@@ -1,7 +1,7 @@
 import React from "react";
 
 interface PlanReviewCardProps {
-  planData: { title: string; summary: string; steps: string[]; status: string } | null;
+  planData: { title: string; summary: string; steps: string[]; status: string };
   isGate1Confirmed: boolean;
   isConfirmingGate: boolean;
   onSyncPlan: () => void;
@@ -19,10 +19,10 @@ export const PlanReviewCard: React.FC<PlanReviewCardProps> = ({
     <div className="flex items-center justify-between">
       <div>
         <div className="text-xs font-semibold text-[#ececec]">
-          {planData?.title || "Architecture & Execution Plan"}
+          {planData.title}
         </div>
         <div className="text-[9px] text-[#8e8e93]">
-          Gate 1 Human Review Invariant — Verified against core schema
+          Backend workflow state
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -48,7 +48,7 @@ export const PlanReviewCard: React.FC<PlanReviewCardProps> = ({
       </div>
     </div>
     <p className="text-[11px] text-[#c0c0c5] leading-relaxed">
-      {planData?.summary || "5 atomic execution steps validated. Dependencies resolved within DeepAgents sandbox boundaries."}
+      {planData.summary}
     </p>
     <div className="flex items-center gap-2 pt-1">
       <button

@@ -45,7 +45,7 @@ EXCLUDED_PATTERNS: Set[str] = {
     '.kiro',
 }
 
-# Whitelist - files that are ALWAYS source even if in generated dirs
+# Whitelist - files that are always source outside generated trees
 WHITELIST: Set[str] = {
     'tsconfig.json',
     'package.json',
@@ -74,8 +74,13 @@ def is_source_file(path: str) -> bool:
     # Exclude manifest.json (self-referential) - BEFORE whitelist check
     if relative_path.as_posix().endswith('manifest.json'):
         return False
-    
-    # Whitelist: always source
+
+    # Generated trees are never source, even when they contain a whitelisted
+    # filename such as package.json.
+    if any(segment in GENERATED_PATTERNS for segment in relative_path.parts):
+        return False
+
+    # Whitelist: always source outside generated trees
     if name in WHITELIST:
         return True
     

@@ -87,7 +87,7 @@ describe('Health Endpoints', () => {
     assert.strictEqual(data.result.actualHash, data.result.expectedHash);
   });
 
-  it('POST /api/agent/stream supports Non-API Key Style Chat Bot mode and streams SSE deltas', async () => {
+  it('POST /api/agent/stream emits the real local Python reasoning SSE contract', async () => {
     const response = await fetch(`${BASE_URL}/api/agent/stream`, {
       method: 'POST',
       headers: {
@@ -104,10 +104,12 @@ describe('Health Endpoints', () => {
 
     const text = await response.text();
     assert.ok(text.includes('RUN_START'));
+    assert.ok(text.includes('STEP_START'));
+    assert.ok(text.includes('Python reasoning subprocess'));
     assert.ok(text.includes('TEXT_MESSAGE_DELTA'));
-    assert.ok(text.includes('TOOL_CALL_START'));
-    assert.ok(text.includes('validate_fixtures'));
-    assert.ok(text.includes('ValidationConfirmed'));
+    assert.ok(text.includes('Local Python reasoning engine evaluating constraints and invariants.'));
+    assert.ok(text.includes('STEP_FINISH'));
+    assert.ok(text.includes('"status":"completed"'));
     assert.ok(text.includes('RUN_FINISH'));
   });
 });

@@ -32,6 +32,7 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
       "scripts/inspect-ui.mjs",
       "scripts/diagnose-stream.mjs",
       "scripts/record-demo.mjs",
+      "scripts/verify-demo-assets.mjs",
       "app/bootstrap/demo.mjs",
       "app/bootstrap/setup.sh",
       "scripts/install.sh",
@@ -43,6 +44,12 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
     for (const file of executableFiles) {
       assert.doesNotMatch(read(file), forbidden, `${file} must not contain workstation paths`);
     }
+  });
+
+  it("keeps the canonical component barrel free of reference-only surfaces", () => {
+    const barrelSrc = read("frontend/web/src/components/index.ts");
+    assert.doesNotMatch(barrelSrc, /main-screen\//);
+    assert.doesNotMatch(barrelSrc, /components\/chat\//);
   });
 
   it("verifies the canonical composer auto-growing for typed, quick-tool, and citation text", () => {
@@ -98,6 +105,15 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
     assert.match(activitySrc, /steps\.map/);
   });
 
+  it("shows a distinct, testable startup state before workspace data is ready", () => {
+    const appSrc = read("frontend/web/src/components/App.tsx");
+    const recorderSrc = read("scripts/record-demo.mjs");
+
+    assert.match(appSrc, /data-testid="workspace-loading-state"/);
+    assert.match(appSrc, /Waiting for the real checkpoint and system-status responses/);
+    assert.match(recorderSrc, /getByTestId\("workspace-loading-state"\)/);
+  });
+
   it("verifies ProviderConfigModal enforces server security boundary without browser secret inputs", () => {
     const modalSrc = read("frontend/web/src/components/ProviderConfigModal.tsx");
     assert.match(modalSrc, /Server Security Boundary/);
@@ -108,10 +124,22 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
     assert.doesNotMatch(modalSrc, /modalApiKeyInput/);
   });
 
-  it("verifies no obsolete demo files or deep-agent-todo-list patterns remain", () => {
+  it("verifies obsolete standalone simulations and alternate chat components are absent", () => {
     assert.ok(
-      !existsSync(join(root, "frontend/web/public/embed/researcher-workflow-demo.html")),
-      "demo html must not exist"
+      !existsSync(join(root, "frontend/web/public/mock-screen.html")),
+      "standalone mock screen must not exist"
+    );
+    assert.ok(
+      !existsSync(join(root, "frontend/web/public/embed/researcher-workflow-demo.js")),
+      "standalone researcher simulation script must not exist"
+    );
+    assert.ok(
+      !existsSync(join(root, "frontend/web/public/embed/researcher-workflow-demo.css")),
+      "standalone researcher simulation styles must not exist"
+    );
+    assert.ok(
+      !existsSync(join(root, "frontend/web/src/components/chat")),
+      "unused alternate chat surface must not exist"
     );
     assert.ok(
       !existsSync(join(root, "frontend/web/src/patterns/deep-agent-todo-list")),

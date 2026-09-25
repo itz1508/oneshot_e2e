@@ -9,31 +9,16 @@ const screenshotsOutputDir = path.resolve(
 );
 
 test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () => {
-    test("Scenario 1: Core Layout & Earlier Conversation Toggle", async ({ page }) => {
+    test("Scenario 1: Fresh Workspace Starts Without Fabricated Content", async ({ page }) => {
         const guard = attachNetworkGuard(page);
 
         await page.goto("http://127.0.0.1:4173/index.html");
         await expect(page.locator("text=OneShot").first()).toBeVisible();
+        await expect(page.getByText("Start a real OneShot run", { exact: true })).toBeVisible();
+        await expect(page.locator("#earlierCard")).toHaveCount(0);
+        await expect(page.locator("text=OneShot Autonomous Software Engineering Fleet")).toHaveCount(0);
 
-        // Earlier Conversation Details
-        const earlierDetails = page.locator("#earlierCard");
-        await expect(earlierDetails).toBeVisible();
-
-        // Toggle micro-switch
-        const toggleSwitch = page.locator("#earlierToggleSwitch");
-        await expect(toggleSwitch).toBeVisible();
-
-        // Toggle to summary view
-        await toggleSwitch.check({ force: true });
-        await expect(page.locator("#earlierSummaryView")).toBeVisible();
-        await expect(page.locator("#earlierDetailView")).toBeHidden();
-
-        // Toggle back to detail view
-        await toggleSwitch.uncheck({ force: true });
-        await expect(page.locator("#earlierDetailView")).toBeVisible();
-        await expect(page.locator("#earlierSummaryView")).toBeHidden();
-
-        await page.screenshot({ path: path.join(screenshotsOutputDir, "01-layout-and-earlier-toggle.png"), fullPage: true });
+        await page.screenshot({ path: path.join(screenshotsOutputDir, "01-fresh-workspace.png"), fullPage: true });
         await guard.dispose();
     });
 
@@ -96,28 +81,27 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await guard.dispose();
     });
 
-    test("Scenario 4: Real AG-UI Stream Consumption & Safe Unavailable State", async ({ page }) => {
+    test("Scenario 4: Real Local AG-UI Stream Consumption", async ({ page }) => {
         const guard = attachNetworkGuard(page);
 
         await page.goto("http://127.0.0.1:4173/index.html");
 
-        // Enter prompt into composer
         const input = page.locator("#composerInput");
-        await input.fill("Verify current Tokyo travel preferences");
+        await input.fill("Verify the response verification invariant with Python reasoning");
+        const responsePromise = page.waitForResponse(
+            (response) => response.url().endsWith("/api/agent/stream") && response.request().method() === "POST",
+        );
+        await page.locator("#composerSendBtn").click();
+        const response = await responsePromise;
+        expect(response.status()).toBe(200);
 
-        // Click send
-        const sendBtn = page.locator("#composerSendBtn");
-        await sendBtn.click();
-
-        // Verify the empty successful stream is surfaced explicitly; no response is invented.
         const asstMessage = page.locator("#asstContent");
-        await expect(asstMessage).toContainText("No response was returned by the provider.");
-
-        // Verify no simulated progress or fake tool execution was fabricated.
+        await expect(asstMessage).toContainText("Local Python reasoning engine", { timeout: 15_000 });
         await expect(asstMessage).not.toContainText("Backend Service Unavailable (503)");
         await expect(asstMessage).not.toContainText("Credentials remain server-side per security policy.");
+        await expect(page.getByText("Backend agent stream completed", { exact: true })).toBeVisible();
 
-        await page.screenshot({ path: path.join(screenshotsOutputDir, "04-ag-ui-stream-safe-unavailable.png") });
+        await page.screenshot({ path: path.join(screenshotsOutputDir, "04-real-local-ag-ui-stream.png") });
         await guard.dispose();
     });
 
@@ -177,43 +161,40 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await guard.dispose();
     });
 
-    test("Scenario 7: Tasks Flip Card, Active-Only Todo Chain, Gate 1 Confirmation, & Message Actions", async ({ page }) => {
+    test("Scenario 7: Real Run Activity, Hook Log, Gate 1 Confirmation, & Message Actions", async ({ page }) => {
         const guard = attachNetworkGuard(page);
 
         await page.goto("http://127.0.0.1:4173/index.html");
 
-        // Open Tasks drawer
-        await page.locator("#toggleDrawerBtn").click();
+        // Start a real local run.
+        const input = page.locator("#composerInput");
+        await input.fill("research the response verification invariant with Python reasoning");
+        await page.locator("#composerSendBtn").click();
+        await expect(page.getByText("Backend agent stream completed", { exact: true })).toBeVisible({ timeout: 15_000 });
+
+        // Sending a real run opens the Tasks drawer automatically.
+        const drawer = page.locator("#contextDrawer");
+        await expect(drawer).toHaveClass(/open/);
         await page.locator("#tabTaskBtn").click();
+        await expect(page.getByText("Python reasoning subprocess", { exact: true })).toBeVisible();
+        await expect(page.getByText("No activity steps have been emitted for this run.")).toHaveCount(0);
 
-        // Verify Active-Only Todo Chain
-        const activeSkill = page.locator(".todo-skill.active");
-        await expect(activeSkill).toBeVisible();
-        await expect(activeSkill).toContainText("ACTIVE");
-
-        // Test Tasks Flip Card (Stage Todos ⇆ Hook Audit Log)
+        // Test Tasks Flip Card (real activity ⇆ real event log).
         const flipBtn = page.locator("#tasksFlipBtn");
         await expect(flipBtn).toBeVisible();
         const flipCard = page.locator("#tasksFlipCard");
         await expect(flipCard).not.toHaveClass(/flipped/);
-
-        // Flip to Back (Hook Log)
         await flipBtn.click();
         await expect(flipCard).toHaveClass(/flipped/);
         await expect(page.locator("#hookLogScroll")).toBeVisible();
-
-        // Flip back to Front
+        await expect(page.locator("#hookLogScroll").getByText(/Python reasoning subprocess \[completed\]/)).toBeVisible();
         await flipBtn.click();
         await expect(flipCard).not.toHaveClass(/flipped/);
 
-        // Test Gate 1 Plan Card confirmation
-        const planCard = page.locator("#planReviewCard");
-        await expect(planCard).toBeVisible();
-        const confirmBtn = page.locator("#confirmPlanBtn");
-        await confirmBtn.click();
-        await expect(page.locator("#gate1Badge")).toHaveText("CONFIRMED");
+        // Gate 1 remains explicit until confirmation.
+        await expect(page.getByText("PENDING_APPROVAL", { exact: true }).first()).toBeVisible();
 
-        // Test real Message Content Actions (Copy & Fork)
+        // Test real Message Content Actions (Copy & Fork).
         const copyBtn = page.getByRole("button", { name: "Copy message to clipboard" }).first();
         await expect(copyBtn).toBeVisible();
         await copyBtn.click();
@@ -224,7 +205,7 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await forkBtn.click();
         await expect(forkBtn).toHaveText(/Branch|Fork unavailable/);
 
-        await page.screenshot({ path: path.join(screenshotsOutputDir, "06-flipcard-todos-and-gate-confirm.png") });
+        await page.screenshot({ path: path.join(screenshotsOutputDir, "06-real-run-activity-and-gate.png") });
         await guard.dispose();
     });
 });
