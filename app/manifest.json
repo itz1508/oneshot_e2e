@@ -1,24 +1,24 @@
 {
-  "generated_at": "2026-09-25T02:31:10Z",
+  "generated_at": "2026-09-25T03:00:42Z",
   "version": "1.3.0",
-  "commit": "62a0703a",
+  "commit": "e4beb766",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
-      "size": 3088,
-      "hash": "sha256:16b8a93e1e1c0e59ec283178ca890c3aaa51aa8cc42d9f1e18cf00a83097add1",
+      "size": 3089,
+      "hash": "sha256:08f3e60c320d90c28cdcc3d75a41c08ab3817e2ca4b20b12b1d03297b27aee56",
       "category": "source"
     },
     {
       "path": "AGENTS.md",
-      "size": 9523,
-      "hash": "sha256:f8d4346c3679ab2d3110eeff4acb83c4d0fdf0cbab8433a98ec4aa75e4d3a1cc",
+      "size": 9527,
+      "hash": "sha256:374f6e3035b012c953d4090bb4ceddd65edcd0afa87dab246a5282b841c66d27",
       "category": "source"
     },
     {
       "path": "README.md",
-      "size": 5010,
-      "hash": "sha256:1bee96ea739172da8d9ba1b457910eb31f2fea5f6fb950d1894a577b8801d978",
+      "size": 5012,
+      "hash": "sha256:7fa5b1fe6d506ba8d9131d98f7f712c7c2c61f7d319c4daaf7f2f29d86f9a6e8",
       "category": "source"
     },
     {
@@ -29,26 +29,26 @@
     },
     {
       "path": "app\\integration\\gemini\\package.json",
-      "size": 161,
-      "hash": "sha256:079864741ba397d88a19ad4ad82b735cc24443393bf2b99c6c13bfb1238f3d2f",
+      "size": 205,
+      "hash": "sha256:f656cbbb0482f8079e3303f933ed756f8c11a17e0b128aafdb5961e60479dc43",
       "category": "source"
     },
     {
       "path": "app\\integration\\openai\\package.json",
-      "size": 169,
-      "hash": "sha256:8d04834745bfb2b112db617f8a63c5ff336f7e9b5a32d5ac515e3ef91cf3a19d",
+      "size": 213,
+      "hash": "sha256:7baa43d37a145c41254d41206ef42bdfb9649354931a6e34f42c578a7dd892d4",
       "category": "source"
     },
     {
       "path": "app\\integration\\strands\\package.json",
-      "size": 193,
-      "hash": "sha256:d2ec153994143e0b071c4791d3cba3387670e640c5d7460b61f3eb26145a187f",
+      "size": 237,
+      "hash": "sha256:6dd4427d2ec9c7815b5d8a94c26c14218085f93a603ada2db2ae17082ac3a586",
       "category": "source"
     },
     {
       "path": "app\\integration\\tavily\\package.json",
-      "size": 168,
-      "hash": "sha256:9ea20f44ca88414e3f31166822e01c3e6c51a8aa9a6a3ab6c64703e5b0a69ec0",
+      "size": 212,
+      "hash": "sha256:b2f10de0714a72d0b799abe17f72027aa81099d6f1d78ec2ac9af857aee50d47",
       "category": "source"
     },
     {
@@ -65,8 +65,8 @@
     },
     {
       "path": "app\\scripts\\verify_all.py",
-      "size": 12312,
-      "hash": "sha256:6bfa8b1b7782f71bbaec9163e78837cbed4783f6075ceecd00329767ac0d1d5e",
+      "size": 12602,
+      "hash": "sha256:726122230d9aa273fc357d4d98b972e43814090fcac21e0c36d575e1680c20a4",
       "category": "source"
     },
     {
@@ -119,8 +119,8 @@
     },
     {
       "path": "backend\\package.json",
-      "size": 593,
-      "hash": "sha256:03aa673b7caeeecacdf936ab9b0389f4c947f42759f6016101eb860a4b17d617",
+      "size": 638,
+      "hash": "sha256:a90a88772833f0d9c4c5bd30460d775450ed7714f8eff0da8a0014dd5f0f38b7",
       "category": "source"
     },
     {
@@ -5753,8 +5753,8 @@
     },
     {
       "path": "frontend\\web\\package.json",
-      "size": 1153,
-      "hash": "sha256:e64f8c4907aa342bf87ec83d34186cb65d1bdce4472850f55653a64f27f554ae",
+      "size": 1157,
+      "hash": "sha256:a359c1fdb9c3859defa5c1e8cb0f2b334916df01bb61fc939a27fd3c2c6fdd1f",
       "category": "source"
     },
     {
@@ -6089,14 +6089,14 @@
     },
     {
       "path": "package.json",
-      "size": 3113,
-      "hash": "sha256:72e0fdc995bdc093d8ea0e7d93c5bb33355df3b026af58dad04b1a3119dc15f8",
+      "size": 3050,
+      "hash": "sha256:adeefee93333471cb781bb583a98b69aa11cbc1b74406609f0faed31322f3f1d",
       "category": "source"
     },
     {
       "path": "packages\\agent-runtime\\package.json",
-      "size": 361,
-      "hash": "sha256:b9115a14379090b6d310c85de905dbef3fb6072b10f88b112807683447249515",
+      "size": 405,
+      "hash": "sha256:6b17dbfd69a29064c7cf9428157a398907b32db7e277de27bbbdff4eaa67c57b",
       "category": "source"
     },
     {
@@ -6389,14 +6389,14 @@
     },
     {
       "path": "pnpm-lock.yaml",
-      "size": 110460,
-      "hash": "sha256:23543b2cd93b9d0671bda721c97344f7093d8f4e9493ff1a0fa5af533619923c",
+      "size": 101927,
+      "hash": "sha256:83a685e3fe3aa1ca953917525d5da83ae8f0698c4b962d1d4f95835593dded9e",
       "category": "source"
     },
     {
       "path": "pnpm-workspace.yaml",
-      "size": 139,
-      "hash": "sha256:d02a4ebd133b4960478214180aea04e7f6005cee104149676ff5091527cf3532",
+      "size": 290,
+      "hash": "sha256:8292ca4c656d4a27ac6b8182da1c9e979c8d6d9757ad82ef4af938d2f7177ef6",
       "category": "source"
     },
     {
@@ -6469,7 +6469,7 @@
   "statistics": {
     "total_files": 1077,
     "source_files": 1077,
-    "total_size_bytes": 13214082,
+    "total_size_bytes": 13206203,
     "by_extension": {
       ".yml": 1,
       ".md": 15,

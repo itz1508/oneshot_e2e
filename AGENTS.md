@@ -10,8 +10,8 @@ Never fabricate progress, assistant responses, tool execution, research results,
 
 ## Prerequisites and Installation
 
-- Node.js >= 24.13.0
-- pnpm 11.9.0
+- Node.js >= 24.21.0
+- pnpm >= 11.27.1
 - Python 3.12+ for Python validation services
 - Git
 - Docker only for services that explicitly require containers

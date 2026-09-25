@@ -8,15 +8,14 @@ echo "===================="
 echo "[1/7] Checking Node.js..."
 if ! command -v node &> /dev/null; then
     echo "[ERROR] Node.js not found"
-    echo "Please install Node.js >= 24.13.0 from https://nodejs.org/"
+    echo "Please install Node.js >= 24.21.0 from https://nodejs.org/"
     exit 1
 fi
 
 NODE_VERSION=$(node --version | sed 's/v//')
-NODE_MAJOR=$(echo $NODE_VERSION | cut -d. -f1)
-if [ "$NODE_MAJOR" -lt 24 ]; then
+if ! node -e "const v=process.argv[1].split('.').map(Number),r=[24,21,0];process.exit(v[0]!==r[0]?v[0]-r[0]:v[1]!==r[1]?v[1]-r[1]:v[2]-r[2])" "$NODE_VERSION"; then
     echo "[ERROR] Node.js version $NODE_VERSION is too old"
-    echo "Please install Node.js >= 24.13.0"
+    echo "Please install Node.js >= 24.21.0"
     exit 1
 fi
 echo "[OK] Node.js $NODE_VERSION"
@@ -24,10 +23,16 @@ echo "[OK] Node.js $NODE_VERSION"
 # Check pnpm
 if ! command -v pnpm &> /dev/null; then
     echo "[ERROR] pnpm not found"
-    echo "Install Node.js >= 24.13.0 and enable Corepack, then run: corepack enable"
+    echo "Install Node.js >= 24.21.0 and enable Corepack, then run: corepack enable"
     exit 1
 fi
-echo "[OK] pnpm found"
+PNPM_VERSION=$(pnpm --version)
+if ! node -e "const v=process.argv[1].split('.').map(Number),r=[11,27,1];process.exit(v[0]!==r[0]?v[0]-r[0]:v[1]!==r[1]?v[1]-r[1]:v[2]-r[2])" "$PNPM_VERSION"; then
+    echo "[ERROR] pnpm version $PNPM_VERSION is too old"
+    echo "Please install pnpm >= 11.27.1"
+    exit 1
+fi
+echo "[OK] pnpm $PNPM_VERSION"
 
 # Install dependencies
 echo "[3/7] Installing dependencies..."

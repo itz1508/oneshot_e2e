@@ -9,8 +9,8 @@
 </p>
 
 <p>
-  <img src="https://img.shields.io/badge/Node.js-%3E%3D24.13.0-339933?style=flat-square&logo=node.js&logoColor=white" />
-  <img src="https://img.shields.io/badge/pnpm-%3E%3D11.9.0-F69220?style=flat-square&logo=pnpm&logoColor=white" />
+  <img src="https://img.shields.io/badge/Node.js-%3E%3D24.21.0-339933?style=flat-square&logo=node.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/pnpm-%3E%3D11.27.1-F69220?style=flat-square&logo=pnpm&logoColor=white" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square" />
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square" />
 </p>
@@ -126,7 +126,7 @@ pnpm --prefix frontend/web test
 pnpm run verify
 ```
 
-> **Requirements:** Node.js `>= 24.13.0` · pnpm `>= 11.9.0`
+> **Requirements:** Node.js `>= 24.21.0` · pnpm `>= 11.27.1`
 
 ---
 

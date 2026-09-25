@@ -7,3 +7,10 @@ packages:
 allowBuilds:
   esbuild: true
   msgpackr-extract: true
+
+minimumReleaseAgeExclude:
+  - '@ai-sdk/gateway@4.0.92'
+  - '@ai-sdk/google@4.0.80'
+  - '@ai-sdk/openai@4.0.75'
+  - ai@7.0.114
+  - lucide-react@1.48.0

@@ -33,7 +33,7 @@ if ! command -v pnpm >/dev/null 2>&1; then
     if command -v corepack >/dev/null 2>&1; then
         corepack enable >/dev/null 2>&1 || true
     else
-        echo "[ERROR] pnpm is required; enable Corepack or install pnpm 11.9.0." >&2
+        echo "[ERROR] pnpm is required; enable Corepack or install pnpm >= 11.27.1." >&2
         exit 1
     fi
 fi

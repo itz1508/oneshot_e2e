@@ -3,8 +3,11 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=24.21.0"
+  },
   "dependencies": {
-    "@strands-agents/sdk": "^1.17.0",
+    "@strands-agents/sdk": "^1.19.0",
     "openai": "^6.49.0"
   }
 }
