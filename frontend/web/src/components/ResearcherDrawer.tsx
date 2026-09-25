@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useOverlayFocus } from "../lib/useOverlayFocus";
 
-import { readJsonResponse } from "../lib/api";
+import { readJsonResponse, resolveApiUrl } from "../lib/api";
 
 interface SearchResult {
   title: string;
@@ -33,7 +33,7 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
     setError(null);
 
     try {
-      const res = await fetch("/api/research/query", {
+      const res = await fetch(resolveApiUrl("/api/research/query"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: query.trim() }),

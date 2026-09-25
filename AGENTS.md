@@ -43,7 +43,7 @@ pnpm run build                                # production build
 pnpm --prefix frontend/web run build           # frontend static export
 pnpm --prefix frontend/web run preview        # static frontend preview
 pnpm run start                                # backend production server
-pnpm exec playwright test                     # browser tests
+pnpm run test:e2e                            # browser tests
 ```
 
 ## Code Style
@@ -157,11 +157,12 @@ The frontend and backend follow the DeepAgents event streaming model:
 | Frontend tests | `pnpm --prefix frontend/web test` |
 | Backend tests | `pnpm test` |
 | Runtime tests | `pnpm run test:runtime` |
-| Browser tests | `pnpm exec playwright test` |
+| Browser tests | `pnpm run test:e2e` |
 | Full verification | `pnpm run verify` |
 | Generate manifest | `python app/scripts/generate_manifest.py` |
 | Verify manifest | `python app/scripts/verify_manifest.py` |
 | Verify demo assets | `pnpm run verify:demo` |
+| Regenerate demo screenshots & video | `pnpm run capture:demo` (requires a running backend on `:4173`) |
 
 ## CI and Deployment
 

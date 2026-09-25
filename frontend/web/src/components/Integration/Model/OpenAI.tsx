@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { PROVIDER_DEFINITIONS } from "../../../lib/providers";
-import { readJsonResponse } from "../../../lib/api";
+import { readJsonResponse, resolveApiUrl } from "../../../lib/api";
 
 interface ModelOpenAIProps {
     sessionId?: string;
@@ -33,7 +33,7 @@ export const ModelOpenAI: React.FC<ModelOpenAIProps> = ({
             const headers: Record<string, string> = { "Content-Type": "application/json" };
             if (sessionId) headers["X-Session-Id"] = sessionId;
 
-            const res = await fetch("/api/config/provider", {
+            const res = await fetch(resolveApiUrl("/api/config/provider"), {
                 method: "POST",
                 headers,
                 body: JSON.stringify({
@@ -59,7 +59,7 @@ export const ModelOpenAI: React.FC<ModelOpenAIProps> = ({
 
     const handleCheckStatus = async () => {
         try {
-            const res = await fetch("/api/providers/status");
+            const res = await fetch(resolveApiUrl("/api/providers/status"));
             const data = await readJsonResponse<Record<string, { configured?: boolean; available?: boolean; latency?: number }>>(res, "Provider status request");
             const info = data.openai;
             if (!info || typeof info.configured !== "boolean") {

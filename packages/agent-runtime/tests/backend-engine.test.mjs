@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   OneShotWorkflowEngine,
+  ImplementationRuntime,
   TavilySearchBackend,
   TodoChainManager,
   SessionLedger,
@@ -49,28 +50,66 @@ describe("OneShot Canonical Workflow Engine (Backend)", () => {
     assert.strictEqual(engine.getCurrentStage(), "planning");
   });
 
-  it("blocks transition to builder until Gate 2 is confirmed with a verified package hash", () => {
+  it("refuses to let Design_Planning reach the execution lifecycle", () => {
     const engine = new OneShotWorkflowEngine();
     engine.confirmGate1();
-    engine.transitionTo("planning");
-    engine.transitionTo("gap_analysis");
-    engine.transitionTo("evaluation");
+    assert.strictEqual(engine.transitionTo("planning").success, true);
+    assert.strictEqual(engine.getCurrentStage(), "planning");
 
-    // Try transitioning to builder without Gate 2
-    const blocked = engine.transitionTo("builder");
-    assert.strictEqual(blocked.success, false);
-    assert.ok(blocked.error?.includes("Gate 2 (Build Ready) invariant violation"));
+    // Planning is terminal for this engine. Execution belongs to the separate
+    // implementation runtime, which requires a user-approved plan.
+    for (const executionStage of ["gap_analysis", "evaluation", "builder"]) {
+      const blocked = engine.transitionTo(executionStage);
+      assert.strictEqual(blocked.success, false, `${executionStage} must not be reachable from planning`);
+      assert.match(
+        blocked.error ?? "",
+        /implementation runtime|terminal stage of this engine/,
+        `${executionStage} must point to the implementation runtime boundary`
+      );
+    }
 
-    // Confirm Gate 2 with package core
-    const packageCore = { name: "oneshot-core", version: "1.0.0", files: ["index.ts"] };
-    const confirmedGate2 = engine.confirmGate2(packageCore, "lead_reviewer");
-    assert.strictEqual(confirmedGate2.status, "CONFIRMED");
-    assert.ok(confirmedGate2.packageHash?.startsWith("sha256:"));
+    // The engine must not have moved.
+    assert.strictEqual(engine.getCurrentStage(), "planning");
+  });
 
-    // Now transition succeeds
-    const allowed = engine.transitionTo("builder");
-    assert.strictEqual(allowed.success, true);
-    assert.strictEqual(engine.getCurrentStage(), "builder");
+  it("blocks execution entirely until a user-approved plan exists", () => {
+    // The implementation runtime cannot even be constructed without a plan.
+    assert.throws(() => new ImplementationRuntime(undefined), /requires an ApprovedPlan/);
+    assert.throws(() => new ImplementationRuntime({}), /planId/);
+
+    // With an approved plan it starts, and cannot skip or claim unevidenced work.
+    const runtime = new ImplementationRuntime({
+      planId: "plan-1",
+      runId: "run-1",
+      intent: "ship it",
+      steps: [],
+      reviews: [],
+    });
+    assert.strictEqual(runtime.getPhase(), "IMPLEMENTATION");
+
+    const skip = runtime.advance("VERIFICATION");
+    assert.strictEqual(skip.success, false, "phases must not be skipped");
+    assert.match(skip.error ?? "", /cannot be skipped/);
+
+    assert.strictEqual(runtime.advance("GAP_DISCOVERY").success, true);
+    const unevidenced = runtime.advance("GAP_RESOLUTION");
+    assert.strictEqual(unevidenced.success, false);
+    assert.match(unevidenced.error ?? "", /requires evidence/);
+    assert.strictEqual(runtime.advance("GAP_RESOLUTION", { findings: "none" }).success, true);
+
+    // Verification and receipts both require proof.
+    assert.strictEqual(runtime.advance("VERIFICATION").success, false);
+    assert.strictEqual(runtime.advance("VERIFICATION", { proofHash: "sha256:abc" }).success, true);
+    const noProof = runtime.advance("RECEIPT");
+    assert.strictEqual(noProof.success, false);
+    assert.match(noProof.error ?? "", /requires evidence/);
+    assert.strictEqual(runtime.advance("RECEIPT", { receiptId: "r-1" }).success, true);
+
+    // The run closes only through the full, evidenced path.
+    assert.strictEqual(runtime.advance("PROMOTION", { promoted: true }).success, true);
+    assert.strictEqual(runtime.advance("CLOSED", { closed: true }).success, true);
+    assert.strictEqual(runtime.isFinished(), true);
+    assert.strictEqual(runtime.advance("PROMOTION", { again: true }).success, false);
   });
 
   it("verifies Gate 2 computes deterministic canonical SHA-256 hash regardless of key ordering", () => {

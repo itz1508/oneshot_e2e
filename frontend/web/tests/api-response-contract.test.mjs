@@ -6,6 +6,8 @@ const {
   readJsonResponse,
   checkBackendHealth,
   iterateAgentStream,
+  resolveApiUrl,
+  resolveBackendBaseUrl,
 } = await import("../src/lib/api.ts");
 
 const JSON_HEADERS = { "content-type": "application/json" };
@@ -47,6 +49,27 @@ async function collectAgentEvents(prompt, providerConfig, sessionId) {
   }
   return events;
 }
+
+describe("Backend base URL resolution (Vercel split deployment)", () => {
+  it("keeps same-origin relative URLs when NEXT_PUBLIC_BACKEND_URL is unset", () => {
+    delete process.env.NEXT_PUBLIC_BACKEND_URL;
+    assert.strictEqual(resolveBackendBaseUrl(), "");
+    assert.strictEqual(resolveApiUrl("/api/health"), "/api/health");
+    assert.strictEqual(resolveApiUrl("api/health"), "/api/health");
+  });
+
+  it("prefixes API paths and trims trailing slashes when configured", () => {
+    process.env.NEXT_PUBLIC_BACKEND_URL = "https://api.example.com/";
+    try {
+      assert.strictEqual(resolveBackendBaseUrl(), "https://api.example.com");
+      assert.strictEqual(resolveApiUrl("/api/health"), "https://api.example.com/api/health");
+      assert.strictEqual(resolveApiUrl("/api/agent/stream"), "https://api.example.com/api/agent/stream");
+      assert.strictEqual(resolveApiUrl("https://other.example.com/api/health"), "https://other.example.com/api/health");
+    } finally {
+      delete process.env.NEXT_PUBLIC_BACKEND_URL;
+    }
+  });
+});
 
 describe("Strict JSON response contract (readJsonResponse)", () => {
   it("returns the parsed payload for a JSON 200 response", async () => {

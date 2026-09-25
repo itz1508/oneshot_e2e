@@ -9,7 +9,6 @@ export * from "./ContextReviewDrawer";
 export * from "./ProviderConfigModal";
 export * from "./ResearcherDrawer";
 export * from "./ResearchBanner";
-export * from "./PlanReviewCard";
 export * from "./ToolCallList";
 
 // Reference-only surfaces are intentionally not exported from the canonical

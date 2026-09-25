@@ -352,7 +352,10 @@ def check_security() -> bool:
         (r'sk-[a-zA-Z0-9]{48,}', 'OpenAI API key pattern'),
     ]
     
-    source_file_paths = list(repository_root.glob('**/*.ts'))
+    source_file_paths = [
+        p for p in repository_root.glob('**/*.ts')
+        if not any(part in ('node_modules', '.next', 'dist', '.git', 'coverage') for part in p.parts)
+    ]
     secrets_found = []
     
     for source_file_path in source_file_paths:

@@ -1,12 +1,14 @@
 /**
  * OneShot Canonical Workflow Engine
  *
- * Implements the single-agent sequential framework:
- * Research -> Planning -> Gap Analysis -> Evaluation -> Builder
+ * Implements the Research → Design_Planning boundary only:
+ *   research → planning   (Gate 1: Research Review)
  *
  * Invariants Enforced:
- * 1. Gate 1 (Research Review): Must be CONFIRMED by human before transition to Planning.
- * 2. Gate 2 (Build Ready): Must be CONFIRMED by human and verified by package core SHA-256 hash before Builder execution.
+ * 1. Gate 1 (Research Review): Must be CONFIRMED by human before Planning.
+ * 2. Planning is TERMINAL for this engine. It must not advance into the execution
+ *    lifecycle — that belongs to the separate `ImplementationRuntime`, which
+ *    requires a user-approved plan (ARCHITECTURE.MD §1.4).
  */
 
 import crypto from "node:crypto";
@@ -17,6 +19,17 @@ import type {
   WorkflowStageInfo,
   WorkflowTransitionResult,
 } from "./types.js";
+
+/**
+ * Stages owned by the separate implementation runtime. This engine must never
+ * transition into them, because doing so is what previously let planning reach
+ * the execution lifecycle.
+ */
+export const EXECUTION_STAGES: WorkflowStage[] = [
+  "gap_analysis",
+  "evaluation",
+  "builder",
+];
 
 export class OneShotWorkflowEngine {
   private currentStage: WorkflowStage = "research";
@@ -142,11 +155,28 @@ export class OneShotWorkflowEngine {
   }
 
   /**
-   * Attempts to transition to the next workflow stage.
-   * Strictly enforces human gates.
+   * Attempts to transition to the next research/planning stage.
+   *
+   * Invariant: this engine owns Research → Design_Planning ONLY. It must not walk
+   * planning into the execution lifecycle (ARCHITECTURE.MD §1.4). Execution is
+   * owned by the separate `ImplementationRuntime`, which cannot be constructed
+   * without a user-approved plan.
+   *
+   * Invariant 1: Gate 1 (Research Review) must be CONFIRMED before Planning.
    */
   transitionTo(targetStage: WorkflowStage): WorkflowTransitionResult {
     const fromStage = this.currentStage;
+
+    // Boundary: execution stages do not belong to this engine.
+    if (EXECUTION_STAGES.includes(targetStage)) {
+      return {
+        success: false,
+        fromStage,
+        toStage: targetStage,
+        error:
+          "Execution stage is owned by the separate implementation runtime. Design_Planning must end at APPROVED_PLAN, and the ImplementationRuntime must be constructed from that approved plan.",
+      };
+    }
 
     // Invariant: Transition from research to planning requires Gate 1 approval
     if (targetStage === "planning" && this.gate1.status !== "CONFIRMED") {
@@ -159,17 +189,15 @@ export class OneShotWorkflowEngine {
       };
     }
 
-    // Invariant: Transition to builder requires Gate 2 approval and package hash
-    if (targetStage === "builder") {
-      if (this.gate2.status !== "CONFIRMED" || !this.gate2.packageHash) {
-        return {
-          success: false,
-          fromStage,
-          toStage: targetStage,
-          error: "Gate 2 (Build Ready) invariant violation: Package hash authorization required before Builder stage.",
-          gateRequired: this.gate2,
-        };
-      }
+    // Planning is terminal for this engine. Nothing advances past it here.
+    if (fromStage === "planning" && targetStage !== "planning") {
+      return {
+        success: false,
+        fromStage,
+        toStage: targetStage,
+        error:
+          "Design_Planning is the terminal stage of this engine. Hand off to the implementation runtime with an Approved Plan.",
+      };
     }
 
     // Mark previous stage completed

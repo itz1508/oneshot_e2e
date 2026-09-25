@@ -14,7 +14,7 @@ import {
   setActiveSessionId,
 } from "./storage";
 import { getStoredProviderConfig, saveProviderConfig } from "./providers";
-import { readJsonResponse, isRecord, streamAgentExecution, StrandsStreamEvent } from "./api";
+import { readJsonResponse, isRecord, resolveApiUrl, streamAgentExecution, StrandsStreamEvent } from "./api";
 import { TaskEvent } from "../components/ContextReviewDrawer";
 
 const ACTIVE_RUN_ID_KEY = "oneshot_active_run_id_v1";
@@ -38,9 +38,6 @@ export function useChatSession() {
     nebius: getStoredProviderConfig("nebius"),
   });
 
-  const [planData, setPlanData] = useState<{ title: string; summary: string; steps: string[]; status: string } | null>(null);
-  const [isGate1Confirmed, setIsGate1Confirmed] = useState(false);
-  const [isConfirmingGate, setIsConfirmingGate] = useState(false);
   const [systemStatusText, setSystemStatusText] = useState<string>("System Online");
   const [startupError, setStartupError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(true);
@@ -61,7 +58,7 @@ export function useChatSession() {
     setRunStatus("IDLE");
 
     const requests: Promise<void>[] = [
-      fetch("/api/session/checkpoints")
+      fetch(resolveApiUrl("/api/session/checkpoints"))
         .then((response) => readJsonResponse<{ checkpoints?: unknown[] }>(response, "Checkpoint request"))
         .then((data) => {
           if (!Array.isArray(data.checkpoints)) {
@@ -88,7 +85,7 @@ export function useChatSession() {
           });
           setSessions((previous) => previous.map((session) => ({ ...session, earlierContext: mapped })));
         }),
-      fetch("/api/system/status")
+      fetch(resolveApiUrl("/api/system/status"))
         .then((response) => readJsonResponse<{ status?: string; currentStage?: string }>(response, "Status request"))
         .then((data) => {
           if (!data.status || !data.currentStage) {
@@ -128,7 +125,7 @@ export function useChatSession() {
   const handleNewSession = async () => {
     let newId: string;
     try {
-      const res = await fetch("/api/session/new", { method: "POST" });
+      const res = await fetch(resolveApiUrl("/api/session/new"), { method: "POST" });
       const data = await readJsonResponse<{ ok?: boolean; sessionId?: string }>(res, "New session request");
       if (data.ok !== true || !data.sessionId) {
         throw new Error("New session response is missing ok=true or sessionId");
@@ -158,7 +155,7 @@ export function useChatSession() {
 
   const handleClearHistory = async () => {
     try {
-      const res = await fetch("/api/session/clear", {
+      const res = await fetch(resolveApiUrl("/api/session/clear"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: activeSessionId }),
@@ -181,7 +178,7 @@ export function useChatSession() {
 
   const handleRefreshSystemStatus = async () => {
     try {
-      const res = await fetch("/api/system/status");
+      const res = await fetch(resolveApiUrl("/api/system/status"));
       const data = await readJsonResponse<{ status?: string; currentStage?: string; uptimeSeconds?: number }>(res, "Status request");
       if (!data.status || !data.currentStage || typeof data.uptimeSeconds !== "number") {
         throw new Error("System status response is missing required status fields");
@@ -195,63 +192,10 @@ export function useChatSession() {
     }
   };
 
-  const handleSyncPlan = async () => {
-    try {
-      const res = await fetch("/api/pipeline/plan");
-      const data = await readJsonResponse<{ title?: string; summary?: string; steps?: string[]; status?: string } | null>(res, "Plan request");
-      if (data === null) {
-        setPlanData(null);
-        return;
-      }
-      if (!data.title || !data.summary || !Array.isArray(data.steps) || !data.status) {
-        throw new Error("Plan response is missing required plan fields");
-      }
-      setPlanData(data as { title: string; summary: string; steps: string[]; status: string });
-      if (data.status === "CONFIRMED") setIsGate1Confirmed(true);
-      addDeduplicatedEvent("Workflow Engine", `Active plan synced: ${data.status}`, "step");
-    } catch (error) {
-      setStartupError(error instanceof Error ? `Could not sync plan: ${error.message}` : "Could not sync plan.");
-    }
-  };
-
-  const handleConfirmGate1 = async () => {
-    setIsConfirmingGate(true);
-    try {
-      const confirmRes = await fetch("/api/pipeline/gate/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gateId: "gate-1", stage: "research" }),
-      });
-      const confirmData = await readJsonResponse<{ status?: string; confirmedAt?: string }>(confirmRes, "Gate confirmation request");
-      if (confirmData.status !== "CONFIRMED" || !confirmData.confirmedAt) {
-        throw new Error("Gate confirmation response did not confirm the gate");
-      }
-      const transitionRes = await fetch("/api/tools/execute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ toolName: "workflow_transition", input: { targetStage: "planning" } }),
-      });
-      const transitionData = await readJsonResponse<{ success?: boolean; result?: unknown }>(transitionRes, "Workflow transition request");
-      if (transitionData.success !== true || typeof transitionData.result !== "string" || !transitionData.result.startsWith("STAGE_TRANSITION_SUCCESS")) {
-        throw new Error("Workflow transition response did not confirm a successful stage transition");
-      }
-      setIsGate1Confirmed(true);
-      addDeduplicatedEvent("Gate 1 Confirmed", `Human invariant confirmed: ${confirmData.status}`, "done");
-
-      const backendConfirmMsg: Message = {
-        id: `msg-confirm-${Date.now()}`,
-        role: "assistant",
-        content: `### 📋 Human Review Gate 1 Confirmed & Verified\n\n- **Verification Status**: \`${confirmData.status}\`\n- **Confirmed At**: \`${confirmData.confirmedAt}\`\n- **Transition Tool Output**: \`${transitionData.result}\`\n\n*Gate 1 and stage transition were confirmed by backend responses.*`,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setSessions((prev) => prev.map((s) => (s.id === activeSessionId ? { ...s, messages: [...s.messages, backendConfirmMsg] } : s)));
-    } catch (error) {
-      setIsGate1Confirmed(false);
-      setStartupError(error instanceof Error ? `Could not confirm Gate 1: ${error.message}` : "Could not confirm Gate 1.");
-    } finally {
-      setIsConfirmingGate(false);
-    }
-  };
+  // Gate 1 confirmation and plan sync were removed from this hook.
+  //   * /api/pipeline/plan always returned null, so the plan contract was unreachable.
+  //   * Gate 1 confirmation moved to ContextReviewDrawer, beside the live gate
+  //     status it changes (ARCHITECTURE.MD §1.4: planning is owned by Design_Planning).
 
   const handleAbort = () => {
     if (abortControllerRef.current) {
@@ -515,9 +459,6 @@ export function useChatSession() {
     taskEvents,
     activityStartTime,
     providerConfigs,
-    planData,
-    isGate1Confirmed,
-    isConfirmingGate,
     systemStatusText,
     startupError,
     isStarting,
@@ -525,8 +466,6 @@ export function useChatSession() {
     handleNewSession,
     handleClearHistory,
     handleRefreshSystemStatus,
-    handleSyncPlan,
-    handleConfirmGate1,
     handleAbort,
     handleSendMessage,
     handleConfigSaved,

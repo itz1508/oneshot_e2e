@@ -120,22 +120,21 @@ export const Composer: React.FC<ComposerProps> = ({
       <div className="relative shrink-0 px-3 py-3 sm:px-6 sm:py-5" style={gradientStyle}>
       <div className="w-full max-w-[732px] mx-auto flex flex-col gap-2 pointer-events-auto">
         {/* Quick Tools Bar */}
-        <section
-          className="flex items-center gap-1.5 overflow-x-auto py-1 px-1 select-none"
-          aria-label="Quick tools"
-        >
-          {QUICK_TOOLS.map((t) => (
-            <button
-              key={t.label}
-              type="button"
-              onClick={() => handleSelectQuickTool(t.prompt)}
-              className="px-2.5 py-1 rounded-full border border-white/10 bg-[#16181d] hover:bg-white/10 text-xs text-[#c7c7cc] hover:text-white transition-colors whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
-              aria-label={t.label}
-            >
-              {t.label}
-            </button>
-          ))}
-        </section>
+        <div className="quick-tools-bar select-none" aria-label="Quick tools" role="group">
+          <div className="quick-tools-scroll">
+            {QUICK_TOOLS.map((t) => (
+              <button
+                key={t.label}
+                type="button"
+                onClick={() => handleSelectQuickTool(t.prompt)}
+                className="px-2.5 py-1 rounded-full border border-white/10 bg-[#16181d] hover:bg-white/10 text-xs text-[#c7c7cc] hover:text-white transition-colors whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+                aria-label={t.label}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Input box */}
         <form
