@@ -7,20 +7,33 @@ Functions and must run on a persistent container/VM host.
 
 ## 1. Vercel project settings (dashboard)
 
-- Root Directory: `frontend/web`
+- Root Directory: **`frontend/web`** — this is the only supported layout
 - Framework Preset: Next.js (static export)
-- Install Command: `pnpm install --frozen-lockfile`
-- Build Command: `pnpm --prefix frontend/web run build`
-  (use `pnpm run build` from repo root if Root Directory is repo root)
-- Output Directory:
-  - `dist` when Root Directory is `frontend/web`
-  - `frontend/web/dist` when Root Directory is repo root
+- Install / Build / Output: leave blank; `frontend/web/vercel.json` pins them
+
+`frontend/web/vercel.json` is only ever read when the Root Directory is
+`frontend/web`, so its values are written for that location:
+
+| Setting | Value | Why |
+| :--- | :--- | :--- |
+| `installCommand` | `cd ../.. && pnpm install --frozen-lockfile` | The only lockfile is at the repo root; `--frozen-lockfile` is kept so versions are reproducible. Do **not** drop this override — with no lockfile in this directory, a plain install would resolve fresh versions. |
+| `buildCommand` | `pnpm run build` | Runs `next build --webpack && node scripts/export.mjs` from `frontend/web`. |
+| `outputDirectory` | `dist` | `next.config.ts` sets `output: "export"`, `distDir: "dist"`, and `export.mjs` writes a relative `dist`. |
+
+If your Vercel project uses the repo root as its Root Directory instead, this
+file is **not read** — set Install/Build/Output on the dashboard
+(`pnpm run build` from root, output `frontend/web/dist`).
+
 - Node.js: `22.x` (repo `engines` allows `22.x || >=24.21.0`)
 - Env var: `NEXT_PUBLIC_BACKEND_URL=https://<backend-host>` (no trailing path)
 
-`frontend/web/vercel.json` already pins the same install/build/output values for
-repo-root imports. Do not add `rewrites` for `/api/*` on a static export: the
-browser calls `NEXT_PUBLIC_BACKEND_URL` directly via `resolveApiUrl()`.
+> **`NEXT_PUBLIC_*` is inlined at build time.** Next.js substitutes it into the
+> client bundle during `next build`. Changing the backend URL therefore requires
+> a **rebuild**, not just a redeploy of the static output. Treat it as a build
+> input, not a runtime environment variable.
+
+Do not add `rewrites` for `/api/*` on a static export: the browser calls
+`NEXT_PUBLIC_BACKEND_URL` directly via `resolveApiUrl()`.
 
 ## 2. Backend host (container/VM, not Vercel)
 

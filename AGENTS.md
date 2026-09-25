@@ -174,6 +174,21 @@ The frontend and backend follow the DeepAgents event streaming model:
 - Pages deployment requires the repository Pages site to use `build_type: workflow`.
 - A local build is not deployment proof. Inspect workflow logs, deployment logs, live HTTP status, and live payload evidence.
 
+### Secondary: split static deployment
+
+GitHub Pages is the canonical deployment target. A **split** deployment —
+static frontend export on Vercel, backend on a persistent container/VM — is
+supported but optional, and is documented in `frontend/web/VERCEL_DEPLOY.md`.
+
+- The stateful backend (`node:http`, AG-UI SSE, Python subprocess, `.oneshot/`
+  writes) cannot run on Vercel Serverless. Only the static export is hosted there.
+- `frontend/web/vercel.json` applies **only** when the Vercel Root Directory is
+  `frontend/web`; its install/build/output values are written for that location.
+- Cross-origin calls use `NEXT_PUBLIC_BACKEND_URL`, which Next.js inlines at
+  **build** time — changing it requires a rebuild, not a redeploy.
+- `resolveApiUrl()` in `frontend/web/src/lib/api.ts` keeps same-origin relative
+  URLs when the variable is unset, so local flows are unaffected.
+
 ## Verification Lifecycle
 
 Before completing a task or proposing a commit:
