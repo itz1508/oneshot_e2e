@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useOverlayFocus } from "../lib/useOverlayFocus";
 import { EarlierContextItem, ActivityStep } from "../types";
+<<<<<<< HEAD
 import { CANONICAL_BACKEND_PARTITIONS, isRecord, readJsonResponse } from "../lib/api";
+=======
+import { CANONICAL_BACKEND_PARTITIONS, isRecord, readJsonResponse, resolveApiUrl } from "../lib/api";
+>>>>>>> rebuild-researcher-only
 
 export interface TaskEvent {
   id: string;
@@ -48,10 +52,72 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
   const [gate2, setGate2] = useState<{ status: string; confirmedAt?: string; packageHash?: string } | null>(null);
   const [serverAuditLogs, setServerAuditLogs] = useState<unknown[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+<<<<<<< HEAD
   const drawerRef = useOverlayFocus<HTMLDivElement>(isOpen, onClose);
 
   const fetchAuditLogs = async () => {
     const response = await fetch("/api/session/audit-logs");
+=======
+  const [isConfirmingGate, setIsConfirmingGate] = useState(false);
+  const [gateActionError, setGateActionError] = useState<string | null>(null);
+  const drawerRef = useOverlayFocus<HTMLDivElement>(isOpen, onClose);
+
+  // Gate 1 confirmation lives here, beside the live gate status it changes.
+  // It used to live in PlanReviewCard, which could never render because its
+  // plan endpoint always returned null.
+  const handleConfirmGate1 = async () => {
+    setIsConfirmingGate(true);
+    setGateActionError(null);
+    try {
+      const confirmRes = await fetch(resolveApiUrl("/api/pipeline/gate/confirm"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gateId: "gate-1" }),
+      });
+      const confirmData = await readJsonResponse<{ gateId?: string; status?: string; confirmedAt?: string }>(
+        confirmRes,
+        "Gate confirmation request"
+      );
+      // The server reports the engine's canonical gate id, not the request alias.
+      if (confirmData.status !== "CONFIRMED" || confirmData.gateId !== "gate_1_research_review" || !confirmData.confirmedAt) {
+        throw new Error("Gate confirmation response did not confirm Gate 1");
+      }
+
+      const transitionRes = await fetch(resolveApiUrl("/api/tools/execute"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toolName: "workflow_transition", input: { targetStage: "planning" } }),
+      });
+      const transitionData = await readJsonResponse<{
+        success?: boolean;
+        result?: { fromStage?: string; toStage?: string; detail?: string };
+        error?: string;
+      }>(
+        transitionRes,
+        "Workflow transition request"
+      );
+      if (transitionData.success !== true || transitionData.result?.toStage !== "planning") {
+        throw new Error(
+          transitionData.error
+            ? `Gate 1 confirmed, but the stage transition was refused: ${transitionData.error}`
+            : "Gate 1 confirmed, but the workflow did not report a successful transition to planning."
+        );
+      }
+
+      setGate1({ status: "CONFIRMED", confirmedAt: confirmData.confirmedAt });
+      await fetchAuditLogs();
+    } catch (error) {
+      setGateActionError(
+        error instanceof Error ? error.message : "Could not confirm Gate 1."
+      );
+    } finally {
+      setIsConfirmingGate(false);
+    }
+  };
+
+  const fetchAuditLogs = async () => {
+    const response = await fetch(resolveApiUrl("/api/session/audit-logs"));
+>>>>>>> rebuild-researcher-only
     const data = await readJsonResponse<{ logs?: unknown[] }>(response, "Audit log request");
     if (!Array.isArray(data.logs)) {
       throw new Error("Audit log response is missing logs array");
@@ -64,7 +130,11 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
       const loadDrawerState = async () => {
         setLoadError(null);
         try {
+<<<<<<< HEAD
           const response = await fetch("/api/system/status");
+=======
+          const response = await fetch(resolveApiUrl("/api/system/status"));
+>>>>>>> rebuild-researcher-only
           const statusData = await readJsonResponse<{ status?: string; currentStage?: string; gate1?: unknown; gate2?: unknown }>(response, "System status request");
           const gate1 = statusData.gate1;
           const gate2 = statusData.gate2;
@@ -283,6 +353,26 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
                     {gate1?.status || "UNAVAILABLE"}
                   </span>
                 </div>
+                <div className="flex items-center justify-end">
+                  <button
+                    id="confirmGate1Btn"
+                    type="button"
+                    onClick={handleConfirmGate1}
+                    disabled={gate1?.status === "CONFIRMED" || isConfirmingGate || gate1 === null}
+                    className="px-2.5 py-1 rounded-md bg-[#3f6ba8] hover:bg-[#4d7fc4] disabled:opacity-40 text-white text-[10px] font-medium transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    {isConfirmingGate
+                      ? "Confirming…"
+                      : gate1?.status === "CONFIRMED"
+                        ? "✓ Gate 1 Approved"
+                        : "Confirm Gate 1 & Proceed"}
+                  </button>
+                </div>
+                {gateActionError && (
+                  <div id="gateActionError" role="alert" className="text-[10px] text-[#e5a84b]">
+                    {gateActionError}
+                  </div>
+                )}
                 <div className="flex items-center justify-between p-2 rounded bg-black/30 border border-white/5">
                   <div>
                     <span className="font-semibold text-[#dedede]">Gate 2: Build Ready</span>

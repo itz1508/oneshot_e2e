@@ -32,6 +32,10 @@ html, body {
 }
 
 /* Base shell */
+:root {
+  --drawer-w: 0px;
+}
+
 .app-shell {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
@@ -39,11 +43,21 @@ html, body {
   height: 100dvh;
   background: var(--os-bg);
   overflow: hidden;
-  transition: grid-template-columns 0.2s ease;
+  transition: grid-template-columns 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .app-shell.sidebar-collapsed {
   grid-template-columns: minmax(0, 1fr);
+}
+
+/* app-content shifts right when drawer is open */
+.app-content {
+  margin-right: var(--drawer-w);
+  transition: margin-right 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.app-shell.drawer-open {
+  --drawer-w: min(420px, 100vw);
 }
 
 .app-sidebar-nav {
@@ -60,6 +74,8 @@ html, body {
 
   .app-content {
     height: 100dvh;
+    /* On mobile, drawer overlays — no margin shift */
+    margin-right: 0 !important;
   }
 
   .app-sidebar-nav {
@@ -155,19 +171,49 @@ html, body {
   right: 0;
   width: min(420px, 100vw);
   height: 100dvh;
-  z-index: 260;
+  z-index: 50;
   display: flex;
   flex-direction: column;
   background: #111113;
   border-left: 1px solid var(--os-line);
   overscroll-behavior: contain;
-  box-shadow: -18px 0 48px rgba(0, 0, 0, 0.35);
+  box-shadow: none;
   transform: translateX(105%);
   transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .context-review-drawer.open {
   transform: translateX(0);
+}
+
+/* Quick-tools scroll-fade: last chip is never clipped */
+.quick-tools-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-tools-scroll {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 2px;
+  scrollbar-width: none;
+}
+
+.quick-tools-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.quick-tools-bar::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(to left, #0d0d0e 40%, transparent);
+  pointer-events: none;
 }
 
 /* Modal veil & provider modal */

@@ -8,6 +8,14 @@ allowBuilds:
   esbuild: true
   msgpackr-extract: true
 
+# pnpm >=7 no longer runs pre/post lifecycle scripts by default. This repository
+# depends on them: `pretest` removes dist/ so deleted sources cannot linger as
+# compiled JS and inflate the reported test count, and `pretest:e2e` builds the
+# frontend so the e2e suite never runs against a missing build. Pinned here so
+# the behaviour is explicit rather than dependent on a pnpm default.
+# (pnpm 11 reads this from pnpm-workspace.yaml; a .npmrc entry is ignored.)
+enablePrePostScripts: true
+
 minimumReleaseAgeExclude:
   - '@ai-sdk/gateway@4.0.92'
   - '@ai-sdk/google@4.0.80'

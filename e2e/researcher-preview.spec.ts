@@ -129,15 +129,28 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await guard.dispose();
     });
 
-    test("Scenario 6: Research Banner & Standalone Researcher Drawer (User-Driven Tavily Search)", async ({ page }) => {
+    test("Scenario 6: Research Banner Reports Real State & Standalone Researcher Drawer", async ({ page }) => {
         const guard = attachNetworkGuard(page);
 
         await page.goto("http://127.0.0.1:4173/index.html");
 
-        // Verify Research Banner exists and is visible
+        // The banner must reflect real backend state. With no research run, it must
+        // NOT claim a mode is active (ARCHITECTURE.MD §1.7 / repo no-fake-state rule).
         const researchBanner = page.locator("#researchBanner");
         await expect(researchBanner).toBeVisible();
-        await expect(researchBanner).toContainText("Research Mode Active");
+        await expect(researchBanner).toContainText("Research not running");
+        await expect(researchBanner).not.toContainText("Research Mode Active");
+
+        // Per-message research choice is an explicit toggle, not a global driver.
+        const useResearchToggle = page.locator("#useResearchToggle");
+        await expect(useResearchToggle).toBeVisible();
+        await expect(useResearchToggle).not.toBeChecked();
+        await useResearchToggle.check();
+        await expect(useResearchToggle).toBeChecked();
+
+        // Design_Planning has its own explicit control, separate from Research.
+        const designPlanningBtn = page.locator("#designPlanningBtn");
+        await expect(designPlanningBtn).toBeVisible();
 
         // Verify Researcher button
         const researcherBtn = page.locator("#researcherBtn");
@@ -168,11 +181,73 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await guard.dispose();
     });
 
+<<<<<<< HEAD
+    test("Scenario 7: Real Run Activity, Hook Log, Gate 1 Confirmation, & Message Actions", async ({ page }) => {
+=======
+    test("Scenario 6b: Governed Research Stops At The Planning Handoff", async ({ page }) => {
+>>>>>>> rebuild-researcher-only
+        const guard = attachNetworkGuard(page);
+
+        await page.goto("http://127.0.0.1:4173/index.html");
+
+<<<<<<< HEAD
+=======
+        // A research run must stop at READY_FOR_PLANNING and never invoke planning.
+        const research = await page.evaluate(async () => {
+            const res = await fetch("/api/research/run", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ intent: "OneShot architecture invariants", search: { enabled: false } }),
+            });
+            if (!res.ok) throw new Error(`Research run failed: ${res.status}`);
+            return await res.json();
+        });
+
+        expect(research.phase).toBe("READY_FOR_PLANNING");
+        expect(research.stopped).toBe(true);
+        expect(research.handoffReady).toBe(true);
+        expect(research.bundle.decisionOwner).toBe("Design_Planning");
+        // Search was disabled, so no sources may be invented.
+        expect(Array.isArray(research.bundle.sources)).toBe(true);
+        expect(research.bundle.sources.length).toBe(0);
+        expect(research.issues.length).toBeGreaterThan(0);
+
+        // Planning is never auto-triggered and refuses an unfinished handoff.
+        const blocked = await page.evaluate(async () => {
+            const res = await fetch("/api/design-planning/plan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    explicitlyInvoked: true,
+                    intent: "plan the thing",
+                    researchRun: { runId: "r1", phase: "RESEARCHING", startedAt: "t" },
+                }),
+            });
+            return { status: res.status, body: await res.json() };
+        });
+        expect(blocked.status).toBe(409);
+        expect(blocked.body.phase).toBe("RESEARCHING");
+
+        // Planning without explicit invocation is refused.
+        const notExplicit = await page.evaluate(async () => {
+            const res = await fetch("/api/design-planning/plan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ intent: "plan the thing", explicitlyInvoked: false }),
+            });
+            return res.status;
+        });
+        expect(notExplicit).toBe(400);
+
+        await guard.dispose();
+    });
+
     test("Scenario 7: Real Run Activity, Hook Log, Gate 1 Confirmation, & Message Actions", async ({ page }) => {
         const guard = attachNetworkGuard(page);
 
         await page.goto("http://127.0.0.1:4173/index.html");
 
+>>>>>>> rebuild-researcher-only
         // Start a real local run.
         const input = page.locator("#composerInput");
         await input.fill("research the response verification invariant with Python reasoning");

@@ -8,7 +8,11 @@
 
 import { useState, useCallback, useRef } from "react";
 import { ToolCapabilityExecution } from "../types/invariants";
+<<<<<<< HEAD
 import { readJsonResponse } from "./api";
+=======
+import { readJsonResponse, resolveApiUrl } from "./api";
+>>>>>>> rebuild-researcher-only
 
 export interface UseToolReturn {
   // Invariant 4: useTool(...) owns capability runtime
@@ -69,7 +73,7 @@ export function useTool(): UseToolReturn {
       activeCountRef.current += 1;
 
       try {
-        const endpoint = options.customEndpoint || "/api/tools/execute";
+        const endpoint = options.customEndpoint || resolveApiUrl("/api/tools/execute");
         const response = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

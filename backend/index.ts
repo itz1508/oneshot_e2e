@@ -20,6 +20,11 @@ import {
   TodoChainManager,
   GitLocalStorage,
   tavilySearchBackend,
+  researchSkill,
+  designPlanningSkill,
+  isResearchHandoffReady,
+  canInvokeDesignPlanning,
+  type WorkflowStage,
   workflowTransitionTool,
   workflowGateStatusTool,
   readImageAttachmentTool,
@@ -397,6 +402,7 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
 
         const envVar = keyMap[provider];
         const modelVar = modelMap[provider];
+<<<<<<< HEAD
 
         // Persist to app/env/.env before acknowledging configuration.
         try {
@@ -409,29 +415,60 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           } catch (error: any) {
             if (error?.code !== "ENOENT") throw error;
           }
+=======
+        const allowEnvFilePersistence = process.env.ONESHOT_ALLOW_ENV_FILE_WRITE === "1"
+          || process.env.NODE_ENV !== "production";
 
-          if (envVar && apiKey) {
-            const regex = new RegExp(`^${envVar}=.*$`, "m");
-            if (regex.test(existing)) {
-              existing = existing.replace(regex, `${envVar}=${apiKey.trim()}`);
-            } else {
-              existing = `${existing.trim()}\n${envVar}=${apiKey.trim()}\n`;
+        // Persist to app/env/.env before acknowledging configuration.
+        // Production container/serverless filesystems are read-only or ephemeral,
+        // so file persistence is local-dev only unless explicitly enabled.
+        let persisted = false;
+        if (allowEnvFilePersistence) {
+          try {
+            const envDir = path.resolve(process.cwd(), "app/env");
+            await fs.mkdir(envDir, { recursive: true });
+            const envFile = path.join(envDir, ".env");
+            let existing = "";
+            try {
+              existing = await fs.readFile(envFile, "utf-8");
+            } catch (error: any) {
+              if (error?.code !== "ENOENT") throw error;
             }
-          }
-          if (modelVar && model) {
-            const regex = new RegExp(`^${modelVar}=.*$`, "m");
-            if (regex.test(existing)) {
-              existing = existing.replace(regex, `${modelVar}=${model.trim()}`);
-            } else {
-              existing = `${existing.trim()}\n${modelVar}=${model.trim()}\n`;
+>>>>>>> rebuild-researcher-only
+
+            if (envVar && apiKey) {
+              const regex = new RegExp(`^${envVar}=.*$`, "m");
+              if (regex.test(existing)) {
+                existing = existing.replace(regex, `${envVar}=${apiKey.trim()}`);
+              } else {
+                existing = `${existing.trim()}\n${envVar}=${apiKey.trim()}\n`;
+              }
             }
+            if (modelVar && model) {
+              const regex = new RegExp(`^${modelVar}=.*$`, "m");
+              if (regex.test(existing)) {
+                existing = existing.replace(regex, `${modelVar}=${model.trim()}`);
+              } else {
+                existing = `${existing.trim()}\n${modelVar}=${model.trim()}\n`;
+              }
+            }
+            await fs.writeFile(envFile, existing, "utf-8");
+            persisted = true;
+          } catch (error: any) {
+            console.error("[OneShot] Error saving app/env/.env:", error.message);
+            res.writeHead(500, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: `Provider configuration was not persisted: ${error.message}` }));
+            return;
           }
+<<<<<<< HEAD
           await fs.writeFile(envFile, existing, "utf-8");
         } catch (error: any) {
           console.error("[OneShot] Error saving app/env/.env:", error.message);
           res.writeHead(500, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ error: `Provider configuration was not persisted: ${error.message}` }));
           return;
+=======
+>>>>>>> rebuild-researcher-only
         }
 
         if (envVar) process.env[envVar] = apiKey.trim();
@@ -443,8 +480,15 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           configured: true,
           provider,
           model: model || `(default for ${provider})`,
+<<<<<<< HEAD
           persisted: true,
           message: `Credentials for ${provider} active and persisted to app/env/.env.`,
+=======
+          persisted,
+          message: persisted
+            ? `Credentials for ${provider} active and persisted to app/env/.env.`
+            : `Credentials for ${provider} active for this runtime only (file persistence disabled in production).`,
+>>>>>>> rebuild-researcher-only
         }));
         return;
       }
@@ -568,27 +612,60 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
       }
 
       // A workflow plan appears only after the backend creates one.
+<<<<<<< HEAD
       if (pathname === "/api/pipeline/plan" && req.method === "GET") {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(null));
         return;
       }
+=======
+      // NOTE: /api/pipeline/plan was removed. It unconditionally returned `null`,
+      // so PlanReviewCard could never render and the client-side plan contract was
+      // unreachable. Planning is now owned by Design_Planning
+      // (POST /api/design-planning/plan → APPROVED_PLAN). See ARCHITECTURE.MD §1.4.
+>>>>>>> rebuild-researcher-only
 
       // Workflow Stages & Status
       if (pathname === "/api/pipeline/stages" && req.method === "GET") {
         const gate1 = workflowEngine.getGate1();
         const gate2 = workflowEngine.getGate2();
+        const currentStage = workflowEngine.getCurrentStage();
+
+        // Stage status is derived from the real engine position and the documented
+        // stage order. A stage the engine has not reached is never reported as done.
+        const ENGINE_ORDER = ["research", "planning", "gap_analysis", "evaluation", "builder"];
+        const currentIndex = ENGINE_ORDER.indexOf(currentStage);
+
+        // displayId -> the engine stage it represents (null = not engine-tracked)
+        const ENGINE_FOR: Record<string, string | null> = {
+          research: "research",
+          planning: "planning",
+          gap: "gap_analysis",
+          evaluation: "evaluation",
+          build: "builder",
+          refactor: null,
+        };
+
+        const statusFor = (displayId: string): string => {
+          const engineStage = ENGINE_FOR[displayId];
+          if (engineStage === null) return "waiting"; // not tracked by the engine
+          const index = ENGINE_ORDER.indexOf(engineStage);
+          if (index === currentIndex) return "active";
+          return index < currentIndex ? "completed" : "waiting";
+        };
+
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({
+          currentStage,
           stages: [
-            { id: "research", name: "Research & Explore", status: "completed", kind: "run", todos: ["Understand user prompt requirements", "Formulate search queries", "Index primary documentation sources"] },
+            { id: "research", name: "Research & Explore", status: statusFor("research"), kind: "run", todos: ["Understand user prompt requirements", "Formulate search queries", "Index primary documentation sources"] },
             { id: "review", name: "Gate 1: Research Review", status: gate1.status === "CONFIRMED" ? "confirmed" : "pending", kind: "pause", todos: ["Present findings and evidence", "Obtain human confirmation before planner"] },
-            { id: "planning", name: "Plan Architecture", status: workflowEngine.getCurrentStage() === "planning" ? "active" : "waiting", kind: "run", todos: ["Validate schema contracts", "Verify partition boundaries", "Generate atomic plan package"] },
-            { id: "refactor", name: "Refactor Strategy", status: "waiting", kind: "run", todos: ["Audit imports and caller graph", "Preserve public exports"] },
-            { id: "gap", name: "Gap Analysis", status: "waiting", kind: "run", todos: ["Reconcile active code against source of truth", "Enforce invariant contracts"] },
-            { id: "evaluation", name: "Evaluation & Tests", status: "waiting", kind: "run", todos: ["Execute unit tests", "Run browser E2E verification"] },
+            { id: "planning", name: "Plan Architecture", status: statusFor("planning"), kind: "run", todos: ["Validate schema contracts", "Verify partition boundaries", "Generate atomic plan package"] },
+            { id: "refactor", name: "Refactor Strategy", status: statusFor("refactor"), kind: "run", todos: ["Audit imports and caller graph", "Preserve public exports"] },
+            { id: "gap", name: "Gap Analysis", status: statusFor("gap"), kind: "run", todos: ["Reconcile active code against source of truth", "Enforce invariant contracts"] },
+            { id: "evaluation", name: "Evaluation & Tests", status: statusFor("evaluation"), kind: "run", todos: ["Execute unit tests", "Run browser E2E verification"] },
             { id: "build_ready", name: "Gate 2: Build Ready", status: gate2.status === "CONFIRMED" ? "confirmed" : "waiting", kind: "pause", todos: ["Hash confirmed core representation", "Obtain human authorization for build"] },
-            { id: "build", name: "Builder & Output", status: "waiting", kind: "run", todos: ["Apply certified patches", "Verify static export bundle"] },
+            { id: "build", name: "Builder & Output", status: statusFor("build"), kind: "run", todos: ["Apply certified patches", "Verify static export bundle"] },
           ],
         }));
         return;
@@ -597,18 +674,62 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
       // Human Invariant Gate Confirmation
       if (pathname === "/api/pipeline/gate/confirm" && req.method === "POST") {
         const body = await parseBody(req);
-        const gateId = body.gateId || "gate-1";
-        const gate1 = workflowEngine.confirmGate1("user");
+        const gateId = body.gateId ?? "gate-1";
+
+        // Only the two real gates are confirmable. An unknown id is refused rather
+        // than silently treated as gate 1.
+        if (gateId !== "gate-1" && gateId !== "gate-2") {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            error: "Unknown gate. Expected 'gate-1' or 'gate-2'.",
+            received: gateId,
+          }));
+          return;
+        }
+
+        // Gate 2 is hash-bound: it cannot be confirmed without a package core.
+        if (gateId === "gate-2" && (body.packageCore === undefined || body.packageCore === null)) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            error: "Gate 2 confirmation requires a 'packageCore' object to bind the SHA-256 hash.",
+          }));
+          return;
+        }
+
+        // Confirm the gate the caller actually asked for, and return the engine's
+        // real state — never a value echoed back from the request.
+        const confirmed =
+          gateId === "gate-1"
+            ? workflowEngine.confirmGate1("user")
+            : workflowEngine.confirmGate2(body.packageCore, "user");
+
         sessionLedger.recordAuditHook("on_gate_check", {
+<<<<<<< HEAD
           gateId,
           status: "CONFIRMED",
           confirmedAt: gate1.confirmedAt,
+=======
+          gateId: confirmed.gateId,
+          status: confirmed.status,
+          confirmedAt: confirmed.confirmedAt,
+          packageHash: confirmed.packageHash,
+>>>>>>> rebuild-researcher-only
         });
+
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({
+<<<<<<< HEAD
           gateId,
           status: "CONFIRMED",
           confirmedAt: gate1.confirmedAt || new Date().toISOString(),
+=======
+          gateId: confirmed.gateId,
+          name: confirmed.name,
+          status: confirmed.status,
+          confirmedAt: confirmed.confirmedAt,
+          confirmedBy: confirmed.confirmedBy,
+          packageHash: confirmed.packageHash ?? null,
+>>>>>>> rebuild-researcher-only
         }));
         return;
       }
@@ -733,7 +854,19 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
         } else if (toolName === "read_image_attachment") {
           result = await readImageAttachmentTool.invoke(input);
         } else if (toolName === "workflow_transition") {
-          const targetStage = input?.targetStage || "planning";
+          // No default target: silently substituting "planning" would report a
+          // transition the caller never requested.
+          const VALID_TARGETS = ["research", "planning", "gap_analysis", "evaluation", "builder"] as const;
+          const requested = input?.targetStage;
+          if (typeof requested !== "string" || !VALID_TARGETS.includes(requested as (typeof VALID_TARGETS)[number])) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({
+              error: `workflow_transition requires targetStage. Valid: ${VALID_TARGETS.join(", ")}.`,
+              received: requested ?? null,
+            }));
+            return;
+          }
+          const targetStage = requested as WorkflowStage;
           const transitionRes = workflowEngine.transitionTo(targetStage);
           sessionLedger.recordAuditHook("on_stage_transition", {
             targetStage,
@@ -743,9 +876,24 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             todoManager.updateSubtaskState("skill-plan", "t3", "done");
             todoManager.updateSubtaskState("skill-plan", "t4", "active");
           }
-          result = transitionRes.success
-            ? `STAGE_TRANSITION_SUCCESS: Moved from ${transitionRes.fromStage} to ${transitionRes.toStage}`
-            : `STAGE_TRANSITION_FAILED: ${transitionRes.error}`;
+          // Report the real outcome. A refused transition must not be reported as a
+          // successful tool call.
+          if (!transitionRes.success) {
+            res.writeHead(409, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({
+              success: false,
+              toolName: "workflow_transition",
+              fromStage: transitionRes.fromStage,
+              toStage: transitionRes.toStage,
+              error: transitionRes.error,
+            }));
+            return;
+          }
+          result = {
+            fromStage: transitionRes.fromStage,
+            toStage: transitionRes.toStage,
+            detail: `STAGE_TRANSITION_SUCCESS: Moved from ${transitionRes.fromStage} to ${transitionRes.toStage}`,
+          };
         } else if (toolName === "workflow_gate_status") {
           const currentGate2 = workflowEngine.getGate2();
           const latestCheckpoint = sessionLedger.getAllCheckpoints().at(-1);
@@ -757,6 +905,17 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             restorePoint: latestCheckpoint?.restoreId || null,
           };
         } else if (toolName === "tavily_search") {
+          // Unavailable credentials are a 503, not a 500: this is honest reporting
+          // of missing configuration, not a server fault.
+          if (!tavilySearchBackend.isConfigured()) {
+            res.writeHead(503, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({
+              success: false,
+              toolName: "tavily_search",
+              error: "Research search is currently unavailable because TAVILY_API_KEY is not configured.",
+            }));
+            return;
+          }
           result = await tavilySearchBackend.search(input?.query || "OneShot architecture");
         } else if (toolName === "git_snapshot") {
           const snap = await gitStorage.createSnapshot({ stage: "checkpoint" });
@@ -790,6 +949,148 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
         return;
       }
 
+      // Governed Research run — explicitly invoked, stops at READY_FOR_PLANNING.
+      // Research never auto-invokes Design_Planning; it only produces a bundle.
+      if (pathname === "/api/research/run" && req.method === "POST") {
+        const body = await parseBody(req);
+        const intent = (body.intent || "").trim();
+        if (!intent) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Research intent is required" }));
+          return;
+        }
+
+        const researchModel = {
+          provider: (body.model?.provider || "gemini") as "gemini",
+          model: (body.model?.model || process.env.GEMINI_MODEL || "gemini-2.5-flash") as string,
+        };
+        const searchConfig = {
+          enabled: body.search?.enabled === true,
+          source: (body.search?.source || "tavily") as "tavily",
+        };
+
+        try {
+          const phases: string[] = [];
+          const result = await researchSkill.run({
+            intent,
+            model: researchModel,
+            search: searchConfig,
+            onPhase: (phase) => phases.push(phase),
+          });
+
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            runId: result.run.runId,
+            phase: result.run.phase,
+            stopped: result.stopped,
+            handoffReady: isResearchHandoffReady(result.run),
+            phases,
+            bundle: result.run.bundle ?? null,
+            issues: result.issues,
+          }));
+        } catch (err: any) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: err?.message || "Research run failed" }));
+        }
+        return;
+      }
+
+      // Design_Planning — explicitly invoked only. Never auto-triggered.
+      // Ends at PRE_BUILD_REVIEWED; only a user approval reaches APPROVED_PLAN.
+      if (pathname === "/api/design-planning/plan" && req.method === "POST") {
+        const body = await parseBody(req);
+        // Planning is never auto-triggered: it requires an explicit user action.
+        // When a research run is referenced, its handoff must also be complete.
+        if (!canInvokeDesignPlanning(body.researchRun ?? null, body.explicitlyInvoked === true)) {
+          const pendingHandoff = body.researchRun
+            ? " Research has not reached READY_FOR_PLANNING."
+            : " Design_Planning must be explicitly invoked (explicitlyInvoked=true).";
+          res.writeHead(body.researchRun ? 409 : 400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            error: pendingHandoff.trim(),
+            phase: body.researchRun?.phase ?? null,
+          }));
+          return;
+        }
+
+        const intent = (body.intent || "").trim();
+        if (!intent) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Planning intent is required" }));
+          return;
+        }
+
+        try {
+          const phases: string[] = [];
+          const result = await designPlanningSkill.plan({
+            input: {
+              userIntent: intent,
+              repositoryState: (body.repositoryState || "").trim(),
+              existingArchitecture: (body.existingArchitecture || "").trim(),
+              existingPhaseReceipts: Array.isArray(body.existingPhaseReceipts)
+                ? body.existingPhaseReceipts
+                : [],
+              existingBaselines: Array.isArray(body.existingBaselines)
+                ? body.existingBaselines
+                : [],
+              researchBundle: body.researchBundle ?? undefined,
+            },
+            onPhase: (phase) => phases.push(phase),
+          });
+
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            runId: result.run.runId,
+            phase: result.run.phase,
+            auditId: result.run.auditId ?? null,
+            stopped: result.stopped,
+            requiresUserApproval: true,
+            phases,
+            issues: result.issues,
+          }));
+        } catch (err: any) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: err?.message || "Design_Planning run failed" }));
+        }
+        return;
+      }
+
+      // User approval — the ONLY path that ends Design_Planning at APPROVED_PLAN.
+      if (pathname === "/api/design-planning/approve" && req.method === "POST") {
+        const body = await parseBody(req);
+        const run = body.run;
+        if (!run || run.phase !== "PRE_BUILD_REVIEWED") {
+          res.writeHead(409, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            error: "Only a PRE_BUILD_REVIEWED plan can be approved by the user.",
+          }));
+          return;
+        }
+        try {
+          const approved = designPlanningSkill.approvePlan(
+            run,
+            {
+              planId: (body.planId || `plan-${run.runId}`) as string,
+              intent: (body.intent || "") as string,
+              steps: Array.isArray(body.steps) ? body.steps : [],
+              reviews: Array.isArray(body.reviews) ? body.reviews : [],
+            },
+            (body.approvedBy as string) || "user"
+          );
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            runId: approved.runId,
+            phase: approved.phase,
+            auditId: approved.auditId ?? null,
+            approvedPlan: approved.approvedPlan ?? null,
+          }));
+        } catch (err: any) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: err?.message || "Approval failed" }));
+        }
+        return;
+      }
+
       // Standalone Tavily Research Search
       if (pathname === "/api/research/query" && req.method === "POST") {
         const body = await parseBody(req);
@@ -800,6 +1101,7 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           return;
         }
 
+<<<<<<< HEAD
         if (isConfiguredKey(process.env.TAVILY_API_KEY)) {
           try {
             const { tavily } = await import("@tavily/core");
@@ -835,13 +1137,59 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             }));
             return;
           }
+=======
+        // Single source of truth for the Tavily call. This route previously
+        // hand-rolled its own client, which duplicated the adapter and returned
+        // inconsistent status codes for the same missing-credential condition.
+        if (!tavilySearchBackend.isConfigured()) {
+          res.writeHead(503, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            error: "Research search is currently unavailable because TAVILY_API_KEY is not configured.",
+          }));
+          return;
+>>>>>>> rebuild-researcher-only
         }
 
-        res.writeHead(503, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          error: "Research search is currently unavailable because TAVILY_API_KEY is not configured.",
-        }));
-        return;
+        try {
+          const response = await tavilySearchBackend.search(
+            query,
+            {
+              depth: body.searchDepth === "advanced" ? "advanced" : "basic",
+              maxResults: typeof body.maxResults === "number" ? body.maxResults : 5,
+            },
+            "user_standalone"
+          );
+
+          if (!Array.isArray(response.results)) {
+            throw new Error("Tavily response is missing results array");
+          }
+          const results = response.results.map((result) => {
+            if (!result || typeof result.title !== "string" || !result.title || typeof result.url !== "string" || !result.url || typeof result.content !== "string" || !result.content) {
+              throw new Error("Tavily response contains an invalid result record");
+            }
+            const url = new URL(result.url);
+            if (url.protocol !== "http:" && url.protocol !== "https:") {
+              throw new Error("Tavily response contains a non-HTTP result URL");
+            }
+            return {
+              title: result.title,
+              url: result.url,
+              content: result.content,
+              ...(typeof result.score === "number" ? { score: result.score } : {}),
+            };
+          });
+
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ query, results }));
+          return;
+        } catch (tavilyErr: any) {
+          console.error("[tavily] Live call failed:", tavilyErr?.message);
+          res.writeHead(503, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            error: "Research search is currently unavailable because the live provider request failed.",
+          }));
+          return;
+        }
       }
 
       // === UNIFIED ACTION API (V2 RPC POST DISPATCHER) ===
@@ -1003,7 +1351,21 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
 
         // Operation 6: transitionStage
         if (operation === "transitionStage") {
-          const targetStage = body.targetStage || "planning";
+          // Same rule as the workflow_transition tool: never substitute a default
+          // target, because that reports a transition the caller never requested.
+          const VALID_TARGETS = ["research", "planning", "gap_analysis", "evaluation", "builder"] as const;
+          const requested = body.targetStage;
+          if (typeof requested !== "string" || !VALID_TARGETS.includes(requested as (typeof VALID_TARGETS)[number])) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({
+              ok: false,
+              operation: "transitionStage",
+              error: `transitionStage requires targetStage. Valid: ${VALID_TARGETS.join(", ")}.`,
+              received: requested ?? null,
+            }));
+            return;
+          }
+          const targetStage = requested as WorkflowStage;
           const transitionRes = workflowEngine.transitionTo(targetStage);
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({
@@ -1220,6 +1582,7 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             label: "Python reasoning subprocess",
           }));
 
+<<<<<<< HEAD
           const task = /gap|reconcil|diff/i.test(prompt)
             ? "gap-analysis"
             : /plan|gate|review|stage/i.test(prompt)
@@ -1227,6 +1590,31 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
               : /research|search|find|index/i.test(prompt)
                 ? "researcher"
                 : "general";
+=======
+          // Workflow selection is an explicit user choice, never inferred from the
+          // message text. A message reaches Main Chat unless the caller declares a
+          // research or planning intent for THIS message (ARCHITECTURE.MD §1.1–1.3).
+          // Keyword heuristics must not divert a chat message into a lifecycle.
+          const REASONING_TASKS = [
+            "researcher",
+            "planner",
+            "gap-analysis",
+            "evaluation",
+            "critic",
+            "general",
+          ] as const;
+          type ReasoningTask = (typeof REASONING_TASKS)[number];
+
+          const requestedTask = (parsed as Record<string, unknown>).useResearch === true
+            ? "researcher"
+            : (parsed as Record<string, unknown>).useDesignPlanning === true
+              ? "planner"
+              : (parsed as Record<string, unknown>).task;
+          const task: ReasoningTask = REASONING_TASKS.includes(requestedTask as ReasoningTask)
+            ? (requestedTask as ReasoningTask)
+            : "general";
+
+>>>>>>> rebuild-researcher-only
           let receivedDelta = false;
           for await (const delta of streamPythonReasoning({ runId, prompt, task }, ac.signal)) {
             if (ac.signal.aborted) break;

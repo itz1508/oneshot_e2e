@@ -22,7 +22,7 @@ try {
     $nodeVersion = & node -v
     Write-Host "[1/4] Node.js runtime detected: $nodeVersion" -ForegroundColor Green
 } catch {
-    Write-Host "[ERROR] Node.js was not found on PATH. Please install Node.js 20+." -ForegroundColor Red
+    Write-Host "[ERROR] Node.js was not found on PATH. Please install Node.js >= 24.21.0." -ForegroundColor Red
     exit 1
 }
 

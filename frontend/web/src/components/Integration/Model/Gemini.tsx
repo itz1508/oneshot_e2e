@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { PROVIDER_DEFINITIONS } from "../../../lib/providers";
+<<<<<<< HEAD
 import { readJsonResponse } from "../../../lib/api";
+=======
+import { readJsonResponse, resolveApiUrl } from "../../../lib/api";
+>>>>>>> rebuild-researcher-only
 
 interface ModelGeminiProps {
     sessionId?: string;
@@ -33,7 +37,7 @@ export const ModelGemini: React.FC<ModelGeminiProps> = ({
             const headers: Record<string, string> = { "Content-Type": "application/json" };
             if (sessionId) headers["X-Session-Id"] = sessionId;
 
-            const res = await fetch("/api/config/provider", {
+            const res = await fetch(resolveApiUrl("/api/config/provider"), {
                 method: "POST",
                 headers,
                 body: JSON.stringify({
@@ -59,7 +63,11 @@ export const ModelGemini: React.FC<ModelGeminiProps> = ({
 
     const handleCheckStatus = async () => {
         try {
+<<<<<<< HEAD
             const res = await fetch("/api/providers/status");
+=======
+            const res = await fetch(resolveApiUrl("/api/providers/status"));
+>>>>>>> rebuild-researcher-only
             const data = await readJsonResponse<Record<string, { configured?: boolean; available?: boolean; latency?: number }>>(res, "Provider status request");
             const info = data.gemini;
             if (!info || typeof info.configured !== "boolean") {

@@ -18,6 +18,18 @@ Never fabricate progress, assistant responses, tool execution, research results,
 
 The `engines` fields and local verification/bootstrap checks define minimum supported versions. The root `packageManager` field and CI use exact Node.js 24.21.0 and pnpm 11.27.1 pins so builds and lockfile resolution are reproducible; those pins do not prohibit locally using a newer version that satisfies the declared minimums.
 
+### Known `engines` discrepancy: the Node 22 line
+
+All eight workspace manifests declare `engines.node: >=24.21.0`, matching the
+prerequisite above. That floor is enforced rather than aspirational: the six
+library packages fail an engine check below it, both CI jobs pin
+`node-version: 24.21.0`, and `@types/node` targets 24.x.
+
+Do not reintroduce a `22.x || ` alternate in `package.json` or
+`frontend/web/package.json`. Those two manifests previously advertised
+`22.x || >=24.21.0` — a runtime nothing else supported, since Node 22 is never
+exercised by CI and falls outside the Node 24 type definitions.
+
 Current compatibility holds in `pnpm outdated` are intentional:
 
 - `openai` stays on 6.x because `@strands-agents/sdk@1.19.0` declares the peer range `^6.45.0`.
@@ -43,7 +55,7 @@ pnpm run build                                # production build
 pnpm --prefix frontend/web run build           # frontend static export
 pnpm --prefix frontend/web run preview        # static frontend preview
 pnpm run start                                # backend production server
-pnpm exec playwright test                     # browser tests
+pnpm run test:e2e                            # browser tests
 ```
 
 ## Code Style
@@ -93,7 +105,7 @@ A test or stage transition is not valid merely because it returns `pass` or `pas
 | Manifest and integrity | `app/scripts/` |
 | Root package manager config | `package.json` and `pnpm-workspace.yaml` |
 | Root lockfile | `pnpm-lock.yaml` |
-| CI and deployment | `.github/workflows/deploy.yml` |
+| CI and deployment | `.github/deploy.yml` |
 
 `app/web/` is not present in the current tree and must not be recreated as a second production frontend. Alternate `main-screen/` files under `frontend/web/src/` are reference-only until migrated. Do not edit `node_modules/`, `.next/`, or generated `dist/` output.
 
@@ -157,11 +169,12 @@ The frontend and backend follow the DeepAgents event streaming model:
 | Frontend tests | `pnpm --prefix frontend/web test` |
 | Backend tests | `pnpm test` |
 | Runtime tests | `pnpm run test:runtime` |
-| Browser tests | `pnpm exec playwright test` |
+| Browser tests | `pnpm run test:e2e` |
 | Full verification | `pnpm run verify` |
 | Generate manifest | `python app/scripts/generate_manifest.py` |
 | Verify manifest | `python app/scripts/verify_manifest.py` |
 | Verify demo assets | `pnpm run verify:demo` |
+| Regenerate demo screenshots & video | `pnpm run capture:demo` (requires a running backend on `:4173`) |
 
 ## CI and Deployment
 
@@ -172,6 +185,21 @@ The frontend and backend follow the DeepAgents event streaming model:
 - Frontend production output is `frontend/web/dist/`.
 - Pages deployment requires the repository Pages site to use `build_type: workflow`.
 - A local build is not deployment proof. Inspect workflow logs, deployment logs, live HTTP status, and live payload evidence.
+
+### Secondary: split static deployment
+
+GitHub Pages is the canonical deployment target. A **split** deployment —
+static frontend export on Vercel, backend on a persistent container/VM — is
+supported but optional, and is documented in `frontend/web/VERCEL_DEPLOY.md`.
+
+- The stateful backend (`node:http`, AG-UI SSE, Python subprocess, `.oneshot/`
+  writes) cannot run on Vercel Serverless. Only the static export is hosted there.
+- `frontend/web/vercel.json` applies **only** when the Vercel Root Directory is
+  `frontend/web`; its install/build/output values are written for that location.
+- Cross-origin calls use `NEXT_PUBLIC_BACKEND_URL`, which Next.js inlines at
+  **build** time — changing it requires a rebuild, not a redeploy.
+- `resolveApiUrl()` in `frontend/web/src/lib/api.ts` keeps same-origin relative
+  URLs when the variable is unset, so local flows are unaffected.
 
 ## Verification Lifecycle
 

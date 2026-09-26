@@ -83,6 +83,13 @@ export async function* streamPythonReasoning(
   input: PythonReasoningInput,
   signal?: AbortSignal
 ): AsyncGenerator<string, PythonReasoningResponse | null, unknown> {
+  // Serverless/readonly hosts (Vercel Functions) cannot spawn the local Python
+  // CLI. Fail fast with an actionable error instead of ENOENT from spawn().
+  if (process.env.ONESHOT_DISABLE_PYTHON_SPAWN === "1") {
+    throw new Error(
+      "Python reasoning subprocess is disabled (ONESHOT_DISABLE_PYTHON_SPAWN=1). Set PYTHON_REASONING_URL to an external Python service."
+    );
+  }
   const rootDir = process.cwd();
   const pythonScript = path.resolve(rootDir, "backend/python/app/main.py");
   const pythonDir = path.resolve(rootDir, "backend/python");

@@ -13,6 +13,12 @@ frontend/web/dist/
 frontend/web/out/
 *.tsbuildinfo
 
+
+# Deployment tooling
+# .vercel/project.json pins the linked Vercel project/org by id. It is
+# machine-local and must never be committed.
+.vercel/
+
 # Environment and secrets
 .env
 .env.local

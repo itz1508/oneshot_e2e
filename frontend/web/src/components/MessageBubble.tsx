@@ -1,5 +1,9 @@
 import React, { useMemo, useCallback, useState, FC } from "react";
+<<<<<<< HEAD
 import { readJsonResponse } from "../lib/api";
+=======
+import { readJsonResponse, resolveApiUrl } from "../lib/api";
+>>>>>>> rebuild-researcher-only
 import { Message } from "../types";
 import {
   extractStructuredOutput,
@@ -189,7 +193,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   // Memoized fork handler
   const handleFork = useCallback(async () => {
     try {
-      const response = await fetch("/api/session/fork", {
+      const response = await fetch(resolveApiUrl("/api/session/fork"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messageId: message.id }),

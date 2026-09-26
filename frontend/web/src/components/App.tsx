@@ -9,12 +9,15 @@ import { ContextReviewDrawer } from "./ContextReviewDrawer";
 import { ProviderConfigModal } from "./ProviderConfigModal";
 import { ResearcherDrawer } from "./ResearcherDrawer";
 import { ResearchBanner } from "./ResearchBanner";
-import { PlanReviewCard } from "./PlanReviewCard";
 import { Integration } from "./Integration";
 import { EarlierContextItem, ProviderId } from "../types";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
 import { useChatSession } from "../lib/useChatSession";
+<<<<<<< HEAD
 import { readJsonResponse } from "../lib/api";
+=======
+import { readJsonResponse, resolveApiUrl } from "../lib/api";
+>>>>>>> rebuild-researcher-only
 
 // Error boundary component for graceful error handling
 class ErrorBoundary extends React.Component<
@@ -70,9 +73,9 @@ const AppContent: React.FC = () => {
   const {
     sessions, activeSessionId, activeRunId, runStatus, isRunning,
     activitySteps, toolEvents, taskEvents, activityStartTime, providerConfigs,
-    planData, isGate1Confirmed, isConfirmingGate, systemStatusText,
+    systemStatusText,
     handleSelectSession, handleNewSession, handleClearHistory, handleRefreshSystemStatus,
-    handleSyncPlan, handleConfirmGate1, handleAbort, handleSendMessage, handleConfigSaved,
+    handleAbort, handleSendMessage, handleConfigSaved,
     startupError, isStarting,
   } = session;
 
@@ -85,6 +88,16 @@ const AppContent: React.FC = () => {
   const [modalProviderId, setModalProviderId] = useState<ProviderId>("gemini");
   const [isIntegrationOpen, setIsIntegrationOpen] = useState(false);
   const [isResearcherDrawerOpen, setIsResearcherDrawerOpen] = useState(false);
+  // Real research workflow state, reported by the backend. Null means no run exists.
+  // The banner must render this truth and never assert a mode of its own.
+  const [researchRun, setResearchRun] = useState<{
+    runId: string;
+    phase: string;
+    stopped: boolean;
+  } | null>(null);
+  // Per-message choice for the NEXT message only. Never a global workflow driver.
+  const [useResearchForNextMessage, setUseResearchForNextMessage] = useState(false);
+  const [designPlanningNotice, setDesignPlanningNotice] = useState<string | null>(null);
   const [composerExternalText, setComposerExternalText] = useState<string | undefined>(undefined);
   const [apiError, setApiError] = useState<string | null>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -94,6 +107,40 @@ const AppContent: React.FC = () => {
     () => sessions.find((s) => s.id === activeSessionId) || sessions[0],
     [sessions, activeSessionId]
   );
+
+  // Design_Planning is a deliberate, explicit user action. It is never triggered by
+  // a keyword in the message text, and research never invokes it on its own.
+  const handleOpenDesignPlanning = useCallback(async () => {
+    setDesignPlanningNotice(null);
+    try {
+      const lastUserMessage = activeSession?.messages
+        .filter((m) => m.role === "user")
+        .slice(-1)[0]?.content;
+      const res = await fetch(resolveApiUrl("/api/design-planning/plan"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          explicitlyInvoked: true,
+          intent: lastUserMessage || "Plan the current intent",
+          repositoryState: "Detected from the current workspace",
+          existingArchitecture: "See ARCHITECTURE.MD",
+        }),
+      });
+      const data = await readJsonResponse<{ phase: string; requiresUserApproval: boolean }>(
+        res,
+        "Design_Planning request"
+      );
+      setDesignPlanningNotice(
+        `Design_Planning reached ${data.phase}. It stops here and requires your approval before an Approved Plan exists.`
+      );
+    } catch (err) {
+      setDesignPlanningNotice(
+        err instanceof Error
+          ? err.message
+          : "Design_Planning is currently unavailable. Check the server connection and try again."
+      );
+    }
+  }, [activeSession]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 767px)')
@@ -123,7 +170,11 @@ const AppContent: React.FC = () => {
     async (item: EarlierContextItem) => {
       try {
         setApiError(null);
+<<<<<<< HEAD
         const res = await fetch("/api/session/restore", {
+=======
+        const res = await fetch(resolveApiUrl("/api/session/restore"), {
+>>>>>>> rebuild-researcher-only
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ restoreId: item.restoreId || item.id }),
@@ -197,7 +248,7 @@ const AppContent: React.FC = () => {
         Skip to conversation
       </a>
       <div
-        className={`app-shell ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}
+        className={`app-shell ${isSidebarCollapsed ? "sidebar-collapsed" : ""} ${isDrawerOpen ? "drawer-open" : ""}`}
         role="application"
         aria-label="OneShot Agent Chat"
       >
@@ -295,10 +346,23 @@ const AppContent: React.FC = () => {
                 </div>
               )}
               <ResearchBanner
+                researchRun={researchRun}
+                useResearchForNextMessage={useResearchForNextMessage}
+                onToggleUseResearch={setUseResearchForNextMessage}
                 systemStatusText={systemStatusText}
                 onRefreshStatus={handleRefreshSystemStatus}
                 onOpenResearcher={() => setIsResearcherDrawerOpen(true)}
+                onOpenDesignPlanning={handleOpenDesignPlanning}
               />
+              {designPlanningNotice && (
+                <div
+                  id="designPlanningNotice"
+                  role="status"
+                  className="mb-3 rounded-xl border border-white/10 bg-[#141416]/80 p-3 text-[11px] text-[#a0a0a5]"
+                >
+                  {designPlanningNotice}
+                </div>
+              )}
               <EarlierConversation
                 items={activeSession?.earlierContext || []}
                 onSelectContext={handleSelectContext}
@@ -306,6 +370,7 @@ const AppContent: React.FC = () => {
                   isDrawerOpen && drawerTab === "context" ? selectedContext?.id : null
                 }
               />
+<<<<<<< HEAD
               {planData && (
                 <PlanReviewCard
                   planData={planData}
@@ -315,6 +380,8 @@ const AppContent: React.FC = () => {
                   onConfirmGate1={handleConfirmGate1}
                 />
               )}
+=======
+>>>>>>> rebuild-researcher-only
               {apiError && (
                 <div
                   className="p-4 rounded-lg border border-red-500/30 bg-red-500/10 text-red-300 text-sm flex items-center justify-between"

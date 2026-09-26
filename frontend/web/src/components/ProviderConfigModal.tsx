@@ -2,7 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useOverlayFocus } from "../lib/useOverlayFocus";
 import { ProviderId, ProviderConfig } from "../types";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
+<<<<<<< HEAD
 import { readJsonResponse } from "../lib/api";
+=======
+import { readJsonResponse, resolveApiUrl } from "../lib/api";
+>>>>>>> rebuild-researcher-only
 
 interface ProviderConfigModalProps {
   isOpen: boolean;
@@ -63,7 +67,11 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     setIsChecking(true);
     setStatusText("Probing server environment...");
     try {
+<<<<<<< HEAD
       const res = await fetch("/api/providers/status");
+=======
+      const res = await fetch(resolveApiUrl("/api/providers/status"));
+>>>>>>> rebuild-researcher-only
       const data = await readJsonResponse<Record<string, { configured?: boolean }>>(res, "Provider status request");
       const providerStatus = data[activeProvider];
       if (!providerStatus || typeof providerStatus.configured !== "boolean") {
@@ -87,7 +95,7 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     setIsSavingKey(true);
     setSaveSuccessMsg(null);
     try {
-      const res = await fetch("/api/providers/configure", {
+      const res = await fetch(resolveApiUrl("/api/providers/configure"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -125,7 +133,11 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     setIsSavingKey(true);
     setSaveSuccessMsg(null);
     try {
+<<<<<<< HEAD
       const res = await fetch("/api/config/provider", {
+=======
+      const res = await fetch(resolveApiUrl("/api/config/provider"), {
+>>>>>>> rebuild-researcher-only
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider: activeProvider, model }),

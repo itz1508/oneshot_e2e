@@ -44,7 +44,7 @@ for (const filename of expectedFiles) {
   const frontendPath = path.join(frontendDemoDir, filename)
   const rootBytes = await fs.readFile(rootPath)
   const frontendBytes = await fs.readFile(frontendPath)
-  assert.deepEqual(frontendBytes, rootBytes, `demo asset bytes differ: ${filename}`)
+  assert.equal(frontendBytes.compare(rootBytes), 0, `demo asset bytes differ: ${filename}`)
   assert.equal(await sha256(frontendPath), await sha256(rootPath), `demo asset hashes differ: ${filename}`)
 }
 

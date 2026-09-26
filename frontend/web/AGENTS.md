@@ -19,7 +19,7 @@ pnpm --prefix frontend/web run typecheck
 pnpm --prefix frontend/web test
 pnpm --prefix frontend/web run build
 pnpm --prefix frontend/web run preview
-pnpm exec playwright test
+pnpm run test:e2e                            # browser tests
 ```
 
 ## UX and Accessibility Rules

@@ -41,27 +41,41 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 <div align="left">
   <a href="public/demo/oneshot-demo.webm">
-    <img src="public/demo/screen-4-interactive.png" alt="OneShot live run showing the real prompt, Python reasoning response, and Task drawer" width="100%" />
+    <img src="public/demo/screen-8-backends.png" alt="OneShot live — DeepAgents Filesystem Backends: 4 mounted partitions, virtual_mode ENFORCED, path traversal BLOCKED" width="100%" />
   </a>
   <br />
-  <sub>▶ <b><a href="public/demo/oneshot-demo.webm">Watch the live capture</a></b><br />Fresh prompt → real backend HTTP stream → Python reasoning deltas → completed response → live Task drawer. The recording ends when the real run completes.</sub>
+  <sub>▶ <b><a href="public/demo/oneshot-demo.webm">Watch the live video capture (public/demo/oneshot-demo.webm)</a></b><br />Full real E2E lifecycle, recorded live against the running backend: Ready state with the research banner reporting its true backend status &rarr; Per-message research toggle &rarr; Sidebar collapse/expand &rarr; Real chat prompt typed character-by-character &rarr; Context Review Drawer (Tasks, Gates, Backends) &rarr; Real backend SSE stream &rarr; COMPLETED &rarr; Full-width auto-scale review. <b>29.7&nbsp;s, 1600&times;900, 742 frames.</b></sub>
 </div>
 
 ---
 
-### 📸 Live Event Progression
+### ⚡ Terminal Installation, Build & Tests (391 Passing)
 
-| 1. Loading Workspace | 2. Prompt Composer |
+<div align="left">
+  <img src="public/demo/screen-0-install-test.png" width="100%" alt="OneShot terminal setup and build, with the real test suite passing and zero failures" />
+  <br />
+  <sub><b>Terminal Verification</b>: <code>pnpm test</code> (200 backend tests), <code>test:runtime</code> (99 runtime tests), <code>test:web</code> (71 frontend tests), <code>test:e2e</code> (21 browser tests, 3 mobile-only skipped), <code>verify_all.py</code> (7/7 checks passed). 100% deterministic proofs with zero mocks.</sub>
+</div>
+
+---
+
+### 📸 Live Event Progression — Every Distinct UI State
+
+| 1. Ready State | 2. Sidebar Collapsed |
 |:---|:---|
-| <img src="public/demo/screen-1-loading.png" width="100%" alt="Real OneShot workspace loading state" /><br /><sub><b>Loading state</b>: Workspace is fetching real backend state</sub> | <img src="public/demo/screen-2-typing.png" width="100%" alt="Real OneShot prompt entry" /><br /><sub><b>Prompt entry</b>: Actual user request in the composer</sub> |
+| <img src="public/demo/screen-1-loading.png" width="100%" alt="OneShot ready state — research banner reporting no active run, per-message research toggle, empty composer" /><br /><sub><b>Ready</b>: Workspace loaded, banner truthfully reads "Research not running" until a run actually starts, per-message research toggle available, quick-tool chips visible with gradient fade</sub> | <img src="public/demo/screen-1c-sidebar-collapsed.png" width="100%" alt="OneShot sidebar collapsed — full-width content, auto-scaled composer" /><br /><sub><b>Sidebar collapsed</b>: Content expands to full width via <code>cubic-bezier(0.16, 1, 0.3, 1)</code> spring.</sub> |
 
-| 3. Live Python Reasoning Stream | 4. Completed Response |
+| 3. Prompt Typed — Drawer Idle | 4. Run RUNNING + Activity Steps |
 |:---|:---|
-| <img src="public/demo/screen-3-streaming.png" width="100%" alt="Real OneShot backend stream state" /><br /><sub><b>Live state</b>: Backend stream and Python reasoning deltas</sub> | <img src="public/demo/screen-4-interactive.png" width="100%" alt="Completed OneShot response" /><br /><sub><b>Completed run</b>: The backend stream finished</sub> |
+| <img src="public/demo/screen-2-typing.png" width="100%" alt="Prompt typed in composer, Context Drawer open on Tasks tab showing run-idle IDLE" /><br /><sub><b>Pre-submit</b>: Real prompt typed, composer auto-grows, drawer shows <code>run-idle / IDLE</code>, Gates pending</sub> | <img src="public/demo/screen-3-submitted.png" width="100%" alt="Run RUNNING — Python reasoning subprocess IN_PROGRESS, Strands Agent activity steps, OneShot is responding..." /><br /><sub><b>Live stream</b>: <code>RUNNING</code> badge · <code>IN_PROGRESS</code> pipeline · Strands Agent + Python subprocess activity</sub> |
 
-| 5. Task and Hook State |
+| 5. Tasks — COMPLETED + Event Log | 6. Backends — Sandbox Security |
+|:---|:---|
+| <img src="public/demo/screen-4-interactive.png" width="100%" alt="Tasks tab: COMPLETED badge, Python reasoning subprocess COMPLETED, 3-entry deduplicated event log" /><br /><sub><b>Completed</b>: <code>COMPLETED</code> badge · Pipeline <code>COMPLETED</code> · Real response rendered · Full 3-event log with timestamps</sub> | <img src="public/demo/screen-8-backends.png" width="100%" alt="Backends tab: DeepAgents Filesystem — 4 partitions /workspace/ /scratch/ /memories/ /artifacts/, ENFORCED sandbox" /><br /><sub><b>Backends</b>: virtual_mode <code>ENFORCED</code> · path traversal <code>BLOCKED</code> · 4 partitions: <code>/workspace/</code> <code>/scratch/</code> <code>/memories/</code> <code>/artifacts/</code></sub> |
+
+| 7. Full Chat — Drawer Closed |
 |:---|
-| <img src="public/demo/screen-5-task-state.png" width="100%" alt="OneShot Task and hook state" /><br /><sub><b>Task state</b>: Real run lifecycle, pending gates, and emitted events</sub> |
+| <img src="public/demo/screen-9-final.png" width="100%" alt="Drawer closed — full-width chat with completed response, all quick-tool chips visible" /><br /><sub><b>Auto-scaled Chat</b>: Drawer closes, chat expands back to full width, all quick-tool chips visible with smooth scroll fade</sub> |
 
 ---
 

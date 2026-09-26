@@ -14,7 +14,11 @@ import {
   setActiveSessionId,
 } from "./storage";
 import { getStoredProviderConfig, saveProviderConfig } from "./providers";
+<<<<<<< HEAD
 import { readJsonResponse, isRecord, streamAgentExecution, StrandsStreamEvent } from "./api";
+=======
+import { readJsonResponse, isRecord, resolveApiUrl, streamAgentExecution, StrandsStreamEvent } from "./api";
+>>>>>>> rebuild-researcher-only
 import { TaskEvent } from "../components/ContextReviewDrawer";
 
 const ACTIVE_RUN_ID_KEY = "oneshot_active_run_id_v1";
@@ -38,9 +42,6 @@ export function useChatSession() {
     nebius: getStoredProviderConfig("nebius"),
   });
 
-  const [planData, setPlanData] = useState<{ title: string; summary: string; steps: string[]; status: string } | null>(null);
-  const [isGate1Confirmed, setIsGate1Confirmed] = useState(false);
-  const [isConfirmingGate, setIsConfirmingGate] = useState(false);
   const [systemStatusText, setSystemStatusText] = useState<string>("System Online");
   const [startupError, setStartupError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(true);
@@ -61,7 +62,11 @@ export function useChatSession() {
     setRunStatus("IDLE");
 
     const requests: Promise<void>[] = [
+<<<<<<< HEAD
       fetch("/api/session/checkpoints")
+=======
+      fetch(resolveApiUrl("/api/session/checkpoints"))
+>>>>>>> rebuild-researcher-only
         .then((response) => readJsonResponse<{ checkpoints?: unknown[] }>(response, "Checkpoint request"))
         .then((data) => {
           if (!Array.isArray(data.checkpoints)) {
@@ -88,7 +93,11 @@ export function useChatSession() {
           });
           setSessions((previous) => previous.map((session) => ({ ...session, earlierContext: mapped })));
         }),
+<<<<<<< HEAD
       fetch("/api/system/status")
+=======
+      fetch(resolveApiUrl("/api/system/status"))
+>>>>>>> rebuild-researcher-only
         .then((response) => readJsonResponse<{ status?: string; currentStage?: string }>(response, "Status request"))
         .then((data) => {
           if (!data.status || !data.currentStage) {
@@ -128,7 +137,11 @@ export function useChatSession() {
   const handleNewSession = async () => {
     let newId: string;
     try {
+<<<<<<< HEAD
       const res = await fetch("/api/session/new", { method: "POST" });
+=======
+      const res = await fetch(resolveApiUrl("/api/session/new"), { method: "POST" });
+>>>>>>> rebuild-researcher-only
       const data = await readJsonResponse<{ ok?: boolean; sessionId?: string }>(res, "New session request");
       if (data.ok !== true || !data.sessionId) {
         throw new Error("New session response is missing ok=true or sessionId");
@@ -158,7 +171,11 @@ export function useChatSession() {
 
   const handleClearHistory = async () => {
     try {
+<<<<<<< HEAD
       const res = await fetch("/api/session/clear", {
+=======
+      const res = await fetch(resolveApiUrl("/api/session/clear"), {
+>>>>>>> rebuild-researcher-only
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: activeSessionId }),
@@ -181,7 +198,11 @@ export function useChatSession() {
 
   const handleRefreshSystemStatus = async () => {
     try {
+<<<<<<< HEAD
       const res = await fetch("/api/system/status");
+=======
+      const res = await fetch(resolveApiUrl("/api/system/status"));
+>>>>>>> rebuild-researcher-only
       const data = await readJsonResponse<{ status?: string; currentStage?: string; uptimeSeconds?: number }>(res, "Status request");
       if (!data.status || !data.currentStage || typeof data.uptimeSeconds !== "number") {
         throw new Error("System status response is missing required status fields");
@@ -195,6 +216,7 @@ export function useChatSession() {
     }
   };
 
+<<<<<<< HEAD
   const handleSyncPlan = async () => {
     try {
       const res = await fetch("/api/pipeline/plan");
@@ -252,6 +274,12 @@ export function useChatSession() {
       setIsConfirmingGate(false);
     }
   };
+=======
+  // Gate 1 confirmation and plan sync were removed from this hook.
+  //   * /api/pipeline/plan always returned null, so the plan contract was unreachable.
+  //   * Gate 1 confirmation moved to ContextReviewDrawer, beside the live gate
+  //     status it changes (ARCHITECTURE.MD §1.4: planning is owned by Design_Planning).
+>>>>>>> rebuild-researcher-only
 
   const handleAbort = () => {
     if (abortControllerRef.current) {
@@ -515,9 +543,6 @@ export function useChatSession() {
     taskEvents,
     activityStartTime,
     providerConfigs,
-    planData,
-    isGate1Confirmed,
-    isConfirmingGate,
     systemStatusText,
     startupError,
     isStarting,
@@ -525,8 +550,6 @@ export function useChatSession() {
     handleNewSession,
     handleClearHistory,
     handleRefreshSystemStatus,
-    handleSyncPlan,
-    handleConfirmGate1,
     handleAbort,
     handleSendMessage,
     handleConfigSaved,
