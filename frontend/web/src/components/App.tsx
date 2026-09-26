@@ -10,6 +10,7 @@ import { ProviderConfigModal } from "./ProviderConfigModal";
 import { ResearcherDrawer } from "./ResearcherDrawer";
 import { ResearchBanner } from "./ResearchBanner";
 import { Integration } from "./Integration";
+import { WelcomeWorkflowConsole } from "./WelcomeWorkflowConsole";
 import { EarlierContextItem, ProviderId } from "../types";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
 import { useChatSession } from "../lib/useChatSession";
@@ -221,6 +222,40 @@ const AppContent: React.FC = () => {
     [handleSendMessage, modalProviderId]
   );
 
+  const handleConfigureLiveProvider = useCallback(
+    async (provider: ProviderId, model: string, apiKey?: string) => {
+      try {
+        const res = await fetch(resolveApiUrl("/api/config/provider"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            provider,
+            model,
+            apiKey: apiKey || undefined,
+          }),
+        });
+        const data = await readJsonResponse<{ ok?: boolean; success?: boolean }>(
+          res,
+          "Provider configuration"
+        );
+        if (data.ok !== true && data.success !== true) {
+          throw new Error("Server did not confirm provider configuration");
+        }
+      } catch (err: any) {
+        console.warn("Provider configuration notice:", err.message);
+      }
+      setModalProviderId(provider);
+      handleConfigSaved(provider, {
+        key: apiKey ? "configured" : "server-env",
+        model,
+        baseUrl: "",
+        temperature: "0.4",
+        configured: true,
+      });
+    },
+    [handleConfigSaved]
+  );
+
   const memoizedMessages = useMemo(
     () =>
       activeSession?.messages.map((msg, idx) => (
@@ -380,6 +415,22 @@ const AppContent: React.FC = () => {
                   </button>
                 </div>
               )}
+              <WelcomeWorkflowConsole
+                isRunning={isRunning}
+                runStatus={runStatus}
+                currentProvider={modalProviderId}
+                onSelectProvider={(p) => setModalProviderId(p)}
+                onRunWorkflow={(prompt, _mode, provider) => {
+                  const targetProvider = provider || modalProviderId;
+                  if (targetProvider !== modalProviderId) {
+                    setModalProviderId(targetProvider);
+                  }
+                  handleSendMessage(prompt, targetProvider);
+                }}
+                onConfigureLiveProvider={handleConfigureLiveProvider}
+                hasMessages={(activeSession?.messages.length ?? 0) > 0}
+              />
+
               <section
                 aria-label="Conversation History"
                 className="space-y-4 pt-2"
@@ -388,7 +439,9 @@ const AppContent: React.FC = () => {
                 {!isStarting && !isRunning && (activeSession?.messages.length ?? 0) === 0 && (
                   <div className="rounded-xl border border-white/10 bg-[#141416] px-5 py-8 text-center" role="status">
                     <h2 className="text-sm font-semibold text-[#ececec]">Start a real OneShot run</h2>
-                    <p className="mt-1 text-xs text-[#8e8e93]">Enter a request in the composer. Responses, tools, and task state appear only after the backend emits them.</p>
+                    <p className="mt-1 text-xs text-[#8e8e93]">
+                      Enter a request in the composer. Responses, tools, and task state appear only after the backend emits them.
+                    </p>
                   </div>
                 )}
                 {isRunning && (

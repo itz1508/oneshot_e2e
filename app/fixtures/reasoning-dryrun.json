@@ -1,0 +1,51 @@
+{
+  "fixture_id": "fix-reason-01",
+  "session_id": "session-dryrun-reason",
+  "name": "Python Reasoning & Invariant Verification Dry-Run",
+  "version": "1.3.0",
+  "description": "Offline reasoning test cases with thinking chain expectations and deterministic findings",
+  "test_cases": [
+    {
+      "case_id": "tc-security-invariants",
+      "task": "general",
+      "prompt": "Analyze the security invariant and explain the 4 filesystem sandbox partitions in DeepAgents.",
+      "expected_finding_code": "SEC-INV-001",
+      "expected_partitions": [
+        "/workspace/",
+        "/scratch/",
+        "/memories/",
+        "/artifacts/"
+      ],
+      "requires_api_key": false
+    },
+    {
+      "case_id": "tc-adk-orchestration",
+      "task": "planner",
+      "prompt": "Inspect Google ADK multi-agent stage orchestration and human gates",
+      "expected_stages": [
+        "IDLE",
+        "RESEARCH",
+        "PLANNING",
+        "EXECUTION",
+        "VALIDATION"
+      ],
+      "expected_gates": [
+        "Gate 1",
+        "Gate 2"
+      ],
+      "requires_api_key": false
+    },
+    {
+      "case_id": "tc-deterministic-critic",
+      "task": "critic",
+      "prompt": "Run invariant audit across contract schemas",
+      "expected_finding_code": "CRITIC-001",
+      "requires_api_key": false
+    }
+  ],
+  "dry_run_validation": {
+    "target_status": "validated",
+    "subprocess_ipc": "stdin_stdout_json",
+    "requires_api_key": false
+  }
+}

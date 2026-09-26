@@ -16,10 +16,12 @@ describe('Network Endpoint', () => {
   before(async () => {
     try {
       const res = await fetch(`${BASE_URL}/ping`);
-      if (res.ok) return;
+      const data = (await res.json().catch(() => null)) as { status?: string } | null;
+      if (res.ok && data?.status === 'healthy') return;
     } catch {
-      server = (await startAgentServer({ port: 8080 })) as Server;
+      // not healthy
     }
+    server = (await startAgentServer({ port: 8080 })) as Server;
   });
 
   after(async () => {

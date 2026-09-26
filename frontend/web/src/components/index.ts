@@ -10,6 +10,7 @@ export * from "./ProviderConfigModal";
 export * from "./ResearcherDrawer";
 export * from "./ResearchBanner";
 export * from "./ToolCallList";
+export * from "./WelcomeWorkflowConsole";
 
 // Reference-only surfaces are intentionally not exported from the canonical
 // component barrel. See frontend/web/AGENTS.md for the migration boundary.

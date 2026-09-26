@@ -25,7 +25,7 @@ prerequisite above. That floor is enforced rather than aspirational: the six
 library packages fail an engine check below it, both CI jobs pin
 `node-version: 24.21.0`, and `@types/node` targets 24.x.
 
-Do not reintroduce a `22.x || ` alternate in `package.json` or
+Do not reintroduce a `22.x ||` alternate in `package.json` or
 `frontend/web/package.json`. Those two manifests previously advertised
 `22.x || >=24.21.0` — a runtime nothing else supported, since Node 22 is never
 exercised by CI and falls outside the Node 24 type definitions.
@@ -66,6 +66,7 @@ pnpm run test:e2e                            # browser tests
 - Use Node-compatible ESM import specifiers.
 - Follow the existing backend/cloud 2-space and frontend/Python 4-space indentation conventions.
 - Keep line endings consistent with the repository's existing tracked files.
+
 ---
 
 ## Workspace and Path Rules
@@ -118,7 +119,6 @@ Use explicit, consistent names for local path variables:
 - Keep public API and CLI names stable: `rootDir`, `path`, `--root`, and manifest JSON keys are compatibility contracts.
 - Distinguish URL paths, virtual backend namespaces, and filesystem paths in names and documentation.
 
-
 - `frontend/web/` is the canonical frontend.
 - `App.tsx` and `Composer.tsx` are the canonical chat runtime path.
 - `main-screen/` and the invariant-oriented `useStream`/`useTool` contracts are reference-only until migrated; do not import them from production components.
@@ -153,6 +153,29 @@ The frontend and backend follow the DeepAgents event streaming model:
 - `stream.values.todos` carries real `pending`, `in_progress`, and `completed` state.
 - No hardcoded percentages, artificial progress bars, fake tool execution, or synthetic delays.
 - Provider failures may use the configured gateway fallback chain, but the UI must expose the real resulting state.
+
+## Video & Demonstration Standard (Synchronized Behavioral Transcript)
+
+When recording demonstration videos and authoring captions or voice narration:
+
+- **Single Synchronized Transcript**: Write one synchronized transcript for both voice-over and captions.
+- **Behavior, Not Inventory**: Narrate the user's task and the system's behavior, not the visual inventory of the interface.
+- **Required Workflow Context**: Explain:
+  1. What the workflow is for.
+  2. When the user would use it.
+  3. What action they take.
+  4. How the UI responds.
+  5. What the system is processing.
+  6. What result the user should expect.
+  7. What they can immediately test or verify.
+- **No Component Inventory**: Do not enumerate buttons, panels, cards, icons, labels, colors, or other UI components unless identifying that element is strictly necessary to perform the action.
+- **Describe Changes Through Meaning**:
+  - *"The review begins"* rather than *"the Review button turns blue."*
+  - *"The interface shows that processing is underway"* rather than *"a spinner appears."*
+  - *"The result is now available for confirmation"* rather than *"a result card appears."*
+- **Comfortable Pacing**: Keep each caption short enough to read comfortably while it is spoken. Break narration at meaningful interaction or state boundaries.
+- **Strict Visual Synchronization**: The narration must correspond to what is actually visible in the video. Do not describe an action before it occurs or explain a result before it appears.
+- **Immediate Practical Action**: End each workflow with an immediate practical action the viewer can perform to verify what they just saw.
 
 ## Development and Verification Commands
 
@@ -208,13 +231,17 @@ Before completing a task or proposing a commit:
 1. Stop background dev or daemon processes started for the task.
 2. Run targeted tests, then the relevant broader suites.
 3. If tracked source or test files changed, regenerate and verify the manifest:
+
    ```powershell
    python app/scripts/generate_manifest.py
    python app/scripts/verify_manifest.py
    ```
+
 4. Run full verification:
+
    ```powershell
    pnpm run verify
    ```
+
 5. Run `git diff --check` and review the final file list.
 6. Report exact results, payload validations, and known limitations.

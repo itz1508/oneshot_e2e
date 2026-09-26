@@ -1,0 +1,55 @@
+{
+  "fixture_id": "fix-sec-01",
+  "session_id": "session-dryrun-sec",
+  "name": "DeepAgents 4-Partition Sandbox Security Invariants",
+  "version": "1.3.0",
+  "description": "Specification and verification boundaries for DeepAgents virtual filesystem isolation and security invariants",
+  "virtual_mode": "ENFORCED",
+  "partitions": [
+    {
+      "name": "workspace",
+      "uri": "/workspace",
+      "type": "durable",
+      "access": "read_write",
+      "confinement": "workspace_root_only",
+      "traversal_protection": true,
+      "description": "Physical repository root for active codebase and source files"
+    },
+    {
+      "name": "scratch",
+      "uri": "/scratch",
+      "type": "ephemeral",
+      "access": "volatile_read_write",
+      "isolated": true,
+      "cleared_on_exit": true,
+      "description": "Per-run volatile RAM scratchpad for temporary test scripts and intermediate dumps"
+    },
+    {
+      "name": "memories",
+      "uri": "/memories",
+      "type": "persistent_kv",
+      "access": "isolated_read_write",
+      "git_tracked": false,
+      "description": "Cross-turn context and decision retention outside git tree to avoid tree pollution"
+    },
+    {
+      "name": "artifacts",
+      "uri": "/artifacts",
+      "type": "immutable_staging",
+      "access": "write_once_read_only",
+      "sha256_verified": true,
+      "description": "Cryptographically verified build bundles and release deliverables"
+    }
+  ],
+  "invariants": {
+    "canonical_root_containment": "ENFORCED",
+    "directory_traversal_blocked": true,
+    "unauthorized_symlink_escapes_blocked": true,
+    "human_gate_governance": "ENFORCED"
+  },
+  "dry_run_validation": {
+    "target_status": "validated",
+    "expected_finding": "SEC-INV-001",
+    "requires_api_key": false
+  }
+}

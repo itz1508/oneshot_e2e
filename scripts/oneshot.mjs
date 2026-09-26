@@ -35,6 +35,7 @@ const options = {
   dev: false,
   rebuild: false,
   sample: false,
+  dryRun: false,
   noBrowser: Boolean(process.env.NO_BROWSER),
 };
 
@@ -52,6 +53,8 @@ for (let i = 0; i < args.length; i++) {
     options.rebuild = true;
   } else if (arg === "--sample") {
     options.sample = true;
+  } else if (arg === "--dry-run") {
+    options.dryRun = true;
   } else if (arg === "--no-browser") {
     options.noBrowser = true;
   }
@@ -72,11 +75,13 @@ Options:
   --dev             Run in development mode with live TypeScript reload
   --rebuild         Force clean re-compilation of backend and Next.js UI
   --sample          Run in deterministic sample fixture mode
+  --dry-run         Execute deterministic contract fixture dry-run verification
   --no-browser      Suppress automatic browser launching
 
 Examples:
   oneshot
   oneshot --dev
+  oneshot --dry-run
   oneshot --bundle my-bundle.json
 `);
   process.exit(0);
@@ -84,6 +89,14 @@ Examples:
 
 // Switch to target directory
 process.chdir(options.dir);
+
+if (options.dryRun) {
+  const dryRunScript = join(options.dir, "scripts", "dry-run.mjs");
+  const proc = spawn(process.execPath, [dryRunScript], { stdio: "inherit" });
+  proc.on("close", (code) => {
+    process.exit(code ?? 0);
+  });
+} else {
 
 console.log("\n⚡ OneShot — Automated Launcher");
 console.log("==============================\n");
@@ -184,4 +197,5 @@ for (let i = 0; i < 40; i++) {
     }
     break;
   }
+}
 }

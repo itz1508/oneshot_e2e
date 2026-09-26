@@ -42,13 +42,14 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const [serverStatus, setServerStatus] = useState<Record<string, { configured: boolean }>>({});
   const modalRef = useOverlayFocus<HTMLDivElement>(isOpen, onClose);
 
-  const def = PROVIDER_DEFINITIONS[activeProvider];
+  const def = PROVIDER_DEFINITIONS[activeProvider] || PROVIDER_DEFINITIONS.gemini;
 
   useEffect(() => {
     const prov = initialProviderId || currentProvider || "gemini";
     setActiveProvider(prov);
     const cfg = currentConfig || (providerConfigs ? providerConfigs[prov] : undefined);
-    setModel(cfg?.model || PROVIDER_DEFINITIONS[prov].models[0]);
+    const targetDef = PROVIDER_DEFINITIONS[prov] || PROVIDER_DEFINITIONS.gemini;
+    setModel(cfg?.model || targetDef.models[0]);
     setApiKey("");
     setSaveSuccessMsg(null);
   }, [initialProviderId, currentProvider, currentConfig, providerConfigs]);

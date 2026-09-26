@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-26T17:36:03Z",
+  "generated_at": "2026-09-26T23:20:23Z",
   "version": "1.3.0",
-  "commit": "902b4af0",
+  "commit": "e96b86a3",
   "files": [
     {
       "path": ".github\\deploy.yml",
@@ -11,8 +11,8 @@
     },
     {
       "path": "AGENTS.md",
-      "size": 12035,
-      "hash": "sha256:ea0a4216f779b11a17d8324841ae8bf7e3a1f9edc11fc78975f9001f44c8d520",
+      "size": 13686,
+      "hash": "sha256:ca26ecb96fb7f1891edd43d894a52803f3a0b1324a1b3afcc61710c023d61003",
       "category": "source"
     },
     {
@@ -29,14 +29,44 @@
     },
     {
       "path": "README.md",
-      "size": 10175,
-      "hash": "sha256:b38857774bbd0ba2e6d4fc160e444f9a710251ba8427e3c860c0dc3f1a5a4bd9",
+      "size": 13326,
+      "hash": "sha256:0a0187451731590a99334d9e25fbbe84467b0e5f01e404de419fed4cbe7dc597",
       "category": "source"
     },
     {
       "path": "app\\bootstrap\\demo.mjs",
       "size": 2705,
       "hash": "sha256:89c65995b2dba68eaa2dec88ad7219b2d1ef736259ca19e7827d7d21247fffde",
+      "category": "source"
+    },
+    {
+      "path": "app\\fixtures\\adk-workflow.json",
+      "size": 1439,
+      "hash": "sha256:20e07c48463459e06e12e6f1ea44a9fbcecef8ef41bd11d124496b04a1a3107b",
+      "category": "source"
+    },
+    {
+      "path": "app\\fixtures\\data.json",
+      "size": 441,
+      "hash": "sha256:ba28f15486088aa5665e5415f5c11ca590f9706b1c28f858eac0f1cc74a63a40",
+      "category": "source"
+    },
+    {
+      "path": "app\\fixtures\\reasoning-dryrun.json",
+      "size": 1453,
+      "hash": "sha256:a52468ba5df4685e474f530958b358eedd38892f82dcfb7a86d2670bb22e7a4f",
+      "category": "source"
+    },
+    {
+      "path": "app\\fixtures\\sample.json",
+      "size": 497,
+      "hash": "sha256:9ee8ec71b87f46133c868b3e2c82bc12d62decab5f8c5a4bdfb27d6db758d9dd",
+      "category": "source"
+    },
+    {
+      "path": "app\\fixtures\\security-invariants.json",
+      "size": 1780,
+      "hash": "sha256:46aad717ee8e83ab0fe36033f993a9c2333a58b17999ac0d67e94139838c3979",
       "category": "source"
     },
     {
@@ -5525,8 +5555,8 @@
     },
     {
       "path": "backend\\python\\app\\main.py",
-      "size": 12511,
-      "hash": "sha256:4a2de720d7503e29bc08e5a6cb310e128f3fe9f6bbee8218b679791fcacab1c6",
+      "size": 22517,
+      "hash": "sha256:5ade6e142fafc7b17648f1d12b14bd3103f5b43becd513c334125aa7f5246491",
       "category": "source"
     },
     {
@@ -5644,6 +5674,12 @@
       "category": "source"
     },
     {
+      "path": "backend\\tests\\ts\\dry-run-fixtures.test.ts",
+      "size": 6500,
+      "hash": "sha256:a3419c37a0824ecb6e2c812dd27bbd494fc8d9a3da3829dc2e959f5fcb22edf7",
+      "category": "source"
+    },
+    {
       "path": "backend\\tests\\ts\\environment.test.ts",
       "size": 1695,
       "hash": "sha256:4d90437c75459e099ba1ea86bb52029ae1bcc794914ed041b914330a7ec77944",
@@ -5669,14 +5705,14 @@
     },
     {
       "path": "backend\\tests\\ts\\health-endpoint.test.ts",
-      "size": 4001,
-      "hash": "sha256:d02e115ac31799ac0c8ee5c2ac32408ac7c256c4ad29f564abf2ac3ce0d51045",
+      "size": 4137,
+      "hash": "sha256:4de5348816f9bc98f1ad7b12019bf7f6e390be883a10fdd8f575fda0f6d24916",
       "category": "source"
     },
     {
       "path": "backend\\tests\\ts\\network-endpoint.test.ts",
-      "size": 1885,
-      "hash": "sha256:b935a96101dc5ed06f5c9f987f3c427ea9fb41173cb059ea1181d13509d52231",
+      "size": 2021,
+      "hash": "sha256:96c424416b8d16fc4ba4229ec6bd81fb237dd2e929b37ff23cbb57ae4ca85afd",
       "category": "source"
     },
     {
@@ -5836,21 +5872,27 @@
       "category": "source"
     },
     {
+      "path": "frontend\\web\\scripts\\serve.mjs",
+      "size": 1864,
+      "hash": "sha256:835e5bbc340214d9a3a567e4d5ddc1b449f1a732ce86f91fc88614e9b0896baf",
+      "category": "source"
+    },
+    {
       "path": "frontend\\web\\src\\components\\App.tsx",
-      "size": 18712,
-      "hash": "sha256:3cd7d659a288e2ac921a418a5718e9b53ccf8a4dc68f3f7acde3b05b4c455ea2",
+      "size": 20641,
+      "hash": "sha256:2790805b69bc7c82e8995f252c6abf549247d7687a97fe2ca22ff951879c5f80",
       "category": "source"
     },
     {
       "path": "frontend\\web\\src\\components\\Composer.tsx",
-      "size": 7574,
-      "hash": "sha256:b7bccf1094fbbfbbab06406b4a603df040d3ae3a4c61cc1aac94781d69beb9b9",
+      "size": 7873,
+      "hash": "sha256:c9bfc07af87d088c641d13d73c34b1f6dde5d241b522c2c2c2ebf67a6af94763",
       "category": "source"
     },
     {
       "path": "frontend\\web\\src\\components\\ContextReviewDrawer.tsx",
-      "size": 26364,
-      "hash": "sha256:59c3c58657ebc56b40661c1a8424f25cbbb2183ce20bf78377182917459d4da4",
+      "size": 26394,
+      "hash": "sha256:5a2b20acad2133984b253b3a1d892d662c40442357292a5d0608fb9b3ff9d311",
       "category": "source"
     },
     {
@@ -5915,8 +5957,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\ProviderConfigModal.tsx",
-      "size": 14588,
-      "hash": "sha256:008866882e715c29b0b834ac245cf151318f1cff17b77ed9155c6f0def3a891a",
+      "size": 14683,
+      "hash": "sha256:90df779c2270b33b21e7210587350f8cc4fbdc1c3e01ec159008db82659754d2",
       "category": "source"
     },
     {
@@ -5944,9 +5986,15 @@
       "category": "source"
     },
     {
+      "path": "frontend\\web\\src\\components\\WelcomeWorkflowConsole.tsx",
+      "size": 20644,
+      "hash": "sha256:dd895ea553375f703d8ba5f04673912488691bd84ca7e6e92b44f96777c0c462",
+      "category": "source"
+    },
+    {
       "path": "frontend\\web\\src\\components\\index.ts",
-      "size": 718,
-      "hash": "sha256:ce6bcb96fd3266cfd7975e39972d1df03006d84a40869ed9850ddef82bbb4f65",
+      "size": 760,
+      "hash": "sha256:13abf4aacdd5e879a64614ae819d6c39683dc5cb59daedef6033995cb6da7b95",
       "category": "source"
     },
     {
@@ -6136,6 +6184,12 @@
       "category": "source"
     },
     {
+      "path": "frontend\\web\\tests\\welcome-workflow-console.test.mjs",
+      "size": 2263,
+      "hash": "sha256:da0970362175630b7ab5ca527514b5ea487728ac97d06d9e45337a487d30f6b2",
+      "category": "source"
+    },
+    {
       "path": "frontend\\web\\tsconfig.json",
       "size": 1073,
       "hash": "sha256:84389fe3be66637ff748b6150faa834f0a536a636d73e6f80e9686fe9055bf06",
@@ -6149,8 +6203,8 @@
     },
     {
       "path": "package.json",
-      "size": 3380,
-      "hash": "sha256:710309d7a160ceea6e14e015ef40f1232e562f4029a3c3a261877eec36f9d449",
+      "size": 2501,
+      "hash": "sha256:8a00925945ba82123256d2c3b2a5a105ee6a13c06d499f9acc570da9d4728659",
       "category": "source"
     },
     {
@@ -6473,14 +6527,20 @@
     },
     {
       "path": "scripts\\capture-demo.mjs",
-      "size": 20744,
-      "hash": "sha256:62f28c3e6fc2d9438a91b9bbdd251e24594ae23c6e8938926415163bdb7fe8a5",
+      "size": 44957,
+      "hash": "sha256:6d1bd4c395e4f595bbd96fb155c253250c96f0942cf39861ea3839abe5376cf8",
       "category": "source"
     },
     {
       "path": "scripts\\diagnose-stream.mjs",
       "size": 3426,
       "hash": "sha256:4fe099f59e13b478db973563dfb442a4534254a03e404c0f6463bb5984ec4284",
+      "category": "source"
+    },
+    {
+      "path": "scripts\\dry-run.mjs",
+      "size": 8150,
+      "hash": "sha256:02cb0cb8d21561b800548ae10c31af5260701409811cebb57b6ba942d510f3b0",
       "category": "source"
     },
     {
@@ -6497,8 +6557,8 @@
     },
     {
       "path": "scripts\\oneshot.mjs",
-      "size": 5537,
-      "hash": "sha256:13d389a9d29ebc09d581ee1eb39c644dcc79d0eb8d05e2cab06674276f942a13",
+      "size": 5963,
+      "hash": "sha256:1e1d3010cba8562644eeffaeac433b1e6096099395a8d62b4072096df3f1cd68",
       "category": "source"
     },
     {
@@ -6521,8 +6581,8 @@
     },
     {
       "path": "scripts\\verify-demo-assets.mjs",
-      "size": 2743,
-      "hash": "sha256:14dd5c904113be955967d7470b3a1d778dfb0491b5931041f957a53c36693f94",
+      "size": 3131,
+      "hash": "sha256:3a9ba41456aac4398ac69decb90a2f5dd82618e7cff97770ad8ead241af62f9f",
       "category": "source"
     },
     {
@@ -6545,20 +6605,20 @@
     }
   ],
   "statistics": {
-    "total_files": 1090,
-    "source_files": 1090,
-    "total_size_bytes": 13345323,
+    "total_files": 1100,
+    "source_files": 1100,
+    "total_size_bytes": 13431977,
     "by_extension": {
       ".yml": 1,
       ".md": 19,
-      ".mjs": 30,
-      ".json": 20,
+      ".mjs": 33,
+      ".json": 25,
       ".py": 871,
-      ".ts": 93,
+      ".ts": 94,
       ".txt": 23,
       ".toml": 1,
       ".css": 1,
-      ".tsx": 28,
+      ".tsx": 29,
       ".html": 1,
       ".yaml": 2
     }

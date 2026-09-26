@@ -53,6 +53,14 @@ export const Composer: React.FC<ComposerProps> = ({
         label: "💾 Snapshot State",
         prompt: "Create immutable SessionLedger checkpoint of current workspace",
       },
+      {
+        label: "🧪 Dry Run: Sandbox",
+        prompt: "Dry run test: evaluate 4 sandbox partitions and verify security invariant fixtures",
+      },
+      {
+        label: "📦 Dry Run: Fixtures",
+        prompt: "Dry run fixture audit and verify repository contract baselines",
+      },
     ],
     []
   );

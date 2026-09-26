@@ -42,30 +42,38 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
-## 🎬 60-Second Live Demo — Full Agentic Lifecycle
+## 🎬 Combined Live Demo — Full Agentic Lifecycle & Multi-Provider Workflow
 
 <div align="center">
   <a href="public/demo/oneshot-demo.mp4">
-    <img src="public/demo/oneshot-demo.gif" alt="OneShot live demo — real SSE streaming with Python reasoning subprocess, thinking chain, and live activity" width="100%" />
+    <img src="public/demo/oneshot-demo.gif" alt="OneShot live demo — combined offline fixture verification and live multi-agent streaming" width="100%" />
   </a>
   <br />
   <sub>
-    ▶ <b><a href="public/demo/oneshot-demo.mp4">Watch Full 60s Demo (MP4)</a></b> · <a href="public/demo/oneshot-demo.webm">WebM</a> · <a href="public/demo/oneshot-demo.vtt">Live Captions (.vtt)</a> · <a href="https://itz1508.github.io/oneshot_e2e/">GitHub Pages Live Site</a><br />
-    Recorded live against the running backend — no mocks, no synthetic timers. Real Python reasoning subprocess, live thinking chain, and genuine SSE deltas.
+    ▶ <b><a href="public/demo/oneshot-demo.mp4">Watch Combined Demo (MP4)</a></b> · <a href="public/demo/oneshot-demo.webm">WebM</a> · <a href="public/demo/oneshot-demo.vtt">Live Captions (.vtt)</a> · <a href="https://itz1508.github.io/oneshot_e2e/">GitHub Pages Live Site</a><br />
+    Recorded live against the running backend — no mocks, no synthetic timers. 3 minutes and 15 seconds of continuous live action combining both the offline fixture verification suite (4 sandbox partitions, 3D hook audit ledger flip, and Gate 1 human approval) and the live agentic execution workflow (provider switching, research mode, key-by-key composer auto-growth, real-time SSE streaming, tool proofs, and Gate 2 verification).
   </sub>
 </div>
 
-### 🕐 Video Timestamp Guide
+### 🕐 Synchronized Video Transcript & Behavioral Timeline
 
-| Time | Action | What You See |
+Follows the canonical **Video & Demonstration Standard** — single synchronized transcript for voice-over and captions, describing system behavior and state transitions rather than component inventory:
+
+| Timecode | Workflow Phase | Synchronized Caption & Spoken Voice-Over Narration |
 | :--- | :--- | :--- |
-| **00:00–00:06** | Workspace Initialization | App loads, research banner reports real backend health status |
-| **00:06–00:14** | Responsive Layout | Spring-animated sidebar collapse/expand, research toggle, quick tool chips |
-| **00:14–00:24** | Conversational Composer | Character-by-character typing, auto-grow from 44px → 110px, pre-submit drawer |
-| **00:24–00:36** | DeepAgents SSE Streaming | Real-time message deltas, Python reasoning subprocess, RUNNING activity steps |
-| **00:36–00:46** | Context Review Drawer | Tasks tab with event log, Backends tab with 4-partition sandbox enforcement |
-| **00:46–00:54** | Human-in-the-Loop | Gate 1 pending → explicit confirm → APPROVED, model switcher inspection |
-| **00:54–01:00** | Auto-Scale & Verification | Full-width chat reflow, smooth scroll, deterministic test proof overlay |
+| **00:00–00:14** | 1. Understand | This single-screen console lets you inspect, execute, and verify software engineering tasks immediately without navigating separate pages. |
+| **00:14–00:27** | 2. Canvas Adaptation | Collapse the navigation to expand the workspace when you need more space to inspect live streaming traces and partitions. |
+| **00:27–00:42** | 3. Test Scenario | Select a test scenario to evaluate security invariants and filesystem isolation boundaries without requiring API keys or external credentials. |
+| **00:42–00:56** | 4. Start Workflow | Trigger the test scenario to start the execution stream in the shared workflow area. |
+| **00:56–01:14** | 5. Observe Invariants | The workflow processes the request, confirming strict containment across all four virtual filesystem partitions and verifying directory isolation. |
+| **01:14–01:30** | 6. Partitions & Ledger Flip | Inspect partition boundaries in the context drawer, or flip the task card to audit real lifecycle events and execution proofs. |
+| **01:30–01:44** | 7. Human Governance | Authorize the review checkpoint to confirm findings and advance the verified run to approved status. |
+| **01:44–02:00** | 8. Live Configuration | Switch seamlessly to live execution on the same screen by selecting your preferred provider and connecting your environment configuration. |
+| **02:00–02:18** | 9. Research & Prompt | Enable context-aware research for the query and compose an engineering request. The input automatically expands to accommodate requirements. |
+| **02:18–02:36** | 10. Multi-Agent Streaming | The live agent executes the request, emitting real-time streaming tokens, structured reasoning, and lifecycle status through the event stream. |
+| **02:36–02:52** | 11. Tool Execution | Automated tools execute directly against workspace files, producing genuine output records and deterministic validation proofs. |
+| **02:52–03:06** | 12. Gate 2 & Actions | Review the cryptographic build manifest, verify artifact hashes, and interact with the finalized response through copy or branching actions. |
+| **03:06–03:15** | 13. Unified Progression | Both offline fixture verification and live agentic execution follow the exact same verifiable contracts, delivering end-to-end software engineering integrity. |
 
 ---
 
@@ -89,12 +97,12 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
-### ⚡ Terminal — Installation, Build & Tests (391 Passing)
+### ⚡ Terminal — Installation, Build & Tests (417 Passing)
 
 <div align="left">
   <img src="public/demo/screen-0-install-test.png" width="100%" alt="Terminal verification — all test suites passing with zero failures" />
   <br />
-  <sub><b>Terminal Verification</b>: <code>pnpm test</code> (200 backend), <code>test:runtime</code> (99 runtime), <code>test:web</code> (71 frontend), <code>test:e2e</code> (21 browser, 3 mobile-only skipped), <code>verify</code> (7/7 checks). 100% deterministic — zero mocks.</sub>
+  <sub><b>Terminal Verification</b>: <code>pnpm test</code> (221 backend), <code>test:runtime</code> (99 runtime), <code>test:web</code> (76 frontend), <code>test:e2e</code> (21 browser), <code>verify</code> (7/7 checks). 100% deterministic — zero mocks.</sub>
 </div>
 
 ---
@@ -159,10 +167,26 @@ pnpm start
 
 ---
 
-## 🧪 Run Tests & Verification
+## 🧪 Run Tests, Fixtures & Dry Run
+
+OneShot includes **5 deterministic contract fixtures** under `app/fixtures/` and an offline dry-run engine for testing without external API keys or network dependencies:
+
+| Fixture | ID | Purpose & Invariants Verified |
+| :--- | :--- | :--- |
+| [`sample.json`](app/fixtures/sample.json) | `fix-sample-01` | Baseline contract schema and session isolation proof |
+| [`security-invariants.json`](app/fixtures/security-invariants.json) | `fix-sec-01` | DeepAgents 4-partition sandbox (`/workspace/`, `/scratch/`, `/memories/`, `/artifacts/`) |
+| [`adk-workflow.json`](app/fixtures/adk-workflow.json) | `fix-adk-01` | Google ADK stage machine (`IDLE` ➔ `VALIDATION`) and Human Gates (Gate 1 & Gate 2) |
+| [`reasoning-dryrun.json`](app/fixtures/reasoning-dryrun.json) | `fix-reason-01` | Offline Python reasoning test cases with thinking chain expectations |
+| [`data.json`](app/fixtures/data.json) | `fixture-401` | Runtime engine state transition baseline |
 
 ```bash
-# Backend tests — asserts actual response payloads & fixture proofs
+# Execute deterministic dry-run verification against all contract fixtures
+pnpm run dry-run
+
+# Or launch OneShot directly in dry-run mode
+pnpm run oneshot --dry-run
+
+# Backend tests — asserts actual response payloads & fixture proofs (17 suites)
 pnpm test
 
 # Workflow engine & state machine tests

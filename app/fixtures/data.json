@@ -1,0 +1,19 @@
+{
+  "fixture_id": "fixture-401",
+  "session_id": "session-001",
+  "name": "Runtime Engine Test Fixture",
+  "version": "1.3.0",
+  "description": "Runtime fixture baseline for backend engine and agent runtime tests",
+  "status": "validated",
+  "timestamp": "2026-09-26T00:00:00.000Z",
+  "entries": [
+    {
+      "key": "invariants_enforced",
+      "value": true
+    },
+    {
+      "key": "virtual_sandbox",
+      "value": "active"
+    }
+  ]
+}

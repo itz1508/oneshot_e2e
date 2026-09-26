@@ -215,6 +215,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
         </div>
 
         <button
+          id="closeDrawerBtn"
           type="button"
           onClick={onClose}
           aria-label="Close drawer"

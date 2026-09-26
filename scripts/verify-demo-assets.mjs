@@ -10,6 +10,7 @@ const moduleDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(moduleDir, '..')
 const rootDemoDir = path.join(repoRoot, 'public', 'demo')
 const frontendDemoDir = path.join(repoRoot, 'frontend', 'web', 'public', 'demo')
+const distDemoDir = path.join(repoRoot, 'frontend', 'web', 'dist', 'demo')
 
 /**
  * Full expected asset set produced by the 60-second high-motion capture script.
@@ -58,7 +59,10 @@ const sha256 = async (filePath) => {
   return hash.digest('hex')
 }
 
-for (const demoDir of [rootDemoDir, frontendDemoDir]) {
+const distExists = await fs.access(distDemoDir).then(() => true).catch(() => false)
+const checkedDirs = distExists ? [rootDemoDir, frontendDemoDir, distDemoDir] : [rootDemoDir, frontendDemoDir]
+
+for (const demoDir of checkedDirs) {
   for (const filename of expectedFiles) {
     await fs.access(path.join(demoDir, filename))
   }
@@ -71,11 +75,15 @@ for (const demoDir of [rootDemoDir, frontendDemoDir]) {
 
 for (const filename of expectedFiles) {
   const rootPath = path.join(rootDemoDir, filename)
-  const frontendPath = path.join(frontendDemoDir, filename)
   const rootBytes = await fs.readFile(rootPath)
-  const frontendBytes = await fs.readFile(frontendPath)
-  assert.equal(frontendBytes.compare(rootBytes), 0, `demo asset bytes differ: ${filename}`)
-  assert.equal(await sha256(frontendPath), await sha256(rootPath), `demo asset hashes differ: ${filename}`)
+  const rootHash = await sha256(rootPath)
+
+  for (const otherDir of checkedDirs.slice(1)) {
+    const otherPath = path.join(otherDir, filename)
+    const otherBytes = await fs.readFile(otherPath)
+    assert.equal(otherBytes.compare(rootBytes), 0, `demo asset bytes differ: ${filename} in ${otherDir}`)
+    assert.equal(await sha256(otherPath), rootHash, `demo asset hashes differ: ${filename} in ${otherDir}`)
+  }
 }
 
-console.log(`Demo asset verification passed: ${expectedFiles.length} files, byte/hash equality confirmed`)
+console.log(`Demo asset verification passed: ${expectedFiles.length} files across ${checkedDirs.length} locations, byte/hash equality confirmed`)
