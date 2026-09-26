@@ -181,17 +181,11 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await guard.dispose();
     });
 
-<<<<<<< HEAD
-    test("Scenario 7: Real Run Activity, Hook Log, Gate 1 Confirmation, & Message Actions", async ({ page }) => {
-=======
     test("Scenario 6b: Governed Research Stops At The Planning Handoff", async ({ page }) => {
->>>>>>> rebuild-researcher-only
         const guard = attachNetworkGuard(page);
 
         await page.goto("http://127.0.0.1:4173/index.html");
 
-<<<<<<< HEAD
-=======
         // A research run must stop at READY_FOR_PLANNING and never invoke planning.
         const research = await page.evaluate(async () => {
             const res = await fetch("/api/research/run", {
@@ -247,7 +241,6 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
 
         await page.goto("http://127.0.0.1:4173/index.html");
 
->>>>>>> rebuild-researcher-only
         // Start a real local run.
         const input = page.locator("#composerInput");
         await input.fill("research the response verification invariant with Python reasoning");

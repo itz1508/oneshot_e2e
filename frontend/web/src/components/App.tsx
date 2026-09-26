@@ -13,11 +13,7 @@ import { Integration } from "./Integration";
 import { EarlierContextItem, ProviderId } from "../types";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
 import { useChatSession } from "../lib/useChatSession";
-<<<<<<< HEAD
-import { readJsonResponse } from "../lib/api";
-=======
 import { readJsonResponse, resolveApiUrl } from "../lib/api";
->>>>>>> rebuild-researcher-only
 
 // Error boundary component for graceful error handling
 class ErrorBoundary extends React.Component<
@@ -170,11 +166,7 @@ const AppContent: React.FC = () => {
     async (item: EarlierContextItem) => {
       try {
         setApiError(null);
-<<<<<<< HEAD
-        const res = await fetch("/api/session/restore", {
-=======
         const res = await fetch(resolveApiUrl("/api/session/restore"), {
->>>>>>> rebuild-researcher-only
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ restoreId: item.restoreId || item.id }),
@@ -370,18 +362,7 @@ const AppContent: React.FC = () => {
                   isDrawerOpen && drawerTab === "context" ? selectedContext?.id : null
                 }
               />
-<<<<<<< HEAD
-              {planData && (
-                <PlanReviewCard
-                  planData={planData}
-                  isGate1Confirmed={isGate1Confirmed}
-                  isConfirmingGate={isConfirmingGate}
-                  onSyncPlan={handleSyncPlan}
-                  onConfirmGate1={handleConfirmGate1}
-                />
-              )}
-=======
->>>>>>> rebuild-researcher-only
+
               {apiError && (
                 <div
                   className="p-4 rounded-lg border border-red-500/30 bg-red-500/10 text-red-300 text-sm flex items-center justify-between"

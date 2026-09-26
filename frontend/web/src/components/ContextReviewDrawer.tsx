@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useOverlayFocus } from "../lib/useOverlayFocus";
 import { EarlierContextItem, ActivityStep } from "../types";
-<<<<<<< HEAD
-import { CANONICAL_BACKEND_PARTITIONS, isRecord, readJsonResponse } from "../lib/api";
-=======
 import { CANONICAL_BACKEND_PARTITIONS, isRecord, readJsonResponse, resolveApiUrl } from "../lib/api";
->>>>>>> rebuild-researcher-only
 
 export interface TaskEvent {
   id: string;
@@ -52,12 +48,6 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
   const [gate2, setGate2] = useState<{ status: string; confirmedAt?: string; packageHash?: string } | null>(null);
   const [serverAuditLogs, setServerAuditLogs] = useState<unknown[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
-<<<<<<< HEAD
-  const drawerRef = useOverlayFocus<HTMLDivElement>(isOpen, onClose);
-
-  const fetchAuditLogs = async () => {
-    const response = await fetch("/api/session/audit-logs");
-=======
   const [isConfirmingGate, setIsConfirmingGate] = useState(false);
   const [gateActionError, setGateActionError] = useState<string | null>(null);
   const drawerRef = useOverlayFocus<HTMLDivElement>(isOpen, onClose);
@@ -117,7 +107,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
 
   const fetchAuditLogs = async () => {
     const response = await fetch(resolveApiUrl("/api/session/audit-logs"));
->>>>>>> rebuild-researcher-only
+
     const data = await readJsonResponse<{ logs?: unknown[] }>(response, "Audit log request");
     if (!Array.isArray(data.logs)) {
       throw new Error("Audit log response is missing logs array");
@@ -130,11 +120,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
       const loadDrawerState = async () => {
         setLoadError(null);
         try {
-<<<<<<< HEAD
-          const response = await fetch("/api/system/status");
-=======
           const response = await fetch(resolveApiUrl("/api/system/status"));
->>>>>>> rebuild-researcher-only
           const statusData = await readJsonResponse<{ status?: string; currentStage?: string; gate1?: unknown; gate2?: unknown }>(response, "System status request");
           const gate1 = statusData.gate1;
           const gate2 = statusData.gate2;

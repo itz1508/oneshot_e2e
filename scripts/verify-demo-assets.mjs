@@ -10,16 +10,44 @@ const moduleDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(moduleDir, '..')
 const rootDemoDir = path.join(repoRoot, 'public', 'demo')
 const frontendDemoDir = path.join(repoRoot, 'frontend', 'web', 'public', 'demo')
+
+/**
+ * Full expected asset set produced by the 60-second high-motion capture script.
+ * Order follows the storyboard timeline.
+ */
 const expectedFiles = [
   'architecture-diagram.svg',
   'oneshot-demo.webm',
+  'oneshot-demo.vtt',
+  'screen-0-install-test.png',
   'screen-1-loading.png',
+  'screen-1b-loading-pulse.png',
+  'screen-1c-sidebar-collapsed.png',
   'screen-2-typing.png',
+  'screen-2b-drawer-empty.png',
+  'screen-2c-tasks-empty.png',
+  'screen-3-submitted.png',
   'screen-3-streaming.png',
   'screen-4-interactive.png',
+  'screen-4b-activity.png',
+  'screen-4c-pipeline.png',
+  'screen-4d-late.png',
+  'screen-4e-near-complete.png',
   'screen-5-task-state.png',
+  'screen-6-tools.png',
+  'screen-7-gates.png',
+  'screen-8-backends.png',
+  'screen-9-final.png',
 ]
-const obsoleteFiles = ['screen-1-initial.png']
+
+/** Assets from prior capture runs that should no longer exist. */
+const obsoleteFiles = [
+  'screen-1-initial.png',
+  'screen-1-loading-theirs.png',
+  'screen-5-task-state-theirs.png',
+  'oneshot-demo-rebuild.webm',
+]
+
 const rawVideoPattern = /^page@.*\.webm$/
 
 const sha256 = async (filePath) => {

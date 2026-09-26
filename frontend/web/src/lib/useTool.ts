@@ -8,11 +8,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { ToolCapabilityExecution } from "../types/invariants";
-<<<<<<< HEAD
-import { readJsonResponse } from "./api";
-=======
 import { readJsonResponse, resolveApiUrl } from "./api";
->>>>>>> rebuild-researcher-only
 
 export interface UseToolReturn {
   // Invariant 4: useTool(...) owns capability runtime

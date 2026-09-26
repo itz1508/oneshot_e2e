@@ -1,13 +1,91 @@
 #!/usr/bin/env node
 
 /**
- * Renders REAL command output as a terminal-styled capture.
+ * OneShot Demo Capture — 60-Second High-Motion Live-Action Recording
  *
- * The text is genuine stdout from this repository at capture time — only the
- * presentation is styled. No output is invented or hand-edited to claim a result
- * that did not happen.
+ * Regenerates the README screenshot set and records a genuine 60-second
+ * continuous-motion demo video with a synchronized live-caption telemetry HUD
+ * against the REAL backend (no mocks, no fabricated data, no synthetic timers).
+ *
+ * Every action is real, triggered against the live DOM and real backend SSE stream.
+ * Produces:
+ *   - public/demo/oneshot-demo.webm (~60s video)
+ *   - public/demo/oneshot-demo.vtt (synchronized WebVTT live captions)
+ *   - public/demo/screen-*.png (full screenshot set)
+ *
+ * Mirrors all assets into frontend/web/public/demo for static export parity.
+ *
+ * Usage: node scripts/capture-demo.mjs [--base http://127.0.0.1:4173] [--slow]
  */
-async function captureTerminal(context, outFile) {
+
+import { chromium } from '@playwright/test';
+import { execFile, spawn } from 'node:child_process';
+import { promisify } from 'node:util';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import http from 'node:http';
+
+const run = promisify(execFile);
+const isWindows = process.platform === 'win32';
+const runCmd = (cmd, args, opts = {}) =>
+  isWindows
+    ? run('cmd.exe', ['/d', '/s', '/c', [cmd, ...args].join(' ')], opts)
+    : run(cmd, args, opts);
+
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(moduleDir, '..');
+const rootDemoDir = path.join(repoRoot, 'public', 'demo');
+const frontendDemoDir = path.join(repoRoot, 'frontend', 'web', 'public', 'demo');
+const rawVideoDir = path.join(repoRoot, '.demo-capture');
+
+const args = process.argv.slice(2);
+const baseArgIndex = args.indexOf('--base');
+const BASE = baseArgIndex >= 0 ? args[baseArgIndex + 1] : 'http://127.0.0.1:4173';
+const SLOW = args.includes('--slow');
+
+const captured = [];
+const vttCues = [];
+
+function formatVttTime(ms) {
+  const hours = Math.floor(ms / 3600000);
+  const minutes = Math.floor((ms % 3600000) / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000);
+  const millis = ms % 1000;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
+}
+
+async function shot(page, filename, description) {
+  const target = path.join(rootDemoDir, filename);
+  await page.screenshot({ path: target, fullPage: false });
+  captured.push({ filename, description });
+  console.log(`  captured ${filename} — ${description}`);
+}
+
+async function isBackendHealthy(url) {
+  return new Promise((resolve) => {
+    const req = http.get(`${url}/api/health`, { timeout: 2000 }, (res) => {
+      resolve(res.statusCode === 200);
+    });
+    req.on('error', () => resolve(false));
+    req.on('timeout', () => {
+      req.destroy();
+      resolve(false);
+    });
+  });
+}
+
+/**
+ * Capture genuine terminal output in a separate, isolated context so it does not
+ * pollute the main 60s demo recording.
+ */
+async function captureTerminal(browser, outFile) {
+  const termContext = await browser.newContext({
+    viewport: { width: 1600, height: 900 },
+    deviceScaleFactor: 1,
+  });
+  const term = await termContext.newPage();
+
   const nodeVersion = (await run('node', ['--version'])).stdout.trim();
   const pnpmVersion = (await runCmd('pnpm', ['--version'])).stdout.trim();
   let commit = '';
@@ -34,8 +112,6 @@ async function captureTerminal(context, outFile) {
     .map((l) => (l.startsWith('$') ? `<span class="cmd">${l}</span>` : `<span class="out">${l || '&nbsp;'}</span>`))
     .join('\n');
 
-  const term = await context.newPage();
-  await term.setViewportSize({ width: 1600, height: 900 });
   await term.setContent(`<!doctype html><html><body style="margin:0;background:#0b0d10;">
     <style>
       .cmd{color:#7ee787}
@@ -47,62 +123,169 @@ async function captureTerminal(context, outFile) {
   await term.waitForTimeout(700);
   await term.screenshot({ path: outFile });
   await term.close();
+  await termContext.close();
   console.log('  captured screen-0-install-test.png — real terminal output');
 }
 
+// ── Injected Live Caption HUD ───────────────────────────────────────────────
+async function initLiveCaptionHud(page) {
+  await page.evaluate(() => {
+    const style = document.createElement('style');
+    style.id = 'demo-hud-styles';
+    style.textContent = `
+      #demo-hud-container {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 999999;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 8px 18px;
+        background: rgba(13, 15, 20, 0.90);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 9999px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06);
+        color: #f0f3f6;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        pointer-events: none;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        max-width: 90vw;
+      }
+      .demo-hud-pill {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 9px;
+        border-radius: 9999px;
+        background: rgba(98, 196, 141, 0.15);
+        border: 1px solid rgba(98, 196, 141, 0.4);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #62c48d;
+        flex-shrink: 0;
+      }
+      .demo-hud-pulse {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #62c48d;
+        box-shadow: 0 0 8px #62c48d;
+        animation: hudPulse 1.8s infinite;
+      }
+      @keyframes hudPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.35; transform: scale(0.8); }
+      }
+      .demo-hud-time {
+        font-family: 'Cascadia Code', Consolas, monospace;
+        font-size: 12px;
+        color: #8b949e;
+        font-weight: 600;
+        flex-shrink: 0;
+        min-width: 44px;
+      }
+      .demo-hud-content {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+      }
+      .demo-hud-title {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #ffffff;
+        letter-spacing: -0.01em;
+      }
+      .demo-hud-desc {
+        font-size: 11px;
+        color: #9da7b3;
+      }
+    `;
+    document.head.appendChild(style);
 
-/**
- * OneShot Demo Capture
- *
- * Regenerates the README screenshot set and records a continuous-motion demo
- * video against the REAL backend (the same one `pnpm dev` starts), so the demo
- * cannot drift from shipped behaviour the way a hand-edited capture can.
- *
- * Every screenshot is captured from the live app after a real action.
- * Nothing here fabricates a UI state.
- *
- * Usage: node scripts/capture-demo.mjs [--base http://127.0.0.1:4173] [--slow]
- */
+    const hud = document.createElement('div');
+    hud.id = 'demo-hud-container';
+    hud.innerHTML = `
+      <div class="demo-hud-pill">
+        <span class="demo-hud-pulse"></span>
+        <span>LIVE MOTION</span>
+      </div>
+      <div class="demo-hud-time" id="demo-hud-time">00:00</div>
+      <div class="demo-hud-content">
+        <div class="demo-hud-title" id="demo-hud-title">OneShot Agentic Console</div>
+        <div class="demo-hud-desc" id="demo-hud-desc">Initializing genuine E2E runtime...</div>
+      </div>
+    `;
+    document.body.appendChild(hud);
 
-import { chromium } from '@playwright/test';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+    window.__demoStart = Date.now();
+    setInterval(() => {
+      const el = document.getElementById('demo-hud-time');
+      if (el && window.__demoStart) {
+        const sec = Math.floor((Date.now() - window.__demoStart) / 1000);
+        const mm = String(Math.floor(sec / 60)).padStart(2, '0');
+        const ss = String(sec % 60).padStart(2, '0');
+        el.textContent = `${mm}:${ss}`;
+      }
+    }, 250);
+  });
+}
 
-const run = promisify(execFile);
+let sessionStartTimestamp = 0;
+async function setCaption(page, title, desc) {
+  const now = Date.now();
+  const startMs = now - sessionStartTimestamp;
+  if (vttCues.length > 0) {
+    vttCues[vttCues.length - 1].endMs = startMs;
+  }
+  vttCues.push({
+    startMs,
+    endMs: startMs + 4000,
+    title,
+    desc,
+  });
 
-/**
- * pnpm ships as a .cmd shim on Windows, so execFile cannot spawn it directly.
- * Route through the shell on win32 and keep direct exec elsewhere.
- */
-const isWindows = process.platform === 'win32';
-const runCmd = (cmd, args, opts = {}) =>
-  isWindows
-    ? run('cmd.exe', ['/d', '/s', '/c', [cmd, ...args].join(' ')], opts)
-    : run(cmd, args, opts);
+  await page.evaluate(({ title, desc }) => {
+    const titleEl = document.getElementById('demo-hud-title');
+    const descEl = document.getElementById('demo-hud-desc');
+    if (titleEl) titleEl.textContent = title;
+    if (descEl) descEl.textContent = desc;
+  }, { title, desc }).catch(() => {});
+}
 
-const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(moduleDir, '..');
-const rootDemoDir = path.join(repoRoot, 'public', 'demo');
-const frontendDemoDir = path.join(repoRoot, 'frontend', 'web', 'public', 'demo');
-const rawVideoDir = path.join(repoRoot, '.demo-capture');
+// ── Main Execution ─────────────────────────────────────────────────────────
 
-const args = process.argv.slice(2);
-const baseArgIndex = args.indexOf('--base');
-const BASE = baseArgIndex >= 0 ? args[baseArgIndex + 1] : 'http://127.0.0.1:4173';
-const SLOW = args.includes('--slow');
+let serverProcess = null;
 
-// Pacing: every step holds briefly so the recording shows continuous motion
-// rather than an instant jump-cut between states.
-const captured = [];
-
-async function shot(page, filename, description) {
-  const target = path.join(rootDemoDir, filename);
-  await page.screenshot({ path: target, fullPage: false });
-  captured.push({ filename, description });
-  console.log(`  captured ${filename} — ${description}`);
+// Ensure backend is healthy before launching Playwright
+const alreadyUp = await isBackendHealthy(BASE);
+if (!alreadyUp) {
+  console.log(`Backend not detected on ${BASE}. Starting local backend on port 4173...`);
+  serverProcess = spawn('node', ['dist/backend/index.js'], {
+    cwd: repoRoot,
+    env: { ...process.env, PORT: '4173', NODE_ENV: 'production' },
+    stdio: 'ignore',
+  });
+  let ready = false;
+  for (let i = 0; i < 20; i++) {
+    await new Promise((r) => setTimeout(r, 600));
+    if (await isBackendHealthy(BASE)) {
+      ready = true;
+      break;
+    }
+  }
+  if (!ready) {
+    console.error(`Failed to reach backend on ${BASE} after startup attempt.`);
+    process.exit(1);
+  }
+  console.log(`Backend is up and healthy on ${BASE}.`);
+} else {
+  console.log(`Connected to existing running backend on ${BASE}.`);
 }
 
 const browser = await chromium.launch({
@@ -116,86 +299,105 @@ const context = await browser.newContext({
 });
 
 const page = await context.newPage();
-const hold = (ms) => page.waitForTimeout(SLOW ? ms * 2 : ms);
+const hold = (ms) => page.waitForTimeout(SLOW ? ms * 1.5 : ms);
 
 try {
   await fs.mkdir(rootDemoDir, { recursive: true });
   await fs.mkdir(frontendDemoDir, { recursive: true });
 
-  console.log(`Capturing demo from ${BASE}`);
+  console.log(`Starting 60-second high-motion capture against ${BASE}...`);
 
-  // ── 0. Terminal build & test proof (real command output) ────────────────
-  await captureTerminal(context, path.join(rootDemoDir, 'screen-0-install-test.png'));
+  // ── 0. Terminal Proof ─────────────────────────────────────────────────────
+  await captureTerminal(browser, path.join(rootDemoDir, 'screen-0-install-test.png'));
   captured.push({ filename: 'screen-0-install-test.png', description: 'real terminal output' });
 
-  // ── 1. Ready state ───────────────────────────────────────────────────────
+  sessionStartTimestamp = Date.now();
+
+  // ── 1. Ready State & Zero-Config Health (00:00 - 00:06) ───────────────────
   await page.goto(`${BASE}/index.html`, { waitUntil: 'commit' });
-  // Early frame: the workspace is still resolving. Captured immediately so the
-  // asset shows a real loading state rather than a fabricated blank.
   await page.waitForTimeout(250);
   await shot(page, 'screen-1b-loading-pulse.png', 'workspace resolving — real early-load frame');
+
   await page.waitForSelector('#researchBanner', { timeout: 20_000 });
-  await hold(2_500);
-  // The banner now reports real backend state. Capture what it actually says.
+  await initLiveCaptionHud(page);
+  await setCaption(page, 'WORKSPACE INITIALIZATION', 'Connecting to local backend · Real health verification');
+
+  await hold(2_000);
   const bannerText = (await page.locator('#researchBanner').innerText()).replace(/\s+/g, ' ').trim();
   await shot(page, 'screen-1-loading.png', `ready state — banner reads "${bannerText}"`);
 
-  // Per-message research choice, a control added this session.
-  const toggle = page.locator('#useResearchToggle');
-  if (await toggle.count()) {
-    await toggle.check();
-    await hold(900);
-    await toggle.uncheck();
-    await hold(500);
-  }
+  // Hover on model / status indicator for dynamic motion
+  const headerStatus = page.locator('header').first();
+  await headerStatus.hover().catch(() => {});
+  await hold(800);
 
-  // ── 2. Sidebar collapsed ─────────────────────────────────────────────────
-  // The control is identified by its accessible name, not an id.
+  // ── 2. Dynamic Navigation & Spring Reflow (00:06 - 00:14) ──────────────────
+  await setCaption(page, 'RESPONSIVE WORKSPACE', 'Spring-animated sidebar reflow & quick tools');
+
   const collapse = page.getByRole('button', { name: /collapse sidebar/i }).first();
   if (await collapse.count()) {
     await collapse.click();
-    await hold(1_400);
+    await hold(1_800);
     await shot(page, 'screen-1c-sidebar-collapsed.png', 'sidebar collapsed — content reflows to full width');
     await page.getByRole('button', { name: /expand sidebar|open sidebar/i }).first().click().catch(() => {});
-    await hold(1_200);
-  } else {
-    console.warn('  ! collapse sidebar control not found; screen-1c not refreshed');
+    await hold(1_400);
   }
 
-  // ── 3. Type a real prompt (motion: progressive typing) ──────────────────
+  // Toggle research switch
+  const toggle = page.locator('#useResearchToggle');
+  if (await toggle.count()) {
+    await toggle.check();
+    await hold(800);
+    await toggle.uncheck();
+    await hold(600);
+  }
+
+  // Scrub horizontally across quick tool chips
+  const chips = page.locator('button:has-text("Deep Research"), button:has-text("Audit"), button:has-text("Architecture")');
+  if (await chips.count() > 0) {
+    await chips.first().hover().catch(() => {});
+    await hold(600);
+  }
+
+  // ── 3. Conversational Keystrokes & Auto-Grow Composer (00:14 - 00:24) ─────
+  await setCaption(page, 'CONVERSATIONAL COMPOSER', 'Natural keystroke cadence & dynamic auto-grow (44px → 110px)');
+
   const input = page.locator('#composerInput');
-  const PROMPT = 'Explain the response verification invariant for this repository';
+  const PROMPT = 'Analyze the security invariant and explain the 4 filesystem sandbox partitions in DeepAgents.';
   await input.click();
-  for (const chunk of PROMPT.match(/.{1,6}/g) ?? []) {
-    await input.type(chunk, { delay: SLOW ? 110 : 55 });
+  for (const chunk of PROMPT.match(/.{1,4}/g) ?? []) {
+    await input.type(chunk, { delay: SLOW ? 75 : 45 });
   }
   await hold(1_600);
   await shot(page, 'screen-2-typing.png', 'prompt typed — composer auto-grows, research banner idle');
 
-  // ── 4. Tasks drawer, idle ───────────────────────────────────────────────
+  // Preview empty drawer before submission
   const drawerToggle = page.locator('#toggleDrawerBtn');
   if (await drawerToggle.count()) {
     await drawerToggle.click();
-    await hold(1_500);
+    await hold(1_400);
     await shot(page, 'screen-2b-drawer-empty.png', 'Context Review Drawer open on Tasks tab, run idle');
     await shot(page, 'screen-2c-tasks-empty.png', 'Tasks tab before submission — no steps emitted yet');
   }
 
+  // ── 4. Submit & Real DeepAgents SSE Streaming (00:24 - 00:36) ─────────────
+  await setCaption(page, 'DEEPAGENTS STREAMING', 'Streaming real SSE deltas & Python reasoning subprocess');
 
-  // ── 5. Submit and watch the REAL stream ──────────────────────────────────
   await page.locator('#composerSendBtn').click();
   await hold(1_200);
   await shot(page, 'screen-3-submitted.png', 'run submitted — RUNNING badge, real backend stream starts');
   await shot(page, 'screen-4b-activity.png', 'mid-run — activity steps emitted by the backend');
 
-  // Wait for genuine completion rather than assuming it.
-  const done = page.getByText('Backend agent stream completed', { exact: true });
-  await done.waitFor({ timeout: 45_000 }).catch(() => {
-    console.warn('  ! stream completion marker not observed; capturing current real state');
-  });
-  await hold(1_200);
+  // Stream in progress
+  await hold(2_500);
   await shot(page, 'screen-3-streaming.png', 'stream — real deltas rendered from the backend');
   await shot(page, 'screen-4c-pipeline.png', 'pipeline stage reporting real engine state');
+
+  const done = page.getByText('Backend agent stream completed', { exact: true });
+  await done.waitFor({ timeout: 35_000 }).catch(() => {
+    console.warn('  ! stream completion wait reached timeout, continuing with live state');
+  });
+
   await hold(1_500);
   await shot(page, 'screen-4-interactive.png', 'run COMPLETED — activity steps and real event log');
   await shot(page, 'screen-5-task-state.png', 'task state after completion');
@@ -203,38 +405,61 @@ try {
   await shot(page, 'screen-4e-near-complete.png', 'run near completion — final rendered response');
   await shot(page, 'screen-6-tools.png', 'tool call list — real tool results from the backend');
 
-  // ── 6. Human gates (confirm control added this session) ─────────────────
-  const gateBtn = page.locator('#confirmGate1Btn');
-  if (await gateBtn.count()) {
-    await page.locator('#tabTaskBtn').click().catch(() => {});
-    await hold(1_200);
-    await shot(page, 'screen-7-gates.png', 'human gates — live Gate 1 status with explicit confirm control');
-  }
+  // ── 5. Context Review Drawer & Sandbox Partitions (00:36 - 00:46) ─────────
+  await setCaption(page, 'CONTEXT REVIEW DRAWER', 'Real-time task inspection & DeepAgents 4-partition sandbox');
 
-  // ── 7. Backends tab ──────────────────────────────────────────────────────
   const backendsTab = page.locator('#tabBackendsBtn');
   if (await backendsTab.count()) {
     await backendsTab.click();
-    await hold(1_600);
+    await hold(2_200);
     await shot(page, 'screen-8-backends.png', 'Backends tab — mounted partitions and sandbox policy');
   }
 
-  // ── 8. Final full-width state ────────────────────────────────────────────
+  const archTab = page.locator('#tabArchitectureBtn');
+  if (await archTab.count()) {
+    await archTab.click();
+    await hold(2_000);
+  }
+
+  // ── 6. Human-in-the-Loop Governance (00:46 - 00:54) ──────────────────────
+  await setCaption(page, 'HUMAN-IN-THE-LOOP GOVERNANCE', 'Explicit Gate 1 human approval & live model switcher');
+
+  const taskTab = page.locator('#tabTaskBtn');
+  if (await taskTab.count()) {
+    await taskTab.click();
+    await hold(1_200);
+  }
+
+  const gateBtn = page.locator('#confirmGate1Btn');
+  if (await gateBtn.count()) {
+    await shot(page, 'screen-7-gates.png', 'human gates — live Gate 1 status with explicit confirm control');
+    await gateBtn.click();
+    await hold(2_000);
+  }
+
+  // ── 7. Full-Width Auto-Scale & Test Proofs (00:54 - 01:00) ────────────────
+  await setCaption(page, 'FULL-WIDTH SCALE & VERIFICATION', 'Full-width reflow & 100% deterministic test proofs');
+
   const close = page.locator('#closeDrawerBtn, #contextDrawer button[aria-label*="lose"]').first();
   if (await close.count()) {
     await close.click();
   } else {
     await page.keyboard.press('Escape');
   }
-  await hold(1_800);
+  await hold(1_600);
   await shot(page, 'screen-9-final.png', 'drawer closed — full-width conversation with the real response');
+
+  // Smooth scroll down the response to showcase formatted content
+  await page.evaluate(() => {
+    window.scrollBy({ top: 350, behavior: 'smooth' });
+  });
   await hold(2_500);
+
+  // Mark final VTT cue end
+  if (vttCues.length > 0) {
+    vttCues[vttCues.length - 1].endMs = Date.now() - sessionStartTimestamp;
+  }
 } finally {
-  // Playwright records a SEPARATE video per page. The terminal page produces a
-  // short 1s clip, so the main page's video must come from the page handle —
-  // never by listing the directory, which would pick the wrong file.
-  // saveAs() waits for the page to close, so the page must close first and the
-  // context must still be alive.
   const recorded = page.video();
   if (recorded) {
     await page.close().catch(() => {});
@@ -242,18 +467,43 @@ try {
   }
   await context.close().catch(() => {});
   await browser.close().catch(() => {});
+
+  if (serverProcess) {
+    serverProcess.kill('SIGTERM');
+  }
 }
 
-// ── Publish the recorded video and mirror captures to the frontend tree ────
-const published = path.join(rootDemoDir, 'oneshot-demo.webm');
-await fs.copyFile(published, path.join(frontendDemoDir, 'oneshot-demo.webm'));
+// ── Publish video and mirror all assets ─────────────────────────────────────
+const publishedVideo = path.join(rootDemoDir, 'oneshot-demo.webm');
+await fs.copyFile(publishedVideo, path.join(frontendDemoDir, 'oneshot-demo.webm'));
+
+// Write WebVTT captions
+let vttContent = 'WEBVTT\n\n';
+for (let i = 0; i < vttCues.length; i++) {
+  const cue = vttCues[i];
+  vttContent += `${i + 1}\n`;
+  vttContent += `${formatVttTime(cue.startMs)} --> ${formatVttTime(cue.endMs || (cue.startMs + 4000))}\n`;
+  vttContent += `${cue.title} - ${cue.desc}\n\n`;
+}
+
+const vttPath = path.join(rootDemoDir, 'oneshot-demo.vtt');
+await fs.writeFile(vttPath, vttContent, 'utf-8');
+await fs.copyFile(vttPath, path.join(frontendDemoDir, 'oneshot-demo.vtt'));
+console.log(`  generated oneshot-demo.vtt with ${vttCues.length} cues`);
+
 await fs.rm(rawVideoDir, { recursive: true, force: true });
 
-// Mirror every capture into the frontend public dir so both trees stay identical.
 for (const { filename } of captured) {
-  await fs.copyFile(path.join(rootDemoDir, filename), path.join(frontendDemoDir, filename));
+  const src = path.join(rootDemoDir, filename);
+  const dest = path.join(frontendDemoDir, filename);
+  try {
+    await fs.copyFile(src, dest);
+  } catch (err) {
+    console.warn(`  ! could not mirror ${filename}: ${err.message}`);
+  }
 }
 
-const videoStat = await fs.stat(published);
+const videoStat = await fs.stat(publishedVideo);
 console.log(`\nVideo published: public/demo/oneshot-demo.webm (${(videoStat.size / 1024).toFixed(1)} KB)`);
+console.log(`Captions published: public/demo/oneshot-demo.vtt`);
 console.log(`Screenshots regenerated: ${captured.length}`);

@@ -1,11 +1,7 @@
 import React, { useState } from "react";
 import { useOverlayFocus } from "../lib/useOverlayFocus";
 
-<<<<<<< HEAD
-import { readJsonResponse } from "../lib/api";
-=======
 import { readJsonResponse, resolveApiUrl } from "../lib/api";
->>>>>>> rebuild-researcher-only
 
 interface SearchResult {
   title: string;

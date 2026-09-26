@@ -1,9 +1,5 @@
 import React, { useMemo, useCallback, useState, FC } from "react";
-<<<<<<< HEAD
-import { readJsonResponse } from "../lib/api";
-=======
 import { readJsonResponse, resolveApiUrl } from "../lib/api";
->>>>>>> rebuild-researcher-only
 import { Message } from "../types";
 import {
   extractStructuredOutput,

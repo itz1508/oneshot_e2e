@@ -54,8 +54,6 @@ export class ApiResponseError extends Error {
   }
 }
 
-<<<<<<< HEAD
-=======
 /**
  * Resolve the backend base URL for browser fetches.
  *
@@ -78,7 +76,6 @@ export function resolveApiUrl(path: string): string {
   return `${resolveBackendBaseUrl()}${normalized}`;
 }
 
->>>>>>> rebuild-researcher-only
 export async function readJsonResponse<T>(response: Response, operation = "API request"): Promise<T> {
   const contentType = response.headers.get("content-type") || "";
   if (!contentType.includes("application/json")) {
@@ -117,11 +114,7 @@ export async function readJsonResponse<T>(response: Response, operation = "API r
  */
 export async function checkBackendHealth(): Promise<{ ok: boolean; status?: string }> {
   try {
-<<<<<<< HEAD
-    const res = await fetch("/api/health", { method: "GET" });
-=======
     const res = await fetch(resolveApiUrl("/api/health"), { method: "GET" });
->>>>>>> rebuild-researcher-only
     const data = await readJsonResponse<{ ok?: boolean; status?: string }>(res, "Backend health request");
     if (data.ok !== true || typeof data.status !== "string") {
       return { ok: false, status: "Backend health response is missing ok=true or status" };
@@ -142,11 +135,7 @@ export async function testProviderConnection(
   _config?: ProviderConfig
 ): Promise<{ success: boolean; message: string }> {
   try {
-<<<<<<< HEAD
-    const res = await fetch("/api/providers/status", { method: "GET" });
-=======
     const res = await fetch(resolveApiUrl("/api/providers/status"), { method: "GET" });
->>>>>>> rebuild-researcher-only
     const data = await readJsonResponse<Record<string, { configured?: boolean }>>(res, "Provider status request");
     const providerStatus = data[provider];
     if (!providerStatus || typeof providerStatus.configured !== "boolean") {

@@ -402,20 +402,6 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
 
         const envVar = keyMap[provider];
         const modelVar = modelMap[provider];
-<<<<<<< HEAD
-
-        // Persist to app/env/.env before acknowledging configuration.
-        try {
-          const envDir = path.resolve(process.cwd(), "app/env");
-          await fs.mkdir(envDir, { recursive: true });
-          const envFile = path.join(envDir, ".env");
-          let existing = "";
-          try {
-            existing = await fs.readFile(envFile, "utf-8");
-          } catch (error: any) {
-            if (error?.code !== "ENOENT") throw error;
-          }
-=======
         const allowEnvFilePersistence = process.env.ONESHOT_ALLOW_ENV_FILE_WRITE === "1"
           || process.env.NODE_ENV !== "production";
 
@@ -434,7 +420,7 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             } catch (error: any) {
               if (error?.code !== "ENOENT") throw error;
             }
->>>>>>> rebuild-researcher-only
+
 
             if (envVar && apiKey) {
               const regex = new RegExp(`^${envVar}=.*$`, "m");
@@ -460,15 +446,7 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             res.end(JSON.stringify({ error: `Provider configuration was not persisted: ${error.message}` }));
             return;
           }
-<<<<<<< HEAD
-          await fs.writeFile(envFile, existing, "utf-8");
-        } catch (error: any) {
-          console.error("[OneShot] Error saving app/env/.env:", error.message);
-          res.writeHead(500, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: `Provider configuration was not persisted: ${error.message}` }));
-          return;
-=======
->>>>>>> rebuild-researcher-only
+
         }
 
         if (envVar) process.env[envVar] = apiKey.trim();
@@ -480,15 +458,11 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           configured: true,
           provider,
           model: model || `(default for ${provider})`,
-<<<<<<< HEAD
-          persisted: true,
-          message: `Credentials for ${provider} active and persisted to app/env/.env.`,
-=======
           persisted,
           message: persisted
             ? `Credentials for ${provider} active and persisted to app/env/.env.`
             : `Credentials for ${provider} active for this runtime only (file persistence disabled in production).`,
->>>>>>> rebuild-researcher-only
+
         }));
         return;
       }
@@ -612,18 +586,11 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
       }
 
       // A workflow plan appears only after the backend creates one.
-<<<<<<< HEAD
-      if (pathname === "/api/pipeline/plan" && req.method === "GET") {
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(null));
-        return;
-      }
-=======
       // NOTE: /api/pipeline/plan was removed. It unconditionally returned `null`,
       // so PlanReviewCard could never render and the client-side plan contract was
       // unreachable. Planning is now owned by Design_Planning
       // (POST /api/design-planning/plan → APPROVED_PLAN). See ARCHITECTURE.MD §1.4.
->>>>>>> rebuild-researcher-only
+
 
       // Workflow Stages & Status
       if (pathname === "/api/pipeline/stages" && req.method === "GET") {
@@ -704,32 +671,22 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             : workflowEngine.confirmGate2(body.packageCore, "user");
 
         sessionLedger.recordAuditHook("on_gate_check", {
-<<<<<<< HEAD
-          gateId,
-          status: "CONFIRMED",
-          confirmedAt: gate1.confirmedAt,
-=======
           gateId: confirmed.gateId,
           status: confirmed.status,
           confirmedAt: confirmed.confirmedAt,
           packageHash: confirmed.packageHash,
->>>>>>> rebuild-researcher-only
+
         });
 
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({
-<<<<<<< HEAD
-          gateId,
-          status: "CONFIRMED",
-          confirmedAt: gate1.confirmedAt || new Date().toISOString(),
-=======
           gateId: confirmed.gateId,
           name: confirmed.name,
           status: confirmed.status,
           confirmedAt: confirmed.confirmedAt,
           confirmedBy: confirmed.confirmedBy,
           packageHash: confirmed.packageHash ?? null,
->>>>>>> rebuild-researcher-only
+
         }));
         return;
       }
@@ -1101,43 +1058,7 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           return;
         }
 
-<<<<<<< HEAD
-        if (isConfiguredKey(process.env.TAVILY_API_KEY)) {
-          try {
-            const { tavily } = await import("@tavily/core");
-            const tv = tavily({ apiKey: process.env.TAVILY_API_KEY });
-            const response = await tv.search(query, {
-              searchDepth: body.searchDepth || "basic",
-              maxResults: body.maxResults || 5,
-            });
-            if (!Array.isArray(response.results)) {
-              throw new Error("Tavily response is missing results array");
-            }
-            const results = response.results.map((result: any) => {
-              if (!result || typeof result.title !== "string" || !result.title || typeof result.url !== "string" || !result.url || typeof result.content !== "string" || !result.content) {
-                throw new Error("Tavily response contains an invalid result record");
-              }
-              const url = new URL(result.url);
-              if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("Tavily response contains a non-HTTP result URL");
-              return {
-                title: result.title,
-                url: result.url,
-                content: result.content,
-                ...(typeof result.score === "number" ? { score: result.score } : {}),
-              };
-            });
-            res.writeHead(200, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ query, results }));
-            return;
-          } catch (tavilyErr: any) {
-            console.error("[tavily] Live call failed:", tavilyErr.message);
-            res.writeHead(503, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({
-              error: "Research search is currently unavailable because the live provider request failed.",
-            }));
-            return;
-          }
-=======
+
         // Single source of truth for the Tavily call. This route previously
         // hand-rolled its own client, which duplicated the adapter and returned
         // inconsistent status codes for the same missing-credential condition.
@@ -1147,7 +1068,6 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             error: "Research search is currently unavailable because TAVILY_API_KEY is not configured.",
           }));
           return;
->>>>>>> rebuild-researcher-only
         }
 
         try {
@@ -1582,15 +1502,6 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             label: "Python reasoning subprocess",
           }));
 
-<<<<<<< HEAD
-          const task = /gap|reconcil|diff/i.test(prompt)
-            ? "gap-analysis"
-            : /plan|gate|review|stage/i.test(prompt)
-              ? "planner"
-              : /research|search|find|index/i.test(prompt)
-                ? "researcher"
-                : "general";
-=======
           // Workflow selection is an explicit user choice, never inferred from the
           // message text. A message reaches Main Chat unless the caller declares a
           // research or planning intent for THIS message (ARCHITECTURE.MD §1.1–1.3).
@@ -1614,7 +1525,6 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             ? (requestedTask as ReasoningTask)
             : "general";
 
->>>>>>> rebuild-researcher-only
           let receivedDelta = false;
           for await (const delta of streamPythonReasoning({ runId, prompt, task }, ac.signal)) {
             if (ac.signal.aborted) break;

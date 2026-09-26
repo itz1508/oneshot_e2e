@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from "react";
-<<<<<<< HEAD
-import { ApiResponseError, readJsonResponse } from "../../../lib/api";
-=======
 import { ApiResponseError, readJsonResponse, resolveApiUrl } from "../../../lib/api";
->>>>>>> rebuild-researcher-only
 
 interface GeminiAuthState {
     status: "idle" | "checking" | "authenticated" | "unauthenticated" | "error";
@@ -39,11 +35,7 @@ export const AuthloginGemini: React.FC<AuthloginGeminiProps> = ({
             const headers: Record<string, string> = {};
             if (sessionId) headers["X-Session-Id"] = sessionId;
 
-<<<<<<< HEAD
-            const res = await fetch("/api/auth/google/status", { headers });
-=======
             const res = await fetch(resolveApiUrl("/api/auth/google/status"), { headers });
->>>>>>> rebuild-researcher-only
             const data = await readJsonResponse<{ isAuthenticated?: boolean; user?: { email: string; name: string } }>(res, "Google auth status request");
             if (data.isAuthenticated !== true || !data.user) {
                 throw new Error("Google auth status response is missing an authenticated user");
@@ -65,11 +57,7 @@ export const AuthloginGemini: React.FC<AuthloginGeminiProps> = ({
         setState((s) => ({ ...s, error: undefined }));
         try {
             // Get the OAuth redirect URI from backend
-<<<<<<< HEAD
-            const res = await fetch("/api/auth/google/init");
-=======
             const res = await fetch(resolveApiUrl("/api/auth/google/init"));
->>>>>>> rebuild-researcher-only
             const data = await readJsonResponse<{ redirectUri?: string; state?: string }>(res, "Google OAuth init request");
             if (!data.redirectUri || !data.state) {
                 throw new Error("Google OAuth init response is missing redirectUri or state");
@@ -101,11 +89,7 @@ export const AuthloginGemini: React.FC<AuthloginGeminiProps> = ({
             const headers: Record<string, string> = { "Content-Type": "application/json" };
             if (sessionId) headers["X-Session-Id"] = sessionId;
 
-<<<<<<< HEAD
-            const response = await fetch("/api/auth/google/logout", { method: "POST", headers });
-=======
             const response = await fetch(resolveApiUrl("/api/auth/google/logout"), { method: "POST", headers });
->>>>>>> rebuild-researcher-only
             const data = await readJsonResponse<{ success?: boolean; message?: string }>(response, "Google logout request");
             if (data.success !== true) {
                 throw new Error("Google logout response did not confirm logout");
