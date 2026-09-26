@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-26T06:35:01Z",
+  "generated_at": "2026-09-26T07:07:17Z",
   "version": "1.3.0",
-  "commit": "13c771ba",
+  "commit": "b6c539c5",
   "files": [
     {
       "path": ".github\\deploy.yml",
@@ -139,6 +139,12 @@
       "path": "backend\\python-runtime.ts",
       "size": 8932,
       "hash": "sha256:c43020f0b6dfcaeafffcd14ee709ae7a7984270cc8218b69a87ec53db255bd30",
+      "category": "source"
+    },
+    {
+      "path": "backend\\python\\.pytest_cache\\README.md",
+      "size": 302,
+      "hash": "sha256:73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad",
       "category": "source"
     },
     {
@@ -5519,8 +5525,8 @@
     },
     {
       "path": "backend\\python\\app\\main.py",
-      "size": 6121,
-      "hash": "sha256:38fad7772064287ed4566fc145799db5bb4e3d33933950891919191e6711f6aa",
+      "size": 12511,
+      "hash": "sha256:4a2de720d7503e29bc08e5a6cb310e128f3fe9f6bbee8218b679791fcacab1c6",
       "category": "source"
     },
     {
@@ -5897,8 +5903,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\MessageBubble.tsx",
-      "size": 10569,
-      "hash": "sha256:4bc3223949d276b801ed7c25194d05a6dcd6e1589ab39bb5d6ec7f0552cb14e4",
+      "size": 14360,
+      "hash": "sha256:db97d617857c291d03dd663f708ed91cc7074148075c216867decd1b6519da95",
       "category": "source"
     },
     {
@@ -6539,12 +6545,12 @@
     }
   ],
   "statistics": {
-    "total_files": 1089,
-    "source_files": 1089,
-    "total_size_bytes": 13333577,
+    "total_files": 1090,
+    "source_files": 1090,
+    "total_size_bytes": 13344060,
     "by_extension": {
       ".yml": 1,
-      ".md": 18,
+      ".md": 19,
       ".mjs": 30,
       ".json": 20,
       ".py": 871,

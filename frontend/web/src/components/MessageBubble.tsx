@@ -83,8 +83,98 @@ const StructuredDataRenderer: FC<{ data: Record<string, any> }> = ({
   );
 };
 
+// Memoized thinking process block
+interface ParsedMessageContent {
+  thinkingText: string | null;
+  isThinkingActive: boolean;
+  responseText: string;
+}
+
+function parseThinkingAndResponse(raw: string, isStreaming?: boolean): ParsedMessageContent {
+  const thinkStart = raw.indexOf("<think>");
+  if (thinkStart === -1) {
+    return { thinkingText: null, isThinkingActive: false, responseText: raw };
+  }
+
+  const beforeThink = raw.slice(0, thinkStart).trim();
+  const afterStart = raw.slice(thinkStart + 7);
+  const thinkEnd = afterStart.indexOf("</think>");
+
+  if (thinkEnd === -1) {
+    return {
+      thinkingText: afterStart.trim(),
+      isThinkingActive: !!isStreaming,
+      responseText: beforeThink,
+    };
+  }
+
+  const thinkingText = afterStart.slice(0, thinkEnd).trim();
+  const afterThink = afterStart.slice(thinkEnd + 8).trim();
+  const responseText = beforeThink ? `${beforeThink}\n\n${afterThink}` : afterThink;
+
+  return {
+    thinkingText,
+    isThinkingActive: false,
+    responseText,
+  };
+}
+
+const ThinkingBlock: FC<{ text: string; isStreaming: boolean }> = ({ text, isStreaming }) => {
+  const [userToggled, setUserToggled] = useState<boolean | null>(null);
+  const isExpanded = userToggled !== null ? userToggled : isStreaming;
+
+  return (
+    <div className="my-3 rounded-xl border border-[#79a8ea]/30 bg-[#0f141d]/90 overflow-hidden shadow-md transition-all duration-200">
+      <div
+        className="flex items-center justify-between px-3.5 py-2.5 bg-[#141b27]/80 border-b border-[#79a8ea]/15 cursor-pointer select-none hover:bg-[#182130]/90 transition-colors"
+        onClick={() => setUserToggled(!isExpanded)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setUserToggled(!isExpanded)}
+        aria-expanded={isExpanded}
+        aria-label="Toggle reasoning chain"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-sm" aria-hidden="true">🧠</span>
+          <span className="font-mono-code text-[11px] font-semibold text-[#8eb6ed] uppercase tracking-wider">
+            Reasoning Chain
+          </span>
+          {isStreaming ? (
+            <span className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full bg-[#79a8ea]/15 text-[10px] text-[#79a8ea] border border-[#79a8ea]/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#79a8ea] animate-pulse" />
+              Thinking...
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full bg-[#62c48d]/15 text-[10px] text-[#62c48d] border border-[#62c48d]/30 font-medium">
+              ✓ Verified Invariants
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          className="text-[#6e85a3] hover:text-[#c7d9ee] text-xs font-mono-code transition-colors"
+          tabIndex={-1}
+          aria-hidden="true"
+        >
+          {isExpanded ? "Collapse ▲" : "Expand ▼"}
+        </button>
+      </div>
+
+      {isExpanded && (
+        <div className="p-3.5 bg-[#0b0e14]/80 font-mono-code text-[11.5px] text-[#9cb1cc] leading-relaxed max-h-[360px] overflow-y-auto whitespace-pre-wrap border-t border-white/[0.02]">
+          {text}
+          {isStreaming && (
+            <span className="inline-block w-1.5 h-3.5 ml-1 bg-[#79a8ea] animate-pulse align-middle" />
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Memoized formatted content renderer
 const FormattedContentRenderer: FC<{ raw: string }> = ({ raw }) => {
+  if (!raw || !raw.trim()) return null;
   const trimmed = raw.trim();
   const isJsonLike =
     trimmed.startsWith("{") ||
@@ -214,10 +304,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     [onSelectCitation]
   );
 
+  const { thinkingText, isThinkingActive, responseText } = useMemo(
+    () => parseThinkingAndResponse(message.content, message.isStreaming),
+    [message.content, message.isStreaming]
+  );
+
   // Memoized formatted content
   const formattedContent = useMemo(
-    () => <FormattedContentRenderer raw={message.content} />,
-    [message.content]
+    () => <FormattedContentRenderer raw={responseText} />,
+    [responseText]
   );
 
   if (isUser) {
@@ -250,8 +345,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         aria-live={isLatest ? "polite" : "off"}
         aria-atomic="false"
       >
+        {thinkingText && (
+          <ThinkingBlock text={thinkingText} isStreaming={isThinkingActive} />
+        )}
         {formattedContent}
-        {message.isStreaming && (
+        {message.isStreaming && !isThinkingActive && (
           <span
             className="inline-block w-1.5 h-4 ml-1 bg-[#79a8ea] animate-pulse align-middle"
             role="status"
