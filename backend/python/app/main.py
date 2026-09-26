@@ -24,7 +24,12 @@ from fastapi import FastAPI, HTTPException
 try:
     from app.models.reasoning import ReasoningRequest, ReasoningResponse, Finding, EvidenceItem
 except ImportError:
-    from backend.python.app.models.reasoning import ReasoningRequest, ReasoningResponse, Finding, EvidenceItem
+    import importlib
+    _mod = importlib.import_module("backend.python.app.models.reasoning")
+    ReasoningRequest = getattr(_mod, "ReasoningRequest")
+    ReasoningResponse = getattr(_mod, "ReasoningResponse")
+    Finding = getattr(_mod, "Finding")
+    EvidenceItem = getattr(_mod, "EvidenceItem")
 
 app = FastAPI(title="OneShot Python Reasoning Addon")
 
