@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-26T07:07:17Z",
+  "generated_at": "2026-09-26T17:36:03Z",
   "version": "1.3.0",
-  "commit": "b6c539c5",
+  "commit": "902b4af0",
   "files": [
     {
       "path": ".github\\deploy.yml",
@@ -29,8 +29,8 @@
     },
     {
       "path": "README.md",
-      "size": 10049,
-      "hash": "sha256:fb5be2ea09c40602d44ac7a0136f6c195337cec7e38ba8e3cbbcfbbdbd418fcd",
+      "size": 10175,
+      "hash": "sha256:b38857774bbd0ba2e6d4fc160e444f9a710251ba8427e3c860c0dc3f1a5a4bd9",
       "category": "source"
     },
     {
@@ -6473,8 +6473,8 @@
     },
     {
       "path": "scripts\\capture-demo.mjs",
-      "size": 19651,
-      "hash": "sha256:e55faa501ba05262859e9863d38b21b0753fcdf307972719e2b24aba404236a1",
+      "size": 20744,
+      "hash": "sha256:62f28c3e6fc2d9438a91b9bbdd251e24594ae23c6e8938926415163bdb7fe8a5",
       "category": "source"
     },
     {
@@ -6521,8 +6521,8 @@
     },
     {
       "path": "scripts\\verify-demo-assets.mjs",
-      "size": 2699,
-      "hash": "sha256:b161d4482b371311baa9bb5114f82337e7f04762afb7a7fe2517cd7946ae266a",
+      "size": 2743,
+      "hash": "sha256:14dd5c904113be955967d7470b3a1d778dfb0491b5931041f957a53c36693f94",
       "category": "source"
     },
     {
@@ -6547,7 +6547,7 @@
   "statistics": {
     "total_files": 1090,
     "source_files": 1090,
-    "total_size_bytes": 13344060,
+    "total_size_bytes": 13345323,
     "by_extension": {
       ".yml": 1,
       ".md": 19,

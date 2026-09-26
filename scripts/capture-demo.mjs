@@ -477,6 +477,30 @@ try {
 const publishedVideo = path.join(rootDemoDir, 'oneshot-demo.webm');
 await fs.copyFile(publishedVideo, path.join(frontendDemoDir, 'oneshot-demo.webm'));
 
+// Transcode to H.264 MP4 for native GitHub player and cross-browser support
+const publishedMp4 = path.join(rootDemoDir, 'oneshot-demo.mp4');
+try {
+  await runCmd('ffmpeg', ['-y', '-i', publishedVideo, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', publishedMp4]);
+  await fs.copyFile(publishedMp4, path.join(frontendDemoDir, 'oneshot-demo.mp4'));
+  console.log('  transcoded oneshot-demo.mp4 (H.264 faststart)');
+} catch (err) {
+  console.warn(`  ! could not transcode mp4: ${err.message}`);
+}
+
+// Generate animated GIF for native inline GitHub README autoplay
+const publishedGif = path.join(rootDemoDir, 'oneshot-demo.gif');
+try {
+  await runCmd('ffmpeg', [
+    '-y', '-ss', '00:00:14', '-to', '00:00:36', '-i', publishedVideo,
+    '-vf', 'fps=10,scale=800:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse',
+    publishedGif
+  ]);
+  await fs.copyFile(publishedGif, path.join(frontendDemoDir, 'oneshot-demo.gif'));
+  console.log('  generated animated oneshot-demo.gif');
+} catch (err) {
+  console.warn(`  ! could not generate gif: ${err.message}`);
+}
+
 // Write WebVTT captions
 let vttContent = 'WEBVTT\n\n';
 for (let i = 0; i < vttCues.length; i++) {

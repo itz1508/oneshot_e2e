@@ -18,6 +18,8 @@ const frontendDemoDir = path.join(repoRoot, 'frontend', 'web', 'public', 'demo')
 const expectedFiles = [
   'architecture-diagram.svg',
   'oneshot-demo.webm',
+  'oneshot-demo.mp4',
+  'oneshot-demo.gif',
   'oneshot-demo.vtt',
   'screen-0-install-test.png',
   'screen-1-loading.png',

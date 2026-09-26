@@ -44,12 +44,15 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ## 🎬 60-Second Live Demo — Full Agentic Lifecycle
 
-<div align="left">
-  <a href="public/demo/oneshot-demo.webm">
-    <img src="public/demo/screen-3-streaming.png" alt="OneShot live — real SSE streaming with Python reasoning subprocess, activity steps, and live caption HUD" width="100%" />
+<div align="center">
+  <a href="public/demo/oneshot-demo.mp4">
+    <img src="public/demo/oneshot-demo.gif" alt="OneShot live demo — real SSE streaming with Python reasoning subprocess, thinking chain, and live activity" width="100%" />
   </a>
   <br />
-  <sub>▶ <b><a href="public/demo/oneshot-demo.webm">Watch the full 60-second live capture</a></b> · <a href="public/demo/oneshot-demo.vtt">Live captions (.vtt)</a><br />Recorded against the real running backend — no mocks, no fabricated data, no synthetic timers. Every SSE delta, tool call, and state transition is genuine.</sub>
+  <sub>
+    ▶ <b><a href="public/demo/oneshot-demo.mp4">Watch Full 60s Demo (MP4)</a></b> · <a href="public/demo/oneshot-demo.webm">WebM</a> · <a href="public/demo/oneshot-demo.vtt">Live Captions (.vtt)</a> · <a href="https://itz1508.github.io/oneshot_e2e/">GitHub Pages Live Site</a><br />
+    Recorded live against the running backend — no mocks, no synthetic timers. Real Python reasoning subprocess, live thinking chain, and genuine SSE deltas.
+  </sub>
 </div>
 
 ### 🕐 Video Timestamp Guide
