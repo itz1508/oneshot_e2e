@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { useOverlayFocus } from "../lib/useOverlayFocus";
 import { readJsonResponse, resolveApiUrl } from "../lib/api";
 import type { ResearchRun, ResearchRunStatus, ReadinessReport } from "../types";
 import { ReadinessCard } from "./ReadinessCard";
+import { DrawerShell, AlertBanner, StatusBadge } from "./common/index";
 
 interface SearchResult {
   title: string;
@@ -63,8 +63,6 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
   const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
   const [checkedNotice, setCheckedNotice] = useState<string | null>(null);
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
-
-  const drawerRef = useOverlayFocus<HTMLDivElement>(isOpen, onClose);
 
   // --- Search Tab Logic ---
   const handleSearch = async () => {
@@ -350,22 +348,18 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
   };
 
   return (
-    <div
-      ref={drawerRef}
+    <DrawerShell
       id="researcherDrawer"
-      className={`context-review-drawer ${isOpen ? "open" : ""}`}
-      aria-hidden={!isOpen}
-      aria-label="Standalone researcher drawer"
-      role="dialog"
-      aria-modal="true"
-      inert={!isOpen}
-    >
-      {/* Header */}
-      <div className="min-h-[52px] px-4 flex items-center justify-between border-b border-white/[0.075] bg-[#141416]">
+      isOpen={isOpen}
+      onClose={onClose}
+      ariaLabel="Standalone researcher drawer"
+      headerContent={
         <div className="flex items-center gap-2">
           <span className="text-sm text-[#62c48d]">🔍</span>
           <span className="font-semibold text-xs text-[#ececec]">Researcher Console</span>
         </div>
+      }
+      closeButton={
         <button
           id="closeResearcherDrawerBtn"
           type="button"
@@ -375,46 +369,44 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
         >
           ×
         </button>
-      </div>
-
-      {/* Mode Navigation Tabs */}
-      <div className="px-4 py-2 border-b border-white/10 bg-[#16181d] flex items-center gap-2">
-        <button
-          id="researcherTabSearchBtn"
-          type="button"
-          onClick={() => setActiveTab("search")}
-          aria-selected={activeTab === "search"}
-          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
-            activeTab === "search"
-              ? "bg-[#3f6ba8] text-white"
-              : "text-[#8e8e93] hover:text-[#ececec] hover:bg-white/5"
-          }`}
-        >
-          Live Search
-        </button>
-        <button
-          id="researcherTabControllerBtn"
-          type="button"
-          onClick={() => setActiveTab("controller")}
-          aria-selected={activeTab === "controller"}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
-            activeTab === "controller"
-              ? "bg-[#3f6ba8] text-white"
-              : "text-[#8e8e93] hover:text-[#ececec] hover:bg-white/5"
-          }`}
-        >
-          <span>Governed Runs</span>
-          {runs.length > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-white/15 text-[10px] font-mono-code">
-              {runs.length}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Body Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* --- TAB 1: Search --- */}
+      }
+      subHeader={
+        <div className="px-4 py-2 border-b border-white/10 bg-[#16181d] flex items-center gap-2">
+          <button
+            id="researcherTabSearchBtn"
+            type="button"
+            onClick={() => setActiveTab("search")}
+            aria-selected={activeTab === "search"}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              activeTab === "search"
+                ? "bg-[#3f6ba8] text-white"
+                : "text-[#8e8e93] hover:text-[#ececec] hover:bg-white/5"
+            }`}
+          >
+            Live Search
+          </button>
+          <button
+            id="researcherTabControllerBtn"
+            type="button"
+            onClick={() => setActiveTab("controller")}
+            aria-selected={activeTab === "controller"}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              activeTab === "controller"
+                ? "bg-[#3f6ba8] text-white"
+                : "text-[#8e8e93] hover:text-[#ececec] hover:bg-white/5"
+            }`}
+          >
+            <span>Governed Runs</span>
+            {runs.length > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-white/15 text-[10px] font-mono-code">
+                {runs.length}
+              </span>
+            )}
+          </button>
+        </div>
+      }
+    >
+      {/* --- TAB 1: Search --- */}
         {activeTab === "search" && (
           <div className="space-y-4">
             {/* Search Input Box */}
@@ -779,7 +771,7 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </DrawerShell>
   );
 };
+

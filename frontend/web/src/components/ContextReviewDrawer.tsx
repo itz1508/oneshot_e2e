@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useOverlayFocus } from "../lib/useOverlayFocus";
 import { EarlierContextItem, ActivityStep } from "../types";
 import { CANONICAL_BACKEND_PARTITIONS, isRecord, readJsonResponse, resolveApiUrl } from "../lib/api";
+import { DrawerShell, AlertBanner } from "./common/index";
 
 export interface TaskEvent {
   id: string;
@@ -50,7 +50,6 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isConfirmingGate, setIsConfirmingGate] = useState(false);
   const [gateActionError, setGateActionError] = useState<string | null>(null);
-  const drawerRef = useOverlayFocus<HTMLDivElement>(isOpen, onClose);
 
   // Gate 1 confirmation lives here, beside the live gate status it changes.
   // It used to live in PlanReviewCard, which could never render because its
@@ -146,19 +145,14 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
   }, [activeTab]);
 
   return (
-    <div
-      ref={drawerRef}
+    <DrawerShell
       id="contextDrawer"
-      className={`context-review-drawer ${isOpen ? "open" : ""}`}
-      aria-hidden={!isOpen}
-      aria-label="Context review drawer"
-      role="dialog"
-      aria-modal="true"
-      inert={!isOpen}
-      data-testid="context-review-drawer"
-    >
-      {/* Header with Tab Switcher */}
-      <div className="min-h-[52px] px-4 flex items-center justify-between border-b border-white/[0.075] bg-[#141416]">
+      isOpen={isOpen}
+      onClose={onClose}
+      ariaLabel="Context review drawer"
+      dataTestId="context-review-drawer"
+      closeButtonId="closeDrawerBtn"
+      headerContent={
         <div className="flex items-center gap-1.5 overflow-x-auto py-1">
           <button
             id="tabContextBtn"
@@ -225,25 +219,13 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
             <span>🏛️ Architecture</span>
           </button>
         </div>
-
-        <button
-          id="closeDrawerBtn"
-          type="button"
-          onClick={onClose}
-          aria-label="Close drawer"
-          className="w-7 h-7 shrink-0 rounded-lg bg-transparent hover:bg-white/10 text-[#8e8e93] hover:text-white grid place-items-center text-sm transition-colors"
-        >
-          ×
-        </button>
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {loadError && (
-          <div role="alert" className="rounded-lg border border-[#e5a84b]/30 bg-[#e5a84b]/10 p-3 text-[11px] text-[#e5a84b]">
-            {loadError}
-          </div>
-        )}
+      }
+    >
+      {loadError && (
+        <AlertBanner type="warning">
+          {loadError}
+        </AlertBanner>
+      )}
         {tab === "context" ? (
           /* CONTEXT REVIEW TAB */
           <div className="space-y-4">
@@ -743,7 +725,6 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
             </div>
           </div>
         ) : null}
-      </div>
-    </div>
+    </DrawerShell>
   );
 };
