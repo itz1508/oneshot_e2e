@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T09:39:39Z",
+  "generated_at": "2026-09-27T10:58:51Z",
   "version": "1.3.0",
-  "commit": "91ce90d4",
+  "commit": "deb180cf",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -35,8 +35,8 @@
     },
     {
       "path": "README.md",
-      "size": 12893,
-      "hash": "sha256:4aaf610084d44746f33ec35a84719142b519d2514f5f912fbf562600b538c038",
+      "size": 7499,
+      "hash": "sha256:77a09b3176e06a4535da378eac37fc686f0cf9e9815f5a1d8324637d6063c7af",
       "category": "source"
     },
     {
@@ -6685,7 +6685,7 @@
   "statistics": {
     "total_files": 1113,
     "source_files": 1113,
-    "total_size_bytes": 13497115,
+    "total_size_bytes": 13491721,
     "by_extension": {
       ".yml": 1,
       ".md": 19,
