@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T08:36:36Z",
+  "generated_at": "2026-09-27T08:56:35Z",
   "version": "1.3.0",
-  "commit": "de3edafe",
+  "commit": "c0af455c",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -5675,8 +5675,8 @@
     },
     {
       "path": "backend\\routes\\v2.ts",
-      "size": 10420,
-      "hash": "sha256:37b0b95ef01b6f4e8b8792e5724fcd57272974e9b3a4124a4cffac7ebd36a15c",
+      "size": 12274,
+      "hash": "sha256:4b9471e31bfd449ab680ece00d60c4e3fa548a04228f82d5aeb115f8ea1dfa6f",
       "category": "source"
     },
     {
@@ -6685,7 +6685,7 @@
   "statistics": {
     "total_files": 1113,
     "source_files": 1113,
-    "total_size_bytes": 13494873,
+    "total_size_bytes": 13496727,
     "by_extension": {
       ".yml": 1,
       ".md": 19,

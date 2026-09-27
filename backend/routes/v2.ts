@@ -1,6 +1,7 @@
 import path from "node:path";
 import fs from "node:fs/promises";
 import { executePythonReasoning } from "../python-runtime.js";
+import { researchSkill, isResearchHandoffReady } from "../../packages/agent-runtime/src/index.js";
 import type { WorkflowStage } from "../../packages/agent-runtime/src/index.js";
 import type { RouteHandler } from "./types.js";
 
@@ -286,6 +287,53 @@ export const handleV2Routes: RouteHandler = async (req, res, ctx) => {
           manifestVersion: bundleData.manifest?.version || "1.3.0",
         },
       }));
+      return true;
+    }
+
+    // Operation 10: executeResearch (Governed Research Run via Action API v2)
+    if (operation === "executeResearch") {
+      const intent = (body.intent || "").trim();
+      if (!intent) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "intent is required for executeResearch" }));
+        return true;
+      }
+
+      const phases: string[] = [];
+      const researchModel = {
+        provider: (body.model?.provider || "gemini") as "gemini",
+        model: (body.model?.model || process.env.GEMINI_MODEL || "gemini-2.5-flash") as string,
+      };
+      const searchConfig = {
+        enabled: body.search === true || (typeof body.search === "object" && body.search?.enabled === true),
+        source: (body.source || (typeof body.search === "object" && body.search?.source) || "tavily") as "tavily",
+      };
+
+      try {
+        const result = await researchSkill.run({
+          intent,
+          model: researchModel,
+          search: searchConfig,
+          onPhase: (phase) => phases.push(phase),
+        });
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({
+          ok: true,
+          operation: "executeResearch",
+          runId: result.run.runId,
+          phase: result.run.phase,
+          stopped: result.stopped,
+          handoffReady: isResearchHandoffReady(result.run),
+          phases,
+          bundle: result.run.bundle ?? null,
+          issues: result.issues,
+          sessionId,
+        }));
+      } catch (err: any) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: err?.message || "Research execution failed" }));
+      }
       return true;
     }
 
