@@ -1,10 +1,10 @@
 # OneShot: Hackathon & Competition Submission Packaging Guide
 
-> **Official Competition Title:** `OneShot: Deterministic E2E Agent Runtime Demo`  
-> **Tagline:** Verifiable Contracts Delivering End-to-End Software Engineering Integrity  
-> **Live Video Walkthrough:** [https://www.youtube.com/watch?v=lE9vtKB-fSk](https://www.youtube.com/watch?v=lE9vtKB-fSk)  
-> **Live Web Console:** [https://itz1508.github.io/oneshot_e2e/](https://itz1508.github.io/oneshot_e2e/)  
-> **Repository:** [https://github.com/itz1508/oneshot_e2e](https://github.com/itz1508/oneshot_e2e)  
+> **Official Competition Title:** `OneShot: Deterministic E2E Agent Runtime Demo`<br />
+> **Tagline:** Verifiable Contracts Delivering End-to-End Software Engineering Integrity<br />
+> **Live Video Walkthrough:** [https://youtu.be/lE9vtKB-fSk](https://youtu.be/lE9vtKB-fSk)<br />
+> **Live Web Console:** [https://itz1508.github.io/oneshot_e2e/](https://itz1508.github.io/oneshot_e2e/)<br />
+> **Repository:** [https://github.com/itz1508/oneshot_e2e](https://github.com/itz1508/oneshot_e2e)<br />
 > **Test Status:** 419 Tests Passing (222 Backend + 99 Runtime + 77 Frontend + 21 Browser E2E)
 
 ---

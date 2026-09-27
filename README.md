@@ -9,6 +9,9 @@ Real AG-UI SSE Streaming · 4-Partition Sandbox Isolation · Python Reasoning Su
   <a href="https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1">
     <img src="https://img.shields.io/badge/⚡_OneShot_Installation-One_Click_Automatic_E2E-2563EB?style=for-the-badge&logo=powershell&logoColor=white" alt="OneShot Installation" />
   </a>
+  <a href="https://youtu.be/lE9vtKB-fSk">
+    <img src="https://img.shields.io/badge/YouTube-Video_Walkthrough_(youtu.be%2FlE9vtKB--fSk)-red?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube Walkthrough" />
+  </a>
 </p>
 
 <p>
@@ -20,7 +23,18 @@ Real AG-UI SSE Streaming · 4-Partition Sandbox Isolation · Python Reasoning Su
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square" alt="Windows, macOS, Linux" />
 </p>
 
+<p>
+  <a href="HACKATHON_PACKAGING.md"><img src="https://img.shields.io/badge/🏆_Judge_Playbook-Hackathon_Packaging-purple?style=flat-square" alt="Hackathon Packaging" /></a>
+  <a href="ARCHITECTURE.md"><img src="https://img.shields.io/badge/🏛️_Architecture-ADK_&_Streaming_Core-emerald?style=flat-square" alt="Architecture" /></a>
+  <a href="DIAGRAM.md"><img src="https://img.shields.io/badge/📊_DAG_Proofs-419_Tests-amber?style=flat-square" alt="DAG Proofs" /></a>
+  <a href="AGENTS.md"><img src="https://img.shields.io/badge/🤖_Agentic_Spec-AGENTS.md-blueviolet?style=flat-square" alt="AGENTS.md Specification" /></a>
+</p>
+
 </div>
+
+> ### 🛡️ The Golden Rule of OneShot
+> **"PASS" is superficial and meaningless on its own; a verified HTTP RESPONSE payload with cryptographic SHA-256 byte equality is the ONLY valid confirmation.**<br />
+> Zero client-side invention. Zero synthetic progress bars. The backend executes first and emits authentic AG-UI SSE stream events; the frontend faithfully renders genuine backend state.
 
 ---
 
@@ -47,7 +61,7 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 <div align="center">
 
 <p align="center">
-  <a href="https://www.youtube.com/watch?v=lE9vtKB-fSk"><img src="https://img.shields.io/badge/YouTube-Watch_Video_Walkthrough-red?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch on YouTube" /></a>
+  <a href="https://youtu.be/lE9vtKB-fSk"><img src="https://img.shields.io/badge/YouTube-Watch_Video_Walkthrough-red?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch on YouTube" /></a>
   <a href="https://itz1508.github.io/oneshot_e2e/"><img src="https://img.shields.io/badge/Live_Console-Launch_GitHub_Pages-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Live Console" /></a>
 </p>
 
@@ -56,7 +70,7 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 <br />
 
 <sub>
-  ▶ <b><a href="https://github.com/user-attachments/assets/a64b0fdc-b138-468a-8996-c30c5bef1f25">Direct Video Stream (MP4)</a></b> · <a href="https://www.youtube.com/watch?v=lE9vtKB-fSk">YouTube (with Chapter Navigation)</a> · <a href="public/demo/oneshot-demo.webm">WebM Video</a> · <a href="public/demo/oneshot-demo.vtt">Subtitles (.vtt)</a> · <a href="https://itz1508.github.io/oneshot_e2e/">Live Browser Console</a>
+  ▶ <b><a href="https://youtu.be/lE9vtKB-fSk">YouTube Walkthrough: youtu.be/lE9vtKB-fSk</a></b> · <a href="https://github.com/user-attachments/assets/a64b0fdc-b138-468a-8996-c30c5bef1f25">Direct Video Stream (MP4)</a> · <a href="public/demo/oneshot-demo.webm">WebM Video</a> · <a href="public/demo/oneshot-demo.vtt">Subtitles (.vtt)</a> · <a href="https://itz1508.github.io/oneshot_e2e/">Live Browser Console</a>
 </sub>
 
 </div>
@@ -65,12 +79,24 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 | Timestamp | Chapter | What Judges & Reviewers Observe |
 | :--- | :--- | :--- |
-| [00:00](https://www.youtube.com/watch?v=lE9vtKB-fSk&t=0s) | **Introduction & Runtime Overview** | Problem statement, deterministic contract runtime, architecture intro, and 1-click startup |
-| [00:30](https://www.youtube.com/watch?v=lE9vtKB-fSk&t=30s) | **Test Scenario Setup & Security Invariants** | Loading offline fixtures (`security-invariants.json`), 4-partition sandbox verification |
-| [01:40](https://www.youtube.com/watch?v=lE9vtKB-fSk&t=100s) | **Live Provider Configuration** | Dynamic multi-provider switching (Gemini, OpenAI, Mistral, Ollama) without server restart |
-| [02:20](https://www.youtube.com/watch?v=lE9vtKB-fSk&t=140s) | **Multi-Agent Streaming & Reasoning Chain** | Real-time AG-UI SSE stream (`stream.messages`, `stream.subagents`, `stream.tool_calls`) |
-| [02:50](https://www.youtube.com/watch?v=lE9vtKB-fSk&t=170s) | **Gate Approval & Artifact Verification** | Human-in-the-loop Gate 1 & Gate 2 confirmation, SHA-256 byte equality proof |
-| [03:07](https://www.youtube.com/watch?v=lE9vtKB-fSk&t=187s) | **Summary & Repository Links** | Verifiable contracts guarantee, 419 deterministic tests passing, and GitHub links |
+| [00:00](https://youtu.be/lE9vtKB-fSk?t=0) | **Introduction & Runtime Overview** | Problem statement, deterministic contract runtime, architecture intro, and 1-click startup |
+| [00:30](https://youtu.be/lE9vtKB-fSk?t=30) | **Test Scenario Setup & Security Invariants** | Loading offline fixtures (`security-invariants.json`), 4-partition sandbox verification |
+| [01:40](https://youtu.be/lE9vtKB-fSk?t=100) | **Live Provider Configuration** | Dynamic multi-provider switching (Gemini, OpenAI, Mistral, Ollama) without server restart |
+| [02:20](https://youtu.be/lE9vtKB-fSk?t=140) | **Multi-Agent Streaming & Reasoning Chain** | Real-time AG-UI SSE stream (`stream.messages`, `stream.subagents`, `stream.tool_calls`) |
+| [02:50](https://youtu.be/lE9vtKB-fSk?t=170) | **Gate Approval & Artifact Verification** | Human-in-the-loop Gate 1 & Gate 2 confirmation, SHA-256 byte equality proof |
+| [03:07](https://youtu.be/lE9vtKB-fSk?t=187) | **Summary & Repository Links** | Verifiable contracts guarantee, 419 deterministic tests passing, and GitHub links |
+
+---
+
+## 📑 Technical Reviewer & Judge Documentation
+
+| Guide | Scope & Architectural Focus | Direct Link |
+| :--- | :--- | :--- |
+| **🏆 Hackathon Packaging** | 2-minute evaluation playbook, competition titles, differentiation matrix, and YouTube metadata | [`HACKATHON_PACKAGING.md`](HACKATHON_PACKAGING.md) |
+| **🏛️ System Architecture** | Multi-agent DAG topology, 4-partition sandbox (`/workspace`, `/scratch`, `/memories`, `/artifacts`), and Python subprocess | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
+| **📊 Diagram & DAG Proofs** | Complete ASCII/Mermaid stage machine diagrams and 419-test execution dependency proof | [`DIAGRAM.md`](DIAGRAM.md) |
+| **🤖 AGENTS.md Standard** | Standard agent operating guidelines (Agentic AI Foundation / Linux Foundation open spec) | [`AGENTS.md`](AGENTS.md) |
+| **⚖️ License** | Apache-2.0 Permissive Open Source License | [`LICENSE`](LICENSE) |
 
 ---
 

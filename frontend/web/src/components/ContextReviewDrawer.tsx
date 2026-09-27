@@ -570,7 +570,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
 
             {/* YouTube Walkthrough & Chapter Guide */}
             <a
-              href="https://www.youtube.com/watch?v=lE9vtKB-fSk"
+              href="https://youtu.be/lE9vtKB-fSk"
               target="_blank"
               rel="noopener noreferrer"
               className="p-3 rounded-lg border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 transition-colors flex items-center justify-between text-xs group cursor-pointer"

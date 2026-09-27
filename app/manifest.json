@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T05:15:02Z",
+  "generated_at": "2026-09-27T06:07:17Z",
   "version": "1.3.0",
-  "commit": "b93015f1",
+  "commit": "dbe6c375",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -29,8 +29,8 @@
     },
     {
       "path": "HACKATHON_PACKAGING.md",
-      "size": 8682,
-      "hash": "sha256:e556cde8df6b1977bf2e902f651ae7a45ebb507a2d0d6f43d44e369dda65022b",
+      "size": 8672,
+      "hash": "sha256:04d91eacaa16769a494b72d6bec137f1aa37de846da5e7f92bec7c0c04f286a3",
       "category": "source"
     },
     {
@@ -41,8 +41,8 @@
     },
     {
       "path": "README.md",
-      "size": 12987,
-      "hash": "sha256:e9c5d47e50777fe06f25ae5c8713f3b371a98452ecd1f3a8917a3ca916356aef",
+      "size": 15038,
+      "hash": "sha256:35e582574fc95671f870621c6f9964e2ca414db549395821126b967c91904927",
       "category": "source"
     },
     {
@@ -5903,8 +5903,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\ContextReviewDrawer.tsx",
-      "size": 36449,
-      "hash": "sha256:6b5224e239c62309327421676a21b14f6e4b25d0d0fb81b1d4ca09f14bcb9765",
+      "size": 36434,
+      "hash": "sha256:9e30b0660701249e4ba682b8678cf1bb23e67f60a62fee737be0eeca74f7de89",
       "category": "source"
     },
     {
@@ -6619,7 +6619,7 @@
   "statistics": {
     "total_files": 1102,
     "source_files": 1102,
-    "total_size_bytes": 13470045,
+    "total_size_bytes": 13472071,
     "by_extension": {
       ".yml": 1,
       ".md": 20,
