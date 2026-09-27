@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T08:23:22Z",
+  "generated_at": "2026-09-27T08:36:36Z",
   "version": "1.3.0",
-  "commit": "c0c9b621",
+  "commit": "de3edafe",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -155,8 +155,8 @@
     },
     {
       "path": "backend\\index.ts",
-      "size": 72396,
-      "hash": "sha256:d7b57f79f61346c88c2b687f9219495a279eb0121418863b7a1613664d4cd083",
+      "size": 12223,
+      "hash": "sha256:1bea727676bd2b4f22b29775c81a694b2c82e1073a2a4a87ee5e3bb0b61c6253",
       "category": "source"
     },
     {
@@ -5632,6 +5632,60 @@
       "category": "source"
     },
     {
+      "path": "backend\\routes\\fixtures.ts",
+      "size": 7288,
+      "hash": "sha256:e755c8e8620c2b9aeca6766511c51d305488fa0d6b9e21e146009f331941f6e9",
+      "category": "source"
+    },
+    {
+      "path": "backend\\routes\\health.ts",
+      "size": 2318,
+      "hash": "sha256:f3bb7f0a3a19a96852e01e0bb8a5bc6e9f6f03552389b602f654a63339f56b97",
+      "category": "source"
+    },
+    {
+      "path": "backend\\routes\\index.ts",
+      "size": 236,
+      "hash": "sha256:1048c48de574cfeff1cf793a1a73adf903bd74428e7606c3836fa6cfe5bf7e2a",
+      "category": "source"
+    },
+    {
+      "path": "backend\\routes\\providers.ts",
+      "size": 13685,
+      "hash": "sha256:ec7897fc67138beda3df86d30a70dd15b8946e46791d6cbc3764d167728d0945",
+      "category": "source"
+    },
+    {
+      "path": "backend\\routes\\research.ts",
+      "size": 6257,
+      "hash": "sha256:d8a2e733e2ef1317c1bf699728101e8d09dfa8446961a9eff32527c3ebec5c3d",
+      "category": "source"
+    },
+    {
+      "path": "backend\\routes\\stream.ts",
+      "size": 6587,
+      "hash": "sha256:ae55c0cdba1f219cdcd4f056255a56efea2da48754a46e46995b0b8a83de6dd2",
+      "category": "source"
+    },
+    {
+      "path": "backend\\routes\\types.ts",
+      "size": 1182,
+      "hash": "sha256:167aaee0acddee1e1796200faa0f11f58049cd02023d04ec2f1368c0283ccc00",
+      "category": "source"
+    },
+    {
+      "path": "backend\\routes\\v2.ts",
+      "size": 10420,
+      "hash": "sha256:37b0b95ef01b6f4e8b8792e5724fcd57272974e9b3a4124a4cffac7ebd36a15c",
+      "category": "source"
+    },
+    {
+      "path": "backend\\routes\\workflow.ts",
+      "size": 8244,
+      "hash": "sha256:c654e70a9968f10c20aea022d48621314e16033895e1dd1fd95d84132623e7ff",
+      "category": "source"
+    },
+    {
       "path": "backend\\schema\\reasoning\\request.schema.json",
       "size": 1284,
       "hash": "sha256:9dfa9bcd91b3fec2babe4c5b583acc5d0162a2bbaceac699e6f19ffb67205bd4",
@@ -6083,8 +6137,8 @@
     },
     {
       "path": "frontend\\web\\src\\lib\\api.ts",
-      "size": 25855,
-      "hash": "sha256:13d2b3f04756dc746df67f875cd9c93c7330a95b86aa8804b40d739023005382",
+      "size": 26512,
+      "hash": "sha256:607b3315d326311935d30cd4f9a19550e2cc5e6d5a3f56ca9ac32d9af923d5f3",
       "category": "source"
     },
     {
@@ -6629,9 +6683,9 @@
     }
   ],
   "statistics": {
-    "total_files": 1104,
-    "source_files": 1104,
-    "total_size_bytes": 13498172,
+    "total_files": 1113,
+    "source_files": 1113,
+    "total_size_bytes": 13494873,
     "by_extension": {
       ".yml": 1,
       ".md": 19,
@@ -6639,7 +6693,7 @@
       ".mjs": 34,
       ".json": 25,
       ".py": 871,
-      ".ts": 95,
+      ".ts": 104,
       ".txt": 23,
       ".toml": 1,
       ".css": 1,

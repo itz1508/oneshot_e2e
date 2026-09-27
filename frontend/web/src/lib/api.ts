@@ -535,6 +535,13 @@ export interface ValidateFixturesPayload {
   expectedHash?: string;
 }
 
+export interface ExecuteResearchPayload {
+  intent: string;
+  search?: boolean;
+  source?: string;
+  sessionId?: string;
+}
+
 export class OneShotPublicApi {
   constructor(private http: HttpClient = new HttpClient({ baseUrl: resolveBackendBaseUrl() })) {}
 
@@ -627,6 +634,18 @@ export class OneShotPublicApi {
       payload.sessionId && response.session_id !== payload.sessionId ||
       payload.expectedHash && response.expectedHash !== payload.expectedHash) {
       throw new Error("validateFixtures response failed its operation/hash/session contract");
+    }
+    return response as T;
+  }
+
+  /**
+   * Action API v2: executeResearch
+   */
+  async executeResearch<T = any>(payload: ExecuteResearchPayload): Promise<T> {
+    const response = await this.http.post<unknown>("/api/v2/executeResearch", payload);
+    if (!isRecord(response) || response.ok !== true || response.operation !== "executeResearch" ||
+      typeof response.runId !== "string" || !response.runId || !isRecord(response.bundle)) {
+      throw new Error("executeResearch response failed its operation/bundle contract");
     }
     return response as T;
   }
