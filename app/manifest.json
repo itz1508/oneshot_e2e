@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T11:09:11Z",
+  "generated_at": "2026-09-27T11:26:20Z",
   "version": "1.3.0",
-  "commit": "379f2f13",
+  "commit": "559b05a6",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -11,8 +11,8 @@
     },
     {
       "path": "AGENTS.md",
-      "size": 14387,
-      "hash": "sha256:d176d3bd02294454e17ad98cbf0658141783c0192aa95f6d9531bbdba777ffd0",
+      "size": 6852,
+      "hash": "sha256:1a9a75e425f5cfe113cdcbacaa86434c797150b9db410bfe2f4e92328d6a8baa",
       "category": "source"
     },
     {
@@ -6685,7 +6685,7 @@
   "statistics": {
     "total_files": 1113,
     "source_files": 1113,
-    "total_size_bytes": 13491417,
+    "total_size_bytes": 13483882,
     "by_extension": {
       ".yml": 1,
       ".md": 19,

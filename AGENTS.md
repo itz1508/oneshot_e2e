@@ -4,96 +4,66 @@ Standard instructions for AI coding agents working on OneShot. Follow the open [
 
 ## Project Overview
 
-OneShot is a real agentic software-engineering console. A user sends a prompt through the canonical frontend composer. The backend receives it through the real streaming API, executes agent/tool workflows, and emits SSE events. The UI renders actual messages, tool calls, results, errors, todos, and human-review gates from backend state.
+OneShot provides **governed research tools, contextual discovery features, and deterministic runtime boundaries that any AI agent can use**. It exposes modular APIs (`/api/research/run`, `researchSkill`) and deterministic verification boundaries so coding agents (Gemini, Claude, OpenAI, Antigravity, Cursor) can gather verified codebase and web context, plan changes, and execute safely without unconstrained conveyor-belt execution.
 
-Never fabricate progress, assistant responses, tool execution, research results, validation success, or human approval. Empty, loading, unavailable, and failed states must remain distinguishable.
+## Setup Commands
 
-## Prerequisites and Installation
+- Install dependencies: `pnpm install --frozen-lockfile`
+- Backend development server: `pnpm dev`
+- Frontend development server: `pnpm --prefix frontend/web run dev`
+- Full project launcher: `pnpm run oneshot`
+- Production build: `pnpm run build`
+- Frontend static build: `pnpm --prefix frontend/web run build`
+- Frontend preview: `pnpm --prefix frontend/web run preview`
+- Backend production start: `pnpm run start`
 
-- Node.js >= 24.21.0
-- pnpm >= 11.27.1
-- Python 3.12+ for Python validation services
-- Git
-- Docker only for services that explicitly require containers
+Use `pnpm` exclusively. Never use npm, yarn, or `npx`; use `pnpm exec` for local binaries.
 
-The `engines` fields and local verification/bootstrap checks define minimum supported versions. The root `packageManager` field and CI use exact Node.js 24.21.0 and pnpm 11.27.1 pins so builds and lockfile resolution are reproducible; those pins do not prohibit locally using a newer version that satisfies the declared minimums.
+## Prerequisites and Compatibility Holds
 
-### Known `engines` discrepancy: the Node 22 line
-
-All eight workspace manifests declare `engines.node: >=24.21.0`, matching the
-prerequisite above. That floor is enforced rather than aspirational: the six
-library packages fail an engine check below it, both CI jobs pin
-`node-version: 24.21.0`, and `@types/node` targets 24.x.
-
-Do not reintroduce a `22.x ||` alternate in `package.json` or
-`frontend/web/package.json`. Those two manifests previously advertised
-`22.x || >=24.21.0` — a runtime nothing else supported, since Node 22 is never
-exercised by CI and falls outside the Node 24 type definitions.
-
-Current compatibility holds in `pnpm outdated` are intentional:
-
-- `openai` stays on 6.x because `@strands-agents/sdk@1.19.0` declares the peer range `^6.45.0`.
-- `@types/node` stays on 24.x to match the supported Node.js 24 runtime.
-- TypeScript stays on 5.9; TypeScript 7 is a separate compiler-major migration.
-- `undici-types` stays on 7.x, the line used by the Node.js 24 type definitions.
-
-A newer major reported by `pnpm outdated` is not, by itself, a reason to upgrade a dependency. Update held majors only as a coordinated compatibility change with tests and lockfile verification.
-
-```powershell
-pnpm install --frozen-lockfile
-```
-
-Use pnpm exclusively. Never use npm, yarn, or `npx`; use `pnpm exec` for local binaries.
-
-## Run Modes
-
-```powershell
-pnpm dev                                      # backend development
-pnpm --prefix frontend/web run dev             # frontend development
-pnpm run oneshot                              # full project launcher
-pnpm run build                                # production build
-pnpm --prefix frontend/web run build           # frontend static export
-pnpm --prefix frontend/web run preview        # static frontend preview
-pnpm run start                                # backend production server
-pnpm run test:e2e                            # browser tests
-```
+- **Node.js**: `>= 24.21.0` (all 8 workspace packages declare `engines.node: >=24.21.0`. Do not reintroduce `22.x ||` alternates).
+- **pnpm**: `>= 11.27.1`
+- **Python**: `3.12+` (for Python validation services in `app/validation/` and scripts)
+- **Dependency holds**: `openai` stays on 6.x (peer range of `@strands-agents/sdk@1.19.0`), `@types/node` on 24.x, TypeScript on 5.9, `undici-types` on 7.x.
 
 ## Code Style
 
 - TypeScript strict mode.
 - Single quotes, no semicolons.
 - Prefer functional patterns.
-- Use Node-compatible ESM import specifiers.
-- Follow the existing backend/cloud 2-space and frontend/Python 4-space indentation conventions.
-- Keep line endings consistent with the repository's existing tracked files.
+- Node-compatible ESM import specifiers with `.js` extensions.
+- Indentation: 2 spaces for backend/cloud, 4 spaces for frontend/Python.
+- Keep line endings consistent with repository tracked files.
 
----
+## Architecture & Stop Boundaries
 
-## Workspace and Path Rules
+OneShot enforces explicit human-governed stop boundaries across three distinct pathways:
 
-- The repository root is the current Git workspace root.
-- Documentation uses repository-relative paths with `/` separators.
-- Runtime code resolves filesystem paths with `path.resolve()`, `path.join()`, `fileURLToPath(import.meta.url)`, or explicit CLI/environment values.
-- Never commit machine-specific absolute paths or workstation directories.
-- API routes and virtual namespaces such as `/api/agent/stream`, `/workspace`, `/scratch`, and `/artifacts` are logical paths; do not convert them into OS-specific paths.
-- Machine-specific browser, URL, output, and artifact locations must be supplied through environment variables or CLI options.
-- **Strict Workspace Confinement**: Never read, search, modify, or inspect files outside the current Git workspace root without explicit user authorization.
-
-## Package Manager Standard
-
-Use pnpm exclusively across scripts, installs, builds, and tests. Never use npm, yarn, or `npx`.
-
-## No Fake Progress or Hardcoded Mocks
-
-Never fabricate progress, fake timers, mock data, synthetic success, assistant responses, research results, tool execution, or validation success. UI states must reflect real backend SSE streams, records, and tool execution.
+1. **Normal Chat (Composer)**: Standard conversational requests, explanations, and quick queries without triggering research or planning workflows.
+2. **Research Features (Gate 1 Boundary)**: Governed multi-phase discovery across local code and external sources (Tavily/providers) producing an authoritative `ResearchBundle`. Strictly **stops** at `READY_FOR_PLANNING` (Gate 1).
+3. **Design_Planning Tools (Gate 2 Boundary)**: Architecture, gap, and dependency reviews producing an actionable plan. Strictly **stops** at `APPROVED PLAN` (Gate 2) awaiting human confirmation.
+4. **Deterministic Sandbox Boundary**: Strictly isolated 4-partition sandbox (`/workspace`, `/scratch`, `/memories`, `/artifacts`), verified against RFC 8785 canonical JSON bytes and cryptographic SHA-256 byte equality.
 
 ## Response Verification Invariant — The Golden Rule
 
 **"PASS" is superficial and meaningless on its own; a verified HTTP RESPONSE payload is the ONLY valid confirmation.**
 
-1. **"PASS" is not proof**: A test, tool execution, or stage transition is NOT valid merely because it returns `pass` or `passed` or exit code 0.
-2. **Inspect the concrete response**: Verification MUST inspect the actual HTTP response payload, body fields, status codes, and cryptographic byte/hash equality against the expected data contract. If there is no response payload or byte equality proof, it did not happen.
-3. **Backend first, zero frontend invention**: Every feature, contract fixture, and tool MUST run and succeed on the authoritative backend first, emitting real data. Never invent client-side mock states, synthetic simulations, or hardcoded assumptions in the frontend. The frontend must wire directly into real backend endpoints and faithfully render genuine backend state.
+1. **"PASS" is not proof**: A test, tool execution, or stage transition is NOT valid merely because it returns `pass`, `passed`, or exit code 0.
+2. **Inspect the concrete response**: Verification MUST inspect the actual HTTP response payload, body fields, status codes, and cryptographic byte/hash equality against the expected contract.
+3. **Backend first, zero frontend invention**: Features and contract fixtures execute on the backend first, emitting real data. Never invent client-side mock states, fake timers, or synthetic progress. UI states reflect real backend SSE streams and tool execution.
+
+## Testing & Verification Instructions
+
+| Task | Command |
+| :--- | :--- |
+| Backend unit & contract tests (222 tests) | `pnpm test` |
+| Runtime package tests (99 tests) | `pnpm run test:runtime` |
+| Frontend web tests (84 tests) | `pnpm --prefix frontend/web test` |
+| Browser E2E tests (21 tests) | `pnpm run test:e2e` |
+| Full 7/7 verification suite | `pnpm run verify` |
+| Manifest integrity check | `python app/scripts/verify_manifest.py` |
+| Regenerate manifest | `python app/scripts/generate_manifest.py` |
+| Verify demo assets | `pnpm run verify:demo` |
 
 ## Canonical Sources
 
@@ -103,7 +73,7 @@ Never fabricate progress, fake timers, mock data, synthetic success, assistant r
 | Reference-only alternate frontend | `frontend/web/src/components/main-screen/` |
 | Backend HTTP/SSE entry | `backend/index.ts` |
 | Environment loading | `backend/environment.ts` |
-| Agent runtime | `packages/agent-runtime/` |
+| Agent runtime package | `packages/agent-runtime/` |
 | Workspace control plane | `app/workspace_api/` |
 | Workflow engine | `backend/pipeline/` and `backend/workflow/` |
 | Deterministic validation | `backend/validation/` and `app/validation/` |
@@ -112,140 +82,38 @@ Never fabricate progress, fake timers, mock data, synthetic success, assistant r
 | Root lockfile | `pnpm-lock.yaml` |
 | CI and deployment | `.github/workflows/deploy.yml` |
 
-`app/web/` is not present in the current tree and must not be recreated as a second production frontend. Alternate `main-screen/` files under `frontend/web/src/` are reference-only until migrated. Do not edit `node_modules/`, `.next/`, or generated `dist/` output.
+`main-screen/` files under `frontend/web/src/` are reference-only. Do not edit `node_modules/`, `.next/`, or generated `dist/` output.
 
-## Path and Variable Naming
-
-Use explicit, consistent names for local path variables:
-
-- JavaScript/TypeScript: `moduleDir`, `repoRoot`, `outputFilePath`, `artifactDir`, `relativePath`, `absolutePath`.
-- Python: `repository_root`, `relative_path`, `absolute_path`, `output_file_path`, `source_file_path`.
-- Keep public API and CLI names stable: `rootDir`, `path`, `--root`, and manifest JSON keys are compatibility contracts.
-- Distinguish URL paths, virtual backend namespaces, and filesystem paths in names and documentation.
-
-- `frontend/web/` is the canonical frontend.
-- `App.tsx` and `Composer.tsx` are the canonical chat runtime path.
-- `main-screen/` and the invariant-oriented `useStream`/`useTool` contracts are reference-only until migrated; do not import them from production components.
-- The composer must support Enter to send, Shift+Enter for newline, auto-grow from 44px to 160px, and internal scrolling above 160px.
-- Composer growth must occur for typing, quick tools, and externally inserted citations.
-- The composer must not cover the final conversation message.
-- Mobile layout must not permanently reserve the desktop sidebar width.
-- Every visible interactive-looking control must have real behavior and keyboard access.
-- Loading, empty, error, unavailable, and success states must be distinct and recoverable.
-- Long text, citations, tool output, and session titles must not create page-level horizontal overflow.
-
-## Agent Operating Rules
-
-1. Inspect existing implementation and repository instructions before editing.
-2. Preserve unrelated working-tree changes; never reset or discard them without explicit approval.
-3. Prefer the smallest compatible change and follow existing naming, formatting, and framework conventions.
-4. Keep platform-specific values in environment variables or CLI options.
-5. Do not silently swallow user-facing errors.
-6. Add or update tests for changed behavior, especially browser behavior for layout, focus, and overflow.
-7. Never claim completion without running relevant checks and inspecting concrete results.
-8. Report exact test counts, HTTP status, payload fields, and byte/hash equality where applicable.
-9. Do not commit generated build output or secrets.
-10. Do not use destructive Git commands without explicit user approval.
-
-## Streaming & Event Standard (Agent Architecture)
+## Streaming & Event Standard
 
 The frontend and backend follow the Agent event streaming model:
-
 - `stream.messages` carries assistant text deltas.
 - `stream.subagents` carries delegated-agent lifecycle and messages.
 - `stream.tool_calls` carries `tool_use`, `tool_running`, `tool_result`, and `tool_error` events.
 - `stream.values.todos` carries real `pending`, `in_progress`, and `completed` state.
 - No hardcoded percentages, artificial progress bars, fake tool execution, or synthetic delays.
-- Provider failures may use the configured gateway fallback chain, but the UI must expose the real resulting state.
 
-## Video & Demonstration Standard (Synchronized Behavioral Transcript)
+## Workspace Confinement & Path Rules
 
-When recording demonstration videos and authoring captions or voice narration:
+- Repository root is the current Git workspace root.
+- Never read, search, modify, or inspect files outside the current Git workspace root without explicit user authorization.
+- Runtime code resolves filesystem paths with `path.resolve()`, `path.join()`, or `fileURLToPath(import.meta.url)`. Never commit workstation-specific absolute paths.
+- Virtual namespaces (`/api/agent/stream`, `/workspace`, `/scratch`, `/artifacts`) are logical paths; do not convert them into OS-specific paths.
 
-- **Single Synchronized Transcript**: Write one synchronized transcript for both voice-over and captions.
-- **Behavior, Not Inventory**: Narrate the user's task and the system's behavior, not the visual inventory of the interface.
-- **Required Workflow Context**: Explain:
-  1. What the workflow is for.
-  2. When the user would use it.
-  3. What action they take.
-  4. How the UI responds.
-  5. What the system is processing.
-  6. What result the user should expect.
-  7. What they can immediately test or verify.
-- **No Component Inventory**: Do not enumerate buttons, panels, cards, icons, labels, colors, or other UI components unless identifying that element is strictly necessary to perform the action.
-- **Describe Changes Through Meaning**:
-  - *"The review begins"* rather than *"the Review button turns blue."*
-  - *"The interface shows that processing is underway"* rather than *"a spinner appears."*
-  - *"The result is now available for confirmation"* rather than *"a result card appears."*
-- **Comfortable Pacing**: Keep each caption short enough to read comfortably while it is spoken. Break narration at meaningful interaction or state boundaries.
-- **Strict Visual Synchronization**: The narration must correspond to what is actually visible in the video. Do not describe an action before it occurs or explain a result before it appears.
-- **Immediate Practical Action**: End each workflow with an immediate practical action the viewer can perform to verify what they just saw.
+## Pre-Commit Verification Checklist
 
-## Development and Verification Commands
+Before proposing a commit or completing a task:
 
-| Task | Command |
-| :--- | :--- |
-| Install dependencies | `pnpm install --frozen-lockfile` |
-| Backend development | `pnpm dev` |
-| Frontend development | `pnpm --prefix frontend/web run dev` |
-| Full project launcher | `pnpm run oneshot` |
-| Build all | `pnpm run build` |
-| Build frontend | `pnpm --prefix frontend/web run build` |
-| Build backend | `pnpm run build:backend` |
-| Frontend typecheck | `pnpm --prefix frontend/web run typecheck` |
-| Frontend tests | `pnpm --prefix frontend/web test` |
-| Backend tests | `pnpm test` |
-| Runtime tests | `pnpm run test:runtime` |
-| Browser tests | `pnpm run test:e2e` |
-| Full verification | `pnpm run verify` |
-| Generate manifest | `python app/scripts/generate_manifest.py` |
-| Verify manifest | `python app/scripts/verify_manifest.py` |
-| Verify demo assets | `pnpm run verify:demo` |
-| Regenerate demo screenshots & video | `pnpm run capture:demo` (requires a running backend on `:4173`) |
-
-## CI and Deployment
-
-- Install pnpm before `actions/setup-node` when pnpm caching is enabled.
-- The root `pnpm-lock.yaml` is the dependency cache key.
-- Required native build scripts must be approved in `pnpm-workspace.yaml`.
-- Workflows and helpers must not use npm, yarn, or `npx`.
-- Frontend production output is `frontend/web/dist/`.
-- Pages deployment requires the repository Pages site to use `build_type: workflow`.
-- A local build is not deployment proof. Inspect workflow logs, deployment logs, live HTTP status, and live payload evidence.
-
-### Secondary: split static deployment
-
-GitHub Pages is the canonical deployment target. A **split** deployment —
-static frontend export on Vercel, backend on a persistent container/VM — is
-supported but optional, and is documented in `frontend/web/VERCEL_DEPLOY.md`.
-
-- The stateful backend (`node:http`, AG-UI SSE, Python subprocess, `.oneshot/`
-  writes) cannot run on Vercel Serverless. Only the static export is hosted there.
-- `frontend/web/vercel.json` applies **only** when the Vercel Root Directory is
-  `frontend/web`; its install/build/output values are written for that location.
-- Cross-origin calls use `NEXT_PUBLIC_BACKEND_URL`, which Next.js inlines at
-  **build** time — changing it requires a rebuild, not a redeploy.
-- `resolveApiUrl()` in `frontend/web/src/lib/api.ts` keeps same-origin relative
-  URLs when the variable is unset, so local flows are unaffected.
-
-## Verification Lifecycle
-
-Before completing a task or proposing a commit:
-
-1. Stop background dev or daemon processes started for the task.
-2. Run targeted tests, then the relevant broader suites.
+1. Stop any background dev or daemon processes started during the task.
+2. Run targeted tests, then relevant test suites (`pnpm test`, `pnpm run test:runtime`, `pnpm --prefix frontend/web test`).
 3. If tracked source or test files changed, regenerate and verify the manifest:
-
    ```powershell
    python app/scripts/generate_manifest.py
    python app/scripts/verify_manifest.py
    ```
-
-4. Run full verification:
-
+4. Run full repository verification:
    ```powershell
    pnpm run verify
    ```
-
-5. Run `git diff --check` and review the final file list.
-6. Report exact results, payload validations, and known limitations.
+5. Run `git diff --check` and verify clean working tree.
+6. Report exact test counts, HTTP status, and concrete payload verifications.
