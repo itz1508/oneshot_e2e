@@ -1,9 +1,9 @@
 <div align="left">
 
-# OneShot
+# OneShot: Deterministic E2E Agent Runtime
 
-**The Autonomous Agentic Software Engineering Console**
-Real SSE Streaming · Python Reasoning Subprocess · Strict Filesystem Sandboxing · Human-in-the-Loop Governance
+**Autonomous Agentic Software Engineering Console · Verifiable Contracts Delivering E2E Integrity**
+Real AG-UI SSE Streaming · 4-Partition Sandbox Isolation · Python Reasoning Subprocess · Dual Human Governance Gates
 
 <p>
   <a href="https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1">
@@ -42,19 +42,35 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
-## 🎬 Live Demo
+## 🎬 Live Demo & Video Walkthrough
 
 <div align="center">
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=lE9vtKB-fSk"><img src="https://img.shields.io/badge/YouTube-Watch_Video_Walkthrough-red?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch on YouTube" /></a>
+  <a href="https://itz1508.github.io/oneshot_e2e/"><img src="https://img.shields.io/badge/Live_Console-Launch_GitHub_Pages-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Live Console" /></a>
+</p>
 
 <video src="https://github.com/user-attachments/assets/a64b0fdc-b138-468a-8996-c30c5bef1f25" controls="controls" width="100%"></video>
 
 <br />
 
 <sub>
-  ▶ <b><a href="https://github.com/user-attachments/assets/a64b0fdc-b138-468a-8996-c30c5bef1f25">Direct Video Stream (MP4)</a></b> · <a href="public/demo/oneshot-demo.webm">WebM Video</a> · <a href="public/demo/oneshot-demo.vtt">Subtitles (.vtt)</a> · <a href="https://itz1508.github.io/oneshot_e2e/">Live Browser Console</a>
+  ▶ <b><a href="https://github.com/user-attachments/assets/a64b0fdc-b138-468a-8996-c30c5bef1f25">Direct Video Stream (MP4)</a></b> · <a href="https://www.youtube.com/watch?v=lE9vtKB-fSk">YouTube (with Chapter Navigation)</a> · <a href="public/demo/oneshot-demo.webm">WebM Video</a> · <a href="public/demo/oneshot-demo.vtt">Subtitles (.vtt)</a> · <a href="https://itz1508.github.io/oneshot_e2e/">Live Browser Console</a>
 </sub>
 
 </div>
+
+### ⏱️ Video Chapters & Walkthrough Timeline
+
+| Timestamp | Chapter | What Judges & Reviewers Observe |
+| :--- | :--- | :--- |
+| [00:00](https://www.youtube.com/watch?v=lE9vtKB-fSk&t=0s) | **Introduction & Runtime Overview** | Problem statement, deterministic contract runtime, architecture intro, and 1-click startup |
+| [00:30](https://www.youtube.com/watch?v=lE9vtKB-fSk&t=30s) | **Test Scenario Setup & Security Invariants** | Loading offline fixtures (`security-invariants.json`), 4-partition sandbox verification |
+| [01:40](https://www.youtube.com/watch?v=lE9vtKB-fSk&t=100s) | **Live Provider Configuration** | Dynamic multi-provider switching (Gemini, OpenAI, Mistral, Ollama) without server restart |
+| [02:20](https://www.youtube.com/watch?v=lE9vtKB-fSk&t=140s) | **Multi-Agent Streaming & Reasoning Chain** | Real-time AG-UI SSE stream (`stream.messages`, `stream.subagents`, `stream.tool_calls`) |
+| [02:50](https://www.youtube.com/watch?v=lE9vtKB-fSk&t=170s) | **Gate Approval & Artifact Verification** | Human-in-the-loop Gate 1 & Gate 2 confirmation, SHA-256 byte equality proof |
+| [03:07](https://www.youtube.com/watch?v=lE9vtKB-fSk&t=187s) | **Summary & Repository Links** | Verifiable contracts guarantee, 419 deterministic tests passing, and GitHub links |
 
 ---
 

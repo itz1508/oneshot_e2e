@@ -568,6 +568,31 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
               </div>
             </div>
 
+            {/* YouTube Walkthrough & Chapter Guide */}
+            <a
+              href="https://www.youtube.com/watch?v=lE9vtKB-fSk"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3 rounded-lg border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 transition-colors flex items-center justify-between text-xs group cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="w-6 h-6 rounded-full bg-red-600 grid place-items-center text-white text-xs font-bold shrink-0">
+                  ▶
+                </span>
+                <div>
+                  <div className="font-semibold text-white group-hover:text-red-300 transition-colors">
+                    Watch Full Video Walkthrough (YouTube)
+                  </div>
+                  <div className="text-[10px] text-[#a0a0a5]">
+                    03:15 continuous runtime demonstration with chapter navigation
+                  </div>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono text-red-400 group-hover:underline whitespace-nowrap">
+                Watch Video →
+              </span>
+            </a>
+
             {/* 4 Documentation Cards Grid */}
             <div className="grid grid-cols-1 gap-2.5">
               {/* Card 1: README.md */}
