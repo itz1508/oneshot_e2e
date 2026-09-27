@@ -16,7 +16,7 @@ import {
   executeHandoff,
 } from "../../../packages/agent-runtime/src/handoffs/index.ts";
 
-describe("DeepAgents Pluggable Backends Architecture", () => {
+describe("Agent Pluggable Backends Architecture", () => {
   it("StateBackend performs in-memory virtual filesystem operations", async () => {
     const backend = new StateBackend();
 
@@ -111,7 +111,7 @@ describe("DeepAgents Pluggable Backends Architecture", () => {
   });
 });
 
-describe("LangChain Multi-Agent Handoffs & Canonical Stage Gates", () => {
+describe("Agent Multi-Agent Handoffs & Canonical Stage Gates", () => {
   it("enforces strict AIMessage + ToolMessage pairing with matching toolCallId", () => {
     const pair = createHandoffPair("planner", "call-stage-transfer-42", { reason: "Research complete" });
 

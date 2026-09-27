@@ -1,10 +1,7 @@
 /**
  * OneShot Multi-Agent Handoffs Types & Contracts
  *
- * Implements the LangChain Multi-Agent Handoff pattern per:
- * https://docs.langchain.com/oss/python/langchain/multi-agent/handoffs
- *
- * Reconciled with OneShot's 7 canonical stages and human gates:
+ * Implements the multi-agent handoff pattern reconciled with OneShot's 7 canonical stages and human gates:
  * - 7 Canonical Stages: Researcher, Planner, Refactor, Gap Analysis, Evaluation, Builder, Review
  * - Human Gates: Research Review (before Planner) and Build Ready (before Builder)
  * - Cryptographic hash check on confirmed_package.core

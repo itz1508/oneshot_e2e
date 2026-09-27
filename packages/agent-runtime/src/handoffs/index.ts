@@ -1,8 +1,7 @@
 /**
  * OneShot Multi-Agent Handoffs Module
  *
- * Implements tool-driven state transitions, paired messages, and human gate verification per:
- * https://docs.langchain.com/oss/python/langchain/multi-agent/handoffs
+ * Implements tool-driven state transitions, paired messages, and human gate verification.
  */
 
 export type * from "./types.js";

@@ -4,8 +4,7 @@
  * Coordinates execution and handoffs between the 7 canonical stages:
  * Researcher -> Planner -> Refactor -> Gap Analysis -> Evaluation -> Builder -> Review
  *
- * Implements context engineering & selective context propagation per:
- * https://docs.langchain.com/oss/python/langchain/multi-agent/handoffs#context-engineering
+ * Implements context engineering and selective context propagation.
  *
  * Prunes noisy subagent internals while preserving strictly paired handoff messages
  * and cryptographic package cores.

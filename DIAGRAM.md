@@ -163,7 +163,7 @@ flowchart TD
         DRAWER["ContextReviewDrawer.tsx\n(Tasks Rail · Sandbox Partitions · Gate Controls)"]
     end
 
-    subgraph SSE_TIER["Streaming Transport (DeepAgents SSE)"]
+    subgraph SSE_TIER["Streaming Transport (Agent SSE)"]
         POST_REQ["POST /api/agent/stream"]
         SSE_DELTAS["Live Deltas: stream.messages · stream.tool_calls\nstream.subagents · stream.values.todos"]
     end

@@ -1,9 +1,9 @@
 {
   "fixture_id": "fix-sec-01",
   "session_id": "session-dryrun-sec",
-  "name": "DeepAgents 4-Partition Sandbox Security Invariants",
+  "name": "Agent 4-Partition Sandbox Security Invariants",
   "version": "1.3.0",
-  "description": "Specification and verification boundaries for DeepAgents virtual filesystem isolation and security invariants",
+  "description": "Specification and verification boundaries for Agent virtual filesystem isolation and security invariants",
   "virtual_mode": "ENFORCED",
   "partitions": [
     {

@@ -20,7 +20,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   planEvent,
   todos,
 }) => {
-  // Support both LangChain DeepAgents stream.values.todos and TasksCreatedEvent
+  // Support both Agent stream.values.todos and TasksCreatedEvent
   const rawTasks = tasksEvent?.tasks || [];
   const normalizedTodos: Array<{
     task_id: string;

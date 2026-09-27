@@ -419,7 +419,7 @@ export async function streamAgentExecution(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Action API v2 Client & SecurityWorker Interceptor
-// Pattern extracted from Taskade Action API & LangChain SDK standard
+// Standard Action API & Interceptor pattern
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type SecurityWorker = () => Record<string, string> | Promise<Record<string, string>>;

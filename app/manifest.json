@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T02:28:31Z",
+  "generated_at": "2026-09-27T02:43:02Z",
   "version": "1.3.0",
-  "commit": "ca970655",
+  "commit": "3641af59",
   "files": [
     {
       "path": ".github\\deploy.yml",
@@ -11,8 +11,8 @@
     },
     {
       "path": "AGENTS.md",
-      "size": 13686,
-      "hash": "sha256:ca26ecb96fb7f1891edd43d894a52803f3a0b1324a1b3afcc61710c023d61003",
+      "size": 13676,
+      "hash": "sha256:53fbc21142dcfd599c288a1bb438c5990a3866bef2b5615a11c91c34d7084113",
       "category": "source"
     },
     {
@@ -23,8 +23,8 @@
     },
     {
       "path": "DIAGRAM.md",
-      "size": 11127,
-      "hash": "sha256:23da5b6a909461e2cd29e4d238f253b0bd6ceceaf74066217077f1afd1e68111",
+      "size": 11122,
+      "hash": "sha256:5bbb8d4a5ae02db7cb29ebd04bf222c78cd11b133d0293d7633f302eeeb2901b",
       "category": "source"
     },
     {
@@ -35,8 +35,8 @@
     },
     {
       "path": "README.md",
-      "size": 12675,
-      "hash": "sha256:129bc01bc1e3ed6fd2b54fb4a29b685bc2f9e7638e00c4635ebd083b4d220312",
+      "size": 12650,
+      "hash": "sha256:38b7d18550aba9d5717a7b9eceb40d68db23e0695efd95e58fc7de55e0a7e215",
       "category": "source"
     },
     {
@@ -59,8 +59,8 @@
     },
     {
       "path": "app\\fixtures\\reasoning-dryrun.json",
-      "size": 1453,
-      "hash": "sha256:a52468ba5df4685e474f530958b358eedd38892f82dcfb7a86d2670bb22e7a4f",
+      "size": 1448,
+      "hash": "sha256:3ed6bbf65c47bcaa9e0ead4576c73dd0874fcbf4fe9c1e56b921bb6414bffbed",
       "category": "source"
     },
     {
@@ -71,8 +71,8 @@
     },
     {
       "path": "app\\fixtures\\security-invariants.json",
-      "size": 1780,
-      "hash": "sha256:46aad717ee8e83ab0fe36033f993a9c2333a58b17999ac0d67e94139838c3979",
+      "size": 1770,
+      "hash": "sha256:1fb47dde2fff5d927f8bac70063783dd6379d521a3cde6a2a86065970b97dd51",
       "category": "source"
     },
     {
@@ -5561,8 +5561,8 @@
     },
     {
       "path": "backend\\python\\app\\main.py",
-      "size": 22705,
-      "hash": "sha256:a85205661d05a91ecb0ef1a95dbc6aca4ea5107585a21459e3b89353f2c23398",
+      "size": 22631,
+      "hash": "sha256:714102a4d8aac7e1c13667b37770eb92ede0a9a06b0ca303f9e9fc224123dc03",
       "category": "source"
     },
     {
@@ -5783,8 +5783,8 @@
     },
     {
       "path": "e2e\\researcher-preview.spec.ts",
-      "size": 13901,
-      "hash": "sha256:88ec67ccc4a63b396a128dc30819646202024c43758ea93bcdb1d6a7adb28069",
+      "size": 13896,
+      "hash": "sha256:88629c1965ee632d26adad08515882edcb644ffd1c69ac77731665587550f104",
       "category": "source"
     },
     {
@@ -5891,14 +5891,14 @@
     },
     {
       "path": "frontend\\web\\src\\components\\Composer.tsx",
-      "size": 7873,
-      "hash": "sha256:c9bfc07af87d088c641d13d73c34b1f6dde5d241b522c2c2c2ebf67a6af94763",
+      "size": 7863,
+      "hash": "sha256:ab74e81ec37f7f14460d8ccb72abd41ef5a8e51ac95778e72e89b4f6d309ba17",
       "category": "source"
     },
     {
       "path": "frontend\\web\\src\\components\\ContextReviewDrawer.tsx",
-      "size": 26394,
-      "hash": "sha256:5a2b20acad2133984b253b3a1d892d662c40442357292a5d0608fb9b3ff9d311",
+      "size": 26379,
+      "hash": "sha256:7636cd84a9f8210f5dac4364afdc82c6c7cf775fe5edfe03ffae033b77f755dd",
       "category": "source"
     },
     {
@@ -5993,8 +5993,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\WelcomeWorkflowConsole.tsx",
-      "size": 20644,
-      "hash": "sha256:dd895ea553375f703d8ba5f04673912488691bd84ca7e6e92b44f96777c0c462",
+      "size": 20634,
+      "hash": "sha256:9090a2ed2bb5b3796c48cb6ac0d089106c426a42a9f693ad2a1b2ebcb5a3968b",
       "category": "source"
     },
     {
@@ -6047,8 +6047,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\task-rail\\ProgressTracker.tsx",
-      "size": 5049,
-      "hash": "sha256:4fc0c6f47527ce5dd47b0c612aae25a1ee589dbb4fab18266defeadf0cac57ca",
+      "size": 5034,
+      "hash": "sha256:33944f4f883aa578c393824420a36f8a5a82de9a2113bb325b2b2a384984053f",
       "category": "source"
     },
     {
@@ -6077,20 +6077,20 @@
     },
     {
       "path": "frontend\\web\\src\\lib\\api.ts",
-      "size": 25880,
-      "hash": "sha256:e493e4b5e6752f4448c70e207e868b19413c7092c81354707c7abcf353b9ace7",
+      "size": 25855,
+      "hash": "sha256:13d2b3f04756dc746df67f875cd9c93c7330a95b86aa8804b40d739023005382",
       "category": "source"
     },
     {
       "path": "frontend\\web\\src\\lib\\backends.ts",
-      "size": 2398,
-      "hash": "sha256:142a295dcc7825ff6bfe808b4468f41518fa9ca70088bc75e87e4e81d0d01230",
+      "size": 2328,
+      "hash": "sha256:94b6b5800713ead730041aab30b2918fd2e146cf3d41eaae7582f41319818760",
       "category": "source"
     },
     {
       "path": "frontend\\web\\src\\lib\\handoffs.ts",
-      "size": 2677,
-      "hash": "sha256:70dd384458cc746ffa56314005d063def4e7a2795097835a02dc8d8662b0e233",
+      "size": 2591,
+      "hash": "sha256:52e2632118c1b6f564b7cba9cb18f9a8eb4a9b6eea20ce83c414ea5aacc823e8",
       "category": "source"
     },
     {
@@ -6107,8 +6107,8 @@
     },
     {
       "path": "frontend\\web\\src\\lib\\structured-output.ts",
-      "size": 3353,
-      "hash": "sha256:45b8050d46ee7a21eb82eca29866d1cc45a202b7ec61cbf5cb21a438cef071a7",
+      "size": 3246,
+      "hash": "sha256:b10cd2491fdc99bcf60742a417bf968fa4e239a9f862910fc3b5218a25541a84",
       "category": "source"
     },
     {
@@ -6143,8 +6143,8 @@
     },
     {
       "path": "frontend\\web\\src\\types\\invariants.ts",
-      "size": 3522,
-      "hash": "sha256:8c6886f1a10ad253efc026bf31cc039abcb0ca871843a8ff04623415b65bda70",
+      "size": 3507,
+      "hash": "sha256:6efeb9b44dd5a13fa7b4d415ac1f3b8208752d53cdf24a1ff70d19d6c9c51f02",
       "category": "source"
     },
     {
@@ -6161,38 +6161,38 @@
     },
     {
       "path": "frontend\\web\\tests\\backends-and-handoffs.test.mjs",
-      "size": 8223,
-      "hash": "sha256:37936ffd6ed0885bf2b9e064d2e4d718ba947504545df4d9f8f36261fd4c5fa5",
+      "size": 8214,
+      "hash": "sha256:e66d9ddefc9723296471d8ae037b1a8c55524361dd511e87af5b1f6b6d383ce7",
       "category": "source"
     },
     {
       "path": "frontend\\web\\tests\\chat-ui.test.mjs",
-      "size": 11270,
-      "hash": "sha256:1b38eb9b933db361d4dcb833200e779050de448307b88229713b84c116f48db7",
+      "size": 11265,
+      "hash": "sha256:6c4a2c17e609f5f848265221738a0ac3c4f646676b54b56f195a837ec666968e",
       "category": "source"
     },
     {
       "path": "frontend\\web\\tests\\main-screen-and-task-rail.test.mjs",
-      "size": 6825,
-      "hash": "sha256:847ed4a9d89d600b3960b58a81a49d1c6f6f2379589f46cfc447cd017ad5833e",
+      "size": 6820,
+      "hash": "sha256:4b6c695fd4de93b956e76da6ecaf8a360b437f556d2a43fa1278f8c152dc9d4c",
       "category": "source"
     },
     {
       "path": "frontend\\web\\tests\\structured-output.test.mjs",
-      "size": 2759,
-      "hash": "sha256:396bd19859fba1cac5b6f63fc7daebeb841fd450105897642454923f9d8b8db8",
+      "size": 2755,
+      "hash": "sha256:15aedd10cfd1e08feb7279cb9d55868cd297c1427903ecb0eec9ef1bd02c2a96",
       "category": "source"
     },
     {
       "path": "frontend\\web\\tests\\tool-calling.test.mjs",
-      "size": 1995,
-      "hash": "sha256:4a8878df1d5b45e6e1b0be892bb47db6dae8753d1e372b90771fea7be372b2e6",
+      "size": 1991,
+      "hash": "sha256:1f732f22c20c1049b95571680546a9f0dcae6927144b539122eefe5d91b1ade7",
       "category": "source"
     },
     {
       "path": "frontend\\web\\tests\\welcome-workflow-console.test.mjs",
-      "size": 2263,
-      "hash": "sha256:da0970362175630b7ab5ca527514b5ea487728ac97d06d9e45337a487d30f6b2",
+      "size": 2258,
+      "hash": "sha256:357eb60c9d21bd8821b41163fe62b791c5268455cd0e442368c2263dcda7d529",
       "category": "source"
     },
     {
@@ -6245,62 +6245,62 @@
     },
     {
       "path": "packages\\agent-runtime\\src\\backends\\composite-backend.ts",
-      "size": 6646,
-      "hash": "sha256:d445493ec24adea439bba7afff9a16aa490735d3d514bf56f6285c0eda2f0346",
+      "size": 6551,
+      "hash": "sha256:ae99a7ec1eb579f4899f206b08a9ea0e6c1448785cf2e4fa4e4a1f7d232dab20",
       "category": "source"
     },
     {
       "path": "packages\\agent-runtime\\src\\backends\\filesystem-backend.ts",
-      "size": 8297,
-      "hash": "sha256:3a28e0d907a5e7fee2955264af1fde5764a80a199f61f10ec5321d8aa2054a78",
+      "size": 8197,
+      "hash": "sha256:f4141094a8262339bd5f76cbc42ce77a01662514369d23ce62929ba10f58e217",
       "category": "source"
     },
     {
       "path": "packages\\agent-runtime\\src\\backends\\index.ts",
-      "size": 319,
-      "hash": "sha256:2746cf6755e546fec7ae29c181ad37d590b1fccfce736d26bd1d116e55e72193",
+      "size": 249,
+      "hash": "sha256:ccee9c69a31bd9ae555b42fc87de13c96abfc380eed2a8facabd1b8ebce3035d",
       "category": "source"
     },
     {
       "path": "packages\\agent-runtime\\src\\backends\\protocol.ts",
-      "size": 2211,
-      "hash": "sha256:54263cc58d8b89c18f9f5ba4a3026ab2569f49a38eae47f1d74c8931fde233a5",
+      "size": 2159,
+      "hash": "sha256:aee79ed420cc1db81ccf64a25549156918ef7eb2feeb56c3db74cf6d5560ac42",
       "category": "source"
     },
     {
       "path": "packages\\agent-runtime\\src\\backends\\state-backend.ts",
-      "size": 7677,
-      "hash": "sha256:bd8b4f14628bf2c59883dc3cb7a5cc907300c4f5ffb4cb5abcfeddc6140041ce",
+      "size": 7593,
+      "hash": "sha256:0c3dd05a102f3ad0302f20e6aca7e264ba9aed7a0ce9e11c02eca4951010797e",
       "category": "source"
     },
     {
       "path": "packages\\agent-runtime\\src\\handoffs\\handoff-tools.ts",
-      "size": 4167,
-      "hash": "sha256:efab074d70745b7b3b360cb5fd09e8a45e159e69464eaa967fa1d6a73db466a9",
+      "size": 4115,
+      "hash": "sha256:fbf36563d3321b2c0b20fed21602f735afba8e1e21e24347422d74d2dc85553b",
       "category": "source"
     },
     {
       "path": "packages\\agent-runtime\\src\\handoffs\\index.ts",
-      "size": 320,
-      "hash": "sha256:e0d365183a695792c04c6e0e87db989c2efedf0cff4a57395b4d37323d0d27ac",
+      "size": 244,
+      "hash": "sha256:becf0ab26a395a566e147a765412c55e7f67ad03e350f8d00dcea9dd41853614",
       "category": "source"
     },
     {
       "path": "packages\\agent-runtime\\src\\handoffs\\supervisor.ts",
-      "size": 3032,
-      "hash": "sha256:67dc128e29586da6f41cb887918fa2df0df7c185a0f0536c7494e1a3d4ec5d1c",
+      "size": 2938,
+      "hash": "sha256:8e7c95069c2f469eb61863ba8ff4bbf0a564a8d63131f3b90df23085298194db",
       "category": "source"
     },
     {
       "path": "packages\\agent-runtime\\src\\handoffs\\types.ts",
-      "size": 1853,
-      "hash": "sha256:cedf4ca30acd45e04e044fc3f2c0ccf66ca14dd805ee40c8e347e65a42161200",
+      "size": 1760,
+      "hash": "sha256:28db7b0ed3a8b9077f709c7a4c93973ae337bd3450850e35a42f8453afe4972d",
       "category": "source"
     },
     {
       "path": "packages\\agent-runtime\\src\\index.ts",
-      "size": 1000,
-      "hash": "sha256:cb0c22ebdef194439dec33e6b13b8811186247fbe7a018df90a388a8ec66b442",
+      "size": 995,
+      "hash": "sha256:51f3578f9e23c47cd920abcb7b15f26ad34c143d7e2569d2d5be160ce8a6fb35",
       "category": "source"
     },
     {
@@ -6467,8 +6467,8 @@
     },
     {
       "path": "packages\\agent-runtime\\tests\\backend-engine.test.mjs",
-      "size": 15777,
-      "hash": "sha256:242c8441ce920459476d4a78566282acc0903058b3cf8e712cbfd3bb11ef5b30",
+      "size": 15772,
+      "hash": "sha256:8fefbccdc5ebed7223cf9e4848aa28c2d85d48df125da039dd56491eee7eef5d",
       "category": "source"
     },
     {
@@ -6533,8 +6533,8 @@
     },
     {
       "path": "scripts\\capture-demo.mjs",
-      "size": 44957,
-      "hash": "sha256:6d1bd4c395e4f595bbd96fb155c253250c96f0942cf39861ea3839abe5376cf8",
+      "size": 44946,
+      "hash": "sha256:3773ae40c72a7be79437c71b2e83079a5de6035a332e34a83b5d87c7c903f18f",
       "category": "source"
     },
     {
@@ -6545,8 +6545,8 @@
     },
     {
       "path": "scripts\\dry-run.mjs",
-      "size": 8150,
-      "hash": "sha256:02cb0cb8d21561b800548ae10c31af5260701409811cebb57b6ba942d510f3b0",
+      "size": 8145,
+      "hash": "sha256:2bc7ab03ffff07f44f42953d7bd2cc1d7bb989bd1a60e7b2ac184bb116fa3604",
       "category": "source"
     },
     {
@@ -6613,7 +6613,7 @@
   "statistics": {
     "total_files": 1101,
     "source_files": 1101,
-    "total_size_bytes": 13442335,
+    "total_size_bytes": 13441074,
     "by_extension": {
       ".yml": 1,
       ".md": 19,

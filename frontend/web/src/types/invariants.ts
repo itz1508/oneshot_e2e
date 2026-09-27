@@ -2,7 +2,7 @@
  * OneShot Streaming & Execution Contracts
  *
  * Implements typed contracts for Session, Job, Conversation runtime,
- * Tool capabilities, DeepAgents event streaming, and State-driven progress.
+ * Tool capabilities, Agent event streaming, and State-driven progress.
  */
 
 // Core Session & Conversation Contracts
@@ -76,7 +76,7 @@ export interface ValidationConfirmedEvent {
   timestamp: number;
 }
 
-// State-Driven Progress Contracts (DeepAgents TodoListMiddleware Pattern)
+// State-Driven Progress Contracts (Agent TodoListMiddleware Pattern)
 export interface TodoItem {
   id: string;
   title: string;
@@ -144,7 +144,7 @@ export interface JobExecutionState {
   status: "queued" | "running" | "completed" | "failed";
 }
 
-// Subagent Projection Contract (DeepAgents stream.subagents)
+// Subagent Projection Contract (Agent stream.subagents)
 export interface SubagentProjection {
   name: string;
   path: string;

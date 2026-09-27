@@ -1,15 +1,13 @@
 /**
- * LangChain Structured Output Frontend Utilities
+ * OneShot Agent Structured Output Frontend Utilities
  *
- * Implements official LangChain best practices for streaming structured outputs:
+ * Implements best practices for streaming structured outputs:
  * 1. Validate before rendering (check required fields on partial streaming data)
  * 2. Generic extraction function (parameterized by type and required keys)
  * 3. Progressive rendering (display fields as they arrive)
  * 4. Fallback representations (plain-text fallback when rich structures are incomplete)
  * 5. Flat schema priority
  * 6. Match UI to data (badges for status, cards for objects, lists/tables for arrays)
- *
- * Reference: https://docs.langchain.com/oss/python/langchain/frontend/structured-output
  */
 
 export interface StructuredFieldDescriptor<T> {

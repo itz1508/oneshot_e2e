@@ -39,7 +39,7 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await expect(page.locator("text=Gate 1: Research Review")).toBeVisible();
         await expect(page.locator("text=Gate 2: Build Ready")).toBeVisible();
 
-        // Tab: Backends (DeepAgents Partition Routing & Sandbox)
+        // Tab: Backends (Agent Partition Routing & Sandbox)
         const tabBackendsBtn = page.locator("#tabBackendsBtn");
         await tabBackendsBtn.click();
         await expect(page.locator("text=/workspace/").first()).toBeVisible();

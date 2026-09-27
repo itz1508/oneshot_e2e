@@ -42,8 +42,8 @@ export const Composer: React.FC<ComposerProps> = ({
         prompt: "Verify Cloud Run Docker container specification and deployment readiness",
       },
       {
-        label: "🔍 DeepAgents Stream",
-        prompt: "Research DeepAgents event streaming and real-time TodoList middleware",
+        label: "🔍 Agent Stream",
+        prompt: "Research Agent event streaming and real-time TodoList middleware",
       },
       {
         label: "📋 Human Gate Status",

@@ -133,7 +133,7 @@ describe("OneShot Main Screen, Task Rail & 24 Canonical Invariants Suite", () =>
     assert.match(agentsSrc, /Package Manager Standard/);
     assert.match(agentsSrc, /No Fake Progress or Hardcoded Mocks/);
     assert.match(agentsSrc, /Response Verification Invariant/);
-    assert.match(agentsSrc, /Streaming & Event Standard \(DeepAgents Architecture\)/);
+    assert.match(agentsSrc, /Streaming & Event Standard \(Agent Architecture\)/);
     assert.match(agentsSrc, /stream\.messages/);
     assert.match(agentsSrc, /stream\.subagents/);
     assert.match(agentsSrc, /stream\.tool_calls/);

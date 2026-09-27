@@ -28,7 +28,7 @@ describe("Single-Screen Welcome / Try-It Experience Contract", () => {
 
   it("provides ready-to-run default fixture without credentials", () => {
     const src = read("frontend/web/src/components/WelcomeWorkflowConsole.tsx");
-    assert.match(src, /DeepAgents 4-Partition Sandbox Security Invariants/);
+    assert.match(src, /Agent 4-Partition Sandbox Security Invariants/);
     assert.match(src, /app\/fixtures\/security-invariants\.json/);
     assert.match(src, /SEC-INV-001/);
     assert.match(src, /no credentials needed/);

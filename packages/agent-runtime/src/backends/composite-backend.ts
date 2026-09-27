@@ -1,8 +1,7 @@
 /**
- * OneShot CompositeBackend — Prefix-Routed Filesystem for Deep Agents
+ * OneShot CompositeBackend — Prefix-Routed Filesystem for Agent
  *
- * Implements the CompositeBackend router pattern per:
- * https://docs.langchain.com/oss/python/deepagents/backends#compositebackend-router
+ * Implements the CompositeBackend router pattern.
  *
  * Characteristics:
  * - Routes file operations to specific backends based on path prefix.

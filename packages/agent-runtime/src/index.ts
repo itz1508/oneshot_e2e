@@ -6,7 +6,7 @@
  * 2. Dual Research Engine (TavilySearchBackend)
  * 3. Hierarchical Subtask / Todo Chain (TodoChainManager)
  * 4. Session Ledger, Checkpoints, & Audit Hook Logs (SessionLedger)
- * 5. DeepAgents Pluggable Sandboxed Backends (CompositeBackend, FilesystemBackend, StateBackend)
+ * 5. Agent Pluggable Sandboxed Backends (CompositeBackend, FilesystemBackend, StateBackend)
  * 6. Strands Agents SDK Integration with Google Gemini Authentication
  * 7. AG-UI Server-Sent Events Protocol Adapter
  */

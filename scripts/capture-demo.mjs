@@ -766,7 +766,7 @@ try {
   const scenarioReason = page.locator('#singleScreenConsole button:has-text("Reasoning Subprocess")').first();
   if (await scenarioReason.count()) await hoverTarget(page, scenarioReason, 700);
 
-  const scenarioSec = page.locator('#singleScreenConsole button:has-text("DeepAgents 4-Partition")').first();
+  const scenarioSec = page.locator('#singleScreenConsole button:has-text("4-Partition")').first();
   if (await scenarioSec.count()) {
     await clickTarget(page, scenarioSec, 800);
   }

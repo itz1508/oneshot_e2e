@@ -1,8 +1,7 @@
 /**
  * OneShot Multi-Agent Handoff Tools & Cryptographic Gate Verification
  *
- * Implements tool-driven transitions per:
- * https://docs.langchain.com/oss/python/langchain/multi-agent/handoffs
+ * Implements tool-driven transitions for agent orchestration.
  *
  * Invariants:
  * 1. Strict Message Pairing: Every handoff tool call (AIMessage) is paired with

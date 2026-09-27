@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-describe("LangChain Tool-Calling Frontend Best Practices", () => {
+describe("Agent Tool-Calling Frontend Best Practices", () => {
   const toolCallListPath = path.resolve(__dirname, "../src/components/ToolCallList.tsx");
   const messageBubblePath = path.resolve(__dirname, "../src/components/MessageBubble.tsx");
   const typesPath = path.resolve(__dirname, "../src/types/index.ts");

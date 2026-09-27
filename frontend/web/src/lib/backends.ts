@@ -1,8 +1,7 @@
 /**
- * OneShot Frontend DeepAgents Filesystem Backends Model
+ * OneShot Frontend Agent Filesystem Backends Model
  *
- * Implements frontend projection of the pluggable backends architecture per:
- * https://docs.langchain.com/oss/python/deepagents/backends
+ * Implements frontend projection of the pluggable backends architecture.
  *
  * Exposes:
  * - Composite routed backend definition (/workspace/, /scratch/, /memories/, /artifacts/)

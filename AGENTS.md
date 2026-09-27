@@ -143,9 +143,9 @@ Use explicit, consistent names for local path variables:
 9. Do not commit generated build output or secrets.
 10. Do not use destructive Git commands without explicit user approval.
 
-## Streaming & Event Standard (DeepAgents Architecture)
+## Streaming & Event Standard (Agent Architecture)
 
-The frontend and backend follow the DeepAgents event streaming model:
+The frontend and backend follow the Agent event streaming model:
 
 - `stream.messages` carries assistant text deltas.
 - `stream.subagents` carries delegated-agent lifecycle and messages.

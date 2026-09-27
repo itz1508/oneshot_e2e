@@ -6,7 +6,7 @@ import {
   getStructuredFallbackText,
 } from "../src/lib/structured-output.ts";
 
-describe("LangChain Structured Output Frontend Best Practices", () => {
+describe("Agent Structured Output Frontend Best Practices", () => {
   it("Validates before rendering by checking required fields", () => {
     const completeData = { title: "Research Summary", status: "CONFIRMED", count: 5 };
     assert.ok(validateFields(completeData, ["title", "status"]));

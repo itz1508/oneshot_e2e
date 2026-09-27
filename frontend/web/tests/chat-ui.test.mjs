@@ -224,7 +224,7 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
     assert.match(apiSrc, /export \* from "\.\/ag-ui"/);
   });
 
-  it("verifies DeepAgents Backends and Multi-Agent Handoffs frontend models and drawer UI", () => {
+  it("verifies Agent Backends and Multi-Agent Handoffs frontend models and drawer UI", () => {
     const backendsSrc = read("frontend/web/src/lib/backends.ts");
     const handoffsSrc = read("frontend/web/src/lib/handoffs.ts");
     const apiSrc = read("frontend/web/src/lib/api.ts");

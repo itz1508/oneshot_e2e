@@ -1,8 +1,7 @@
 /**
- * OneShot DeepAgents Filesystem Backend Protocol
+ * OneShot Agent Filesystem Backend Protocol
  *
- * Implements the pluggable backend specification per:
- * https://docs.langchain.com/oss/python/deepagents/backends
+ * Implements the pluggable backend specification for Agent runtime.
  *
  * Exposes virtual filesystem operations:
  * - ls, read, write, edit, glob, grep, delete

@@ -157,7 +157,7 @@ const reasoningTests = [
   {
     name: 'Security Invariants & 4-Partition Sandbox',
     task: 'general',
-    prompt: 'Analyze the security invariant and explain the 4 filesystem sandbox partitions in DeepAgents.',
+    prompt: 'Analyze the security invariant and explain the 4 filesystem sandbox partitions in Agent.',
     expectedCode: 'SEC-INV-001',
     assertDelta: (text) => text.includes('/workspace/') && text.includes('/scratch/') && text.includes('virtual_mode: ENFORCED'),
   },

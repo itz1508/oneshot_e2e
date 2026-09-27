@@ -254,7 +254,7 @@ describe("OneShot Session Ledger (Backend)", () => {
   });
 });
 
-describe("DeepAgents Pluggable Sandboxed Backends (Backend)", () => {
+describe("Agent Pluggable Sandboxed Backends (Backend)", () => {
   it("enforces path traversal containment in FilesystemBackend", () => {
     const backend = new FilesystemBackend({
       rootDir: process.cwd(),

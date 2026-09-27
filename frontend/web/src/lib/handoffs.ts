@@ -1,8 +1,7 @@
 /**
  * OneShot Frontend Multi-Agent Handoffs Model
  *
- * Implements frontend projection of the LangChain Multi-Agent Handoff architecture per:
- * https://docs.langchain.com/oss/python/langchain/multi-agent/handoffs
+ * Implements frontend projection of the multi-agent handoff architecture.
  *
  * Enforces OneShot's 7 Canonical Stages & Human Gates:
  * 1. Researcher -> Gate 1: Research Review

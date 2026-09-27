@@ -1,8 +1,7 @@
 /**
- * OneShot FilesystemBackend — Sandboxed Local Disk Filesystem for Deep Agents
+ * OneShot FilesystemBackend — Sandboxed Local Disk Filesystem for Agent
  *
- * Implements the FilesystemBackend pattern per:
- * https://docs.langchain.com/oss/python/deepagents/backends#filesystembackend-local-disk
+ * Implements the FilesystemBackend pattern.
  *
  * Characteristics:
  * - Reads and writes real files on disk under a configurable rootDir.

@@ -8,7 +8,7 @@
     {
       "case_id": "tc-security-invariants",
       "task": "general",
-      "prompt": "Analyze the security invariant and explain the 4 filesystem sandbox partitions in DeepAgents.",
+      "prompt": "Analyze the security invariant and explain the 4 filesystem sandbox partitions in Agent.",
       "expected_finding_code": "SEC-INV-001",
       "expected_partitions": [
         "/workspace/",

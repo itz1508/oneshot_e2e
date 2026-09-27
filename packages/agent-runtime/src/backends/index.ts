@@ -1,8 +1,7 @@
 /**
- * OneShot DeepAgents Filesystem Backends
+ * OneShot Agent Filesystem Backends
  *
- * Pluggable virtual filesystem architectures per:
- * https://docs.langchain.com/oss/python/deepagents/backends
+ * Pluggable virtual filesystem architectures.
  */
 
 export type * from "./protocol.js";

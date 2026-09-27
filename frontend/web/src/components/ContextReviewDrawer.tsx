@@ -471,7 +471,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
           <div className="space-y-4">
             <div>
               <strong className="block text-xs font-semibold text-[#dedede]">
-                DeepAgents Filesystem Backends
+                Agent Filesystem Backends
               </strong>
               <small className="block text-[8px] text-[#6e6e73]">
                 Pluggable prefix routing &amp; sandbox isolation
@@ -532,7 +532,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
                 OneShot Fleet Architecture
               </strong>
               <small className="block text-[9px] text-[#6e6e73]">
-                Google ADK Workflow · DeepAgents SSE · Gemini 3.5 Flash · Cloud Run
+                Google ADK Workflow · Agent SSE · Gemini 3.5 Flash · Cloud Run
               </small>
             </div>
 
@@ -547,7 +547,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
             <div className="p-3 rounded-lg border border-blue-500/20 bg-blue-500/5 space-y-1">
               <span className="text-xs font-semibold text-blue-300">Layer 1: Canonical Web UI</span>
               <p className="text-[11px] text-[#b0b0b8] leading-relaxed">
-                Next.js 16 App Router with DeepAgents SSE reactive projections (<code>stream.messages</code>, <code>stream.subagents</code>, <code>stream.tool_calls</code>, <code>stream.values.todos</code>) and Action API v2 client.
+                Next.js 16 App Router with Agent SSE reactive projections (<code>stream.messages</code>, <code>stream.subagents</code>, <code>stream.tool_calls</code>, <code>stream.values.todos</code>) and Action API v2 client.
               </p>
             </div>
 

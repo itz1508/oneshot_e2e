@@ -94,7 +94,7 @@ def execute_reasoning_core(request: ReasoningRequest) -> ReasoningResponse:
         recommendation = "Promotion approved."
     else:
         goal_lower = goal.lower()
-        if any(w in goal_lower for w in ["partition", "sandbox", "security", "deepagents", "invariant", "filesystem"]):
+        if any(w in goal_lower for w in ["partition", "sandbox", "security", "invariant", "filesystem"]):
             analysis.extend([
                 "Decomposed problem into virtual filesystem isolation and security boundary verification.",
                 "Partition 1: /workspace/ — physical repository root; read/write durable source code; path traversal containment enforced.",
@@ -109,10 +109,10 @@ def execute_reasoning_core(request: ReasoningRequest) -> ReasoningResponse:
                 Finding(
                     code="SEC-INV-001",
                     severity="info",
-                    message="DeepAgents 4-partition sandbox boundary enforced. Path traversal containment verified with zero leaks.",
+                    message="Agent 4-partition sandbox boundary enforced. Path traversal containment verified with zero leaks.",
                 )
             )
-            recommendation = "Sandbox partition isolation verified. Environment complies with DeepAgents security invariants."
+            recommendation = "Sandbox partition isolation verified. Environment complies with Agent security invariants."
         elif any(w in goal_lower for w in ["adk", "workflow", "stage", "gate", "orchestration"]):
             analysis.extend([
                 "Decomposed request into Google ADK multi-agent orchestration lifecycle.",
@@ -136,7 +136,7 @@ def execute_reasoning_core(request: ReasoningRequest) -> ReasoningResponse:
             analysis.extend([
                 "Evaluating repository contract fixtures in app/fixtures/.",
                 "Fixture 1 (app/fixtures/sample.json): Contract baseline sample verified.",
-                "Fixture 2 (app/fixtures/security-invariants.json): DeepAgents 4 sandbox partitions verified.",
+                "Fixture 2 (app/fixtures/security-invariants.json): Agent 4 sandbox partitions verified.",
                 "Fixture 3 (app/fixtures/adk-workflow.json): Google ADK workflow and human gates verified.",
                 "Fixture 4 (app/fixtures/reasoning-dryrun.json): Offline Python reasoning test suite verified.",
                 "Fixture 5 (app/fixtures/data.json): Runtime engine state baseline verified.",
@@ -222,7 +222,7 @@ def cli_main():
             pace = 0.0
 
         goal_lower = req.goal.lower()
-        is_sandbox_query = any(w in goal_lower for w in ["partition", "sandbox", "security", "deepagents", "invariant", "filesystem"])
+        is_sandbox_query = any(w in goal_lower for w in ["partition", "sandbox", "security", "invariant", "filesystem"])
         is_workflow_query = any(w in goal_lower for w in ["adk", "workflow", "stage", "gate", "orchestration"])
         is_fixture_query = any(w in goal_lower for w in ["fixture", "dry run", "dryrun", "baseline"])
 
@@ -230,7 +230,7 @@ def cli_main():
             deltas = [
                 "<think>\n",
                 "1. Formulation & Threat Model:\n",
-                "   - Goal: Analyze security invariants and explain the 4 filesystem sandbox partitions in DeepAgents.\n",
+                "   - Goal: Analyze security invariants and explain the 4 filesystem sandbox partitions in Agent.\n",
                 "   - Local Python reasoning engine evaluating constraints and invariants.\n",
                 "   - Identifying target namespaces: /workspace/, /scratch/, /memories/, and /artifacts/.\n",
                 "   - Security Boundary: Enforce strict workspace confinement and prevent path traversal escapes.\n\n",
@@ -244,8 +244,8 @@ def cli_main():
                 "   - Invariant 2 (No Fabrication): Empty, loading, and error states preserved; all payloads strictly validated against schemas.\n",
                 "   - Invariant 3 (Human Gate Governance): Gate 1 (Research Review) and Gate 2 (Build Ready) require human authorization.\n",
                 "</think>\n\n",
-                "### DeepAgents 4-Partition Sandbox Architecture\n\n",
-                "DeepAgents isolates agent execution using four distinct virtual filesystem partitions to prevent escape, state leakage, and unauthorized modifications:\n\n",
+                "### Agent 4-Partition Sandbox Architecture\n\n",
+                "Agent isolates execution using four distinct virtual filesystem partitions to prevent escape, state leakage, and unauthorized modifications:\n\n",
                 "1. **`/workspace/` (Durable Working Tree)**\n",
                 "   - Houses the active codebase and tracked project source files.\n",
                 "   - Strictly confined to the workspace root; path traversal outside the root boundary is blocked.\n\n",
@@ -315,7 +315,7 @@ def cli_main():
                 "   - Verification criteria: Valid JSON schema, immutable fixture_id, and cryptographic SHA-256 matching.\n\n",
                 "2. Fixture Inspection Matrix:\n",
                 "   - Fixture 1 (app/fixtures/sample.json): Contract baseline sample for API validation.\n",
-                "   - Fixture 2 (app/fixtures/security-invariants.json): DeepAgents 4 sandbox partitions and containment rules.\n",
+                "   - Fixture 2 (app/fixtures/security-invariants.json): Agent 4 sandbox partitions and containment rules.\n",
                 "   - Fixture 3 (app/fixtures/adk-workflow.json): Google ADK workflow stage machine and Human Gate 1 & 2 specs.\n",
                 "   - Fixture 4 (app/fixtures/reasoning-dryrun.json): Offline Python reasoning test scenarios and expected findings.\n",
                 "   - Fixture 5 (app/fixtures/data.json): Runtime engine test baseline.\n\n",
@@ -328,7 +328,7 @@ def cli_main():
                 "1. **`app/fixtures/sample.json` (`fix-sample-01`)**\n",
                 "   - Baseline contract fixture for schema validation and session isolation.\n\n",
                 "2. **`app/fixtures/security-invariants.json` (`fix-sec-01`)**\n",
-                "   - Defines the 4 DeepAgents filesystem partitions (`/workspace/`, `/scratch/`, `/memories/`, `/artifacts/`) and containment invariants.\n\n",
+                "   - Defines the 4 Agent filesystem partitions (`/workspace/`, `/scratch/`, `/memories/`, `/artifacts/`) and containment invariants.\n\n",
                 "3. **`app/fixtures/adk-workflow.json` (`fix-adk-01`)**\n",
                 "   - Specifies the 5-stage ADK workflow machine and Human Gate 1 & Gate 2 approval checkpoints.\n\n",
                 "4. **`app/fixtures/reasoning-dryrun.json` (`fix-reason-01`)**\n",

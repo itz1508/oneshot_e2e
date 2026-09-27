@@ -35,7 +35,7 @@ Real SSE Streaming · Python Reasoning Subprocess · Strict Filesystem Sandboxin
 
 | 📖 [README.md](README.md) | 🏛️ [ARCHITECTURE.md](ARCHITECTURE.MD) | 📊 [DIAGRAM.md](DIAGRAM.md) | ⚖️ [LICENSE](LICENSE) |
 | :--- | :--- | :--- | :--- |
-| **Interactive Console Guide**<br />• One-Click Installation Script<br />• DeepAgents SSE Real-Time Console<br />• 5 Offline Contract Fixtures<br />• Multi-Provider Switching (Gemini, OpenAI, Mistral, Ollama) | **System Architecture & Security**<br />• DeepAgents Event Streaming Core<br />• 4-Partition Sandbox Isolation (`/workspace/`, `/scratch/`, `/memories/`, `/artifacts/`)<br />• Python Reasoning Subprocess<br />• Dual Human-in-the-Loop Gates | **Topologies & DAG Proofs**<br />• 417-Test Directed Acyclic Graph<br />• Stage Machine Transitions (`IDLE` ➔ `VALIDATION`)<br />• Execution Dependency Hierarchy<br />• 100% Deterministic Byte Verification | **Apache-2.0 Open Source License**<br />• Permissive Open Source License<br />• Commercial & Distribution Rights<br />• Patent & Copyright Grants<br />• Standard Liability & Warranty Terms |
+| **Interactive Console Guide**<br />• One-Click Installation Script<br />• Agent SSE Real-Time Console<br />• 5 Offline Contract Fixtures<br />• Multi-Provider Switching (Gemini, OpenAI, Mistral, Ollama) | **System Architecture & Security**<br />• Agent Event Streaming Core<br />• 4-Partition Sandbox Isolation (`/workspace/`, `/scratch/`, `/memories/`, `/artifacts/`)<br />• Python Reasoning Subprocess<br />• Dual Human-in-the-Loop Gates | **Topologies & DAG Proofs**<br />• 417-Test Directed Acyclic Graph<br />• Stage Machine Transitions (`IDLE` ➔ `VALIDATION`)<br />• Execution Dependency Hierarchy<br />• 100% Deterministic Byte Verification | **Apache-2.0 Open Source License**<br />• Permissive Open Source License<br />• Commercial & Distribution Rights<br />• Patent & Copyright Grants<br />• Standard Liability & Warranty Terms |
 
 ---
 
@@ -106,7 +106,7 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 ## 🏛️ System Architecture
 
 <div align="left">
-  <img src="public/demo/architecture-diagram.svg" alt="OneShot Architecture — DeepAgents SSE, Python Reasoning, Filesystem Sandbox, Human Gates" width="100%" />
+  <img src="public/demo/architecture-diagram.svg" alt="OneShot Architecture — Agent SSE, Python Reasoning, Filesystem Sandbox, Human Gates" width="100%" />
 </div>
 
 ---
@@ -127,7 +127,7 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 | Feature | Description |
 | :--- | :--- |
-| **DeepAgents Event Streaming** | `stream.messages`, `stream.tool_calls`, `stream.subagents` — real SSE with no fabricated progress |
+| **Agent Event Streaming** | `stream.messages`, `stream.tool_calls`, `stream.subagents` — real SSE with no fabricated progress |
 | **Filesystem Sandbox** | 4 strict partitions: `/workspace/`, `/scratch/`, `/memories/`, `/artifacts/` — path traversal BLOCKED |
 | **Human-in-the-Loop Gates** | Gate 1 & Gate 2 require explicit human approval before state transitions |
 | **Multi-Model Support** | Google Gemini, OpenAI, Nebius, Mistral, local Ollama — switchable in the UI, no restart |
@@ -170,7 +170,7 @@ OneShot includes **5 deterministic contract fixtures** under `app/fixtures/` and
 | Fixture | ID | Purpose & Invariants Verified |
 | :--- | :--- | :--- |
 | [`sample.json`](app/fixtures/sample.json) | `fix-sample-01` | Baseline contract schema and session isolation proof |
-| [`security-invariants.json`](app/fixtures/security-invariants.json) | `fix-sec-01` | DeepAgents 4-partition sandbox (`/workspace/`, `/scratch/`, `/memories/`, `/artifacts/`) |
+| [`security-invariants.json`](app/fixtures/security-invariants.json) | `fix-sec-01` | Agent 4-partition sandbox (`/workspace/`, `/scratch/`, `/memories/`, `/artifacts/`) |
 | [`adk-workflow.json`](app/fixtures/adk-workflow.json) | `fix-adk-01` | Google ADK stage machine (`IDLE` ➔ `VALIDATION`) and Human Gates (Gate 1 & Gate 2) |
 | [`reasoning-dryrun.json`](app/fixtures/reasoning-dryrun.json) | `fix-reason-01` | Offline Python reasoning test cases with thinking chain expectations |
 | [`data.json`](app/fixtures/data.json) | `fixture-401` | Runtime engine state transition baseline |

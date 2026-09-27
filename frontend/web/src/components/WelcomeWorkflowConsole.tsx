@@ -15,10 +15,10 @@ export interface FixtureScenario {
 export const FIXTURE_SCENARIOS: FixtureScenario[] = [
   {
     id: "fix-sec-01",
-    name: "DeepAgents 4-Partition Sandbox Security Invariants",
+    name: "Agent 4-Partition Sandbox Security Invariants",
     file: "app/fixtures/security-invariants.json",
     description: "Enforces virtual filesystem isolation across workspace, scratch, memories, and artifacts without external API keys.",
-    prompt: "Audit and verify DeepAgents 4-partition sandbox security invariants and check filesystem isolation boundaries.",
+    prompt: "Audit and verify Agent 4-partition sandbox security invariants and check filesystem isolation boundaries.",
     targetFinding: "SEC-INV-001",
     partitions: ["/workspace", "/scratch", "/memories", "/artifacts"],
   },

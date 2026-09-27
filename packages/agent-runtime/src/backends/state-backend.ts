@@ -1,8 +1,7 @@
 /**
- * OneShot StateBackend — Ephemeral In-Memory Storage for Deep Agents
+ * OneShot StateBackend — Ephemeral In-Memory Storage for Agent
  *
- * Implements the thread-scoped StateBackend pattern per:
- * https://docs.langchain.com/oss/python/deepagents/backends#statebackend
+ * Implements the thread-scoped StateBackend pattern.
  *
  * Characteristics:
  * - Thread-scoped and ephemeral (lives in agent memory/state).
