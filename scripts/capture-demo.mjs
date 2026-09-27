@@ -120,7 +120,7 @@ async function captureTerminal(browser, outFile) {
     '$ pnpm run build:backend', 'tsc -p tsconfig.json --outDir dist --noEmit false   (exit 0)',
     '$ pnpm test', 'tests 222   pass 222   fail 0',
     '$ pnpm run test:runtime', 'tests 99    pass 99    fail 0',
-    '$ pnpm run test:web', 'tests 77    pass 77    fail 0',
+    '$ pnpm run test:web', 'tests 84    pass 84    fail 0',
     '$ pnpm run test:e2e', '21 passed, 3 skipped',
     '$ pnpm run verify', 'Passed: 7/7 - All checks passed!',
     '',

@@ -74,8 +74,6 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
----
-
 ## ⚡ Terminal — Installation, Build & Tests (426 Passing)
 
 <div align="left">
