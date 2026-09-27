@@ -7,7 +7,6 @@ param (
 )
 
 $ErrorActionPreference = "Stop"
-$ScriptDir = $PSScriptRoot
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location -Path $RepoRoot
 

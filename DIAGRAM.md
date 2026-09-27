@@ -24,7 +24,7 @@ flowchart TD
     
     PLAN_FLOW --> APPROVED_PLAN["🛑 APPROVED PLAN\n(Human Gate 2 Approval · STOPS)"]
     
-    APPROVED_PLAN -.->|"Consumed later by"| IMPL_RT["📦 Implementation Runtime\n(Separate runtime · Executes code & 391 tests)"]
+    APPROVED_PLAN -.->|"Consumed later by"| IMPL_RT["📦 Implementation Runtime\n(Separate runtime · Executes code & 417 tests)"]
 
     classDef chat fill:#0e1e38,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
     classDef res fill:#082f49,stroke:#06b6d4,stroke-width:2px,color:#f8fafc;
@@ -100,7 +100,7 @@ flowchart TD
             DEP_PLAN["ApprovedPlan (strictly required)\n• Throws error if missing or without planId"]
             DEP_SANDBOX["CompositeBackend 4 Partitions:\n• /workspace/ (Physical disk durable code)\n• /scratch/ (Thread RAM) · /memories/ (Cross-thread)\n• /artifacts/ (Frozen hash packages)"]
             DEP_REASONER["Offline Python Reasoner & Subprocess IPC\n(reasoning_engine.py · SHA-256 fixture proofs)"]
-            DEP_TESTS["Test Suite & Verification Matrix\n(391 Node/TS tests + manifest verification)"]
+            DEP_TESTS["Test Suite & Verification Matrix\n(417 Node/TS tests + manifest verification)"]
         end
 
         O3_DEPS --> EXEC_CHAIN["Strict 7-Phase Execution Lifecycle (One phase at a time):\nIMPLEMENTATION ➔ GAP_DISCOVERY ➔ GAP_RESOLUTION\n➔ VERIFICATION ➔ RECEIPT ➔ PROMOTION ➔ CLOSED"]
@@ -173,7 +173,7 @@ flowchart TD
         PY_SUB["Offline Python Subprocess IPC\n(reasoning_engine.py · SHA-256 fixture proof)"]
         STRANDS_AGENT["Live Model Agent\n(Gemini 3.5 Flash / OpenAI fallback)"]
         SANDBOX["CompositeBackend Sandbox\n(/workspace/ · /scratch/ · /memories/ · /artifacts/)\nvirtual_mode: ENFORCED · path_traversal: BLOCKED"]
-        TESTS["Evaluation Matrix\n(391 Tests · Manifest parity)"]
+        TESTS["Evaluation Matrix\n(417 Tests · Manifest parity)"]
         LEDGER["SessionLedger Sealed Checkpoint"]
     end
 

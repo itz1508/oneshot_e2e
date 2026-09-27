@@ -15,7 +15,7 @@ Real SSE Streaming · Python Reasoning Subprocess · Strict Filesystem Sandboxin
   <img src="https://img.shields.io/badge/Node.js-%3E%3D24.21.0-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js >= 24.21.0" />
   <img src="https://img.shields.io/badge/pnpm-%3E%3D11.27.1-F69220?style=flat-square&logo=pnpm&logoColor=white" alt="pnpm >= 11.27.1" />
   <img src="https://img.shields.io/badge/TypeScript-Strict_Mode-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript Strict Mode" />
-  <img src="https://img.shields.io/badge/tests-391_passing-brightgreen?style=flat-square" alt="391 tests passing" />
+  <img src="https://img.shields.io/badge/tests-417_passing-brightgreen?style=flat-square" alt="417 tests passing" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square" alt="Apache-2.0 license" />
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square" alt="Windows, macOS, Linux" />
 </p>
@@ -229,7 +229,7 @@ Or configure **Google Gemini**, **OpenAI**, **Nebius**, **Mistral**, or local **
 # Start backend first
 pnpm run build && pnpm start
 
-# In another terminal — record the 60s live capture
+# In another terminal — record the combined live demo
 pnpm run capture:demo
 
 # Verify all assets and byte/hash parity
@@ -238,9 +238,25 @@ pnpm run verify:demo
 
 The capture script ([`scripts/capture-demo.mjs`](scripts/capture-demo.mjs)) drives a Playwright session against the **real running backend**, producing:
 
-- `public/demo/oneshot-demo.webm` — 60-second continuous-motion video
+- `public/demo/oneshot-demo.mp4` — combined 3m15s H.264 video with embedded subtitles and clean, dry conversational voice-over narration
+- `public/demo/oneshot-demo.webm` — HD WebM video with synchronized audio
+- `public/demo/oneshot-demo.gif` — animated autoplay preview for GitHub README
 - `public/demo/oneshot-demo.vtt` — synchronized WebVTT live captions
-- `public/demo/screen-*.png` — full screenshot progression set
+- `public/demo/screen-*.png` — full 18-screenshot progression set
+
+---
+
+## 🚀 Deployment
+
+- **Canonical Frontend (GitHub Pages)**:
+  Static export hosted via GitHub Actions workflow on [GitHub Pages](https://itz1508.github.io/oneshot_e2e/).
+- **Split Frontend Alternative (Vercel)**:
+  Static Next.js export optionally deployed to Vercel (see [`frontend/web/VERCEL_DEPLOY.md`](frontend/web/VERCEL_DEPLOY.md)).
+- **Stateful Backend Server (Render / Container / VM)**:
+  The stateful backend (`node dist/backend/index.js`) runs on a persistent Node.js `>=24.21.0` host.
+  - **Build command**: `pnpm install --frozen-lockfile && pnpm run build:backend`
+  - **Start command**: `node dist/backend/index.js`
+  - **Environment**: `NODE_VERSION=24.21.0`, `PORT=10000`, `HOST=0.0.0.0`, `ONESHOT_DISABLE_PYTHON_SPAWN=1`
 
 ---
 

@@ -1,54 +1,54 @@
 WEBVTT
 
 1
-00:00:00.592 --> 00:00:14.105
+00:00:03.509 --> 00:00:14.064
 This single-screen console lets you inspect, execute, and verify software engineering tasks immediately without navigating separate pages.
 
 2
-00:00:14.105 --> 00:00:27.022
+00:00:14.064 --> 00:00:27.005
 Collapse the navigation to expand the workspace when you need more space to inspect live streaming traces and partitions.
 
 3
-00:00:27.022 --> 00:00:42.009
+00:00:27.005 --> 00:00:42.030
 Select a test scenario to evaluate security invariants and filesystem isolation boundaries without requiring API keys or external credentials.
 
 4
-00:00:42.009 --> 00:00:56.089
+00:00:42.030 --> 00:00:56.046
 Trigger the test scenario to start the execution stream in the shared workflow area.
 
 5
-00:00:56.089 --> 00:01:14.095
+00:00:56.046 --> 00:01:14.003
 The workflow processes the request, confirming strict containment across all four virtual filesystem partitions and verifying directory isolation.
 
 6
-00:01:14.095 --> 00:01:30.030
+00:01:14.003 --> 00:01:30.097
 Inspect partition boundaries in the context drawer, or flip the task card to audit real lifecycle events and execution proofs.
 
 7
-00:01:30.030 --> 00:01:45.009
+00:01:30.097 --> 00:01:45.065
 Authorize the review checkpoint to confirm findings and advance the verified run to approved status.
 
 8
-00:01:45.009 --> 00:02:01.108
+00:01:45.065 --> 00:02:01.069
 Switch seamlessly to live execution on the same screen by selecting your preferred provider and connecting your environment configuration.
 
 9
-00:02:01.108 --> 00:02:19.011
+00:02:01.069 --> 00:02:19.059
 Enable context-aware research for the query and compose an engineering request. The input automatically expands to accommodate requirements.
 
 10
-00:02:19.011 --> 00:02:35.055
+00:02:19.059 --> 00:02:35.002
 The live agent executes the request, emitting real-time streaming tokens, structured reasoning, and lifecycle status through the event stream.
 
 11
-00:02:35.055 --> 00:02:49.846
+00:02:35.002 --> 00:02:49.029
 Automated tools execute directly against workspace files, producing genuine output records and deterministic validation proofs.
 
 12
-00:02:49.846 --> 00:03:02.011
+00:02:49.029 --> 00:03:02.057
 Review the cryptographic build manifest, verify artifact hashes, and interact with the finalized response through copy or branching actions.
 
 13
-00:03:02.011 --> 00:03:15.107
+00:03:02.057 --> 00:03:15.060
 Both offline fixture verification and live agentic execution follow the exact same verifiable contracts, delivering end-to-end software engineering integrity.
 
