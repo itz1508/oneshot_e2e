@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T12:44:33Z",
+  "generated_at": "2026-09-27T12:47:34Z",
   "version": "1.3.0",
-  "commit": "2c475cf2",
+  "commit": "fabb76fb",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -35,8 +35,8 @@
     },
     {
       "path": "README.md",
-      "size": 7893,
-      "hash": "sha256:c5e4beb0ee1944c8051fe5380bbd07af04fabd36f5d550d4cd1cc8b5c50a2dc7",
+      "size": 6118,
+      "hash": "sha256:6e6d286ece99d7bee1a7c9751572a62eface4d35f12e0de8bc76a8d76e05f941",
       "category": "source"
     },
     {
@@ -6685,7 +6685,7 @@
   "statistics": {
     "total_files": 1113,
     "source_files": 1113,
-    "total_size_bytes": 13484884,
+    "total_size_bytes": 13483109,
     "by_extension": {
       ".yml": 1,
       ".md": 19,

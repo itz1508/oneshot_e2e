@@ -134,49 +134,7 @@ pnpm start
 .\scripts\start-web.ps1 -Port 9000 -Sample   # custom port + sample data
 ```
 
----
-
-## 🧪 Run Tests, Fixtures & Dry Run
-
-OneShot includes **5 deterministic contract fixtures** under `app/fixtures/` and an offline dry-run engine for testing without external API keys or network dependencies:
-
-| Fixture | ID | Purpose & Invariants Verified |
-| :--- | :--- | :--- |
-| [`sample.json`](app/fixtures/sample.json) | `fix-sample-01` | Baseline contract schema and session isolation proof |
-| [`security-invariants.json`](app/fixtures/security-invariants.json) | `fix-sec-01` | Agent 4-partition sandbox (`/workspace/`, `/scratch/`, `/memories/`, `/artifacts/`) |
-| [`adk-workflow.json`](app/fixtures/adk-workflow.json) | `fix-adk-01` | Google ADK stage machine (`IDLE` ➔ `VALIDATION`) and Human Gates (Gate 1 & Gate 2) |
-| [`reasoning-dryrun.json`](app/fixtures/reasoning-dryrun.json) | `fix-reason-01` | Offline Python reasoning test cases with thinking chain expectations |
-| [`data.json`](app/fixtures/data.json) | `fixture-401` | Runtime engine state transition baseline |
-
-```bash
-# Execute deterministic dry-run verification against all contract fixtures
-pnpm run dry-run
-
-# Or launch OneShot directly in dry-run mode
-pnpm run oneshot --dry-run
-
-# Backend tests — asserts actual response payloads & fixture proofs (17 suites)
-pnpm test
-
-# Workflow engine & state machine tests
-pnpm run test:runtime
-
-# Web frontend tests
-pnpm --prefix frontend/web test
-
-# Browser E2E tests
-pnpm run test:e2e
-
-# Full repository verification suite (7/7 checks)
-pnpm run verify
-
-# Verify demo assets (byte/hash parity)
-pnpm run verify:demo
-```
-
 > **Requirements:** Node.js `>= 24.21.0` · pnpm `>= 11.27.1`
->
-> These are minimum supported versions. CI pins Node.js `24.21.0` and pnpm `11.27.1` exactly for reproducible builds. Newer local versions are allowed when they satisfy the minimums and the lockfile remains reproducible.
 
 ---
 
