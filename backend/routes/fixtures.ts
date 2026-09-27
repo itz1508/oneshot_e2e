@@ -6,8 +6,9 @@ import {
   captureScreenshotTool,
   readImageAttachmentTool,
   tavilySearchBackend,
-  type WorkflowStage,
 } from "../../packages/agent-runtime/src/index.js";
+import { WorkflowService } from "../services/workflow-service.js";
+import { sendJson, sendError } from "./helpers.js";
 import type { RouteHandler } from "./types.js";
 
 export const handleFixtureRoutes: RouteHandler = async (req, res, ctx) => {
@@ -44,13 +45,10 @@ export const handleFixtureRoutes: RouteHandler = async (req, res, ctx) => {
           prompt: parsed.prompt || `Audit and verify ${file} contract integrity`,
         });
       }
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true, fixtures: fixturesList }));
+      return sendJson(res, 200, { ok: true, fixtures: fixturesList });
     } catch (err: any) {
-      res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: false, error: err.message }));
+      return sendJson(res, 500, { ok: false, error: err.message });
     }
-    return true;
   }
 
   // Contract Fixture Validation Endpoint
@@ -62,9 +60,7 @@ export const handleFixtureRoutes: RouteHandler = async (req, res, ctx) => {
       path: body.path,
       expectedHash: body.expectedHash,
     });
-    res.writeHead(valRes.ok ? 200 : 422, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(valRes));
-    return true;
+    return sendJson(res, valRes.ok ? 200 : 422, valRes);
   }
 
   // Tool Execution Endpoints
@@ -80,41 +76,35 @@ export const handleFixtureRoutes: RouteHandler = async (req, res, ctx) => {
     } else if (toolName === "read_image_attachment") {
       result = await readImageAttachmentTool.invoke(input);
     } else if (toolName === "workflow_transition") {
-      const VALID_TARGETS = ["research", "planning", "gap_analysis", "evaluation", "builder"] as const;
-      const requested = input?.targetStage;
-      if (typeof requested !== "string" || !VALID_TARGETS.includes(requested as (typeof VALID_TARGETS)[number])) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          error: `workflow_transition requires targetStage. Valid: ${VALID_TARGETS.join(", ")}.`,
-          received: requested ?? null,
-        }));
-        return true;
+      const transitionRes = WorkflowService.transitionStage(workflowEngine, input?.targetStage);
+      if (!transitionRes.ok && transitionRes.status === 400) {
+        return sendError(res, 400, transitionRes.error!, { received: transitionRes.received });
       }
-      const targetStage = requested as WorkflowStage;
-      const transitionRes = workflowEngine.transitionTo(targetStage);
+
       sessionLedger.recordAuditHook("on_stage_transition", {
-        targetStage,
-        result: transitionRes,
+        targetStage: input?.targetStage,
+        result: transitionRes.result,
       });
-      if (transitionRes.success) {
+
+      if (transitionRes.ok) {
         todoManager.updateSubtaskState("skill-plan", "t3", "done");
         todoManager.updateSubtaskState("skill-plan", "t4", "active");
       }
-      if (!transitionRes.success) {
-        res.writeHead(409, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
+
+      if (!transitionRes.ok) {
+        return sendJson(res, 409, {
           success: false,
           toolName: "workflow_transition",
-          fromStage: transitionRes.fromStage,
-          toStage: transitionRes.toStage,
-          error: transitionRes.error,
-        }));
-        return true;
+          fromStage: transitionRes.result?.fromStage,
+          toStage: transitionRes.result?.toStage,
+          error: transitionRes.result?.error,
+        });
       }
+
       result = {
-        fromStage: transitionRes.fromStage,
-        toStage: transitionRes.toStage,
-        detail: `STAGE_TRANSITION_SUCCESS: Moved from ${transitionRes.fromStage} to ${transitionRes.toStage}`,
+        fromStage: transitionRes.result?.fromStage,
+        toStage: transitionRes.result?.toStage,
+        detail: `STAGE_TRANSITION_SUCCESS: Moved from ${transitionRes.result?.fromStage} to ${transitionRes.result?.toStage}`,
       };
     } else if (toolName === "workflow_gate_status") {
       const currentGate2 = workflowEngine.getGate2();
@@ -128,13 +118,11 @@ export const handleFixtureRoutes: RouteHandler = async (req, res, ctx) => {
       };
     } else if (toolName === "tavily_search") {
       if (!tavilySearchBackend.isConfigured()) {
-        res.writeHead(503, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
+        return sendJson(res, 503, {
           success: false,
           toolName: "tavily_search",
           error: "Research search is currently unavailable because TAVILY_API_KEY is not configured.",
-        }));
-        return true;
+        });
       }
       result = await tavilySearchBackend.search(input?.query || "OneShot architecture");
     } else if (toolName === "git_snapshot") {
@@ -158,14 +146,10 @@ export const handleFixtureRoutes: RouteHandler = async (req, res, ctx) => {
         auditTrail: valRes.auditTrail,
       };
     } else {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: `Unknown tool: ${toolName}` }));
-      return true;
+      return sendError(res, 400, `Unknown tool: ${toolName}`);
     }
 
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ success: true, toolName, result }));
-    return true;
+    return sendJson(res, 200, { success: true, toolName, result });
   }
 
   return false;

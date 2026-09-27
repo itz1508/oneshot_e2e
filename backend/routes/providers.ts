@@ -1,7 +1,7 @@
-import path from "node:path";
-import fs from "node:fs/promises";
 import { createLiveModel, createMainAgent } from "../../packages/agent-runtime/src/index.js";
 import { oauthManager } from "../oauth.js";
+import { ProviderService } from "../services/provider-service.js";
+import { sendJson, sendError } from "./helpers.js";
 import type { RouteHandler } from "./types.js";
 
 export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
@@ -109,7 +109,7 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
       };
     }
 
-    // Check Mistral (Test Key Preset)
+    // Check Mistral
     const hasMistral = isConfiguredKey(process.env.MISTRAL_API_KEY);
     status.mistral = {
       configured: hasMistral,
@@ -119,7 +119,17 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
       tested: hasMistral,
     };
 
-    // Check Ollama (Local Non-API Preset)
+    // Check Nebius
+    const hasNebius = isConfiguredKey(process.env.NEBIUS_API_KEY);
+    status.nebius = {
+      configured: hasNebius,
+      available: hasNebius,
+      latency: 0,
+      model: process.env.NEBIUS_MODEL || "meta-llama/Meta-Llama-3.1-70B-Instruct",
+      tested: false,
+    };
+
+    // Check Ollama
     status.ollama = {
       configured: Boolean(process.env.OLLAMA_BASE_URL),
       available: Boolean(process.env.OLLAMA_BASE_URL),
@@ -128,53 +138,30 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
       tested: false,
     };
 
-    // Additional provider status
-    status.nebius = {
-      configured: isConfiguredKey(process.env.NEBIUS_API_KEY),
-      available: isConfiguredKey(process.env.NEBIUS_API_KEY),
-      tested: false,
-    };
-
+    // Check Tavily
     status.tavily = {
       configured: isConfiguredKey(process.env.TAVILY_API_KEY),
       available: isConfiguredKey(process.env.TAVILY_API_KEY),
       tested: false,
     };
 
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(status));
-    return true;
+    return sendJson(res, 200, status);
   }
 
   // System status — authoritative engine & session state
   if (pathname === "/api/system/status" && req.method === "GET") {
-    const checkpoints = sessionLedger.getAllCheckpoints();
-    const auditLogs = sessionLedger.getAuditHookLogs();
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
-      status: "healthy",
-      currentStage: workflowEngine.getCurrentStage(),
-      gate1: workflowEngine.getGate1(),
-      gate2: workflowEngine.getGate2(),
-      checkpointsCount: checkpoints.length,
-      auditLogsCount: auditLogs.length,
-      uptimeSeconds: Math.round(process.uptime()),
-      activeSessions: sessions.size,
-      providers: {
-        gemini: isConfiguredKey(process.env.GEMINI_API_KEY),
-        openai: isConfiguredKey(process.env.OPENAI_API_KEY),
-        mistral: isConfiguredKey(process.env.MISTRAL_API_KEY),
-        tavily: isConfiguredKey(process.env.TAVILY_API_KEY),
-      },
-    }));
-    return true;
+    const summary = ProviderService.getWorkflowProviderSummary(
+      workflowEngine,
+      sessionLedger,
+      sessions.size,
+      isConfiguredKey
+    );
+    return sendJson(res, 200, summary);
   }
 
   // Provider registry
   if (pathname === "/api/integration/providers" && req.method === "GET") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(getProviderRegistry()));
-    return true;
+    return sendJson(res, 200, getProviderRegistry());
   }
 
   // Provider configure (saves key to runtime and persists to app/env/.env)
@@ -183,75 +170,25 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
     const sessionId = (req.headers["x-session-id"] as string) || "default";
     const { provider, apiKey, model } = body;
 
-    const validProviders = ["gemini", "openai", "mistral", "tavily", "nebius"];
-    if (!validProviders.includes(provider) || !isConfiguredKey(apiKey)) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: `provider must be one of ${validProviders.join(", ")} and apiKey must be configured` }));
-      return true;
+    const allowEnvFilePersistence =
+      process.env.ONESHOT_ALLOW_ENV_FILE_WRITE === "1" || process.env.NODE_ENV !== "production";
+
+    const configRes = await ProviderService.configureProvider({
+      provider,
+      apiKey,
+      model,
+      sessionId,
+      providerConfigs,
+      isConfiguredKey,
+      persistEnv: allowEnvFilePersistence,
+    });
+
+    if (!configRes.ok) {
+      return sendError(res, configRes.status, configRes.error || "Configuration failed");
     }
 
-    const keyMap: Record<string, string> = {
-      gemini: "GEMINI_API_KEY",
-      openai: "OPENAI_API_KEY",
-      mistral: "MISTRAL_API_KEY",
-      tavily: "TAVILY_API_KEY",
-      nebius: "NEBIUS_API_KEY",
-    };
-    const modelMap: Record<string, string> = {
-      gemini: "GEMINI_MODEL",
-      openai: "OPENAI_MODEL",
-      mistral: "MISTRAL_MODEL",
-    };
-
-    const envVar = keyMap[provider];
-    const modelVar = modelMap[provider];
-    const allowEnvFilePersistence = process.env.ONESHOT_ALLOW_ENV_FILE_WRITE === "1"
-      || process.env.NODE_ENV !== "production";
-
-    let persisted = false;
-    if (allowEnvFilePersistence) {
-      try {
-        const envDir = path.resolve(process.cwd(), "app/env");
-        await fs.mkdir(envDir, { recursive: true });
-        const envFile = path.join(envDir, ".env");
-        let existing = "";
-        try {
-          existing = await fs.readFile(envFile, "utf-8");
-        } catch (error: any) {
-          if (error?.code !== "ENOENT") throw error;
-        }
-
-        if (envVar && apiKey) {
-          const regex = new RegExp(`^${envVar}=.*$`, "m");
-          if (regex.test(existing)) {
-            existing = existing.replace(regex, `${envVar}=${apiKey.trim()}`);
-          } else {
-            existing = `${existing.trim()}\n${envVar}=${apiKey.trim()}\n`;
-          }
-        }
-        if (modelVar && model) {
-          const regex = new RegExp(`^${modelVar}=.*$`, "m");
-          if (regex.test(existing)) {
-            existing = existing.replace(regex, `${modelVar}=${model.trim()}`);
-          } else {
-            existing = `${existing.trim()}\n${modelVar}=${model.trim()}\n`;
-          }
-        }
-        await fs.writeFile(envFile, existing, "utf-8");
-        persisted = true;
-      } catch (error: any) {
-        console.error("[OneShot] Error saving app/env/.env:", error.message);
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: `Provider configuration was not persisted: ${error.message}` }));
-        return true;
-      }
-    }
-
-    if (envVar) process.env[envVar] = apiKey.trim();
-    if (modelVar && model) process.env[modelVar] = model.trim();
-    providerConfigs.set(sessionId, { provider, apiKey: apiKey.trim(), model });
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
+    const persisted = configRes.result!.persisted;
+    return sendJson(res, 200, {
       ok: true,
       configured: true,
       provider,
@@ -260,8 +197,7 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
       message: persisted
         ? `Credentials for ${provider} active and persisted to app/env/.env.`
         : `Credentials for ${provider} active for this runtime only (file persistence disabled in production).`,
-    }));
-    return true;
+    });
   }
 
   // Provider config — runtime switching (per session)
@@ -272,43 +208,46 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
 
     const valid = ["gemini", "openai", "mistral", "nebius", "ollama"];
     if (!valid.includes(provider)) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: `Invalid provider. Valid: ${valid.join(", ")}` }));
-      return true;
+      return sendError(res, 400, `Invalid provider. Valid: ${valid.join(", ")}`);
     }
 
-    const resolvedKey = apiKey ||
-      (provider === "gemini" ? process.env.GEMINI_API_KEY :
-       provider === "openai" ? process.env.OPENAI_API_KEY :
-       provider === "mistral" ? process.env.MISTRAL_API_KEY :
-       provider === "ollama" ? "ollama" :
-       process.env.NEBIUS_API_KEY) || "";
+    const resolvedKey =
+      apiKey ||
+      (provider === "gemini"
+        ? process.env.GEMINI_API_KEY
+        : provider === "openai"
+        ? process.env.OPENAI_API_KEY
+        : provider === "mistral"
+        ? process.env.MISTRAL_API_KEY
+        : provider === "ollama"
+        ? "ollama"
+        : process.env.NEBIUS_API_KEY) ||
+      "";
 
     if (provider !== "ollama" && !isConfiguredKey(resolvedKey)) {
-      res.writeHead(503, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        error: `No valid API key for provider "${provider}". Set ${provider.toUpperCase()}_API_KEY in app/env/.env or configure via settings.`,
-      }));
-      return true;
+      return sendError(
+        res,
+        503,
+        `No valid API key for provider "${provider}". Set ${provider.toUpperCase()}_API_KEY in app/env/.env or configure via settings.`
+      );
     }
 
     providerConfigs.set(sessionId, { provider, model, apiKey: resolvedKey, baseUrl });
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
+    return sendJson(res, 200, {
       ok: true,
       success: true,
       sessionId,
       provider,
       model: model || `(default for ${provider})`,
-    }));
-    return true;
+    });
   }
 
   // OAuth endpoints
   if (pathname === "/api/auth/google/init" && req.method === "GET") {
     const state = oauthManager.generateStateToken();
     const { challenge } = oauthManager.generatePKCE();
-    const redirectUri = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    const redirectUri =
+      `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${process.env.GOOGLE_OAUTH_CLIENT_ID || "YOUR_CLIENT_ID"}` +
       `&redirect_uri=${encodeURIComponent(process.env.GOOGLE_OAUTH_REDIRECT_URI || `http://localhost:${port}/auth/callback`)}` +
       `&response_type=code&scope=${encodeURIComponent("openid profile email")}` +
@@ -316,60 +255,46 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
       `&code_challenge=${challenge}` +
       `&code_challenge_method=S256`;
 
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ redirectUri, state }));
-    return true;
+    return sendJson(res, 200, { redirectUri, state });
   }
 
   if (pathname === "/api/auth/google/callback" && req.method === "POST") {
     const body = await parseBody(req);
     const { code, state } = body;
     if (!code || !state) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Missing code or state" }));
-      return true;
+      return sendError(res, 400, "Missing code or state");
     }
 
     try {
       const tokenData = await oauthManager.exchangeCodeForToken(code, state);
       const session = oauthManager.createSession(tokenData.user, tokenData.accessToken);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
+      return sendJson(res, 200, {
         success: true,
         sessionId: session.sessionId,
         user: { email: session.email, name: session.name },
         expiresIn: 86400,
-      }));
-      return true;
+      });
     } catch (err: any) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: err.message }));
-      return true;
+      return sendError(res, 401, err.message);
     }
   }
 
   if (pathname === "/api/auth/google/status" && req.method === "GET") {
     const sessionId = (req.headers["x-session-id"] as string) || "";
     if (!sessionId || !oauthManager.validateSession(sessionId)) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ isAuthenticated: false, reason: "Session invalid or expired" }));
-      return true;
+      return sendJson(res, 401, { isAuthenticated: false, reason: "Session invalid or expired" });
     }
 
     const session = oauthManager.getSession(sessionId);
     if (!session) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ isAuthenticated: false }));
-      return true;
+      return sendJson(res, 401, { isAuthenticated: false });
     }
 
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
+    return sendJson(res, 200, {
       isAuthenticated: true,
       user: { email: session.email, name: session.name },
       expiresAt: session.expiresAt,
-    }));
-    return true;
+    });
   }
 
   if (pathname === "/api/auth/google/logout" && req.method === "POST") {
@@ -377,9 +302,7 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
     if (sessionId) {
       await oauthManager.destroySession(sessionId);
     }
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ success: true, message: "Logged out successfully" }));
-    return true;
+    return sendJson(res, 200, { success: true, message: "Logged out successfully" });
   }
 
   return false;

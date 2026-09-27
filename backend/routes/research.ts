@@ -1,10 +1,6 @@
-import {
-  researchSkill,
-  designPlanningSkill,
-  isResearchHandoffReady,
-  canInvokeDesignPlanning,
-  tavilySearchBackend,
-} from "../../packages/agent-runtime/src/index.js";
+import { tavilySearchBackend } from "../../packages/agent-runtime/src/index.js";
+import { ResearchService } from "../services/research-service.js";
+import { sendJson, sendError } from "./helpers.js";
 import type { RouteHandler } from "./types.js";
 
 export const handleResearchRoutes: RouteHandler = async (req, res, ctx) => {
@@ -14,103 +10,45 @@ export const handleResearchRoutes: RouteHandler = async (req, res, ctx) => {
   // Research never auto-invokes Design_Planning; it only produces a bundle.
   if (pathname === "/api/research/run" && req.method === "POST") {
     const body = await parseBody(req);
-    const intent = (body.intent || "").trim();
-    if (!intent) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Research intent is required" }));
-      return true;
+    const result = await ResearchService.executeGovernedResearch({
+      intent: body.intent,
+      model: body.model,
+      search: body.search,
+      source: body.source,
+    });
+
+    if (!result.ok) {
+      return sendError(res, result.status, result.error || "Research run failed");
     }
 
-    const researchModel = {
-      provider: (body.model?.provider || "gemini") as "gemini",
-      model: (body.model?.model || process.env.GEMINI_MODEL || "gemini-2.5-flash") as string,
-    };
-    const searchConfig = {
-      enabled: body.search?.enabled === true,
-      source: (body.search?.source || "tavily") as "tavily",
-    };
-
-    try {
-      const phases: string[] = [];
-      const result = await researchSkill.run({
-        intent,
-        model: researchModel,
-        search: searchConfig,
-        onPhase: (phase) => phases.push(phase),
-      });
-
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        runId: result.run.runId,
-        phase: result.run.phase,
-        stopped: result.stopped,
-        handoffReady: isResearchHandoffReady(result.run),
-        phases,
-        bundle: result.run.bundle ?? null,
-        issues: result.issues,
-      }));
-    } catch (err: any) {
-      res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: err?.message || "Research run failed" }));
-    }
-    return true;
+    return sendJson(res, 200, result.data);
   }
 
   // Design_Planning — explicitly invoked only. Never auto-triggered.
   // Ends at PRE_BUILD_REVIEWED; only a user approval reaches APPROVED_PLAN.
   if (pathname === "/api/design-planning/plan" && req.method === "POST") {
     const body = await parseBody(req);
-    if (!canInvokeDesignPlanning(body.researchRun ?? null, body.explicitlyInvoked === true)) {
-      const pendingHandoff = body.researchRun
-        ? " Research has not reached READY_FOR_PLANNING."
-        : " Design_Planning must be explicitly invoked (explicitlyInvoked=true).";
-      res.writeHead(body.researchRun ? 409 : 400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        error: pendingHandoff.trim(),
-        phase: body.researchRun?.phase ?? null,
-      }));
-      return true;
+    const result = await ResearchService.executeDesignPlanning({
+      intent: body.intent,
+      researchRun: body.researchRun,
+      explicitlyInvoked: body.explicitlyInvoked,
+      repositoryState: body.repositoryState,
+      existingArchitecture: body.existingArchitecture,
+      existingPhaseReceipts: body.existingPhaseReceipts,
+      existingBaselines: body.existingBaselines,
+      researchBundle: body.researchBundle,
+    });
+
+    if (!result.ok) {
+      return sendError(
+        res,
+        result.status,
+        result.error || "Design_Planning failed",
+        result.phase !== undefined ? { phase: result.phase } : undefined
+      );
     }
 
-    const intent = (body.intent || "").trim();
-    if (!intent) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Planning intent is required" }));
-      return true;
-    }
-
-    try {
-      const phases: string[] = [];
-      const result = await designPlanningSkill.plan({
-        input: {
-          userIntent: intent,
-          repositoryState: (body.repositoryState || "").trim(),
-          existingArchitecture: (body.existingArchitecture || "").trim(),
-          existingPhaseReceipts: Array.isArray(body.existingPhaseReceipts)
-            ? body.existingPhaseReceipts
-            : [],
-          existingBaselines: Array.isArray(body.existingBaselines)
-            ? body.existingBaselines
-            : [],
-          researchBundle: body.researchBundle ?? undefined,
-        },
-        onPhase: (phase) => phases.push(phase),
-      });
-
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        planId: result.run.runId,
-        phase: result.run.phase,
-        auditId: result.run.auditId,
-        stopped: result.stopped,
-        phases,
-        issues: result.issues,
-      }));
-    } catch (err: any) {
-      res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: err?.message || "Design_Planning failed" }));
-    }
-    return true;
+    return sendJson(res, 200, result.data);
   }
 
   // Standalone Tavily Research Search
@@ -118,17 +56,15 @@ export const handleResearchRoutes: RouteHandler = async (req, res, ctx) => {
     const body = await parseBody(req);
     const query = (body.query || "").trim();
     if (!query) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Query parameter is required" }));
-      return true;
+      return sendError(res, 400, "Query parameter is required");
     }
 
     if (!tavilySearchBackend.isConfigured()) {
-      res.writeHead(503, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        error: "Research search is currently unavailable because TAVILY_API_KEY is not configured.",
-      }));
-      return true;
+      return sendError(
+        res,
+        503,
+        "Research search is currently unavailable because TAVILY_API_KEY is not configured."
+      );
     }
 
     try {
@@ -145,7 +81,15 @@ export const handleResearchRoutes: RouteHandler = async (req, res, ctx) => {
         throw new Error("Tavily response is missing results array");
       }
       const results = response.results.map((result) => {
-        if (!result || typeof result.title !== "string" || !result.title || typeof result.url !== "string" || !result.url || typeof result.content !== "string" || !result.content) {
+        if (
+          !result ||
+          typeof result.title !== "string" ||
+          !result.title ||
+          typeof result.url !== "string" ||
+          !result.url ||
+          typeof result.content !== "string" ||
+          !result.content
+        ) {
           throw new Error("Tavily result is missing required title, url, or content");
         }
         return {
@@ -156,16 +100,14 @@ export const handleResearchRoutes: RouteHandler = async (req, res, ctx) => {
         };
       });
 
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ query, results }));
-      return true;
+      return sendJson(res, 200, { query, results });
     } catch (tavilyErr: any) {
       console.error("[tavily] Live call failed:", tavilyErr?.message);
-      res.writeHead(503, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        error: "Research search is currently unavailable because the live provider request failed.",
-      }));
-      return true;
+      return sendError(
+        res,
+        503,
+        "Research search is currently unavailable because the live provider request failed."
+      );
     }
   }
 
