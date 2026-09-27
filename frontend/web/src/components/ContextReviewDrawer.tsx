@@ -651,14 +651,14 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
                     <strong className="text-xs font-semibold text-[#ececec]">DIAGRAM.md</strong>
                   </div>
                   <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-amber-500/20 text-amber-300">
-                    419-Test DAG Proofs
+                    426-Test DAG Proofs
                   </span>
                 </div>
                 <p className="text-[11px] text-[#a0a0a5] leading-relaxed">
-                  419-test directed acyclic graph, stage machine transitions (<code className="text-[#e5a84b]">IDLE</code> ➔ <code className="text-[#e5a84b]">VALIDATION</code>), execution dependency hierarchy, and 100% deterministic byte verification.
+                  426-test directed acyclic graph, stage machine transitions (<code className="text-[#e5a84b]">IDLE</code> ➔ <code className="text-[#e5a84b]">VALIDATION</code>), execution dependency hierarchy, and 100% deterministic byte verification.
                 </p>
                 <div className="flex flex-wrap gap-1.5 pt-1 text-[9px] text-[#8e8e93]">
-                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">📈 419 Tests Passing</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">📈 426 Tests Passing</span>
                   <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🔄 DAG State Transitions</span>
                   <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🔑 SHA-256 Proof</span>
                 </div>
@@ -738,7 +738,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
                 <div className="text-[#fbbf24] pl-4">└─► 🚪 Gate 1: Human Confirmation of ResearchBundle</div>
                 <div className="text-[#c084fc]">3. Design_Planning ──► 5 Formal Reviews ──► APPROVED_PLAN (STOP)</div>
                 <div className="text-[#fbbf24] pl-4">└─► 🚪 Gate 2: Human Confirmation bound to Package SHA-256</div>
-                <div className="text-[#34d399]">4. Implementation Runtime ──► 4-Partition Sandbox &amp; 419 Passing Tests</div>
+                <div className="text-[#34d399]">4. Implementation Runtime ──► 4-Partition Sandbox &amp; 426 Passing Tests</div>
               </div>
             </div>
           </div>

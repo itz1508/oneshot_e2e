@@ -21,6 +21,7 @@ fi
 echo "[OK] Node.js $NODE_VERSION"
 
 # Check pnpm
+echo "[2/7] Checking pnpm..."
 if ! command -v pnpm &> /dev/null; then
     echo "[ERROR] pnpm not found"
     echo "Install Node.js >= 24.21.0 and enable Corepack, then run: corepack enable"

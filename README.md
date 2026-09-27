@@ -3,6 +3,10 @@
 # OneShot: Deterministic E2E Agent Runtime
 
 <p>
+  <a href="README.md"><b>[README]</b></a> · <a href="DIAGRAM.md"><b>[ARCHITECTURE DIAGRAM]</b></a> · <a href="LICENSE"><b>[LICENSE]</b></a>
+</p>
+
+<p>
   <a href="https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1">
     <img src="https://img.shields.io/badge/⚡_OneShot_Installation-One_Click_Automatic_E2E-2563EB?style=for-the-badge&logo=powershell&logoColor=white" alt="OneShot Installation" />
   </a>
@@ -73,12 +77,12 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
-## ⚡ Terminal — Installation, Build & Tests (419 Passing)
+## ⚡ Terminal — Installation, Build & Tests (426 Passing)
 
 <div align="left">
   <img src="public/demo/screen-0-install-test.png" width="100%" alt="Terminal verification — all test suites passing with zero failures" />
   <br />
-  <sub><b>Terminal Verification</b>: <code>pnpm test</code> (222 backend), <code>test:runtime</code> (99 runtime), <code>test:web</code> (77 frontend), <code>test:e2e</code> (21 browser), <code>verify</code> (7/7 checks). 100% deterministic — zero mocks.</sub>
+  <sub><b>Terminal Verification</b>: <code>pnpm test</code> (222 backend), <code>test:runtime</code> (99 runtime), <code>test:web</code> (84 frontend), <code>test:e2e</code> (21 browser), <code>verify</code> (7/7 checks). 100% deterministic — zero mocks.</sub>
 </div>
 
 ---
@@ -111,7 +115,7 @@ flowchart TD
     PLAN_FLOW --> APPROVED_PLAN["🛑 APPROVED PLAN\n(Gate 2 Approval · STOPS)"]
 
     APPROVED_PLAN --> GATE2{"🚪 Boundary 2: Human Gate 2\nBound to SHA-256 package hash"}
-    GATE2 -.->|"Consumed by"| IMPL_RT["📦 Implementation Runtime\n• 4-Partition Sandbox (/workspace, /scratch, /memories, /artifacts)\n• Python Reasoner Subprocess\n• 419 Deterministic Tests Passing"]
+    GATE2 -.->|"Consumed by"| IMPL_RT["📦 Implementation Runtime\n• 4-Partition Sandbox (/workspace, /scratch, /memories, /artifacts)\n• Python Reasoner Subprocess\n• 426 Deterministic Tests Passing"]
 
     classDef chat fill:#0e1e38,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
     classDef res fill:#082f49,stroke:#06b6d4,stroke-width:2px,color:#f8fafc;

@@ -1,5 +1,9 @@
 # OneShot — Architecture & Workflow DAGs
 
+<p>
+  <a href="README.md"><b>[README]</b></a> · <a href="DIAGRAM.md"><b>[ARCHITECTURE DIAGRAM]</b></a> · <a href="LICENSE"><b>[LICENSE]</b></a>
+</p>
+
 This document defines the core architecture, state machines, and dependencies of OneShot as established in `ARCHITECTURE.md`.
 
 ---
@@ -24,7 +28,7 @@ flowchart TD
     
     PLAN_FLOW --> APPROVED_PLAN["🛑 APPROVED PLAN\n(Human Gate 2 Approval · STOPS)"]
     
-    APPROVED_PLAN -.->|"Consumed later by"| IMPL_RT["📦 Implementation Runtime\n(Separate runtime · Executes code & 419 tests)"]
+    APPROVED_PLAN -.->|"Consumed later by"| IMPL_RT["📦 Implementation Runtime\n(Separate runtime · Executes code & 426 tests)"]
 
     classDef chat fill:#0e1e38,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
     classDef res fill:#082f49,stroke:#06b6d4,stroke-width:2px,color:#f8fafc;
