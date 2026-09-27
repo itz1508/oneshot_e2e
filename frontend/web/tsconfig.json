@@ -23,8 +23,7 @@
       "@hooks/*": ["./src/hooks/*"],
       "@state/*": ["./src/state/*"],
       "@lib/*": ["./src/lib/*"],
-      "@styles/*": ["./src/styles/*"],
-      "@mocks/*": ["./src/mocks/*"]
+      "@styles/*": ["./src/styles/*"]
     }
   },
   "include": [

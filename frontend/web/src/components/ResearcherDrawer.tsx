@@ -118,22 +118,16 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
     const tempId = `res-${Date.now().toString(36)}`;
     const now = new Date().toISOString();
 
-    const placeholderRun: ResearchRun = {
+    const activeRun: ResearchRun = {
       id: tempId,
       title: rawIntent,
       status: "running",
-      tasks: [
-        { id: "step-reconcile", title: "Reconcile workspace and architectural baselines", status: "in_progress", dependencies: [] },
-        { id: "step-evidence", title: "Gather authoritative external & codebase evidence", status: "pending", dependencies: ["step-reconcile"] },
-        { id: "step-draft", title: "Synthesize draft bundle & gap analysis", status: "pending", dependencies: ["step-evidence"] },
-        { id: "step-baseline", title: "Validate invariants & baseline receipts", status: "pending", dependencies: ["step-draft"] },
-        { id: "step-review", title: "Assemble bundle for Gate 1 human review", status: "pending", dependencies: ["step-baseline"] },
-      ],
+      tasks: [],
       createdAt: now,
       checkedAt: now,
     };
 
-    setRuns((prev) => [placeholderRun, ...prev]);
+    setRuns((prev) => [activeRun, ...prev]);
     setExpandedRunId(tempId);
     setIntentInput("");
     showNotice(`Research run ${tempId} initiated — executing against backend pipeline.`);
@@ -217,6 +211,16 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
         recommendations,
       };
 
+      const serverPhases = Array.isArray(data.phases) && data.phases.length > 0
+        ? data.phases
+        : ["reconcile_workspace", "gather_sources", "synthesize_bundle", "validate_invariants", "gate_1_review"];
+      const resolvedTasks = serverPhases.map((phaseName, idx) => ({
+        id: `phase-${idx}-${phaseName}`,
+        title: phaseName.replace(/_/g, " "),
+        status: "completed" as const,
+        dependencies: idx > 0 ? [`phase-${idx - 1}-${serverPhases[idx - 1]}`] : [],
+      }));
+
       const resolvedId = data.runId || tempId;
       setRuns((prev) =>
         prev.map((r) =>
@@ -226,7 +230,7 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
                 id: resolvedId,
                 status: "review_needed",
                 readiness,
-                tasks: r.tasks.map((t) => ({ ...t, status: "completed" as const })),
+                tasks: resolvedTasks,
                 checkedAt: new Date().toISOString(),
                 finishedAt: new Date().toISOString(),
               }
@@ -243,10 +247,7 @@ export const ResearcherDrawer: React.FC<ResearcherDrawerProps> = ({
             ? {
                 ...r,
                 status: "cancelled",
-                tasks: r.tasks.map((t) => ({
-                  ...t,
-                  status: t.status === "in_progress" ? ("pending" as const) : t.status,
-                })),
+                tasks: [],
                 readiness: {
                   score: 0,
                   total: 2,

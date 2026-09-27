@@ -98,7 +98,7 @@ describe('Health Endpoints', () => {
       },
       body: JSON.stringify({
         prompt: 'Validate fixtures and show proof',
-        provider: 'mock',
+        provider: 'python',
       }),
     });
     assert.strictEqual(response.status, 200);

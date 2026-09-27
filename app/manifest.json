@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T17:14:52Z",
+  "generated_at": "2026-09-27T18:37:20Z",
   "version": "1.3.0",
-  "commit": "3eeee9da",
+  "commit": "976fbf29",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -161,8 +161,8 @@
     },
     {
       "path": "backend\\oauth.ts",
-      "size": 4399,
-      "hash": "sha256:2a1f417fa8ed8c3aa252882e2b5d060e3e73ec449ab3c2025c0be9966483d5a5",
+      "size": 5888,
+      "hash": "sha256:fe781f00c2d268876841e123e59f104fb2b9cf27ecc1a7b6fb1ae2809b54ce62",
       "category": "source"
     },
     {
@@ -5669,8 +5669,8 @@
     },
     {
       "path": "backend\\routes\\stream.ts",
-      "size": 6587,
-      "hash": "sha256:ae55c0cdba1f219cdcd4f056255a56efea2da48754a46e46995b0b8a83de6dd2",
+      "size": 6550,
+      "hash": "sha256:2c80595fb766de1762b49bd132e1ca65e826ce84d8d2b9d07bafba0904374425",
       "category": "source"
     },
     {
@@ -5795,8 +5795,8 @@
     },
     {
       "path": "backend\\tests\\ts\\health-endpoint.test.ts",
-      "size": 4137,
-      "hash": "sha256:24d9576f7e7c5532abd959cc630f0b9c5dca1711894bd9c1e3ba2c86b143162a",
+      "size": 4139,
+      "hash": "sha256:382c749454a32a2254ced7b35afaa67544375d73d236e2a51c540ae1f6a8dce8",
       "category": "source"
     },
     {
@@ -6065,8 +6065,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\ResearcherDrawer.tsx",
-      "size": 32787,
-      "hash": "sha256:cabb07fcd479b43bee54c9ac66b17ef56f4dd9cc94ed94dbbaa3dd38e32bd61b",
+      "size": 32401,
+      "hash": "sha256:d88d10a97a65b14c2505d337b270633cb05e1a3abf43940b5cee5c7ff8f999ef",
       "category": "source"
     },
     {
@@ -6131,8 +6131,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\main-screen\\ChatShell.tsx",
-      "size": 6999,
-      "hash": "sha256:c78b994cf68963f487c406adb372a499c918bc479150ae6bffcca3e76b177dc9",
+      "size": 6987,
+      "hash": "sha256:e54f6eff5664d606d17366a27cb56d8fd3dbb6e7260fede2d18c3aaa4a2d71a9",
       "category": "source"
     },
     {
@@ -6143,8 +6143,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\main-screen\\PreviewView.tsx",
-      "size": 7166,
-      "hash": "sha256:d5435300c33ebabbf4712aa68e4937782abf3ec4572a174f96f8fee7f4ab28f4",
+      "size": 7157,
+      "hash": "sha256:4dee688b9ce92c9e140325134f9c2ec51eee5575ae37e7c2b410a38d38a5bf04",
       "category": "source"
     },
     {
@@ -6167,8 +6167,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\task-rail\\TaskRail.tsx",
-      "size": 4920,
-      "hash": "sha256:26aa0272b0180ff25fd18d502c4e54d7e9435ac21bc17142e424abc9b459cbf0",
+      "size": 4792,
+      "hash": "sha256:16fb5d2c9f7a7463d48110fd5358adb804bc0dd22a0b8dde4071d8502e98b1b2",
       "category": "source"
     },
     {
@@ -6323,8 +6323,8 @@
     },
     {
       "path": "frontend\\web\\tsconfig.json",
-      "size": 1073,
-      "hash": "sha256:84389fe3be66637ff748b6150faa834f0a536a636d73e6f80e9686fe9055bf06",
+      "size": 1036,
+      "hash": "sha256:376d21c204ea6c9f4975123f0442e1a193d794794a8b2892f98473b35c73589a",
       "category": "source"
     },
     {
@@ -6581,8 +6581,8 @@
     },
     {
       "path": "packages\\agent-runtime\\src\\workflow\\types.ts",
-      "size": 15144,
-      "hash": "sha256:c172419b21727a296ccc58bb0dd476557d9b864df73fb7046aa88e0688e1613e",
+      "size": 15135,
+      "hash": "sha256:aabf377d82709e75f9f91d18ae8e54fb9876fa9ac81a7be0aa07442daa3d9fa0",
       "category": "source"
     },
     {
@@ -6739,7 +6739,7 @@
   "statistics": {
     "total_files": 1122,
     "source_files": 1122,
-    "total_size_bytes": 13491981,
+    "total_size_bytes": 13492854,
     "by_extension": {
       ".yml": 1,
       ".md": 19,

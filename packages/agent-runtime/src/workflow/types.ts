@@ -13,7 +13,7 @@
  */
 
 // ── Product configuration ──────────────────────────────────────────────────
-export type ProviderId = "gemini" | "openai" | "nebius" | "mistral" | "ollama" | "mock";
+export type ProviderId = "gemini" | "openai" | "nebius" | "mistral" | "ollama";
 
 export interface ChatConfig {
   provider: ProviderId;

@@ -55,7 +55,6 @@ export const handleStreamRoutes: RouteHandler = async (req, res, ctx) => {
 
     const isLive =
       (isConfiguredKey(rawKey) || resolvedProvider === "ollama") &&
-      resolvedProvider !== "mock" &&
       resolvedProvider !== "sample" &&
       process.env.ONESHOT_MODE !== "sample";
 

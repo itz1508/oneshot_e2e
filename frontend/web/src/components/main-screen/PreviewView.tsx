@@ -12,13 +12,13 @@ import { BuildCompletedEvent } from "../../types/invariants";
 export interface PreviewViewProps {
   buildEvent?: BuildCompletedEvent | null;
   customPreviewUrl?: string;
-  mockScreenHtml?: string;
+  previewHtml?: string;
 }
 
 export const PreviewView: React.FC<PreviewViewProps> = ({
   buildEvent,
   customPreviewUrl,
-  mockScreenHtml,
+  previewHtml,
 }) => {
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -121,7 +121,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
                 : "max-w-[375px]"
             }`}
           >
-            {/* Mock browser address bar */}
+            {/* Virtual browser address bar */}
             <div className="flex items-center space-x-2 px-3 py-1.5 bg-[#18181b] border-b border-zinc-800 text-xs text-zinc-400">
               <span className="flex space-x-1">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500/80 inline-block" />
@@ -135,10 +135,10 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
 
             {/* Preview Frame */}
             <div className="flex-1 w-full h-full relative">
-              {mockScreenHtml ? (
+              {previewHtml ? (
                 <iframe
                   title="OneShot Build Preview"
-                  srcDoc={mockScreenHtml}
+                  srcDoc={previewHtml}
                   className="w-full h-full border-none"
                   sandbox="allow-scripts allow-same-origin"
                 />

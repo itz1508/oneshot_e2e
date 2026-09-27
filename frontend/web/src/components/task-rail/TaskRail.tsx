@@ -49,19 +49,7 @@ export const TaskRail: React.FC<TaskRailProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<"all" | "active" | "progress" | "validation">("all");
 
-  const defaultJob: JobEntity = job || {
-    job_id: "job_init_001",
-    jobTitle: "OneShot Canonical Execution",
-    session_id: "session_default",
-    execution: {
-      job_id: "job_init_001",
-      currentStep: "Research & Fact Synthesis",
-      stage: "research",
-      progress: 45,
-      activeCapabilities,
-      status: "running",
-    },
-  };
+
 
   if (isCollapsed) {
     return (
@@ -129,11 +117,17 @@ export const TaskRail: React.FC<TaskRailProps> = ({
       {/* Scrollable Rail Content: Invariant 7: Task Rail owns execution visibility */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {(activeTab === "all" || activeTab === "active") && (
-          <ActiveTask
-            job={defaultJob}
-            activeCapabilities={activeCapabilities}
-            onAbortJob={onAbortJob}
-          />
+          job ? (
+            <ActiveTask
+              job={job}
+              activeCapabilities={activeCapabilities}
+              onAbortJob={onAbortJob}
+            />
+          ) : (
+            <div className="p-4 rounded-xl bg-[#18181b] border border-[#27272a] text-center text-zinc-500 text-xs">
+              No active job in flight.
+            </div>
+          )
         )}
 
         {(activeTab === "all" || activeTab === "progress") && (

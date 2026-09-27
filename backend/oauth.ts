@@ -52,31 +52,68 @@ export class OAuthManager {
   }
 
   /**
-   * Exchange OAuth code for access token
-   * Simulated here; in production, call Google OAuth token endpoint
+   * Exchange OAuth code for access token with Google OAuth token endpoint.
+   * Fails fast if credentials are not configured rather than returning simulated tokens.
    */
   async exchangeCodeForToken(code: string, state: string): Promise<{
     accessToken: string;
     refreshToken?: string;
     user: { id: string; email: string; name: string };
   }> {
-    // In production, this would validate state and call:
-    // POST https://oauth2.googleapis.com/token
-    // with code, client_id, client_secret, grant_type, redirect_uri
-
-    // For now, simulate successful token exchange
     if (!code || code.length < 4) {
       throw new Error("Invalid authorization code");
     }
 
-    // Simulated Google OAuth response
+    const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+    const redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI || "http://localhost:3000/auth/callback";
+
+    if (!clientId || !clientSecret || clientId === "YOUR_CLIENT_ID") {
+      throw new Error(
+        "Google OAuth credentials (GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET) are unconfigured. Mock token exchange is absent from production."
+      );
+    }
+
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: "authorization_code",
+      }),
+    });
+
+    if (!tokenRes.ok) {
+      const errText = await tokenRes.text();
+      throw new Error(`Google OAuth token exchange failed (${tokenRes.status}): ${errText}`);
+    }
+
+    const tokenData = (await tokenRes.json()) as {
+      access_token: string;
+      refresh_token?: string;
+      id_token?: string;
+    };
+
+    const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+
+    if (!userRes.ok) {
+      throw new Error(`Failed to retrieve user profile from Google (${userRes.status})`);
+    }
+
+    const userInfo = (await userRes.json()) as { id: string; email: string; name: string };
+
     return {
-      accessToken: `goog_${crypto.randomBytes(16).toString("hex")}`,
-      refreshToken: `refresh_${crypto.randomBytes(16).toString("hex")}`,
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
       user: {
-        id: `google_${Date.now()}`,
-        email: "user@gmail.com",
-        name: "OneShot User",
+        id: userInfo.id,
+        email: userInfo.email,
+        name: userInfo.name,
       },
     };
   }
@@ -138,9 +175,16 @@ export class OAuthManager {
     const session = this.sessions.get(sessionId);
     if (!session) return;
 
-    // In production, revoke token at Google:
-    // POST https://oauth2.googleapis.com/revoke
-    // with token=accessToken
+    if (session.accessToken) {
+      try {
+        await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(session.accessToken)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        });
+      } catch {
+        // Best effort token revocation
+      }
+    }
 
     this.sessions.delete(sessionId);
   }

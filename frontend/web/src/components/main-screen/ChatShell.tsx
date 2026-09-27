@@ -30,7 +30,7 @@ export interface ChatShellProps {
   streamHook?: UseStreamReturn;
   artifacts?: ArtifactEntity[];
   activeCapabilities?: ToolCapabilityExecution[];
-  mockScreenHtml?: string;
+  previewHtml?: string;
   onSendPrompt?: (text: string) => void;
 }
 
@@ -40,7 +40,7 @@ export const ChatShell: React.FC<ChatShellProps> = ({
   streamHook,
   artifacts = [],
   activeCapabilities = [],
-  mockScreenHtml,
+  previewHtml,
 }) => {
   // If streamHook isn't passed from parent, initialize directly
   const localStream = useStream({ sessionId });
@@ -181,7 +181,7 @@ export const ChatShell: React.FC<ChatShellProps> = ({
           <div className="w-full flex flex-col h-full overflow-hidden">
             <PreviewView
               buildEvent={activeStream.latestBuildEvent}
-              mockScreenHtml={mockScreenHtml}
+              previewHtml={previewHtml}
             />
           </div>
         )}
