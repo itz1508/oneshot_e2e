@@ -7,6 +7,10 @@
     <img src="https://img.shields.io/badge/⚡_OneShot_Installation-One_Click_Automatic_E2E-2563EB?style=for-the-badge&logo=powershell&logoColor=white" alt="OneShot Installation" />
   </a>
 </p>
+
+<div align="center">
+  <img src="public/demo/architecture-diagram.svg" alt="OneShot Architecture — Agent SSE, Python Reasoning, Filesystem Sandbox, Human Gates" width="100%" />
+</div>
 </div>
 
 ---
@@ -73,11 +77,9 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
-## 🏛️ System Architecture & Workflow
+## 🏛️ Architecture & Governed Workflow Specifications
 
-<div align="left">
-  <img src="public/demo/architecture-diagram.svg" alt="OneShot Architecture — Agent SSE, Python Reasoning, Filesystem Sandbox, Human Gates" width="100%" />
-</div>
+For full interactive state machine DAGs, three-owner boundary dependencies, and 4-partition sandbox verification, see [**DIAGRAM.md**](DIAGRAM.md).
 
 ---
 
