@@ -24,6 +24,21 @@ Real SSE Streaming · Python Reasoning Subprocess · Strict Filesystem Sandboxin
 
 ---
 
+### 📑 Repository Documentation & Guides
+
+<p>
+  <a href="README.md"><img src="https://img.shields.io/badge/README.md-Console_&_Quickstart-2563EB?style=for-the-badge&logo=markdown&logoColor=white" alt="README.md" /></a>
+  <a href="ARCHITECTURE.MD"><img src="https://img.shields.io/badge/ARCHITECTURE.md-System_Architecture-059669?style=for-the-badge" alt="ARCHITECTURE.md" /></a>
+  <a href="DIAGRAM.md"><img src="https://img.shields.io/badge/DIAGRAM.md-417--Test_DAG_Graphs-D97706?style=for-the-badge" alt="DIAGRAM.md" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/LICENSE-Apache--2.0-4F46E5?style=for-the-badge" alt="LICENSE" /></a>
+</p>
+
+| 📖 [README.md](README.md) | 🏛️ [ARCHITECTURE.md](ARCHITECTURE.MD) | 📊 [DIAGRAM.md](DIAGRAM.md) | ⚖️ [LICENSE](LICENSE) |
+| :--- | :--- | :--- | :--- |
+| **Interactive Console Guide**<br />• One-Click Installation Script<br />• DeepAgents SSE Real-Time Console<br />• 5 Offline Contract Fixtures<br />• Multi-Provider Switching (Gemini, OpenAI, Mistral, Ollama) | **System Architecture & Security**<br />• DeepAgents Event Streaming Core<br />• 4-Partition Sandbox Isolation (`/workspace/`, `/scratch/`, `/memories/`, `/artifacts/`)<br />• Python Reasoning Subprocess<br />• Dual Human-in-the-Loop Gates | **Topologies & DAG Proofs**<br />• 417-Test Directed Acyclic Graph<br />• Stage Machine Transitions (`IDLE` ➔ `VALIDATION`)<br />• Execution Dependency Hierarchy<br />• 100% Deterministic Byte Verification | **Apache-2.0 Open Source License**<br />• Permissive Open Source License<br />• Commercial & Distribution Rights<br />• Patent & Copyright Grants<br />• Standard Liability & Warranty Terms |
+
+---
+
 ## ⚡ One Click Installation — Launch Server
 
 **Windows (PowerShell — one command, fully automatic):**
@@ -42,38 +57,19 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
-## 🎬 Combined Live Demo — Full Agentic Lifecycle & Multi-Provider Workflow
+## 🎬 Live Demo
 
 <div align="center">
-  <a href="public/demo/oneshot-demo.mp4">
-    <img src="public/demo/oneshot-demo.gif" alt="OneShot live demo — combined offline fixture verification and live multi-agent streaming" width="100%" />
-  </a>
-  <br />
-  <sub>
-    ▶ <b><a href="public/demo/oneshot-demo.mp4">Watch Combined Demo (MP4)</a></b> · <a href="public/demo/oneshot-demo.webm">WebM</a> · <a href="public/demo/oneshot-demo.vtt">Live Captions (.vtt)</a> · <a href="https://itz1508.github.io/oneshot_e2e/">GitHub Pages Live Site</a><br />
-    Recorded live against the running backend — no mocks, no synthetic timers. 3 minutes and 15 seconds of continuous live action combining both the offline fixture verification suite (4 sandbox partitions, 3D hook audit ledger flip, and Gate 1 human approval) and the live agentic execution workflow (provider switching, research mode, key-by-key composer auto-growth, real-time SSE streaming, tool proofs, and Gate 2 verification).
-  </sub>
+
+![OneShot Live Demo Preview](public/demo/oneshot-demo.gif)
+
+<br />
+
+<sub>
+  ▶ <b><a href="public/demo/oneshot-demo.mp4">Watch High-Definition Demo (MP4)</a></b> · <a href="public/demo/oneshot-demo.webm">WebM Video</a> · <a href="public/demo/oneshot-demo.vtt">Subtitles (.vtt)</a> · <a href="https://itz1508.github.io/oneshot_e2e/">Live Browser Console</a>
+</sub>
+
 </div>
-
-### 🕐 Synchronized Video Transcript & Behavioral Timeline
-
-Follows the canonical **Video & Demonstration Standard** — single synchronized transcript for voice-over and captions, describing system behavior and state transitions rather than component inventory:
-
-| Timecode | Workflow Phase | Synchronized Caption & Spoken Voice-Over Narration |
-| :--- | :--- | :--- |
-| **00:00–00:14** | 1. Understand | This single-screen console lets you inspect, execute, and verify software engineering tasks immediately without navigating separate pages. |
-| **00:14–00:27** | 2. Canvas Adaptation | Collapse the navigation to expand the workspace when you need more space to inspect live streaming traces and partitions. |
-| **00:27–00:42** | 3. Test Scenario | Select a test scenario to evaluate security invariants and filesystem isolation boundaries without requiring API keys or external credentials. |
-| **00:42–00:56** | 4. Start Workflow | Trigger the test scenario to start the execution stream in the shared workflow area. |
-| **00:56–01:14** | 5. Observe Invariants | The workflow processes the request, confirming strict containment across all four virtual filesystem partitions and verifying directory isolation. |
-| **01:14–01:30** | 6. Partitions & Ledger Flip | Inspect partition boundaries in the context drawer, or flip the task card to audit real lifecycle events and execution proofs. |
-| **01:30–01:44** | 7. Human Governance | Authorize the review checkpoint to confirm findings and advance the verified run to approved status. |
-| **01:44–02:00** | 8. Live Configuration | Switch seamlessly to live execution on the same screen by selecting your preferred provider and connecting your environment configuration. |
-| **02:00–02:18** | 9. Research & Prompt | Enable context-aware research for the query and compose an engineering request. The input automatically expands to accommodate requirements. |
-| **02:18–02:36** | 10. Multi-Agent Streaming | The live agent executes the request, emitting real-time streaming tokens, structured reasoning, and lifecycle status through the event stream. |
-| **02:36–02:52** | 11. Tool Execution | Automated tools execute directly against workspace files, producing genuine output records and deterministic validation proofs. |
-| **02:52–03:06** | 12. Gate 2 & Actions | Review the cryptographic build manifest, verify artifact hashes, and interact with the finalized response through copy or branching actions. |
-| **03:06–03:15** | 13. Unified Progression | Both offline fixture verification and live agentic execution follow the exact same verifiable contracts, delivering end-to-end software engineering integrity. |
 
 ---
 

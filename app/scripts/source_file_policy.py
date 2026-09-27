@@ -75,6 +75,10 @@ def is_source_file(path: str) -> bool:
     if relative_path.as_posix().endswith('manifest.json'):
         return False
 
+    # Root LICENSE file
+    if relative_path.as_posix() == 'LICENSE':
+        return True
+
     # Generated trees are never source, even when they contain a whitelisted
     # filename such as package.json.
     if any(segment in GENERATED_PATTERNS for segment in relative_path.parts):
