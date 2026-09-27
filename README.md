@@ -74,13 +74,39 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
-## ⚡ Terminal — Installation, Build & Tests (426 Passing)
+## ⚡ Terminal — Build & Verification
 
-<div align="left">
-  <img src="public/demo/screen-0-install-test.png" width="100%" alt="Terminal verification — all test suites passing with zero failures" />
-  <br />
-  <sub><b>Terminal Verification</b>: <code>pnpm test</code> (222 backend), <code>test:runtime</code> (99 runtime), <code>test:web</code> (84 frontend), <code>test:e2e</code> (21 browser), <code>verify</code> (7/7 checks). 100% deterministic — zero mocks.</sub>
-</div>
+```text
+$ pnpm run build
+✓ Compiled backend dist/
+✓ Compiled static frontend dist/
+
+$ pnpm test
+tests 222   pass 222   fail 0
+
+$ pnpm run test:runtime
+tests 99    pass 99    fail 0
+
+$ pnpm --prefix frontend/web test
+tests 84    pass 84    fail 0
+
+$ pnpm run test:e2e
+21 passed (38.6s)
+
+$ pnpm run verify
+======================================================================
+  OneShot Verification Suite (7/7 Checks)
+======================================================================
+  [✓] environment       Node v24.21.0, pnpm 11.27.1, Python 3.12
+  [✓] dependencies      @strands-agents/sdk, dotenv, openai, ai
+  [✓] build_outputs     dist/backend/index.js, frontend/web/dist
+  [✓] configuration     tsconfig, package.json, app/env/.env.example
+  [✓] manifest          1,113 files matching SHA-256 tree
+  [✓] tests             backend, runtime, web, e2e
+  [✓] security          .env git protection, no hardcoded secrets
+
+Passed: 7/7 - All checks passed!
+```
 
 ---
 
