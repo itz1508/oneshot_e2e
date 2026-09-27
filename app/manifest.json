@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T13:28:27Z",
+  "generated_at": "2026-09-27T13:45:53Z",
   "version": "1.3.0",
-  "commit": "31181e12",
+  "commit": "abd19269",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -5633,8 +5633,8 @@
     },
     {
       "path": "backend\\routes\\fixtures.ts",
-      "size": 7288,
-      "hash": "sha256:e755c8e8620c2b9aeca6766511c51d305488fa0d6b9e21e146009f331941f6e9",
+      "size": 6489,
+      "hash": "sha256:d0353f2a48e8d559c50ac771a69ed607daef32c0517e41c5d30aa9edb890916d",
       "category": "source"
     },
     {
@@ -5644,21 +5644,27 @@
       "category": "source"
     },
     {
+      "path": "backend\\routes\\helpers.ts",
+      "size": 520,
+      "hash": "sha256:6245d99ce944ca58fa9bf0760ee1ed151765763faaf64db50b767ae9bf2d9e45",
+      "category": "source"
+    },
+    {
       "path": "backend\\routes\\index.ts",
-      "size": 236,
-      "hash": "sha256:1048c48de574cfeff1cf793a1a73adf903bd74428e7606c3836fa6cfe5bf7e2a",
+      "size": 267,
+      "hash": "sha256:5c2bf9da62993b226a2bb4cd6ae2194ca75e9550183d8309b86715e08ded1da1",
       "category": "source"
     },
     {
       "path": "backend\\routes\\providers.ts",
-      "size": 13685,
-      "hash": "sha256:ec7897fc67138beda3df86d30a70dd15b8946e46791d6cbc3764d167728d0945",
+      "size": 9958,
+      "hash": "sha256:9bb5a5a68e73cdff3fd3934144a0f2f3669e803f6a15c3d3f28feab75ee76a24",
       "category": "source"
     },
     {
       "path": "backend\\routes\\research.ts",
-      "size": 6257,
-      "hash": "sha256:d8a2e733e2ef1317c1bf699728101e8d09dfa8446961a9eff32527c3ebec5c3d",
+      "size": 3810,
+      "hash": "sha256:4a717c511f2624d97db5ed4e80692222200b3fdf151f67946b4fd6eeabe7fa9a",
       "category": "source"
     },
     {
@@ -5675,14 +5681,14 @@
     },
     {
       "path": "backend\\routes\\v2.ts",
-      "size": 12274,
-      "hash": "sha256:4b9471e31bfd449ab680ece00d60c4e3fa548a04228f82d5aeb115f8ea1dfa6f",
+      "size": 8283,
+      "hash": "sha256:867a104cdec600ab2f7039df2474e978d7f0669c88711995f751e2bb54b0d994",
       "category": "source"
     },
     {
       "path": "backend\\routes\\workflow.ts",
-      "size": 8244,
-      "hash": "sha256:c654e70a9968f10c20aea022d48621314e16033895e1dd1fd95d84132623e7ff",
+      "size": 4261,
+      "hash": "sha256:f3080d18be45e66e9f9b5be50a47f31c636f28f5fb1a7b1868e7743fe8a120c6",
       "category": "source"
     },
     {
@@ -5701,6 +5707,30 @@
       "path": "backend\\serialization\\codec.ts",
       "size": 10893,
       "hash": "sha256:d11ada3f1cfe4f8090353ffa95a8e45ca3d0e39fc0e005f2f2a4cf3ab883e448",
+      "category": "source"
+    },
+    {
+      "path": "backend\\services\\index.ts",
+      "size": 117,
+      "hash": "sha256:c3da632b25c0ed45fb22c129aa9204d003e6e852bd0425997a56e4ff6a8f9a9c",
+      "category": "source"
+    },
+    {
+      "path": "backend\\services\\provider-service.ts",
+      "size": 6132,
+      "hash": "sha256:c433e9911b5c977fbade01310f2ff4c0093f31d96bf60226f39629ed6cfa7b8c",
+      "category": "source"
+    },
+    {
+      "path": "backend\\services\\research-service.ts",
+      "size": 4917,
+      "hash": "sha256:4436b914411bf0b7f49591f4a090034d278b1a1b033c55f5f38714fd5e913739",
+      "category": "source"
+    },
+    {
+      "path": "backend\\services\\workflow-service.ts",
+      "size": 8072,
+      "hash": "sha256:ffeb2302469f3e9c834bb70369e3eb609b3c7d8bc7d8c3c8fa872e0711cd5802",
       "category": "source"
     },
     {
@@ -5951,8 +5981,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\ContextReviewDrawer.tsx",
-      "size": 37816,
-      "hash": "sha256:69c7b3b216bcc3a85bf5f68cbb1558b30822f6b467d63438682830a8a12d9c7e",
+      "size": 36997,
+      "hash": "sha256:039f3f91ba46d108ec01b0014c5ab98877b3fd4af5061fb43eb24811c4e14467",
       "category": "source"
     },
     {
@@ -6035,8 +6065,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\ResearcherDrawer.tsx",
-      "size": 33107,
-      "hash": "sha256:1e5ba8b8020660719b7c0c432d2c941ea167b07f1c876100466367522d1c3a23",
+      "size": 32787,
+      "hash": "sha256:cabb07fcd479b43bee54c9ac66b17ef56f4dd9cc94ed94dbbaa3dd38e32bd61b",
       "category": "source"
     },
     {
@@ -6058,9 +6088,33 @@
       "category": "source"
     },
     {
+      "path": "frontend\\web\\src\\components\\common\\AlertBanner.tsx",
+      "size": 852,
+      "hash": "sha256:9eeaf3daf705069e6dc144dcb2c55b604ea2d1310034768fb641ff8f1879c9a3",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\common\\DrawerShell.tsx",
+      "size": 1762,
+      "hash": "sha256:2e856f602202ff78f16a52f7fa6c8e89b405cff6b61e6d3b7d6307afd2cbedb3",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\common\\StatusBadge.tsx",
+      "size": 1382,
+      "hash": "sha256:73640fd9f75cd7072ac5de292a06aba9a4a6e8c1f5b99f809b3bcf87d1db9cbc",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\common\\index.ts",
+      "size": 93,
+      "hash": "sha256:2609802217a3bf68d3df64ffbd2b80801eed94426d4d8bba57fe8bd60209f98c",
+      "category": "source"
+    },
+    {
       "path": "frontend\\web\\src\\components\\index.ts",
-      "size": 793,
-      "hash": "sha256:9466958fabc6e4862fa94f9b3485056808abc2b27c470e99b3e4ebb0b790c135",
+      "size": 825,
+      "hash": "sha256:56d9ff6566cb34bfac2c0e7b78888a443545c984c322ee656ce9896998c5b222",
       "category": "source"
     },
     {
@@ -6683,9 +6737,9 @@
     }
   ],
   "statistics": {
-    "total_files": 1113,
-    "source_files": 1113,
-    "total_size_bytes": 13484157,
+    "total_files": 1122,
+    "source_files": 1122,
+    "total_size_bytes": 13491981,
     "by_extension": {
       ".yml": 1,
       ".md": 19,
@@ -6693,11 +6747,11 @@
       ".mjs": 34,
       ".json": 25,
       ".py": 871,
-      ".ts": 104,
+      ".ts": 110,
       ".txt": 23,
       ".toml": 1,
       ".css": 1,
-      ".tsx": 30,
+      ".tsx": 33,
       ".html": 1,
       ".yaml": 2
     }
