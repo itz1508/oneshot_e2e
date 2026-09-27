@@ -5,8 +5,9 @@ OneShot Source File Policy
 Classifies files as source, generated, or excluded for manifest generation.
 """
 
+import hashlib
 from pathlib import Path
-from typing import List, Set
+from typing import Dict, List, Set, Union
 
 # Source file extensions - these are tracked in the manifest
 SOURCE_EXTENSIONS: Set[str] = {
@@ -216,6 +217,27 @@ def get_source_statistics(root: str = '.') -> dict:
         'total_size_bytes': total_size,
         'by_extension': by_extension,
     }
+
+
+def compute_file_sha256(file_path: Union[str, Path]) -> str:
+    """
+    Compute SHA-256 hash of a file using canonical chunk-based streaming.
+    
+    Args:
+        file_path: Path to target file
+        
+    Returns:
+        SHA-256 hash string formatted as 'sha256:<hex>' or 'error:<msg>'
+    """
+    path = Path(file_path)
+    sha256_hash = hashlib.sha256()
+    try:
+        with open(path, 'rb') as f:
+            for chunk in iter(lambda: f.read(8192), b''):
+                sha256_hash.update(chunk)
+        return f"sha256:{sha256_hash.hexdigest()}"
+    except (OSError, IOError) as e:
+        return f"error:{str(e)}"
 
 
 if __name__ == '__main__':

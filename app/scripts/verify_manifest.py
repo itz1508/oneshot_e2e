@@ -13,7 +13,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from source_file_policy import get_source_files, is_source_file
+from source_file_policy import compute_file_sha256, get_source_files, is_source_file
 
 
 def load_manifest(manifest_path: str) -> dict:
@@ -22,18 +22,8 @@ def load_manifest(manifest_path: str) -> dict:
         return json.load(f)
 
 
-def compute_file_hash(file_path: Path) -> str:
-    """Compute SHA-256 hash of a file."""
-    import hashlib
-    sha256_hash = hashlib.sha256()
-    
-    try:
-        with open(file_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), b''):
-                sha256_hash.update(chunk)
-        return f"sha256:{sha256_hash.hexdigest()}"
-    except (OSError, IOError):
-        return None
+# Aliased for backward compatibility with existing callers
+compute_file_hash = compute_file_sha256
 
 
 def verify_manifest(manifest_path: str, root: str = '.') -> bool:

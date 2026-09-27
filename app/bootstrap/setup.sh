@@ -4,8 +4,49 @@ set -e
 echo "OneShot Setup (Unix)"
 echo "===================="
 
-# Check Node.js
-echo "[1/7] Checking Node.js..."
+# 1. Check Git
+echo "[1/8] Checking Git..."
+if ! command -v git &> /dev/null; then
+    echo "[ERROR] Git not found"
+    echo "Please install Git from https://git-scm.com/"
+    exit 1
+fi
+echo "[OK] Git detected"
+
+# 2. Check Python runtime >= 3.12
+echo "[2/8] Checking Python runtime..."
+if command -v python3 &> /dev/null; then
+    PYTHON_CMD=python3
+elif command -v python &> /dev/null; then
+    PYTHON_CMD=python
+else
+    echo "[ERROR] Python not found"
+    echo "Please install Python >= 3.12"
+    exit 1
+fi
+
+if ! $PYTHON_CMD -c "import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)"; then
+    echo "[ERROR] Python version is too old. Python >= 3.12 is required."
+    exit 1
+fi
+PY_VER=$($PYTHON_CMD --version)
+echo "[OK] $PY_VER"
+
+# 3. Setup Environment Configuration
+echo "[3/8] Checking environment configuration..."
+if [ ! -f "app/env/.env" ]; then
+    if [ -f "app/env/.env.example" ]; then
+        cp "app/env/.env.example" "app/env/.env"
+        echo "[OK] Created app/env/.env from template"
+    else
+        echo "[WARNING] app/env/.env.example template not found"
+    fi
+else
+    echo "[OK] app/env/.env exists"
+fi
+
+# 4. Check Node.js >= 24.21.0
+echo "[4/8] Checking Node.js..."
 if ! command -v node &> /dev/null; then
     echo "[ERROR] Node.js not found"
     echo "Please install Node.js >= 24.21.0 from https://nodejs.org/"
@@ -20,8 +61,8 @@ if ! node -e "const v=process.argv[1].split('.').map(Number),r=[24,21,0];process
 fi
 echo "[OK] Node.js $NODE_VERSION"
 
-# Check pnpm
-echo "[2/7] Checking pnpm..."
+# 5. Check pnpm >= 11.27.1
+echo "[5/8] Checking pnpm..."
 if ! command -v pnpm &> /dev/null; then
     echo "[ERROR] pnpm not found"
     echo "Install Node.js >= 24.21.0 and enable Corepack, then run: corepack enable"
@@ -35,25 +76,19 @@ if ! node -e "const v=process.argv[1].split('.').map(Number),r=[11,27,1];process
 fi
 echo "[OK] pnpm $PNPM_VERSION"
 
-# Install dependencies
-echo "[3/7] Installing dependencies..."
+# 6. Install dependencies
+echo "[6/8] Installing dependencies..."
 pnpm install --frozen-lockfile
 
-# Build backend
-echo "[4/7] Building backend..."
+# 7. Build backend & UI
+echo "[7/8] Compiling backend and UI..."
 pnpm run build:backend
-
-# Build frontend
-echo "[5/7] Building frontend..."
 pnpm run build:ui
 
-# Generate manifest
-echo "[6/7] Generating manifest..."
-python3 app/scripts/generate_manifest.py
-
-# Verify
-echo "[7/7] Running verification..."
-python3 app/scripts/verify_all.py || echo "[WARNING] Verification reported issues"
+# 8. Generate and verify manifest
+echo "[8/8] Verifying repository manifest and integrity..."
+$PYTHON_CMD app/scripts/generate_manifest.py || echo "[WARNING] Manifest generation failed"
+$PYTHON_CMD app/scripts/verify_all.py || echo "[WARNING] Verification reported issues"
 
 echo ""
 echo "Setup complete!"
@@ -62,3 +97,4 @@ echo "Start server: pnpm run start"
 echo ""
 echo "Open browser: http://localhost:8787"
 echo ""
+

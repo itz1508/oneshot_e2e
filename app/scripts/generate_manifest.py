@@ -16,28 +16,10 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from source_file_policy import get_source_files, get_source_statistics
+from source_file_policy import compute_file_sha256, get_source_files, get_source_statistics
 
-
-def compute_sha256(file_path: Path) -> str:
-    """
-    Compute SHA-256 hash of a file.
-    
-    Args:
-        file_path: Absolute path to the file
-        
-    Returns:
-        SHA-256 hash as hex string
-    """
-    sha256_hash = hashlib.sha256()
-    
-    try:
-        with open(file_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), b''):
-                sha256_hash.update(chunk)
-        return f"sha256:{sha256_hash.hexdigest()}"
-    except (OSError, IOError) as e:
-        return f"error:{str(e)}"
+# Aliased for backward compatibility with existing callers
+compute_sha256 = compute_file_sha256
 
 
 def get_git_commit() -> str:

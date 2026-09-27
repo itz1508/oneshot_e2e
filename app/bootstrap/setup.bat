@@ -1,9 +1,49 @@
 @echo off
+setlocal enabledelayedexpansion
+
 echo OneShot Setup (Windows)
 echo ======================
 
-:: Check Node.js
-echo [1/7] Checking Node.js...
+:: 1. Check Git
+echo [1/8] Checking Git...
+git --version >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Git not found
+    echo Please install Git from https://git-scm.com/
+    exit /b 1
+)
+echo [OK] Git detected
+
+:: 2. Check Python >= 3.12
+echo [2/8] Checking Python runtime...
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Python not found
+    echo Please install Python >= 3.12
+    exit /b 1
+)
+python -c "import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)"
+if errorlevel 1 (
+    echo [ERROR] Python version is too old. Python >= 3.12 is required.
+    exit /b 1
+)
+for /f "tokens=*" %%p in ('python --version') do echo [OK] %%p
+
+:: 3. Setup Environment Configuration
+echo [3/8] Checking environment configuration...
+if not exist "app\env\.env" (
+    if exist "app\env\.env.example" (
+        copy "app\env\.env.example" "app\env\.env" >nul
+        echo [OK] Created app\env\.env from template
+    ) else (
+        echo [WARNING] app\env\.env.example template not found
+    )
+) else (
+    echo [OK] app\env\.env exists
+)
+
+:: 4. Check Node.js >= 24.21.0
+echo [4/8] Checking Node.js...
 node --version >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Node.js not found
@@ -19,8 +59,8 @@ if errorlevel 1 (
 )
 echo [OK] Node.js %NODE_VER%
 
-:: Check pnpm
-echo [2/7] Checking pnpm...
+:: 5. Check pnpm >= 11.27.1
+echo [5/8] Checking pnpm...
 pnpm --version >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] pnpm not found
@@ -36,8 +76,8 @@ if errorlevel 1 (
 )
 echo [OK] pnpm %PNPM_VER%
 
-:: Install dependencies
-echo [3/7] Installing dependencies...
+:: 6. Install dependencies
+echo [6/8] Installing dependencies...
 call pnpm install --frozen-lockfile
 if errorlevel 1 (
     echo [ERROR] pnpm install failed
@@ -45,35 +85,28 @@ if errorlevel 1 (
 )
 echo [OK] Dependencies installed
 
-:: Build backend
-echo [4/7] Building backend...
+:: 7. Build backend & UI
+echo [7/8] Compiling backend and UI...
 call pnpm run build:backend
 if errorlevel 1 (
     echo [ERROR] Backend build failed
     exit /b 1
 )
-echo [OK] Backend built
-
-:: Build frontend
-echo [5/7] Building frontend...
 call pnpm run build:ui
 if errorlevel 1 (
     echo [ERROR] Frontend build failed
     exit /b 1
 )
-echo [OK] Frontend built
+echo [OK] Backend and UI built
 
-:: Generate manifest
-echo [6/7] Generating manifest...
+:: 8. Generate and verify manifest
+echo [8/8] Verifying repository manifest and integrity...
 python app/scripts/generate_manifest.py
 if errorlevel 1 (
     echo [WARNING] Manifest generation failed
 ) else (
     echo [OK] Manifest generated
 )
-
-:: Verify
-echo [7/7] Running verification...
 python app/scripts/verify_all.py
 if errorlevel 1 (
     echo [WARNING] Verification failed

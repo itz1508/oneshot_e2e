@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T12:47:34Z",
+  "generated_at": "2026-09-27T13:28:27Z",
   "version": "1.3.0",
-  "commit": "fabb76fb",
+  "commit": "31181e12",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -41,8 +41,8 @@
     },
     {
       "path": "app\\bootstrap\\demo.mjs",
-      "size": 2711,
-      "hash": "sha256:d08de4ec7b036386b0c1096cf9f6c575af778bffa680460a7dccf49cd60dc82c",
+      "size": 3789,
+      "hash": "sha256:92365187713683aa5963f92f4031837b94aa6415e888c26aa2117a55a7c1a61e",
       "category": "source"
     },
     {
@@ -101,14 +101,14 @@
     },
     {
       "path": "app\\scripts\\generate_manifest.py",
-      "size": 4381,
-      "hash": "sha256:2fbd8626c9ba4ceec37b5599a9377921eb8ca6fb2b5d3b44a0a16b7bd79a6591",
+      "size": 3974,
+      "hash": "sha256:48b7831c29c0aa9cdf6fe9dd3701aecb18632b1820e9b4dd01da4b3a8472b3eb",
       "category": "source"
     },
     {
       "path": "app\\scripts\\source_file_policy.py",
-      "size": 6273,
-      "hash": "sha256:03d58a780f01c0ccdab19b49a70bb0459e7fdda2d45ee445a4afeb4adec9a737",
+      "size": 6930,
+      "hash": "sha256:78b93ec50ed83ddabfd9c8be5265bcbeade9226d1dda6bee240e86b2083d8c86",
       "category": "source"
     },
     {
@@ -119,8 +119,8 @@
     },
     {
       "path": "app\\scripts\\verify_manifest.py",
-      "size": 5870,
-      "hash": "sha256:2a490bedaabac461d7ad1d3e114efcc6495523b58d000dc063f815c76ae8f2a7",
+      "size": 5590,
+      "hash": "sha256:0f76d95ffcc312c68ac6f9bcd6b937ca4a4e74965a86bd7063cffe570e4b70c3",
       "category": "source"
     },
     {
@@ -6685,7 +6685,7 @@
   "statistics": {
     "total_files": 1113,
     "source_files": 1113,
-    "total_size_bytes": 13483109,
+    "total_size_bytes": 13484157,
     "by_extension": {
       ".yml": 1,
       ".md": 19,

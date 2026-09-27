@@ -17,6 +17,7 @@ console.log('OneShot Demo');
 console.log('============\n');
 
 const demoUrl = process.env.ONESHOT_DEMO_URL || 'http://127.0.0.1:8787';
+let activeServerProcess = null;
 
 // Check if server is already running
 async function checkServer() {
@@ -31,6 +32,18 @@ async function checkServer() {
   }
 }
 
+// Adaptive health check polling instead of fixed hardcoded sleep
+async function pollServerUntilHealthy(timeoutMs = 15000, intervalMs = 250) {
+  const startTime = Date.now();
+  while (Date.now() - startTime < timeoutMs) {
+    if (await checkServer()) {
+      return true;
+    }
+    await sleep(intervalMs);
+  }
+  return false;
+}
+
 // Start server
 async function startServer() {
   console.log('[1/3] Starting server...');
@@ -40,17 +53,27 @@ async function startServer() {
     shell: true,
     cwd: repoRoot
   });
+  activeServerProcess = server;
   
-  // Wait for server to start
+  server.on('exit', (code) => {
+    if (code !== 0 && code !== null) {
+      console.log(`[WARN] Server process exited with code ${code}`);
+    }
+    activeServerProcess = null;
+  });
+
+  // Adaptive poll for server readiness
   console.log('    Waiting for server to initialize...');
-  await sleep(3000);
+  const isHealthy = await pollServerUntilHealthy();
   
-  // Check if server is running
-  if (await checkServer()) {
+  if (isHealthy) {
     console.log('[OK] Server started\n');
     return true;
   } else {
-    console.log('[ERROR] Server failed to start');
+    console.log('[ERROR] Server failed to start within timeout');
+    if (activeServerProcess && !activeServerProcess.killed) {
+      activeServerProcess.kill('SIGINT');
+    }
     return false;
   }
 }
@@ -67,9 +90,16 @@ function openBrowser() {
   console.log(`[OK] Browser opened at ${url}\n`);
 }
 
-// Cleanup handler
+// Cleanup handler - guarantees child process termination
 function cleanup(signal) {
   console.log(`\n${signal} received. Shutting down server...`);
+  if (activeServerProcess && !activeServerProcess.killed) {
+    try {
+      activeServerProcess.kill('SIGINT');
+    } catch {
+      // Process already terminated
+    }
+  }
   process.exit(0);
 }
 
@@ -96,12 +126,15 @@ async function main() {
   console.log('Press Ctrl+C to stop the server');
   console.log();
   
-  // Keep process alive
-  process.on('SIGINT', cleanup);
-  process.on('SIGTERM', cleanup);
+  // Keep process alive and register cleanup hooks
+  process.on('SIGINT', () => cleanup('SIGINT'));
+  process.on('SIGTERM', () => cleanup('SIGTERM'));
 }
 
 main().catch(err => {
   console.error('Error:', err.message);
+  if (activeServerProcess && !activeServerProcess.killed) {
+    activeServerProcess.kill('SIGINT');
+  }
   process.exit(1);
 });
