@@ -8,12 +8,9 @@
   </a>
 </p>
 
-<div align="center">
-  <img src="public/demo/architecture-diagram.svg" alt="OneShot Architecture — Agent SSE, Python Reasoning, Filesystem Sandbox, Human Gates" width="100%" />
-</div>
-</div>
+## 🏛️ Architecture & Workflow
 
----
+For full state machine DAGs [**DIAGRAM.md**](DIAGRAM.md).
 
 ## ⚡ One Click Installation — Launch Server
 
@@ -29,7 +26,7 @@ irm https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.p
 curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.sh | bash
 ```
 
-> The installer automatically: clones the repo → installs dependencies → compiles → discovers an open port → **launches the browser console ready for testing**. Zero configuration required.
+> The installer automatically: clones the repo → installs dependencies → compiles → discovers an open port → **launches the browser ready for testing**.
 
 ---
 
@@ -57,7 +54,7 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
-## 📸 Live Event Progression — Key UI States
+## 📸 Live Event Captures
 
 | 1. Ready State | 2. Sidebar Collapsed |
 |:---|:---|
@@ -76,10 +73,6 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 | <img src="public/demo/screen-7-gates.png" width="100%" alt="Gate 1 — explicit human confirm control" /><br /><sub><b>Gates</b>: Gate 1 pending → human clicks Confirm → state updates to APPROVED</sub> | <img src="public/demo/screen-9-final.png" width="100%" alt="Full-width chat with completed response" /><br /><sub><b>Auto-scaled</b>: Drawer closed, chat expands to full width, smooth scroll response</sub> |
 
 ---
-
-## 🏛️ Architecture & Governed Workflow Specifications
-
-For full interactive state machine DAGs, three-owner boundary dependencies, and 4-partition sandbox verification, see [**DIAGRAM.md**](DIAGRAM.md).
 
 ---
 
