@@ -3,10 +3,6 @@
 # OneShot: Deterministic E2E Agent Runtime
 
 <p>
-  <a href="README.md"><b>[README]</b></a> · <a href="DIAGRAM.md"><b>[ARCHITECTURE DIAGRAM]</b></a> · <a href="LICENSE"><b>[LICENSE]</b></a>
-</p>
-
-<p>
   <a href="https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1">
     <img src="https://img.shields.io/badge/⚡_OneShot_Installation-One_Click_Automatic_E2E-2563EB?style=for-the-badge&logo=powershell&logoColor=white" alt="OneShot Installation" />
   </a>

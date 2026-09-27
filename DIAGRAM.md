@@ -1,9 +1,5 @@
 # OneShot — Architecture & Workflow DAGs
 
-<p>
-  <a href="README.md"><b>[README]</b></a> · <a href="DIAGRAM.md"><b>[ARCHITECTURE DIAGRAM]</b></a> · <a href="LICENSE"><b>[LICENSE]</b></a>
-</p>
-
 This document defines the core architecture, state machines, and dependencies of OneShot as established in `ARCHITECTURE.md`.
 
 ---
