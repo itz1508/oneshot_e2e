@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T07:11:06Z",
+  "generated_at": "2026-09-27T07:44:53Z",
   "version": "1.3.0",
-  "commit": "539dcbd0",
+  "commit": "2ffb550a",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -35,14 +35,14 @@
     },
     {
       "path": "README.md",
-      "size": 10633,
-      "hash": "sha256:743e6d5ab1f7662ba08eb2cacee888781da2ffe4573ae1f6810f674bf1cc28a8",
+      "size": 12741,
+      "hash": "sha256:1287d5488c595dd5f37715aaf836ee19873b84987d48dd49fd40223702969563",
       "category": "source"
     },
     {
       "path": "app\\bootstrap\\demo.mjs",
-      "size": 2705,
-      "hash": "sha256:89c65995b2dba68eaa2dec88ad7219b2d1ef736259ca19e7827d7d21247fffde",
+      "size": 2711,
+      "hash": "sha256:d08de4ec7b036386b0c1096cf9f6c575af778bffa680460a7dccf49cd60dc82c",
       "category": "source"
     },
     {
@@ -155,8 +155,8 @@
     },
     {
       "path": "backend\\index.ts",
-      "size": 71578,
-      "hash": "sha256:994875fe12564eff0dc7288a13a2851bbf0d07e3e4067e5b2635f9c1de408dbe",
+      "size": 72396,
+      "hash": "sha256:d7b57f79f61346c88c2b687f9219495a279eb0121418863b7a1613664d4cd083",
       "category": "source"
     },
     {
@@ -5897,8 +5897,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\ContextReviewDrawer.tsx",
-      "size": 36434,
-      "hash": "sha256:9e30b0660701249e4ba682b8678cf1bb23e67f60a62fee737be0eeca74f7de89",
+      "size": 37816,
+      "hash": "sha256:d558fa2007ea5174f8b7df09a7b354b3c01213a63faed7d93e3c69214af4ecbc",
       "category": "source"
     },
     {
@@ -6613,7 +6613,7 @@
   "statistics": {
     "total_files": 1101,
     "source_files": 1101,
-    "total_size_bytes": 13458994,
+    "total_size_bytes": 13463308,
     "by_extension": {
       ".yml": 1,
       ".md": 19,

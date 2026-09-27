@@ -726,6 +726,21 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
                 Gemini 3.5 Flash streaming with resilient gateway failover, Google Cloud Run serverless containerization, and OpenTelemetry telemetry.
               </p>
             </div>
+
+            <div className="p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-amber-300">Governed Multi-Agent Workflow State Machine</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-amber-500/20 text-amber-300">3 Pathways · 2 Gates</span>
+              </div>
+              <div className="text-[10px] text-[#a0a0a5] space-y-1 font-mono-code bg-black/40 p-2.5 rounded-lg border border-white/5">
+                <div className="text-[#60a5fa]">1. Normal Chat ──► Main Chat (Conversational, no side-effects)</div>
+                <div className="text-[#38bdf8]">2. Research ──► 7 Governed Phases ──► READY_FOR_PLANNING (STOP)</div>
+                <div className="text-[#fbbf24] pl-4">└─► 🚪 Gate 1: Human Confirmation of ResearchBundle</div>
+                <div className="text-[#c084fc]">3. Design_Planning ──► 5 Formal Reviews ──► APPROVED_PLAN (STOP)</div>
+                <div className="text-[#fbbf24] pl-4">└─► 🚪 Gate 2: Human Confirmation bound to Package SHA-256</div>
+                <div className="text-[#34d399]">4. Implementation Runtime ──► 4-Partition Sandbox &amp; 419 Passing Tests</div>
+              </div>
+            </div>
           </div>
         ) : null}
       </div>

@@ -11,7 +11,7 @@ import { dirname, join } from 'node:path';
 
 const modulePath = fileURLToPath(import.meta.url);
 const moduleDir = dirname(modulePath);
-const repoRoot = join(moduleDir, '..');
+const repoRoot = join(moduleDir, '..', '..');
 
 console.log('OneShot Demo');
 console.log('============\n');

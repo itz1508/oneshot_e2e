@@ -83,11 +83,50 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
-## 🏛️ System Architecture
+## 🏛️ System Architecture & Workflow Diagram
 
 <div align="left">
   <img src="public/demo/architecture-diagram.svg" alt="OneShot Architecture — Agent SSE, Python Reasoning, Filesystem Sandbox, Human Gates" width="100%" />
 </div>
+
+### 🔄 Governed Multi-Agent Workflow State Machine
+
+GitHub natively renders this interactive architecture DAG on page:
+
+```mermaid
+flowchart TD
+    NORMAL_CHAT["💬 Normal Chat (Composer)"]
+
+    NORMAL_CHAT -->|"1. Ordinary Request"| MAIN_CHAT["💬 Main Chat\n• Conversational response\n• Explanations & quick answers\n• Does NOT trigger research or planning"]
+
+    NORMAL_CHAT -->|"2. Choose Research"| RES_FLOW["🔍 Research Workflow\n• 7 governed phases\n• Scans documentation & codebase\n• Emits structured ResearchBundle\n• Stops at handoff boundary"]
+
+    NORMAL_CHAT -->|"3. Choose Design_Planning"| PLAN_FLOW["🧭 Design_Planning Workflow\n• 5 formal reviews (Coverage, Deps, Sandbox)\n• Generates actionable implementation plan\n• Stops at human approval"]
+
+    RES_FLOW --> READY_FOR_PLANNING["🛑 READY_FOR_PLANNING\n(Handoff Boundary · STOPS)"]
+
+    READY_FOR_PLANNING --> GATE1{"🚪 Boundary 1: Human Gate 1\nHuman verifies ResearchBundle"}
+    GATE1 -.->|"Approved ResearchBundle input"| PLAN_FLOW
+
+    PLAN_FLOW --> APPROVED_PLAN["🛑 APPROVED PLAN\n(Gate 2 Approval · STOPS)"]
+
+    APPROVED_PLAN --> GATE2{"🚪 Boundary 2: Human Gate 2\nBound to SHA-256 package hash"}
+    GATE2 -.->|"Consumed by"| IMPL_RT["📦 Implementation Runtime\n• 4-Partition Sandbox (/workspace, /scratch, /memories, /artifacts)\n• Python Reasoner Subprocess\n• 419 Deterministic Tests Passing"]
+
+    classDef chat fill:#0e1e38,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
+    classDef res fill:#082f49,stroke:#06b6d4,stroke-width:2px,color:#f8fafc;
+    classDef plan fill:#3b0764,stroke:#a855f7,stroke-width:2px,color:#f8fafc;
+    classDef stop fill:#4c0519,stroke:#f43f5e,stroke-width:2px,color:#fff1f2;
+    classDef exec fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#f8fafc;
+    classDef gate fill:#451a03,stroke:#f59e0b,stroke-width:2px,color:#fef3c7;
+
+    class NORMAL_CHAT,MAIN_CHAT chat;
+    class RES_FLOW res;
+    class PLAN_FLOW plan;
+    class READY_FOR_PLANNING,APPROVED_PLAN stop;
+    class IMPL_RT exec;
+    class GATE1,GATE2 gate;
+```
 
 ---
 

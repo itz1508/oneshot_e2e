@@ -1589,7 +1589,16 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
               res.writeHead(500, { "Content-Type": "application/json" });
               res.end(JSON.stringify({ error: err.message }));
             } else {
-              res.end();
+              if (!res.writableEnded) {
+                res.write(formatAgUiSse({
+                  type: "RUN_FINISH",
+                  runId: `run-${Date.now().toString(36)}`,
+                  timestamp: new Date().toISOString(),
+                  status: "FAILED",
+                  error: err.message || "Agent execution failed",
+                }));
+                res.end();
+              }
             }
           }
           return;
@@ -1676,7 +1685,16 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
             res.writeHead(500, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ error: err.message }));
           } else {
-            res.end();
+            if (!res.writableEnded) {
+              res.write(formatAgUiSse({
+                type: "RUN_FINISH",
+                runId: `run-${Date.now().toString(36)}`,
+                timestamp: new Date().toISOString(),
+                status: "FAILED",
+                error: err.message || "Python reasoning failed",
+              }));
+              res.end();
+            }
           }
         }
         return;
@@ -1741,7 +1759,9 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
     } catch (err: any) {
       if (!res.headersSent) {
         res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: err.message }));
+        res.end(JSON.stringify({ error: err.message || "Internal server error" }));
+      } else if (!res.writableEnded) {
+        res.end();
       }
     }
   });
