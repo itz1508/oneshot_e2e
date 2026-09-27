@@ -24,21 +24,6 @@ Real SSE Streaming · Python Reasoning Subprocess · Strict Filesystem Sandboxin
 
 ---
 
-### 📑 Repository Documentation & Guides
-
-<p>
-  <a href="README.md"><img src="https://img.shields.io/badge/README.md-Console_&_Quickstart-2563EB?style=for-the-badge&logo=markdown&logoColor=white" alt="README.md" /></a>
-  <a href="ARCHITECTURE.MD"><img src="https://img.shields.io/badge/ARCHITECTURE.md-System_Architecture-059669?style=for-the-badge" alt="ARCHITECTURE.md" /></a>
-  <a href="DIAGRAM.md"><img src="https://img.shields.io/badge/DIAGRAM.md-417--Test_DAG_Graphs-D97706?style=for-the-badge" alt="DIAGRAM.md" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/LICENSE-Apache--2.0-4F46E5?style=for-the-badge" alt="LICENSE" /></a>
-</p>
-
-| 📖 [README.md](README.md) | 🏛️ [ARCHITECTURE.md](ARCHITECTURE.MD) | 📊 [DIAGRAM.md](DIAGRAM.md) | ⚖️ [LICENSE](LICENSE) |
-| :--- | :--- | :--- | :--- |
-| **Interactive Console Guide**<br />• One-Click Installation Script<br />• Agent SSE Real-Time Console<br />• 5 Offline Contract Fixtures<br />• Multi-Provider Switching (Gemini, OpenAI, Mistral, Ollama) | **System Architecture & Security**<br />• Agent Event Streaming Core<br />• 4-Partition Sandbox Isolation (`/workspace/`, `/scratch/`, `/memories/`, `/artifacts/`)<br />• Python Reasoning Subprocess<br />• Dual Human-in-the-Loop Gates | **Topologies & DAG Proofs**<br />• 417-Test Directed Acyclic Graph<br />• Stage Machine Transitions (`IDLE` ➔ `VALIDATION`)<br />• Execution Dependency Hierarchy<br />• 100% Deterministic Byte Verification | **Apache-2.0 Open Source License**<br />• Permissive Open Source License<br />• Commercial & Distribution Rights<br />• Patent & Copyright Grants<br />• Standard Liability & Warranty Terms |
-
----
-
 ## ⚡ One Click Installation — Launch Server
 
 **Windows (PowerShell — one command, fully automatic):**
@@ -93,7 +78,7 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
-### ⚡ Terminal — Installation, Build & Tests (417 Passing)
+## ⚡ Terminal — Installation, Build & Tests (417 Passing)
 
 <div align="left">
   <img src="public/demo/screen-0-install-test.png" width="100%" alt="Terminal verification — all test suites passing with zero failures" />

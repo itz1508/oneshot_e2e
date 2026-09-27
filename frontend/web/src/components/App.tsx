@@ -79,7 +79,7 @@ const AppContent: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerTab, setDrawerTab] = useState<"context" | "task" | "backends" | "architecture">("context");
+  const [drawerTab, setDrawerTab] = useState<"context" | "task" | "backends" | "architecture" | "readme">("context");
   const [selectedContext, setSelectedContext] = useState<EarlierContextItem | null>(null);
   const [isProviderModalOpen, setIsProviderModalOpen] = useState(false);
   const [modalProviderId, setModalProviderId] = useState<ProviderId>("gemini");
@@ -193,7 +193,7 @@ const AppContent: React.FC = () => {
   );
 
   const handleToggleDrawer = useCallback(
-    (targetTab?: "context" | "task" | "backends" | "architecture") => {
+    (targetTab?: "context" | "task" | "backends" | "architecture" | "readme") => {
       if (isDrawerOpen && (!targetTab || targetTab === drawerTab)) {
         setIsDrawerOpen(false);
       } else {
@@ -331,6 +331,7 @@ const AppContent: React.FC = () => {
               onNewSession={handleNewSession}
               onClearHistory={handleClearHistoryWithConfirmation}
               onOpenIntegration={() => setIsIntegrationOpen(true)}
+              onOpenReadme={() => handleToggleDrawer("readme")}
               onOpenArchitecture={() => handleToggleDrawer("architecture")}
             />
           </header>

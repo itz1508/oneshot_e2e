@@ -15,7 +15,7 @@ interface ContextReviewDrawerProps {
   item: EarlierContextItem | null;
   isOpen: boolean;
   onClose: () => void;
-  activeTab?: "context" | "task" | "backends" | "architecture";
+  activeTab?: "context" | "task" | "backends" | "architecture" | "readme";
   runId?: string | null;
   runStatus?: "IDLE" | "RUNNING" | "COMPLETED" | "CANCELLED" | "FAILED";
   activitySteps?: ActivityStep[];
@@ -42,7 +42,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
   activitySteps = [],
   taskEvents = [],
 }) => {
-  const [tab, setTab] = useState<"context" | "task" | "backends" | "architecture">(activeTab);
+  const [tab, setTab] = useState<"context" | "task" | "backends" | "architecture" | "readme">(activeTab);
   const [isTasksFlipped, setIsTasksFlipped] = useState(false);
   const [gate1, setGate1] = useState<{ status: string; confirmedAt?: string } | null>(null);
   const [gate2, setGate2] = useState<{ status: string; confirmedAt?: string; packageHash?: string } | null>(null);
@@ -199,6 +199,18 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
           >
             <span>Backends</span>
             <span className="text-[10px] text-[#6e6e73]">4</span>
+          </button>
+          <button
+            id="tabReadmeBtn"
+            type="button"
+            onClick={() => setTab("readme")}
+            className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+              tab === "readme"
+                ? "bg-white/10 text-white"
+                : "text-[#8e8e93] hover:text-white"
+            }`}
+          >
+            <span>📖 README</span>
           </button>
           <button
             id="tabArchitectureBtn"
@@ -522,6 +534,131 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        ) : tab === "readme" ? (
+          /* README / DOCUMENTATION TAB */
+          <div className="space-y-4">
+            <div>
+              <strong className="block text-xs font-semibold text-[#dedede]">
+                OneShot Documentation &amp; Reference Guides
+              </strong>
+              <small className="block text-[9px] text-[#6e6e73]">
+                Console Guide · Architecture Specifications · DAG Topologies · Open License
+              </small>
+            </div>
+
+            {/* Quick 1-Click Install Preview Card */}
+            <div className="p-3 rounded-lg border border-blue-500/20 bg-blue-500/5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-400">
+                  ⚡ 1-Click Automatic Installation
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-mono-code bg-blue-500/20 text-blue-300">
+                  Zero Config
+                </span>
+              </div>
+              <div className="bg-[#0b0c10] p-2 rounded border border-white/5 font-mono-code text-[11px] text-[#79a8ea] select-all break-all">
+                irm https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1 | iex
+              </div>
+              <div className="flex items-center gap-2 text-[9px] text-[#8e8e93]">
+                <span>Windows (PowerShell)</span>
+                <span>·</span>
+                <span>macOS / Linux: <code className="text-white/70">curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.sh | bash</code></span>
+              </div>
+            </div>
+
+            {/* 4 Documentation Cards Grid */}
+            <div className="grid grid-cols-1 gap-2.5">
+              {/* Card 1: README.md */}
+              <div className="p-3 rounded-lg border border-white/10 bg-[#141416] hover:border-blue-500/40 transition-colors space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">📖</span>
+                    <strong className="text-xs font-semibold text-[#ececec]">README.md</strong>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-blue-500/20 text-blue-300">
+                    Console &amp; Quickstart
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#a0a0a5] leading-relaxed">
+                  Interactive software engineering console guide with one-click installer, live streaming console, 5 offline contract fixtures, and multi-provider switching (Gemini, OpenAI, Mistral, Ollama).
+                </p>
+                <div className="flex flex-wrap gap-1.5 pt-1 text-[9px] text-[#8e8e93]">
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">⚡ 1-Click Install</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">📡 AG-UI SSE Stream</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🧪 5 Dry-Run Fixtures</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🔌 Multi-Provider</span>
+                </div>
+              </div>
+
+              {/* Card 2: ARCHITECTURE.md */}
+              <div className="p-3 rounded-lg border border-white/10 bg-[#141416] hover:border-emerald-500/40 transition-colors space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">🏛️</span>
+                    <strong className="text-xs font-semibold text-[#ececec]">ARCHITECTURE.md</strong>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setTab("architecture")}
+                    className="px-2 py-0.5 rounded text-[9px] font-medium bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 transition-colors cursor-pointer"
+                  >
+                    View Diagram →
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#a0a0a5] leading-relaxed">
+                  System architecture specifications: Agent event streaming core, 4-partition sandbox isolation (<code className="text-[#62c48d]">/workspace/</code>, <code className="text-[#62c48d]">/scratch/</code>, <code className="text-[#62c48d]">/memories/</code>, <code className="text-[#62c48d]">/artifacts/</code>), Python reasoning subprocess, and dual human review gates.
+                </p>
+                <div className="flex flex-wrap gap-1.5 pt-1 text-[9px] text-[#8e8e93]">
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🛡️ 4-Partition Sandbox</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🐍 Python Reasoner</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🚪 Gate 1 &amp; Gate 2</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🔐 Path Traversal Block</span>
+                </div>
+              </div>
+
+              {/* Card 3: DIAGRAM.md */}
+              <div className="p-3 rounded-lg border border-white/10 bg-[#141416] hover:border-amber-500/40 transition-colors space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">📊</span>
+                    <strong className="text-xs font-semibold text-[#ececec]">DIAGRAM.md</strong>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-amber-500/20 text-amber-300">
+                    417-Test DAG Proofs
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#a0a0a5] leading-relaxed">
+                  417-test directed acyclic graph, stage machine transitions (<code className="text-[#e5a84b]">IDLE</code> ➔ <code className="text-[#e5a84b]">VALIDATION</code>), execution dependency hierarchy, and 100% deterministic byte verification.
+                </p>
+                <div className="flex flex-wrap gap-1.5 pt-1 text-[9px] text-[#8e8e93]">
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">📈 417 Tests Passing</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🔄 DAG State Transitions</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🔑 SHA-256 Proof</span>
+                </div>
+              </div>
+
+              {/* Card 4: LICENSE */}
+              <div className="p-3 rounded-lg border border-white/10 bg-[#141416] hover:border-purple-500/40 transition-colors space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">⚖️</span>
+                    <strong className="text-xs font-semibold text-[#ececec]">LICENSE</strong>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-purple-500/20 text-purple-300">
+                    Apache-2.0
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#a0a0a5] leading-relaxed">
+                  Permissive open-source software license. Grants broad commercial and private use, patent rights, modification, and distribution under standard warranty disclaimers.
+                </p>
+                <div className="flex flex-wrap gap-1.5 pt-1 text-[9px] text-[#8e8e93]">
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">💼 Commercial Use</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">📜 Patent Grant</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🔓 Permissive</span>
+                </div>
+              </div>
             </div>
           </div>
         ) : tab === "architecture" ? (

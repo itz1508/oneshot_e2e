@@ -11,6 +11,7 @@ interface HeaderBarProps {
   onClearHistory?: () => void;
   onOpenIntegration?: () => void;
   onOpenArchitecture?: () => void;
+  onOpenReadme?: () => void;
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -24,6 +25,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   onClearHistory,
   onOpenIntegration,
   onOpenArchitecture,
+  onOpenReadme,
 }) => {
   return (
     <header className="h-[54px] min-h-[54px] px-4 flex items-center justify-between border-b border-white/5 bg-[#0d0d0e]/95 backdrop-blur-md z-20">
@@ -90,6 +92,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           Research
         </span>
         <span className="text-[#65656a] hidden sm:inline">Context-aware</span>
+
+        <button
+          id="openReadmeBtn"
+          type="button"
+          onClick={onOpenReadme || (() => onToggleDrawer())}
+          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-medium text-[#c7c7cc] hover:text-white transition-colors cursor-pointer"
+          title="View README Documentation"
+          aria-label="View README Documentation"
+        >
+          <span>📖</span>
+          <span className="hidden sm:inline">README</span>
+        </button>
 
         <button
           id="openArchitectureBtn"
