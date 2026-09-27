@@ -10,6 +10,7 @@ dotenv.config({ path: "app/env/.env" });
 import http from "node:http";
 import path from "node:path";
 import fs from "node:fs/promises";
+import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 export * from "../packages/agent-runtime/src/index.js";
@@ -81,6 +82,89 @@ const gitStorage = new GitLocalStorage({ rootDir: path.resolve(process.cwd(), ".
 
 // ── In-memory chat session store ─────────────────────────────────────────────
 const sessions = new Map<string, { id: string; title: string; messages: unknown[] }>();
+
+/**
+ * Validates a contract fixture directly against disk with cryptographic SHA-256 byte proof.
+ * Uses the authorative FixtureRuntime lifecycle and ensures expected == actual hash equality.
+ */
+export async function validateRealFixture(params: {
+  fixture_id?: string;
+  sessionId?: string;
+  path?: string;
+  expectedHash?: string;
+}) {
+  const relPath = params.path || "app/fixtures/sample.json";
+  const absPath = path.resolve(process.cwd(), relPath);
+
+  let fileBuffer: Buffer;
+  try {
+    fileBuffer = await fs.readFile(absPath);
+  } catch {
+    return {
+      ok: false,
+      success: false,
+      error: `Fixture file not found: ${relPath}`,
+      path: relPath,
+      status: "failed" as const,
+      actualHash: "",
+      expectedHash: params.expectedHash || "",
+      fixture_id: params.fixture_id || "unknown",
+      session_id: params.sessionId || "session-local",
+      auditTrail: [],
+      metadata: {},
+    };
+  }
+
+  const computedHash = `sha256:${crypto.createHash("sha256").update(fileBuffer).digest("hex")}`;
+
+  let parsedContent: Record<string, unknown> = {};
+  try {
+    parsedContent = JSON.parse(fileBuffer.toString("utf-8"));
+  } catch {
+    return {
+      ok: false,
+      success: false,
+      error: `Invalid JSON in fixture: ${relPath}`,
+      path: relPath,
+      status: "failed" as const,
+      actualHash: computedHash,
+      expectedHash: params.expectedHash || computedHash,
+      fixture_id: params.fixture_id || "unknown",
+      session_id: params.sessionId || "session-local",
+      auditTrail: [],
+      metadata: {},
+    };
+  }
+
+  const fid = params.fixture_id || (parsedContent.fixture_id as string) || "fix-sample-01";
+  const sid = params.sessionId || "session-local";
+  const expHash = params.expectedHash || computedHash;
+
+  const actFixture = fixture(fid, sid, relPath, expHash, {
+    metadata: {
+      ...parsedContent,
+      verifiedAt: new Date().toISOString(),
+      byteLength: fileBuffer.length,
+    },
+  });
+
+  const valRes = actFixture.validate(() => computedHash);
+  const stored = actFixture.toStoredRecord();
+
+  return {
+    ok: valRes.ok,
+    success: valRes.ok,
+    fixture_id: stored.fixture_id,
+    session_id: stored.session_id,
+    path: relPath,
+    status: stored.status,
+    actualHash: actFixture.actualHash || computedHash,
+    expectedHash: actFixture.expectedHash,
+    auditTrail: stored.auditTrail,
+    metadata: actFixture.metadata,
+    storedRecord: stored,
+  };
+}
 
 function parseBody(req: http.IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -712,6 +796,46 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
         return;
       }
 
+      // Repository Contract Fixtures Discovery & State
+      if (pathname === "/api/fixtures" && req.method === "GET") {
+        const fixturesDir = path.resolve(process.cwd(), "app/fixtures");
+        try {
+          const files = await fs.readdir(fixturesDir);
+          const jsonFiles = files.filter((f) => f.endsWith(".json"));
+          const fixturesList = [];
+          for (const file of jsonFiles) {
+            const relPath = `app/fixtures/${file}`;
+            const absPath = path.join(fixturesDir, file);
+            const buf = await fs.readFile(absPath);
+            const hash = `sha256:${crypto.createHash("sha256").update(buf).digest("hex")}`;
+            let parsed: any = {};
+            try {
+              parsed = JSON.parse(buf.toString("utf-8"));
+            } catch {}
+            fixturesList.push({
+              id: parsed.fixture_id || file.replace(".json", ""),
+              fixture_id: parsed.fixture_id || file.replace(".json", ""),
+              name: parsed.name || parsed.description || file,
+              file: relPath,
+              path: relPath,
+              description: parsed.description || "",
+              version: parsed.version || "1.0.0",
+              hash,
+              byteLength: buf.length,
+              targetFinding: parsed.targetFinding || "INVARIANT-OK",
+              partitions: parsed.partitions || ["/workspace/", "/scratch/", "/memories/", "/artifacts/"],
+              prompt: parsed.prompt || `Audit and verify ${file} contract integrity`,
+            });
+          }
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: true, fixtures: fixturesList }));
+        } catch (err: any) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: false, error: err.message }));
+        }
+        return;
+      }
+
       // === SESSION & CHECKPOINT ENDPOINTS ===
 
       if (pathname === "/api/session/checkpoints" && req.method === "GET") {
@@ -878,22 +1002,21 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           const snap = await gitStorage.createSnapshot({ stage: "checkpoint" });
           result = { snapshotId: snap.id, stage: snap.stage, timestamp: snap.timestamp, status: "SNAPSHOT_COMMITTED" };
         } else if (toolName === "validate_fixtures") {
-          const fid = input?.fixture_id || "fix-local-01";
-          const sid = (input?.sessionId as string) || (req.headers["x-session-id"] as string) || "session-local";
-          const fpath = input?.path || "app/fixtures/sample.json";
-          const expHash = input?.expectedHash || "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069";
-          const actFixture = fixture(fid, sid, fpath, expHash);
-          actFixture.evolve({ actualHash: expHash, status: "validated" });
-          const valRes = actFixture.validate();
-          const stored = actFixture.toStoredRecord();
+          const valRes = await validateRealFixture({
+            fixture_id: input?.fixture_id,
+            sessionId: (input?.sessionId as string) || (req.headers["x-session-id"] as string) || "session-local",
+            path: input?.path,
+            expectedHash: input?.expectedHash,
+          });
           result = {
             success: valRes.ok,
-            fixture_id: stored.fixture_id,
-            session_id: stored.session_id,
-            status: stored.status,
-            actualHash: actFixture.actualHash,
-            expectedHash: actFixture.expectedHash,
-            auditTrail: stored.auditTrail,
+            fixture_id: valRes.fixture_id,
+            session_id: valRes.session_id,
+            path: valRes.path,
+            status: valRes.status,
+            actualHash: valRes.actualHash,
+            expectedHash: valRes.expectedHash,
+            auditTrail: valRes.auditTrail,
           };
         } else {
           res.writeHead(400, { "Content-Type": "application/json" });
@@ -1165,26 +1288,25 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
           const toolName = body.toolName;
           const input = body.input || {};
           if (toolName === "validate_fixtures") {
-            const fid = input?.fixture_id || "fix-local-01";
-            const sid = input?.sessionId || sessionId;
-            const fpath = input?.path || "app/fixtures/sample.json";
-            const expHash = input?.expectedHash || "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069";
-            const actFixture = fixture(fid, sid, fpath, expHash);
-            actFixture.evolve({ actualHash: expHash, status: "validated" });
-            const valRes = actFixture.validate();
-            const stored = actFixture.toStoredRecord();
-            res.writeHead(200, { "Content-Type": "application/json" });
+            const valRes = await validateRealFixture({
+              fixture_id: input?.fixture_id,
+              sessionId: input?.sessionId || sessionId,
+              path: input?.path,
+              expectedHash: input?.expectedHash,
+            });
+            res.writeHead(valRes.ok ? 200 : 422, { "Content-Type": "application/json" });
             res.end(JSON.stringify({
-              ok: true,
+              ok: valRes.ok,
               operation: "executeTool",
               toolName,
               result: {
                 success: valRes.ok,
-                fixture_id: stored.fixture_id,
-                session_id: stored.session_id,
-                status: stored.status,
-                actualHash: actFixture.actualHash,
-                expectedHash: actFixture.expectedHash,
+                fixture_id: valRes.fixture_id,
+                session_id: valRes.session_id,
+                path: valRes.path,
+                status: valRes.status,
+                actualHash: valRes.actualHash,
+                expectedHash: valRes.expectedHash,
               },
             }));
             return;
@@ -1300,23 +1422,24 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
 
         // Operation 7: validateFixtures
         if (operation === "validateFixtures") {
-          const fid = body.fixture_id || "fix-local-01";
-          const sid = body.sessionId || sessionId;
-          const fpath = body.path || "app/fixtures/sample.json";
-          const expHash = body.expectedHash || "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069";
-          const actFixture = fixture(fid, sid, fpath, expHash);
-          actFixture.evolve({ actualHash: expHash, status: "validated" });
-          const valRes = actFixture.validate();
-          const stored = actFixture.toStoredRecord();
-          res.writeHead(200, { "Content-Type": "application/json" });
+          const valRes = await validateRealFixture({
+            fixture_id: body.fixture_id,
+            sessionId: body.sessionId || sessionId,
+            path: body.path,
+            expectedHash: body.expectedHash,
+          });
+          res.writeHead(valRes.ok ? 200 : 422, { "Content-Type": "application/json" });
           res.end(JSON.stringify({
             ok: valRes.ok,
             operation: "validateFixtures",
-            fixture_id: stored.fixture_id,
-            session_id: stored.session_id,
-            status: stored.status,
-            actualHash: actFixture.actualHash,
-            expectedHash: actFixture.expectedHash,
+            fixture_id: valRes.fixture_id,
+            session_id: valRes.session_id,
+            path: valRes.path,
+            status: valRes.status,
+            actualHash: valRes.actualHash,
+            expectedHash: valRes.expectedHash,
+            auditTrail: valRes.auditTrail,
+            metadata: valRes.metadata,
           }));
           return;
         }

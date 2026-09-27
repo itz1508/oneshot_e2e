@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { ProviderId } from "../types";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
+import { resolveApiUrl, readJsonResponse } from "../lib/api";
 
 export interface FixtureScenario {
   id: string;
@@ -79,8 +80,18 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
   );
   const [liveStatusMsg, setLiveStatusMsg] = useState<string | null>(null);
   const [isConfiguring, setIsConfiguring] = useState(false);
+  const [fixtureResult, setFixtureResult] = useState<{
+    ok: boolean;
+    status: string;
+    actualHash?: string;
+    expectedHash?: string;
+    fixture_id?: string;
+    session_id?: string;
+    error?: string;
+  } | null>(null);
+  const [isValidatingFixture, setIsValidatingFixture] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (PROVIDER_DEFINITIONS[currentProvider]?.models?.length) {
       setLiveModel(PROVIDER_DEFINITIONS[currentProvider].models[0]);
     }
@@ -89,10 +100,43 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
   const activeFixture = FIXTURE_SCENARIOS[selectedFixtureIndex];
   const effectivePrompt = customPrompt.trim() || activeFixture.prompt;
 
-  const handleTryIt = useCallback(() => {
+  const handleTryIt = useCallback(async () => {
     setActiveStep(3); // Move to Observe Workflow step
+    setIsValidatingFixture(true);
+
+    try {
+      // 1. Execute the fixture validation on the backend directly against disk
+      const res = await fetch(resolveApiUrl("/api/v2/validateFixtures"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fixture_id: activeFixture.id,
+          path: activeFixture.file,
+        }),
+      });
+      const data = await readJsonResponse<{
+        ok: boolean;
+        status: string;
+        actualHash?: string;
+        expectedHash?: string;
+        fixture_id?: string;
+        session_id?: string;
+        error?: string;
+      }>(res, "Backend Fixture Validation");
+      setFixtureResult(data);
+    } catch (err: any) {
+      setFixtureResult({
+        ok: false,
+        status: "failed",
+        error: err.message || "Failed to validate fixture on backend",
+      });
+    } finally {
+      setIsValidatingFixture(false);
+    }
+
+    // 2. Stream the live agent execution with the effective prompt
     onRunWorkflow(effectivePrompt, "fixture", currentProvider);
-  }, [effectivePrompt, currentProvider, onRunWorkflow]);
+  }, [activeFixture, effectivePrompt, currentProvider, onRunWorkflow]);
 
   const handleConnectProvider = useCallback(async () => {
     setIsConfiguring(true);

@@ -75,7 +75,7 @@ describe('Health Endpoints', () => {
           fixture_id: 'fix-test-101',
           sessionId: 'sess-unit-test',
           path: 'app/fixtures/sample.json',
-          expectedHash: 'sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069',
+          expectedHash: 'sha256:9ee8ec71b87f46133c868b3e2c82bc12d62decab5f8c5a4bdfb27d6db758d9dd',
         },
       }),
     });

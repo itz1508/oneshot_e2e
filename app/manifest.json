@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T02:43:02Z",
+  "generated_at": "2026-09-27T03:44:17Z",
   "version": "1.3.0",
-  "commit": "3641af59",
+  "commit": "68ec4da6",
   "files": [
     {
       "path": ".github\\deploy.yml",
@@ -11,8 +11,8 @@
     },
     {
       "path": "AGENTS.md",
-      "size": 13676,
-      "hash": "sha256:53fbc21142dcfd599c288a1bb438c5990a3866bef2b5615a11c91c34d7084113",
+      "size": 14377,
+      "hash": "sha256:282dbfdc16fa155118f0751a0d874ecfd3d81a94a4d7149f4ab327d9ad41f882",
       "category": "source"
     },
     {
@@ -35,8 +35,8 @@
     },
     {
       "path": "README.md",
-      "size": 12650,
-      "hash": "sha256:38b7d18550aba9d5717a7b9eceb40d68db23e0695efd95e58fc7de55e0a7e215",
+      "size": 12770,
+      "hash": "sha256:a593316497d164a3d42a9ccaaba1c5e6cd69548b93fc584ac13f0689b0725eeb",
       "category": "source"
     },
     {
@@ -155,8 +155,8 @@
     },
     {
       "path": "backend\\index.ts",
-      "size": 67929,
-      "hash": "sha256:5e6f84641ef22bb92ecaa64c5585630d71447818e7ca0b6b3df202d1e24398f2",
+      "size": 71578,
+      "hash": "sha256:994875fe12564eff0dc7288a13a2851bbf0d07e3e4067e5b2635f9c1de408dbe",
       "category": "source"
     },
     {
@@ -5651,8 +5651,8 @@
     },
     {
       "path": "backend\\tests\\ts\\action-api.test.ts",
-      "size": 12053,
-      "hash": "sha256:bf141e2f67c32e02e1601937ce4be413d61b0a47e704670f17b3eb77af16d7b5",
+      "size": 12709,
+      "hash": "sha256:57f65b94fb8274c4e1ce2c168ad2d87b3584b83d16b1c0d3869939af8ea05f0f",
       "category": "source"
     },
     {
@@ -5712,7 +5712,7 @@
     {
       "path": "backend\\tests\\ts\\health-endpoint.test.ts",
       "size": 4137,
-      "hash": "sha256:4de5348816f9bc98f1ad7b12019bf7f6e390be883a10fdd8f575fda0f6d24916",
+      "hash": "sha256:24d9576f7e7c5532abd959cc630f0b9c5dca1711894bd9c1e3ba2c86b143162a",
       "category": "source"
     },
     {
@@ -5993,8 +5993,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\WelcomeWorkflowConsole.tsx",
-      "size": 20634,
-      "hash": "sha256:9090a2ed2bb5b3796c48cb6ac0d089106c426a42a9f693ad2a1b2ebcb5a3968b",
+      "size": 22048,
+      "hash": "sha256:c78c8e7ac96045fdfa19ce388bc879ca0d52db122ad3c32cb260ac26c9a05029",
       "category": "source"
     },
     {
@@ -6613,7 +6613,7 @@
   "statistics": {
     "total_files": 1101,
     "source_files": 1101,
-    "total_size_bytes": 13441074,
+    "total_size_bytes": 13447614,
     "by_extension": {
       ".yml": 1,
       ".md": 19,

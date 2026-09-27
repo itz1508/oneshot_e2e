@@ -96,7 +96,7 @@ describe("Action API v2 Unified RPC Dispatcher", () => {
   });
 
   it("POST /api/v2/executeTool executes validate_fixtures with deep byte/hash equality verification", async () => {
-    const testHash = "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069";
+    const testHash = "sha256:9ee8ec71b87f46133c868b3e2c82bc12d62decab5f8c5a4bdfb27d6db758d9dd";
     const res = await fetch(`${baseUrl}/api/v2/executeTool`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -216,7 +216,7 @@ describe("Action API v2 Unified RPC Dispatcher", () => {
   });
 
   it("POST /api/v2/validateFixtures verifies standalone fixture validation", async () => {
-    const testHash = "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069";
+    const testHash = "sha256:9ee8ec71b87f46133c868b3e2c82bc12d62decab5f8c5a4bdfb27d6db758d9dd";
     const res = await fetch(`${baseUrl}/api/v2/validateFixtures`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -235,6 +235,23 @@ describe("Action API v2 Unified RPC Dispatcher", () => {
     assert.strictEqual(data.status, "validated");
     assert.strictEqual(data.actualHash, testHash);
     assert.strictEqual(data.expectedHash, testHash);
+  });
+
+  it("POST /api/v2/validateFixtures rejects mismatched expectedHash with 422 failed status", async () => {
+    const res = await fetch(`${baseUrl}/api/v2/validateFixtures`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fixture_id: "fix-standalone-mismatch",
+        path: "app/fixtures/sample.json",
+        expectedHash: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      }),
+    });
+
+    assert.strictEqual(res.status, 422);
+    const data = await res.json();
+    assert.strictEqual(data.ok, false);
+    assert.strictEqual(data.status, "failed");
   });
 
   it("POST /api/v2/exportBundle exports portable workspace bundle with manifest and workflow gates", async () => {

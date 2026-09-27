@@ -61,12 +61,12 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 <div align="center">
 
-![OneShot Live Demo Preview](public/demo/oneshot-demo.gif)
+<video src="https://github.com/user-attachments/assets/a64b0fdc-b138-468a-8996-c30c5bef1f25" controls="controls" width="100%"></video>
 
 <br />
 
 <sub>
-  ▶ <b><a href="public/demo/oneshot-demo.mp4">Watch High-Definition Demo (MP4)</a></b> · <a href="public/demo/oneshot-demo.webm">WebM Video</a> · <a href="public/demo/oneshot-demo.vtt">Subtitles (.vtt)</a> · <a href="https://itz1508.github.io/oneshot_e2e/">Live Browser Console</a>
+  ▶ <b><a href="https://github.com/user-attachments/assets/a64b0fdc-b138-468a-8996-c30c5bef1f25">Direct Video Stream (MP4)</a></b> · <a href="public/demo/oneshot-demo.webm">WebM Video</a> · <a href="public/demo/oneshot-demo.vtt">Subtitles (.vtt)</a> · <a href="https://itz1508.github.io/oneshot_e2e/">Live Browser Console</a>
 </sub>
 
 </div>

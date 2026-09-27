@@ -87,9 +87,13 @@ Use pnpm exclusively across scripts, installs, builds, and tests. Never use npm,
 
 Never fabricate progress, fake timers, mock data, synthetic success, assistant responses, research results, tool execution, or validation success. UI states must reflect real backend SSE streams, records, and tool execution.
 
-## Response Verification Invariant
+## Response Verification Invariant — The Golden Rule
 
-A test or stage transition is not valid merely because it returns `pass` or `passed`. Verification must inspect the actual HTTP response payload, body fields, status codes, and byte/hash equality against the expected data contract.
+**"PASS" is superficial and meaningless on its own; a verified HTTP RESPONSE payload is the ONLY valid confirmation.**
+
+1. **"PASS" is not proof**: A test, tool execution, or stage transition is NOT valid merely because it returns `pass` or `passed` or exit code 0.
+2. **Inspect the concrete response**: Verification MUST inspect the actual HTTP response payload, body fields, status codes, and cryptographic byte/hash equality against the expected data contract. If there is no response payload or byte equality proof, it did not happen.
+3. **Backend first, zero frontend invention**: Every feature, contract fixture, and tool MUST run and succeed on the authoritative backend first, emitting real data. Never invent client-side mock states, synthetic simulations, or hardcoded assumptions in the frontend. The frontend must wire directly into real backend endpoints and faithfully render genuine backend state.
 
 ## Canonical Sources
 
