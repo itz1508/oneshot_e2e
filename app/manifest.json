@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T07:44:53Z",
+  "generated_at": "2026-09-27T08:01:13Z",
   "version": "1.3.0",
-  "commit": "2ffb550a",
+  "commit": "f3bfd31d",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -5968,6 +5968,12 @@
       "category": "source"
     },
     {
+      "path": "frontend\\web\\src\\components\\ReadinessCard.tsx",
+      "size": 3543,
+      "hash": "sha256:7b99ba254333f7f412fc7afd1bc05eb2afffbaf040e7e9d24529780c8e8560c9",
+      "category": "source"
+    },
+    {
       "path": "frontend\\web\\src\\components\\ResearchBanner.tsx",
       "size": 3981,
       "hash": "sha256:e08190453d58372fa7e26546a3795820305daa91a44e6ad9765a145ec15e7bf3",
@@ -5975,8 +5981,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\ResearcherDrawer.tsx",
-      "size": 7051,
-      "hash": "sha256:15c0579dd909746ca080ad367f4fb93c841b2003063dec79064b5f948a1181df",
+      "size": 33107,
+      "hash": "sha256:1e5ba8b8020660719b7c0c432d2c941ea167b07f1c876100466367522d1c3a23",
       "category": "source"
     },
     {
@@ -5999,8 +6005,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\index.ts",
-      "size": 760,
-      "hash": "sha256:13abf4aacdd5e879a64614ae819d6c39683dc5cb59daedef6033995cb6da7b95",
+      "size": 793,
+      "hash": "sha256:9466958fabc6e4862fa94f9b3485056808abc2b27c470e99b3e4ebb0b790c135",
       "category": "source"
     },
     {
@@ -6137,14 +6143,20 @@
     },
     {
       "path": "frontend\\web\\src\\types\\index.ts",
-      "size": 1629,
-      "hash": "sha256:6d554beb72a52907d8bfd4f1edf8929773fac1f7d4deea5845bc4bff8f130a1d",
+      "size": 1658,
+      "hash": "sha256:fb9813f512fe6d4e50ab43efe9d4c33a93b6daf1c766a44799844637603013d9",
       "category": "source"
     },
     {
       "path": "frontend\\web\\src\\types\\invariants.ts",
       "size": 3507,
       "hash": "sha256:6efeb9b44dd5a13fa7b4d415ac1f3b8208752d53cdf24a1ff70d19d6c9c51f02",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\types\\research.ts",
+      "size": 944,
+      "hash": "sha256:8f943aedcaafd79eafc0815dedffb14cd742b9ff35d7219eba567360f937aa68",
       "category": "source"
     },
     {
@@ -6169,6 +6181,12 @@
       "path": "frontend\\web\\tests\\chat-ui.test.mjs",
       "size": 11265,
       "hash": "sha256:6c4a2c17e609f5f848265221738a0ac3c4f646676b54b56f195a837ec666968e",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\tests\\governed-research-flow.test.mjs",
+      "size": 3955,
+      "hash": "sha256:c6f114fa73142d22a6ea1b1aeb459981c69b2e7333871e955654fcf178c01dca",
       "category": "source"
     },
     {
@@ -6611,21 +6629,21 @@
     }
   ],
   "statistics": {
-    "total_files": 1101,
-    "source_files": 1101,
-    "total_size_bytes": 13463308,
+    "total_files": 1104,
+    "source_files": 1104,
+    "total_size_bytes": 13497868,
     "by_extension": {
       ".yml": 1,
       ".md": 19,
       "(no extension)": 1,
-      ".mjs": 33,
+      ".mjs": 34,
       ".json": 25,
       ".py": 871,
-      ".ts": 94,
+      ".ts": 95,
       ".txt": 23,
       ".toml": 1,
       ".css": 1,
-      ".tsx": 29,
+      ".tsx": 30,
       ".html": 1,
       ".yaml": 2
     }
