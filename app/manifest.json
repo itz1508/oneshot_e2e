@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T11:26:20Z",
+  "generated_at": "2026-09-27T11:37:01Z",
   "version": "1.3.0",
-  "commit": "559b05a6",
+  "commit": "85ca200c",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -11,8 +11,8 @@
     },
     {
       "path": "AGENTS.md",
-      "size": 6852,
-      "hash": "sha256:1a9a75e425f5cfe113cdcbacaa86434c797150b9db410bfe2f4e92328d6a8baa",
+      "size": 7362,
+      "hash": "sha256:16bfb72a0172b1412cbd4307a577ff6bdf8c60a46af087f3598a172d1b657974",
       "category": "source"
     },
     {
@@ -35,8 +35,8 @@
     },
     {
       "path": "README.md",
-      "size": 7347,
-      "hash": "sha256:7e679d49b530d44892634d14a44b06461ab5645511757f29e0f8bbe2cd63d504",
+      "size": 7580,
+      "hash": "sha256:8db01a922a36cc9d1787fc82c3aa7bbafb12692aff46c33f71c8a3eb26d81350",
       "category": "source"
     },
     {
@@ -5837,8 +5837,8 @@
     },
     {
       "path": "e2e\\researcher-preview.spec.ts",
-      "size": 13896,
-      "hash": "sha256:88629c1965ee632d26adad08515882edcb644ffd1c69ac77731665587550f104",
+      "size": 13842,
+      "hash": "sha256:b7e0a8539e10dfcc29282d674dd7ddb5605358a9aa6a01b84c8499fd5ab0071b",
       "category": "source"
     },
     {
@@ -6685,7 +6685,7 @@
   "statistics": {
     "total_files": 1113,
     "source_files": 1113,
-    "total_size_bytes": 13483882,
+    "total_size_bytes": 13484571,
     "by_extension": {
       ".yml": 1,
       ".md": 19,

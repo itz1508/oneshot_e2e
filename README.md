@@ -73,6 +73,14 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
+## 🏛️ System Architecture & Workflow
+
+<div align="left">
+  <img src="public/demo/architecture-diagram.svg" alt="OneShot Architecture — Agent SSE, Python Reasoning, Filesystem Sandbox, Human Gates" width="100%" />
+</div>
+
+---
+
 ## ⚡ Terminal — Installation, Build & Tests (426 Passing)
 
 <div align="left">

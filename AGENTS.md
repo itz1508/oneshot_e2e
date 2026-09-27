@@ -17,7 +17,9 @@ OneShot provides **governed research tools, contextual discovery features, and d
 - Frontend preview: `pnpm --prefix frontend/web run preview`
 - Backend production start: `pnpm run start`
 
-Use `pnpm` exclusively. Never use npm, yarn, or `npx`; use `pnpm exec` for local binaries.
+## Package Manager Standard
+
+Use `pnpm` exclusively across scripts, installs, builds, and tests. Never use npm, yarn, or `npx`; use `pnpm exec` for local binaries.
 
 ## Prerequisites and Compatibility Holds
 
@@ -52,6 +54,10 @@ OneShot enforces explicit human-governed stop boundaries across three distinct p
 2. **Inspect the concrete response**: Verification MUST inspect the actual HTTP response payload, body fields, status codes, and cryptographic byte/hash equality against the expected contract.
 3. **Backend first, zero frontend invention**: Features and contract fixtures execute on the backend first, emitting real data. Never invent client-side mock states, fake timers, or synthetic progress. UI states reflect real backend SSE streams and tool execution.
 
+## No Fake Progress or Hardcoded Mocks
+
+Never fabricate progress, fake timers, mock data, synthetic success, assistant responses, research results, tool execution, or validation success. UI states reflect real backend SSE streams, records, and tool execution.
+
 ## Testing & Verification Instructions
 
 | Task | Command |
@@ -84,7 +90,7 @@ OneShot enforces explicit human-governed stop boundaries across three distinct p
 
 `main-screen/` files under `frontend/web/src/` are reference-only. Do not edit `node_modules/`, `.next/`, or generated `dist/` output.
 
-## Streaming & Event Standard
+## Streaming & Event Standard (Agent Architecture)
 
 The frontend and backend follow the Agent event streaming model:
 - `stream.messages` carries assistant text deltas.
@@ -93,16 +99,17 @@ The frontend and backend follow the Agent event streaming model:
 - `stream.values.todos` carries real `pending`, `in_progress`, and `completed` state.
 - No hardcoded percentages, artificial progress bars, fake tool execution, or synthetic delays.
 
-## Workspace Confinement & Path Rules
+## Strict Workspace Confinement and Path Rules
 
+- **Strict Workspace Confinement**: Never read, search, modify, or inspect files outside the current Git workspace root without explicit user authorization.
 - Repository root is the current Git workspace root.
 - Never read, search, modify, or inspect files outside the current Git workspace root without explicit user authorization.
 - Runtime code resolves filesystem paths with `path.resolve()`, `path.join()`, or `fileURLToPath(import.meta.url)`. Never commit workstation-specific absolute paths.
 - Virtual namespaces (`/api/agent/stream`, `/workspace`, `/scratch`, `/artifacts`) are logical paths; do not convert them into OS-specific paths.
 
-## Pre-Commit Verification Checklist
+## Verification Lifecycle
 
-Before proposing a commit or completing a task:
+Before completing a task or proposing a commit:
 
 1. Stop any background dev or daemon processes started during the task.
 2. Run targeted tests, then relevant test suites (`pnpm test`, `pnpm run test:runtime`, `pnpm --prefix frontend/web test`).
