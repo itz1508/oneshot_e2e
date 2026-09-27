@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T08:56:35Z",
+  "generated_at": "2026-09-27T09:39:39Z",
   "version": "1.3.0",
-  "commit": "c0af455c",
+  "commit": "91ce90d4",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -5897,8 +5897,8 @@
     },
     {
       "path": "frontend\\web\\next.config.ts",
-      "size": 210,
-      "hash": "sha256:6194606ff4a96e1d4dc197686e1df8717734827a4c84eaf6b220b51325b99b0e",
+      "size": 302,
+      "hash": "sha256:1a995d7bdd6f2574d3ba0e5b9a02356f7e57a6a7b54ccc1867edfd6db5eff84c",
       "category": "source"
     },
     {
@@ -6413,8 +6413,8 @@
     },
     {
       "path": "packages\\agent-runtime\\src\\research\\tavily-search.ts",
-      "size": 7628,
-      "hash": "sha256:7f14c43a3dd7948d82f0f924ec0cc4a77d02e6da62a67c9d878428de61cf9139",
+      "size": 7924,
+      "hash": "sha256:13a39584d7c70f2daacb41fbe41b6d6c8269cdb1edd2df32fde57ab366e45d1c",
       "category": "source"
     },
     {
@@ -6685,7 +6685,7 @@
   "statistics": {
     "total_files": 1113,
     "source_files": 1113,
-    "total_size_bytes": 13496727,
+    "total_size_bytes": 13497115,
     "by_extension": {
       ".yml": 1,
       ".md": 19,

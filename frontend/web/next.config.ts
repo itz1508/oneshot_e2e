@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+    webpackBuildWorker: false,
+    parallelServerBuildTraces: false,
+  },
 };
 
 export default nextConfig;

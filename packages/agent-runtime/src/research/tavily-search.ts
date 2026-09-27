@@ -25,11 +25,16 @@ export class TavilySearchBackend {
   private apiKey?: string;
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.TAVILY_API_KEY;
+    this.apiKey = apiKey;
+  }
+
+  private getEffectiveKey(): string | undefined {
+    return this.apiKey || process.env.TAVILY_API_KEY;
   }
 
   isConfigured(): boolean {
-    return Boolean(this.apiKey);
+    const key = this.getEffectiveKey();
+    return Boolean(key && !key.includes("your_") && !key.includes("placeholder"));
   }
 
   /**
@@ -51,10 +56,11 @@ export class TavilySearchBackend {
     const maxResults = options.maxResults || 5;
 
     // Real Tavily API integration when key is configured
-    if (this.apiKey) {
+    const effectiveKey = this.getEffectiveKey();
+    if (effectiveKey && !effectiveKey.includes("your_") && !effectiveKey.includes("placeholder")) {
       try {
         const { tavily } = await import("@tavily/core");
-        const tv = tavily({ apiKey: this.apiKey });
+        const tv = tavily({ apiKey: effectiveKey });
         const response = await tv.search(trimmedQuery, {
           searchDepth: depth,
           maxResults,
