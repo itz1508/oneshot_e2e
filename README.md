@@ -2,31 +2,11 @@
 
 # OneShot: Deterministic E2E Agent Runtime
 
-**Autonomous Agentic Software Engineering Console · Verifiable Contracts Delivering E2E Integrity**
-Real AG-UI SSE Streaming · 4-Partition Sandbox Isolation · Python Reasoning Subprocess · Dual Human Governance Gates
-
 <p>
   <a href="https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1">
     <img src="https://img.shields.io/badge/⚡_OneShot_Installation-One_Click_Automatic_E2E-2563EB?style=for-the-badge&logo=powershell&logoColor=white" alt="OneShot Installation" />
   </a>
-  <a href="https://youtu.be/lE9vtKB-fSk">
-    <img src="https://img.shields.io/badge/YouTube-Watch_Video_Walkthrough-red?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch Video Walkthrough" />
-  </a>
 </p>
-
-<p>
-  <img src="https://img.shields.io/badge/Node.js-%3E%3D24.21.0-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js >= 24.21.0" />
-  <img src="https://img.shields.io/badge/pnpm-%3E%3D11.27.1-F69220?style=flat-square&logo=pnpm&logoColor=white" alt="pnpm >= 11.27.1" />
-  <img src="https://img.shields.io/badge/TypeScript-Strict_Mode-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript Strict Mode" />
-  <img src="https://img.shields.io/badge/tests-419_passing-brightgreen?style=flat-square" alt="419 tests passing" />
-  <img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square" alt="Apache-2.0 license" />
-  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square" alt="Windows, macOS, Linux" />
-</p>
-
-<p>
-  <a href="README.md"><b>[README]</b></a> · <a href="DIAGRAM.md"><b>[ARCHITECTURE DIAGRAM]</b></a> · <a href="LICENSE"><b>[LICENSE]</b></a>
-</p>
-
 </div>
 
 ---
@@ -58,19 +38,15 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
   <a href="https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1"><img src="https://img.shields.io/badge/⚡_Launch_Console-One_Click_Local-2563EB?style=for-the-badge&logo=powershell&logoColor=white" alt="Launch Real Console" /></a>
 </p>
 
-<!-- Native autoplaying 60s fast-forward visualization across all section completions -->
+<!-- Autoplaying 60s fast-forward visualization — click to open full YouTube walkthrough -->
 <p align="center">
   <a href="https://youtu.be/lE9vtKB-fSk">
     <img src="public/demo/oneshot-60s.gif" width="100%" alt="OneShot 60s Fast-Forward Workflow Walkthrough" />
   </a>
 </p>
 
-<video src="public/demo/oneshot-60s.mp4" controls="controls" autoplay="autoplay" loop="loop" muted="muted" playsinline="playsinline" width="100%"></video>
-
-<br />
-
 <sub>
-  ▶ <b><a href="https://youtu.be/lE9vtKB-fSk">Watch Full Walkthrough</a></b> · <a href="public/demo/oneshot-60s.mp4">60s Fast-Forward Video (MP4)</a> · <a href="public/demo/oneshot-60s.gif">60s Autoplay Animation (GIF)</a> · <a href="public/demo/oneshot-demo.vtt">Subtitles (.vtt)</a>
+  ▶ <b><a href="https://youtu.be/lE9vtKB-fSk">Watch Full Walkthrough on YouTube</a></b> · <a href="public/demo/oneshot-60s.mp4">Direct MP4</a> · <a href="public/demo/oneshot-demo.vtt">Subtitles (.vtt)</a>
 </sub>
 
 </div>
