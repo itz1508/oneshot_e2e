@@ -12,15 +12,19 @@
 ## 1. Executive Summary & Elevator Pitch
 
 ### The Problem
+
 Modern autonomous software engineering agents frequently fail in real-world deployment due to three critical flaws:
+
 1. **Superficial "Pass" Illusions:** Agents declare success when tests exit 0, even when responses are empty, mocked, or drifted from contracts.
 2. **Ungoverned Filesystem Destruction:** Agents make arbitrary modifications to host environments without strict sandboxing or rollback safety.
 3. **Black-Box Execution:** Opaque progress bars and fake loading timers conceal errors and fail to provide genuine human-in-the-loop governance.
 
 ### The Solution: OneShot
+
 **OneShot** is a deterministic, contract-driven autonomous software engineering console and multi-agent runtime. Built on the **Golden Rule** (*"PASS is meaningless on its own; a verified HTTP response payload with cryptographic byte equality is the only confirmation"*), OneShot streams real-time execution events over AG-UI Server-Sent Events (SSE), executes reasoning inside an isolated Python subprocess, confines all operations to a 4-partition virtual sandbox (`/workspace`, `/scratch`, `/memories`, `/artifacts`), and enforces explicit human-in-the-loop governance gates before applying changes.
 
 ### The Tech Stack
+
 - **Backend Runtime:** Node.js 24.21.0+, TypeScript (Strict ESM), Node native HTTP & SSE stream pipeline.
 - **Agent Subprocess Engine:** Python 3.12+ reasoning DAG, JSON streaming IPC, deterministic validator.
 - **Frontend Console:** React 19, Next.js static export, Tailwind CSS + Vanilla CSS tokens, AG-UI Event Source subscriber.
@@ -51,7 +55,8 @@ irm https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.p
 # curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.sh | bash
 ```
 
-### 3-Step Verification Checklist:
+### 3-Step Verification Checklist
+
 1. **Verify The Golden Rule (No Mocked Success):**
    - Click the **"Dry-Run Fixtures"** quick action in the console.
    - Inspect the **Backend Fixture Verification** card: observe the live `HTTP 200` response payload and SHA-256 cryptographic match (`9ee8ec...9dd`).

@@ -10,7 +10,7 @@ This document is the reference of record for the corrected workflow model.
 
 Three distinct owners, connected by two boundaries. Each owner does its job and **stops**.
 
-```
+```text
 Research            owns research          →  ResearchBundle
 Design_Planning     owns planning          →  Approved Plan
 Implementation RT   owns implementation    →  (separate concern)
@@ -20,7 +20,7 @@ Implementation RT   owns implementation    →  (separate concern)
 
 The `[research]` control is a **configuration drawer**, not a "start now" button:
 
-```
+```text
 Normal Chat
    ├── [research] closed ──► normal chat
    └── [research] open
@@ -33,7 +33,7 @@ Opening the drawer never starts a workflow. A message only uses Research if the 
 
 ### 1.2 Research is a governed skill that stops at the handoff boundary
 
-```
+```text
 ACTIVE → RECONCILING → RESEARCHING → DRAFTING
       → BASELINE_VALIDATING → REVIEW → READY_FOR_PLANNING   ◀── STOP
 ```
@@ -46,7 +46,7 @@ Research may identify gaps and alternatives. It **must not select the final buil
 
 Distinct from Chat and Research:
 
-```
+```text
 Normal Chat
    ├── ordinary request ──► Main Chat
    ├── Research ──────────► Research workflow ──► READY_FOR_PLANNING
@@ -57,7 +57,7 @@ Research can be an **input** to Design_Planning (via `ResearchBundle`), but it n
 
 ### 1.4 Design_Planning owns only the planning boundary
 
-```
+```text
 Undefined → Discovery → Ownership Defined → Planning → Pre-Build Reviewed
                                                  ↓
                                            USER APPROVAL
@@ -69,7 +69,7 @@ Undefined → Discovery → Ownership Defined → Planning → Pre-Build Reviewe
 
 The downstream sequence —
 
-```
+```text
 Implementation → Gap Discovery → Gap Resolution → Verification → Receipt → Promotion → Closed
 ```
 
@@ -106,7 +106,7 @@ Planner answers: *“Given the established intent, repo state, baseline and avai
 - Do **not** invent cousins: ~~ResearchRevision~~, ~~ResearchPackage~~, ~~ResearchArtifact~~, ~~ResearchResult~~, ~~ConfirmedResearchBundle~~, ~~ResearchContext~~.
 - Persistence identity: `audit_id` (if that is the established identity).
 
-```
+```text
 Research → ResearchBundle → Planner → Plan   (+  audit_id)
 ```
 
@@ -114,13 +114,13 @@ Research → ResearchBundle → Planner → Plan   (+  audit_id)
 
 **Product / workflow state** (the thing the user drives):
 
-```
+```text
 Chat · Research · Design_Planning · Implementation · Verification · Receipt · Promotion …
 ```
 
 **Agent execution discipline** (how the build agent works):
 
-```
+```text
 NEXT TODO → EXECUTE → VERIFY → TEST → EVIDENCE → MARK [x] → NEXT TODO
 ```
 
@@ -144,7 +144,7 @@ The second is **execution discipline, not product workflow.** It must never cros
 `POST /api/agent/stream` (also `/invocations`) resolves provider/model from the
 session config or env, then branches on whether live credentials exist:
 
-```
+```text
 no live credentials ──► streamPythonReasoning()  (local Python subprocess)
 live credentials    ──► createMainAgent() → streamStrandsToAgUi()
 ```
