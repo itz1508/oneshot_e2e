@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T03:57:54Z",
+  "generated_at": "2026-09-27T04:09:30Z",
   "version": "1.3.0",
-  "commit": "e3b6b0ab",
+  "commit": "4f19cff8",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -24,7 +24,7 @@
     {
       "path": "DIAGRAM.md",
       "size": 11122,
-      "hash": "sha256:5bbb8d4a5ae02db7cb29ebd04bf222c78cd11b133d0293d7633f302eeeb2901b",
+      "hash": "sha256:3379d208802b77e737b6457e88fc4fc84f1134f0504aa33c462530ce8edf94ac",
       "category": "source"
     },
     {
@@ -36,7 +36,7 @@
     {
       "path": "README.md",
       "size": 11058,
-      "hash": "sha256:a157c8718e52c4b9f9604b9cbeccba9079668a550214deeb50cbcf98e724c1d5",
+      "hash": "sha256:510406d8fec79ffd41a6229818ad5a5c609fafec5659093c2fd97fa5e72c8f7e",
       "category": "source"
     },
     {
@@ -5898,7 +5898,7 @@
     {
       "path": "frontend\\web\\src\\components\\ContextReviewDrawer.tsx",
       "size": 35211,
-      "hash": "sha256:761a57a612efa600cbf04f015899ddcabf9373ee8d352635f4ab4a46a9c4d122",
+      "hash": "sha256:42a8e97f3a699da233143e3011109185c78128fcb16af2995dc9277fd14aeb17",
       "category": "source"
     },
     {
@@ -5993,8 +5993,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\WelcomeWorkflowConsole.tsx",
-      "size": 22048,
-      "hash": "sha256:c78c8e7ac96045fdfa19ce388bc879ca0d52db122ad3c32cb260ac26c9a05029",
+      "size": 24672,
+      "hash": "sha256:52ca3366dafb99198ea39d306ff21249f6ad2cf3bc344be2b5dd4c0dd10c3aaa",
       "category": "source"
     },
     {
@@ -6191,8 +6191,8 @@
     },
     {
       "path": "frontend\\web\\tests\\welcome-workflow-console.test.mjs",
-      "size": 2258,
-      "hash": "sha256:357eb60c9d21bd8821b41163fe62b791c5268455cd0e442368c2263dcda7d529",
+      "size": 2675,
+      "hash": "sha256:4aa719210fafc27624fcbd354acc4b776286a6843b85c0b074b402e8657bfd3d",
       "category": "source"
     },
     {
@@ -6613,7 +6613,7 @@
   "statistics": {
     "total_files": 1101,
     "source_files": 1101,
-    "total_size_bytes": 13455432,
+    "total_size_bytes": 13458473,
     "by_extension": {
       ".yml": 1,
       ".md": 19,

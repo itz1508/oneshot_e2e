@@ -626,14 +626,14 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
                     <strong className="text-xs font-semibold text-[#ececec]">DIAGRAM.md</strong>
                   </div>
                   <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-amber-500/20 text-amber-300">
-                    417-Test DAG Proofs
+                    419-Test DAG Proofs
                   </span>
                 </div>
                 <p className="text-[11px] text-[#a0a0a5] leading-relaxed">
-                  417-test directed acyclic graph, stage machine transitions (<code className="text-[#e5a84b]">IDLE</code> ➔ <code className="text-[#e5a84b]">VALIDATION</code>), execution dependency hierarchy, and 100% deterministic byte verification.
+                  419-test directed acyclic graph, stage machine transitions (<code className="text-[#e5a84b]">IDLE</code> ➔ <code className="text-[#e5a84b]">VALIDATION</code>), execution dependency hierarchy, and 100% deterministic byte verification.
                 </p>
                 <div className="flex flex-wrap gap-1.5 pt-1 text-[9px] text-[#8e8e93]">
-                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">📈 417 Tests Passing</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">📈 419 Tests Passing</span>
                   <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🔄 DAG State Transitions</span>
                   <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#ececec]">🔑 SHA-256 Proof</span>
                 </div>

@@ -335,21 +335,82 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
           </span>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-[#16171b] p-3 text-xs space-y-2">
+        <div className="rounded-xl border border-white/10 bg-[#16171b] p-3 text-xs space-y-2.5">
           <div className="flex items-center justify-between text-[#8e95a5]">
             <span className="font-mono text-[11px]">Pipeline Status</span>
             <span className="font-mono text-[11px] text-[#93c5fd]">
-              {isRunning ? "Stream In Progress (AG-UI SSE)" : hasMessages ? "Completed Execution" : "Awaiting Trigger"}
+              {isRunning
+                ? "Stream In Progress (AG-UI SSE)"
+                : isValidatingFixture
+                ? "Validating Backend Fixture..."
+                : fixtureResult
+                ? `Fixture Verified (${fixtureResult.fixture_id})`
+                : hasMessages
+                ? "Completed Execution"
+                : "Awaiting Trigger"}
             </span>
           </div>
+
+          {/* Authoritative Real Backend Fixture Confirmation */}
+          {isValidatingFixture && (
+            <div
+              id="fixtureValidatingNotice"
+              role="status"
+              className="p-2.5 rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-300 font-mono text-[11px] flex items-center gap-2"
+            >
+              <span className="animate-spin text-sm">⏳</span>
+              <span>Running real backend validation &amp; SHA-256 byte check on <code>{activeFixture.file}</code>...</span>
+            </div>
+          )}
+
+          {fixtureResult && (
+            <div
+              id="backendFixtureResultCard"
+              data-testid="backend-fixture-result"
+              className={`p-3 rounded-lg border text-xs font-mono space-y-1.5 ${
+                fixtureResult.ok
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                  : "border-red-500/30 bg-red-500/10 text-red-200"
+              }`}
+            >
+              <div className="flex items-center justify-between font-semibold text-[11px]">
+                <span className="flex items-center gap-1.5">
+                  <span>{fixtureResult.ok ? "✓" : "✗"}</span>
+                  <span>Backend Fixture Contract Verified ({fixtureResult.fixture_id})</span>
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-black/40 text-[10px] text-emerald-300">
+                  HTTP 200 · SHA-256 CONFIRMED
+                </span>
+              </div>
+              <div className="text-[10px] text-[#9ca3af] space-y-0.5 break-all">
+                <div>Hash Proof: <span className="text-[#34d399]">{fixtureResult.actualHash}</span></div>
+                {fixtureResult.session_id && <div>Session: <span className="text-[#cbd5e1]">{fixtureResult.session_id}</span></div>}
+              </div>
+              {fixtureResult.error && (
+                <div className="text-red-400 text-[10px] pt-1">{fixtureResult.error}</div>
+              )}
+            </div>
+          )}
 
           {/* Workflow Pipeline Stage Badges */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
             {[
-              { label: "1. Task Spec", status: isRunning ? "Active" : hasMessages ? "Passed" : "Ready" },
-              { label: "2. Reasoning", status: isRunning ? "Evaluating" : hasMessages ? "Verified" : "Standby" },
-              { label: "3. Invariants", status: isRunning ? "Checking" : hasMessages ? "Enforced" : "Standby" },
-              { label: "4. Human Gate", status: isRunning ? "Pending" : hasMessages ? "Confirmed" : "Governed" },
+              {
+                label: "1. Task Spec",
+                status: isRunning ? "Active" : fixtureResult ? "Verified" : hasMessages ? "Completed" : "Ready",
+              },
+              {
+                label: "2. Reasoning",
+                status: isRunning ? "Evaluating" : fixtureResult ? "Deterministic" : hasMessages ? "Completed" : "Standby",
+              },
+              {
+                label: "3. Invariants",
+                status: isRunning ? "Checking" : fixtureResult ? "SHA-256 Equal" : hasMessages ? "Enforced" : "Standby",
+              },
+              {
+                label: "4. Human Gate",
+                status: isRunning ? "Pending" : fixtureResult ? "Governed" : hasMessages ? "Confirmed" : "Governed",
+              },
             ].map((st) => (
               <div
                 key={st.label}

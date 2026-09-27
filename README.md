@@ -15,7 +15,7 @@ Real SSE Streaming · Python Reasoning Subprocess · Strict Filesystem Sandboxin
   <img src="https://img.shields.io/badge/Node.js-%3E%3D24.21.0-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js >= 24.21.0" />
   <img src="https://img.shields.io/badge/pnpm-%3E%3D11.27.1-F69220?style=flat-square&logo=pnpm&logoColor=white" alt="pnpm >= 11.27.1" />
   <img src="https://img.shields.io/badge/TypeScript-Strict_Mode-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript Strict Mode" />
-  <img src="https://img.shields.io/badge/tests-417_passing-brightgreen?style=flat-square" alt="417 tests passing" />
+  <img src="https://img.shields.io/badge/tests-419_passing-brightgreen?style=flat-square" alt="419 tests passing" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square" alt="Apache-2.0 license" />
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square" alt="Windows, macOS, Linux" />
 </p>
@@ -78,12 +78,12 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 
 ---
 
-## ⚡ Terminal — Installation, Build & Tests (417 Passing)
+## ⚡ Terminal — Installation, Build & Tests (419 Passing)
 
 <div align="left">
   <img src="public/demo/screen-0-install-test.png" width="100%" alt="Terminal verification — all test suites passing with zero failures" />
   <br />
-  <sub><b>Terminal Verification</b>: <code>pnpm test</code> (221 backend), <code>test:runtime</code> (99 runtime), <code>test:web</code> (76 frontend), <code>test:e2e</code> (21 browser), <code>verify</code> (7/7 checks). 100% deterministic — zero mocks.</sub>
+  <sub><b>Terminal Verification</b>: <code>pnpm test</code> (222 backend), <code>test:runtime</code> (99 runtime), <code>test:web</code> (77 frontend), <code>test:e2e</code> (21 browser), <code>verify</code> (7/7 checks). 100% deterministic — zero mocks.</sub>
 </div>
 
 ---

@@ -48,4 +48,12 @@ describe("Single-Screen Welcome / Try-It Experience Contract", () => {
     assert.match(appSrc, /handleConfigureLiveProvider/);
     assert.match(appSrc, /onRunWorkflow/);
   });
+
+  it("verifies Golden Rule: executes real backend fixture validation and renders verified response payload", () => {
+    const src = read("frontend/web/src/components/WelcomeWorkflowConsole.tsx");
+    assert.match(src, /\/api\/v2\/validateFixtures/);
+    assert.match(src, /data-testid="backend-fixture-result"/);
+    assert.match(src, /SHA-256 CONFIRMED/);
+    assert.match(src, /fixtureResult\.actualHash/);
+  });
 });
