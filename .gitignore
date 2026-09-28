@@ -20,11 +20,29 @@ frontend/web/out/
 .vercel/
 
 # Environment and secrets
+# These patterns contain no slash, so git matches them at EVERY level: repo
+# root, app/env/, backend/, frontend/web/, e2e/, and any new package added.
+# `.env.*` is what covers per-environment variants; the previous rules only
+# handled `.env` and `.env.local`, so a `.env.production` or `.env.development`
+# would have been committed.
 .env
-.env.local
-.env.*.local
-app/env/.env
-app/env/.env.local
+.env.*
+.envrc
+
+# Templates are documentation and are intentionally tracked.
+!.env.example
+!.env.*.example
+
+# Private key material and cloud credentials.
+# Nothing tracked in this repository matches these; the templates above are the
+# only credential-shaped files that belong in version control.
+*.pem
+*.key
+*.p12
+*.pfx
+service-account*.json
+*serviceAccount*.json
+*credentials*.json
 
 # Logs and test artifacts
 *.log
