@@ -1,0 +1,128 @@
+# OneShot Production Configuration
+# Follows Astral UV Multi-Index Resolution & IBM Bob IDE Guidance Patterns
+
+[app]
+name = "OneShot Agent Runtime"
+version = "1.3.0"
+environment = "production"
+
+[server]
+host = "0.0.0.0"
+port = 8787
+request_max_bytes = 10485760 # 10 MB payload limit to prevent OOM/DoS
+body_timeout_ms = 30000
+cors_allowed_origins = ["*"] # Whitelist of allowed origins, or ["*"] for local dev
+
+[security]
+# Sliding-window rate limiter per client IP / session
+[security.rate_limiting]
+enabled = true
+max_requests_per_minute = 120
+burst_limit = 30
+window_seconds = 60
+
+# Authentication guards for sensitive mutation endpoints
+[security.auth]
+enabled = false # Set true to enforce Bearer token verification across non-health endpoints
+api_key_env = "ONESHOT_API_TOKEN"
+header_name = "authorization"
+
+# Helmet-style production security headers
+[security.headers]
+enabled = true
+content_security_policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;"
+x_content_type_options = "nosniff"
+x_frame_options = "DENY"
+strict_transport_security = "max-age=31536000; includeSubDomains"
+
+# Deterministic Sandbox Boundaries
+[sandbox]
+virtual_mode = true
+max_file_size_bytes = 52428800 # 50 MB
+partitions = [
+    { name = "workspace", path = "/workspace", description = "Physical repository root; durable read/write source code" },
+    { name = "scratch", path = "/scratch", description = "Ephemeral RAM/scratchpad partition for intermediate dumps" },
+    { name = "memories", path = "/memories", description = "Persistent cross-turn memory bank; decoupled from git" },
+    { name = "artifacts", path = "/artifacts", description = "Immutable deliverable staging; verified by SHA-256 byte digest" },
+]
+
+# AI Model Configuration & Multi-Tier Resolution
+# Learned pattern from Astral UV Indexes:
+# - Default provider (analogous to uv default-index)
+# - Explicit provider pinning per agent role (analogous to uv explicit indexes and [tool.uv.sources])
+# - Fallback chain (analogous to uv extra-index fallback)
+[models]
+default_provider = "mistral"
+fallback_provider = "gemini"
+
+[models.roles]
+reasoning = "mistral-large-latest"
+fast = "gemini-2.5-flash"
+coding = "mistral-large-latest"
+critic = "mistral-large-latest"
+vision = "gemini-2.5-flash"
+local = "llama3.2"
+
+# Named Model Provider Index (UV-Index Inspired Architecture)
+[[models.providers]]
+name = "mistral"
+priority = 100
+baseUrl = "https://api.mistral.ai/v1"
+defaultModel = "mistral-large-latest"
+models = ["mistral-large-latest", "mistral-small-latest", "codestral-latest", "open-mistral-nemo"]
+envKey = "MISTRAL_API_KEY"
+explicit = false
+fallback = "gemini"
+
+[[models.providers]]
+name = "gemini"
+priority = 90
+baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/"
+defaultModel = "gemini-2.5-flash"
+models = ["gemini-2.5-flash", "gemini-2.5-pro"]
+envKey = "GEMINI_API_KEY"
+explicit = false
+fallback = "openai"
+
+[[models.providers]]
+name = "openai"
+priority = 80
+baseUrl = "https://api.openai.com/v1"
+defaultModel = "gpt-4o-mini"
+models = ["gpt-4o", "gpt-4o-mini", "gpt-5", "gpt-5-mini"]
+envKey = "OPENAI_API_KEY"
+explicit = false
+fallback = "nebius"
+
+[[models.providers]]
+name = "nebius"
+priority = 70
+baseUrl = "https://api.studio.nebius.com/v1/"
+defaultModel = "moonshotai/Kimi-K2.5"
+models = ["moonshotai/Kimi-K2.5", "deepseek-ai/DeepSeek-R1-0528"]
+envKey = "NEBIUS_API_KEY"
+explicit = false
+fallback = "ollama"
+
+[[models.providers]]
+name = "ollama"
+priority = 50
+baseUrl = "http://localhost:11434/v1"
+defaultModel = "llama3.2"
+models = ["llama3.2", "mistral", "deepseek-r1", "phi3"]
+envKey = "OLLAMA_API_KEY"
+explicit = true # Explicit local provider; only used when explicitly requested or all cloud providers offline
+
+# IBM Bob IDE Guidance & Human-in-the-Loop Boundaries
+[bob_guidance]
+context_mentions = ["@workspace", "@file", "@folder", "@diff", "@terminal", "@web", "@docs"]
+
+[bob_guidance.human_in_the_loop]
+gate_1_research_review = true # Strictly halt pipeline at Gate 1 awaiting human approval
+gate_2_build_ready = true     # Strictly halt pipeline at Gate 2 awaiting build authorization
+
+[bob_guidance.streaming_tool_status]
+enabled = true
+stages = ["tool_pending", "tool_running", "tool_result", "tool_error"]
+track_duration_ms = true
+render_json_fallback = true

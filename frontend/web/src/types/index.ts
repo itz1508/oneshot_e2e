@@ -53,7 +53,7 @@ export interface EarlierContextItem {
   restoreId: string;
 }
 
-export type ProviderId = "gemini" | "openai" | "nebius";
+export type ProviderId = "gemini" | "openai" | "nebius" | "mistral" | "ollama";
 
 export interface ProviderConfig {
   key: string;

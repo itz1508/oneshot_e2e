@@ -12,6 +12,7 @@ export * from "./ResearchBanner";
 export * from "./ReadinessCard";
 export * from "./ToolCallList";
 export * from "./WelcomeWorkflowConsole";
+export * from "./Toast";
 export * from "./common/index";
 
 // Reference-only surfaces are intentionally not exported from the canonical

@@ -157,11 +157,22 @@ def execute_reasoning_core(request: ReasoningRequest) -> ReasoningResponse:
             analysis.append(f"Successfully processed {task} request using local reasoning engine.")
             recommendation = "Proceed to next execution stage."
 
+    # Dynamic confidence calculation based on constraints, evidence, and task clarity
+    base_confidence = 0.92
+    if request.evidence:
+        avg_evidence_conf = sum(e.confidence for e in request.evidence) / len(request.evidence)
+        base_confidence = 0.70 + (avg_evidence_conf * 0.25)
+    elif request.constraints:
+        base_confidence = 0.90
+    if risks:
+        base_confidence -= 0.05 * len(risks)
+    computed_confidence = round(max(0.10, min(0.99, base_confidence)), 2)
+
     return ReasoningResponse(
         run_id=request.run_id,
         task=task,
         success=True,
-        confidence=0.92,
+        confidence=computed_confidence,
         analysis=analysis,
         findings=findings,
         risks=risks,
@@ -224,153 +235,43 @@ def cli_main():
         if os.environ.get("FAST_STREAM") == "1":
             pace = 0.0
 
-        goal_lower = req.goal.lower()
-        is_sandbox_query = any(w in goal_lower for w in ["partition", "sandbox", "security", "invariant", "filesystem"])
-        is_workflow_query = any(w in goal_lower for w in ["adk", "workflow", "stage", "gate", "orchestration"])
-        is_fixture_query = any(w in goal_lower for w in ["fixture", "dry run", "dryrun", "baseline"])
+        deltas = [
+            "<think>\n",
+            f"1. Formulation & Threat Model:\n   - Goal: {req.goal}\n   - Task: {task}\n",
+            "   - Local Python reasoning engine evaluating constraints and invariants.\n",
+        ]
+        if req.constraints:
+            deltas.append(f"   - Evaluating {len(req.constraints)} constraints: {', '.join(req.constraints)}\n")
+        if req.evidence:
+            deltas.append(f"   - Incorporating {len(req.evidence)} evidence item(s) from caller context.\n")
 
-        if is_sandbox_query:
-            deltas = [
-                "<think>\n",
-                "1. Formulation & Threat Model:\n",
-                "   - Goal: Analyze security invariants and explain the 4 filesystem sandbox partitions in Agent.\n",
-                "   - Local Python reasoning engine evaluating constraints and invariants.\n",
-                "   - Identifying target namespaces: /workspace/, /scratch/, /memories/, and /artifacts/.\n",
-                "   - Security Boundary: Enforce strict workspace confinement and prevent path traversal escapes.\n\n",
-                "2. Partition Inspection & Verification:\n",
-                "   - Partition 1 (/workspace/): Durable working tree partition. Host mapping confirmed; path traversal protections active.\n",
-                "   - Partition 2 (/scratch/): Ephemeral workspace partition. Isolated per-run storage; volatile scratchpad.\n",
-                "   - Partition 3 (/memories/): Cross-turn context retention partition. Stored in isolated KV store; no dirty working tree writes.\n",
-                "   - Partition 4 (/artifacts/): Immutable output partition. Verified via cryptographic SHA-256 digest validation.\n\n",
-                "3. Invariant Synthesis & Boundary Checks:\n",
-                "   - Invariant 1 (Strict Confinement): Directory traversal attempts (../) and external symlinks blocked at VFS layer.\n",
-                "   - Invariant 2 (No Fabrication): Empty, loading, and error states preserved; all payloads strictly validated against schemas.\n",
-                "   - Invariant 3 (Human Gate Governance): Gate 1 (Research Review) and Gate 2 (Build Ready) require human authorization.\n",
-                "</think>\n\n",
-                "### Agent 4-Partition Sandbox Architecture\n\n",
-                "Agent isolates execution using four distinct virtual filesystem partitions to prevent escape, state leakage, and unauthorized modifications:\n\n",
-                "1. **`/workspace/` (Durable Working Tree)**\n",
-                "   - Houses the active codebase and tracked project source files.\n",
-                "   - Strictly confined to the workspace root; path traversal outside the root boundary is blocked.\n\n",
-                "2. **`/scratch/` (Ephemeral Execution Partition)**\n",
-                "   - Dedicated volatile scratchpad for temporary test scripts and intermediate outputs.\n",
-                "   - Isolated from project version control and safely discarded after task execution.\n\n",
-                "3. **`/memories/` (Persistent Knowledge Partition)**\n",
-                "   - Retains cross-session learnings, preferences, and verified decisions.\n",
-                "   - Decoupled from repository code to avoid git tree pollution.\n\n",
-                "4. **`/artifacts/` (Immutable Verification Partition)**\n",
-                "   - Stores finalized build bundles, test reports, and exported deliverables.\n",
-                "   - Enforces cryptographic SHA-256 byte/hash integrity verification before delivery.\n\n",
-                "### Security Invariants & Human Governance\n\n",
-                "• **Virtual Mode Containment (`virtual_mode: ENFORCED`)**: Logical virtual paths decouple client views from host filesystem realities.\n",
-                "• **Path Traversal Shield**: Resolves canonical paths before all file operations, rejecting directory escapes.\n",
-                "• **Human-in-the-Loop Gates**: Gate 1 (Research Review) requires manual approval before Planner transition; Gate 2 (Build Ready) validates artifact hashes.\n\n",
-                f"**Recommendation:** {resp.recommendation}\n",
-            ]
-            for delta in deltas:
-                print(json.dumps({"type": "delta", "text": delta}), flush=True)
-                if pace > 0:
-                    time.sleep(pace)
-        elif is_workflow_query:
-            deltas = [
-                "<think>\n",
-                "1. ADK Orchestration Analysis:\n",
-                "   - Goal: Inspect Google ADK multi-agent stage orchestration and human gates.\n",
-                "   - Local Python reasoning engine evaluating constraints and invariants.\n",
-                "   - Identifying workflow stages: IDLE ➔ RESEARCH ➔ PLANNING ➔ EXECUTION ➔ VALIDATION.\n",
-                "   - Checking human approval boundary conditions: Gate 1 (Research Review) & Gate 2 (Build Ready).\n\n",
-                "2. Stage Machine Verification:\n",
-                "   - Stage 1 (IDLE): Connection open, zero unprompted background tasks, clean baseline.\n",
-                "   - Stage 2 (RESEARCH): Triggered when per-message research flag is active; synthesizes evidence.\n",
-                "   - Boundary 1 (Gate 1): Human operator explicitly reviews research summary before Planner transition.\n",
-                "   - Stage 3 (PLANNING): Planner runs 5 systematic reviews: coverage, dependency, structure, fixture, goal.\n",
-                "   - Boundary 2 (Gate 2): Human operator reviews plan diffs and authorizes implementation build.\n",
-                "   - Stage 4 (EXECUTION): 7-phase implementation runtime with strict partition isolation.\n",
-                "   - Stage 5 (VALIDATION): SHA-256 byte/hash equality and test verification matrix.\n\n",
-                "3. Invariant Synthesis:\n",
-                "   - Invariant: Human-in-the-loop gates cannot be bypassed by automated agent transitions.\n",
-                "   - Invariant: State machine transitions persist to SessionLedger with cryptographic hash anchors.\n",
-                "</think>\n\n",
-                "### Google ADK Multi-Agent Orchestration & Human Gates\n\n",
-                "OneShot orchestrates autonomous agents using strict lifecycle boundaries and human-in-the-loop authorization gates:\n\n",
-                "1. **`IDLE` ➔ `RESEARCH`**: Activated when research mode is selected. Collects verifiable evidence without synthetic fabrication.\n",
-                "2. **Human Gate 1 (`Research Review`)**: A hard human gate halts execution. The user inspects findings and clicks `Confirm` to transition to Planning.\n",
-                "3. **`PLANNING` (5 Systematic Reviews)**: The planner audits coverage, dependencies, architecture structure, fixtures, and goal alignment.\n",
-                "4. **Human Gate 2 (`Build Ready`)**: The user verifies planned modifications and explicitly authorizes the implementation runtime.\n",
-                "5. **`EXECUTION` (7-Phase Lifecycle)**: Executes inside isolated sandbox partitions (`/workspace/`, `/scratch/`, `/memories/`, `/artifacts/`).\n",
-                "6. **`VALIDATION` & Sealed Receipt**: Final verification confirms byte/hash equality and seals the SessionLedger checkpoint.\n\n",
-                "### Governance Invariants\n\n",
-                "• **No Gate Bypassing**: Automated agents cannot self-approve Gate 1 or Gate 2.\n",
-                "• **Immutable Audit Ledger**: Every gate interaction is logged to the SessionLedger with exact UTC timestamps.\n\n",
-                f"**Recommendation:** {resp.recommendation}\n",
-            ]
-            for delta in deltas:
-                print(json.dumps({"type": "delta", "text": delta}), flush=True)
-                if pace > 0:
-                    time.sleep(pace)
-        elif is_fixture_query:
-            deltas = [
-                "<think>\n",
-                "1. Repository Fixture Audit:\n",
-                "   - Goal: Validate repository contract fixtures and verify deterministic dry-run capabilities.\n",
-                "   - Local Python reasoning engine evaluating constraints and invariants.\n",
-                "   - Target directory: app/fixtures/ (*.json contract baselines).\n",
-                "   - Verification criteria: Valid JSON schema, immutable fixture_id, and cryptographic SHA-256 matching.\n\n",
-                "2. Fixture Inspection Matrix:\n",
-                "   - Fixture 1 (app/fixtures/sample.json): Contract baseline sample for API validation.\n",
-                "   - Fixture 2 (app/fixtures/security-invariants.json): Agent 4 sandbox partitions and containment rules.\n",
-                "   - Fixture 3 (app/fixtures/adk-workflow.json): Google ADK workflow stage machine and Human Gate 1 & 2 specs.\n",
-                "   - Fixture 4 (app/fixtures/reasoning-dryrun.json): Offline Python reasoning test scenarios and expected findings.\n",
-                "   - Fixture 5 (app/fixtures/data.json): Runtime engine test baseline.\n\n",
-                "3. Dry-Run Invariant Confirmation:\n",
-                "   - Cryptographic digest verification: SHA-256 byte/hash equality confirmed for all 5 fixtures.\n",
-                "   - Zero external dependency: Dry-run operates offline without API keys or live network calls.\n",
-                "</think>\n\n",
-                "### OneShot Fixture Verification & Dry-Run Matrix\n\n",
-                "The repository provides 5 deterministic fixtures in `app/fixtures/` for offline testing and dry-run validation:\n\n",
-                "1. **`app/fixtures/sample.json` (`fix-sample-01`)**\n",
-                "   - Baseline contract fixture for schema validation and session isolation.\n\n",
-                "2. **`app/fixtures/security-invariants.json` (`fix-sec-01`)**\n",
-                "   - Defines the 4 Agent filesystem partitions (`/workspace/`, `/scratch/`, `/memories/`, `/artifacts/`) and containment invariants.\n\n",
-                "3. **`app/fixtures/adk-workflow.json` (`fix-adk-01`)**\n",
-                "   - Specifies the 5-stage ADK workflow machine and Human Gate 1 & Gate 2 approval checkpoints.\n\n",
-                "4. **`app/fixtures/reasoning-dryrun.json` (`fix-reason-01`)**\n",
-                "   - Contains 3 offline reasoning test scenarios with expected finding codes (`SEC-INV-001`, `CRITIC-001`, `ADK-WF-001`).\n\n",
-                "5. **`app/fixtures/data.json` (`fixture-401`)**\n",
-                "   - Runtime engine fixture for agent state transition testing.\n\n",
-                "### Testing Dry-Run\n\n",
-                "• **CLI Dry Run**: Run `pnpm run dry-run` or `node scripts/dry-run.mjs` for full matrix verification.\n",
-                "• **Console Launcher**: Run `oneshot --dry-run` or `pnpm oneshot --dry-run`.\n",
-                "• **Web UI Dry Run**: Use the Quick Tool pills below the composer to test dry runs directly in the browser.\n\n",
-                f"**Recommendation:** {resp.recommendation}\n",
-            ]
-            for delta in deltas:
-                print(json.dumps({"type": "delta", "text": delta}), flush=True)
-                if pace > 0:
-                    time.sleep(pace)
-        else:
-            print(json.dumps({"type": "delta", "text": "<think>\n"}), flush=True)
-            for step in resp.analysis:
-                print(json.dumps({"type": "delta", "text": f"• {step}\n"}), flush=True)
-                if pace > 0:
-                    time.sleep(pace)
-            print(json.dumps({"type": "delta", "text": "</think>\n\n"}), flush=True)
+        for step in resp.analysis:
+            deltas.append(f"   - {step}\n")
+        deltas.append("</think>\n\n")
+
+        deltas.append(f"### OneShot Deterministic Reasoning — {task.title()} Analysis\n\n")
+        for step in resp.analysis:
+            deltas.append(f"• {step}\n")
+        deltas.append("\n")
+
+        if resp.findings:
+            deltas.append("#### Findings & Invariants:\n")
+            for f in resp.findings:
+                deltas.append(f"• **[{f.severity.upper()}] {f.code}**: {f.message}\n")
+            deltas.append("\n")
+
+        if resp.risks:
+            deltas.append("#### Risks & Blockers:\n")
+            for r in resp.risks:
+                deltas.append(f"⚠️ {r}\n")
+            deltas.append("\n")
+
+        deltas.append(f"**Recommendation:** {resp.recommendation}\n")
+
+        for delta in deltas:
+            print(json.dumps({"type": "delta", "text": delta}), flush=True)
             if pace > 0:
                 time.sleep(pace)
-
-            for step in resp.analysis:
-                print(json.dumps({"type": "delta", "text": f"\n• {step}"}), flush=True)
-                if pace > 0:
-                    time.sleep(pace)
-            if resp.findings:
-                for f in resp.findings:
-                    print(
-                        json.dumps({"type": "delta", "text": f"\n  [{f.severity.upper()}] {f.code}: {f.message}"}),
-                        flush=True,
-                    )
-                    if pace > 0:
-                        time.sleep(pace)
-            print(json.dumps({"type": "delta", "text": f"\n\n**Recommendation:** {resp.recommendation}\n"}), flush=True)
 
         print(json.dumps({"type": "done", "response": resp.model_dump()}), flush=True)
     else:

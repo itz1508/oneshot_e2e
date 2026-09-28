@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { Session, ProviderId, ProviderConfig } from "../types";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
 
@@ -104,43 +105,61 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="px-2 mt-3 pt-2 border-t border-white/5">
         <div className="px-2.5 py-1 text-[11px] font-medium text-[#8e8e93]">Integrations</div>
         <div className="space-y-1 mt-0.5">
-          {(["gemini", "openai", "nebius"] as ProviderId[]).map((pid) => {
-            const def = PROVIDER_DEFINITIONS[pid];
-            const cfg = providerConfigs[pid];
-            const isConfigured = cfg?.configured && !!cfg?.key;
+          <Tooltip.Provider delayDuration={250}>
+            {(["gemini", "openai", "nebius", "mistral", "ollama"] as ProviderId[]).map((pid) => {
+              const def = PROVIDER_DEFINITIONS[pid];
+              const cfg = providerConfigs[pid];
+              const isConfigured = cfg?.configured && !!cfg?.key;
 
-            return (
-              <div
-                key={pid}
-                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors text-xs"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ background: def.dotGradient }}
-                  />
-                  <div className="truncate">
-                    <div className="font-medium text-[#dedede] truncate">{def.name}</div>
-                    <div className="text-[10px] text-[#6e6e73]">
-                      {isConfigured ? "Configured" : "Not configured"}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onOpenProviderModal(pid)}
-                  title={`Configure ${def.name}`}
-                  className={`provider-open-btn w-6 h-6 rounded-md grid place-items-center text-xs font-semibold transition-colors ${
-                    isConfigured
-                      ? "bg-[#62c48d]/20 text-[#62c48d] border border-[#62c48d]/40"
-                      : "bg-white/5 text-[#9e9ea4] hover:bg-white/10 hover:text-white border border-white/10"
-                  }`}
+              return (
+                <div
+                  key={pid}
+                  className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors text-xs"
                 >
-                  {isConfigured ? "✓" : "＋"}
-                </button>
-              </div>
-            );
-          })}
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <div className="flex items-center gap-2 min-w-0 cursor-default">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ background: def.dotGradient }}
+                        />
+                        <div className="truncate">
+                          <div className="font-medium text-[#dedede] truncate">{def.name}</div>
+                          <div className="text-[10px] text-[#6e6e73]">
+                            {isConfigured ? "Configured" : "Not configured"}
+                          </div>
+                        </div>
+                      </div>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        side="right"
+                        sideOffset={8}
+                        className="px-2.5 py-1.5 rounded-lg border border-white/10 bg-[#1e222a] text-[11px] text-[#dedede] shadow-xl z-[400] max-w-xs"
+                      >
+                        <div className="font-semibold text-white">{def.name} ({def.sub})</div>
+                        <div className="text-[10px] text-[#8e8e93]">Status: {isConfigured ? "Ready & Configured" : "Not configured"}</div>
+                        <div className="text-[10px] text-[#79a8ea] font-mono-code mt-0.5">Model: {cfg?.model || def.models[0]}</div>
+                        <Tooltip.Arrow className="fill-[#1e222a]" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                  <button
+                    type="button"
+                    onClick={() => onOpenProviderModal(pid)}
+                    title={`Configure ${def.name}`}
+                    className={`provider-open-btn w-6 h-6 rounded-md grid place-items-center text-xs font-semibold transition-colors ${
+                      isConfigured
+                        ? "bg-[#62c48d]/20 text-[#62c48d] border border-[#62c48d]/40"
+                        : "bg-white/5 text-[#9e9ea4] hover:bg-white/10 hover:text-white border border-white/10"
+                    }`}
+                  >
+                    {isConfigured ? "✓" : "＋"}
+                  </button>
+                </div>
+              );
+            })}
+          </Tooltip.Provider>
         </div>
       </div>
 

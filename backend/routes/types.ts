@@ -33,6 +33,8 @@ export interface RouteContext {
   getSessionProvider: (sessionId: string) => ProviderConfig;
   getProviderRegistry: () => any;
   port: number;
+  config?: any;
+  requestId?: string;
 }
 
 export type RouteHandler = (

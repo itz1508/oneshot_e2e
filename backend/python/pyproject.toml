@@ -42,3 +42,11 @@ ignore = ["E501"]
 [tool.ruff.format]
 quote-style = "double"
 line-ending = "auto"
+
+[tool.uv]
+# Configured index definitions for package provenance and multi-index governance
+# Reference: https://docs.astral.sh/uv/concepts/indexes/
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true

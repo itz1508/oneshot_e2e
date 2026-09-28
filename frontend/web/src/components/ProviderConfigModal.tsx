@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 import { useOverlayFocus } from "../lib/useOverlayFocus";
 import { ProviderId, ProviderConfig } from "../types";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
@@ -157,39 +158,46 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const isServerConfigured = Boolean(serverStatus[activeProvider]?.configured);
 
   return (
-    <div
-      ref={modalRef}
-      id="providerModal"
-      className={`modal-veil ${isOpen ? "open" : ""}`}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") onClose();
-      }}
-    >
-      <div className="provider-modal p-5" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description">
-        {/* Modal Head */}
-        <div className="flex items-start justify-between pb-3.5 border-b border-white/10">
-          <div>
-            <h2 id="modal-title" className="text-sm font-semibold text-[#f2f2f3]">
-              Integration &amp; Provider Status
-            </h2>
-            <p id="modal-description" className="text-xs text-[#838d9a] mt-0.5">
-              Select active model &amp; configure credentials. Credentials are saved directly to server environment.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close modal"
-            className="w-7 h-7 rounded-lg bg-transparent hover:bg-white/10 text-[#838d9a] hover:text-white grid place-items-center text-base"
+    <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="modal-veil open" />
+        <div className="fixed inset-0 z-[301] flex items-center justify-center p-4 pointer-events-none">
+          <Dialog.Content
+            ref={modalRef}
+            id="providerModal"
+            className="provider-modal p-5 pointer-events-auto focus:outline-none"
+            aria-labelledby="modal-title"
+            aria-describedby="modal-description"
           >
-            ×
-          </button>
-        </div>
+            {/* Modal Head */}
+            <div className="flex items-start justify-between pb-3.5 border-b border-white/10">
+              <div>
+                <Dialog.Title asChild>
+                  <h2 id="modal-title" className="text-sm font-semibold text-[#f2f2f3]">
+                    Integration &amp; Provider Status
+                  </h2>
+                </Dialog.Title>
+                <Dialog.Description asChild>
+                  <p id="modal-description" className="text-xs text-[#838d9a] mt-0.5">
+                    Select active model &amp; configure credentials. Credentials are saved directly to server environment.
+                  </p>
+                </Dialog.Description>
+              </div>
+              <Dialog.Close asChild>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Close modal"
+                  className="w-7 h-7 rounded-lg bg-transparent hover:bg-white/10 text-[#838d9a] hover:text-white grid place-items-center text-base cursor-pointer"
+                >
+                  ×
+                </button>
+              </Dialog.Close>
+            </div>
 
         {/* Provider Tiles */}
-        <div className="grid grid-cols-3 gap-2.5 my-4">
-          {(["gemini", "openai", "nebius"] as ProviderId[]).map((pid) => {
+        <div className="grid grid-cols-5 gap-2.5 my-4">
+          {(["gemini", "openai", "nebius", "mistral", "ollama"] as ProviderId[]).map((pid) => {
             const p = PROVIDER_DEFINITIONS[pid];
             const isSelected = activeProvider === pid;
 
@@ -337,7 +345,9 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             </button>
           </div>
         </div>
-      </div>
+      </Dialog.Content>
     </div>
+  </Dialog.Portal>
+</Dialog.Root>
   );
 };

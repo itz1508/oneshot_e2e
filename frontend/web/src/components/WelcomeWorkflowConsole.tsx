@@ -463,7 +463,7 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
 
           {/* Provider Pills */}
           <div className="flex flex-wrap gap-1.5">
-            {(["gemini", "openai", "nebius"] as ProviderId[]).map((p) => {
+            {(["gemini", "openai", "nebius", "mistral", "ollama"] as ProviderId[]).map((p) => {
               const isSelected = currentProvider === p;
               return (
                 <button

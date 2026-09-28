@@ -35,6 +35,29 @@ export const PROVIDER_DEFINITIONS: Record<ProviderId, ProviderDefinition> = {
     keyHelp: "Nebius Token Factory API key.",
     note: "Nebius Token Factory exposes an OpenAI-compatible API.",
   },
+  mistral: {
+    id: "mistral",
+    name: "Mistral",
+    sub: "Mistral AI",
+    badge: "Default",
+    dotGradient: "linear-gradient(135deg, #ff7000, #ff9a44)",
+    models: ["mistral-large-latest", "mistral-small-latest", "codestral-latest", "open-mistral-nemo"],
+    baseUrl: "https://api.mistral.ai/v1",
+    modelHelp: "Mistral AI model ID.",
+    keyHelp: "Mistral AI API key.",
+    note: "Mistral is the default OneShot provider. Uses the OpenAI-compatible API.",
+  },
+  ollama: {
+    id: "ollama",
+    name: "Ollama",
+    sub: "Local Models",
+    dotGradient: "linear-gradient(135deg, #888, #444)",
+    models: ["llama3.2", "mistral", "deepseek-r1", "phi3"],
+    baseUrl: "http://localhost:11434/v1",
+    modelHelp: "Local Ollama model name.",
+    keyHelp: "No API key required for local Ollama.",
+    note: "Ollama runs models locally. Ensure the Ollama server is running on port 11434.",
+  },
 };
 
 const STORAGE_KEY_PREFIX = "oneshot_provider_";

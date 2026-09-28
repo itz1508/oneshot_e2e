@@ -105,7 +105,8 @@ export function useStream({
       abortControllerRef.current = new AbortController();
 
       try {
-        const selectedProvider: ProviderId = providerId === "openai" || providerId === "nebius" ? providerId : "gemini";
+        const validProviders = ["gemini", "openai", "nebius", "mistral", "ollama"] as const;
+        const selectedProvider: ProviderId = (validProviders as readonly string[]).includes(providerId) ? providerId as ProviderId : "gemini";
         const providerConfig: ProviderConfig = {
           key: "",
           model: "",

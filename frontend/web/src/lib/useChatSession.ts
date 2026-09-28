@@ -36,6 +36,8 @@ export function useChatSession() {
     gemini: getStoredProviderConfig("gemini"),
     openai: getStoredProviderConfig("openai"),
     nebius: getStoredProviderConfig("nebius"),
+    mistral: getStoredProviderConfig("mistral"),
+    ollama: getStoredProviderConfig("ollama"),
   });
 
   const [systemStatusText, setSystemStatusText] = useState<string>("System Online");

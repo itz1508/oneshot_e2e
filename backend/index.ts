@@ -20,7 +20,14 @@ import {
   SessionLedger,
   TodoChainManager,
   GitLocalStorage,
+  getConfig,
 } from "../packages/agent-runtime/src/index.js";
+import {
+  SlidingWindowRateLimiter,
+  applySecurityHeaders,
+  parseJsonBody,
+  checkAuthentication,
+} from "./middleware/index.js";
 import { fixture } from "./artifact/fixture.js";
 import {
   handleHealthRoutes,
@@ -152,69 +159,96 @@ export async function validateRealFixture(params: {
 }
 
 function parseBody(req: http.IncomingMessage): Promise<any> {
-  return new Promise((resolve, reject) => {
-    let body = "";
-    req.on("data", (chunk) => { body += chunk; });
-    req.on("end", () => {
-      try {
-        resolve(JSON.parse(body || "{}"));
-      } catch (err) {
-        reject(err);
-      }
-    });
-    req.on("error", reject);
+  const config = getConfig();
+  return parseJsonBody(req, {
+    maxBytes: config.server?.request_max_bytes,
+    timeoutMs: config.server?.body_timeout_ms,
   });
 }
 
 /**
  * Provider Registry — lists available auth and model providers
+ * Enriched dynamically with config.toml multi-index providers
  */
 function getProviderRegistry() {
+  const config = getConfig();
+  const modelsMap: Record<string, { id: string; models: string[]; priority?: number; fallback?: string }> = {
+    mistral: {
+      id: "mistral",
+      models: ["mistral-large-latest", "mistral-small-latest", "codestral-latest", "open-mistral-nemo"],
+    },
+    gemini: {
+      id: "gemini",
+      models: ["gemini-2.5-flash", "gemini-2.5-pro"],
+    },
+    openai: {
+      id: "openai",
+      models: ["gpt-4o", "gpt-4o-mini", "gpt-5", "gpt-5-mini"],
+    },
+    nebius: {
+      id: "nebius",
+      models: ["moonshotai/Kimi-K2.5", "deepseek-ai/DeepSeek-R1-0528"],
+    },
+    ollama: {
+      id: "ollama",
+      models: ["llama3.2", "mistral", "deepseek-r1", "phi3"],
+    },
+  };
+
+  if (config?.models?.providers?.length) {
+    for (const p of config.models.providers) {
+      modelsMap[p.name] = {
+        id: p.name,
+        models: p.models,
+        priority: p.priority,
+        fallback: p.fallback,
+      };
+    }
+  }
+
   return {
     auth: {
       gemini: { id: "gemini", name: "Google (Gemini)" },
       mistral: { id: "mistral", name: "Mistral AI (Test Preset)" },
     },
-    models: {
-      mistral: {
-        id: "mistral",
-        models: ["mistral-large-latest", "mistral-small-latest", "codestral-latest", "open-mistral-nemo"],
-      },
-      gemini: {
-        id: "gemini",
-        models: ["gemini-2.5-flash", "gemini-2.5-pro"],
-      },
-      openai: {
-        id: "openai",
-        models: ["gpt-4o", "gpt-5", "gpt-5-mini"],
-      },
-      nebius: {
-        id: "nebius",
-        models: ["moonshotai/Kimi-K2.5", "deepseek-ai/DeepSeek-R1-0528"],
-      },
-      ollama: {
-        id: "ollama",
-        models: ["llama3.2", "mistral", "deepseek-r1", "phi3"],
-      },
-    },
+    models: modelsMap,
   };
 }
 
 export function startAgentServer(options: ServerOptions = {}): Promise<http.Server> {
-  const port = options.port ?? Number(process.env.PORT || 8787);
-  const host = options.host ?? (process.env.HOST || "0.0.0.0");
+  const config = getConfig();
+  const port = options.port ?? Number(process.env.PORT || config.server?.port || 8787);
+  const host = options.host ?? (process.env.HOST || config.server?.host || "0.0.0.0");
+  const rateLimiter = new SlidingWindowRateLimiter(config.security?.rate_limiting);
 
   const server = http.createServer(async (req, res) => {
+    const requestId = crypto.randomUUID();
+    res.setHeader("X-Request-Id", requestId);
+
     const reqUrl = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
     const pathname = decodeURIComponent(reqUrl.pathname);
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE, HEAD");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Session-Id");
+    // 1. Security Headers & CORS Guard
+    const continuePipeline = applySecurityHeaders(req, res, {
+      ...config.security?.headers,
+      allowedOrigins: config.server?.cors_allowed_origins,
+    });
+    if (!continuePipeline) return;
 
-    if (req.method === "OPTIONS") {
-      res.writeHead(204);
-      res.end();
+    // 2. Sliding-Window Rate Limiter
+    const rateLimit = rateLimiter.checkLimit(rateLimiter.getClientKey(req));
+    res.setHeader("X-RateLimit-Limit", rateLimit.limit.toString());
+    res.setHeader("X-RateLimit-Remaining", rateLimit.remaining.toString());
+    res.setHeader("X-RateLimit-Reset", rateLimit.resetSeconds.toString());
+    if (!rateLimit.allowed) {
+      res.setHeader("Retry-After", rateLimit.resetSeconds.toString());
+      res.writeHead(429, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "Rate limit exceeded. Please retry later.", requestId }));
+      return;
+    }
+
+    // 3. Authentication Guard
+    if (!checkAuthentication(req, res, pathname, config.security?.auth)) {
       return;
     }
 
@@ -234,6 +268,8 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
         getSessionProvider,
         getProviderRegistry,
         port,
+        config,
+        requestId,
       };
 
       // ── Dispatch sequentially to route modules ─────────────────────────────
@@ -303,9 +339,10 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: `Not found: ${pathname}` }));
     } catch (err: any) {
+      const statusCode = err.statusCode || (err.name === "PayloadTooLargeError" ? 413 : 500);
       if (!res.headersSent) {
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: err.message || "Internal server error" }));
+        res.writeHead(statusCode, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: err.message || "Internal server error", requestId }));
       } else if (!res.writableEnded) {
         res.end();
       }
