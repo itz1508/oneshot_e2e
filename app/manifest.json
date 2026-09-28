@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T22:06:55Z",
+  "generated_at": "2026-09-28T22:31:33Z",
   "version": "1.3.0",
-  "commit": "d2604110",
+  "commit": "e01697c2",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -317,8 +317,8 @@
     },
     {
       "path": "backend\\routes\\providers.ts",
-      "size": 14471,
-      "hash": "sha256:c1e2633c0a2192690283d4ae57cb7d36abe264ebdbead4cfa9445a76a625f65c",
+      "size": 15780,
+      "hash": "sha256:6d110072f818bf4c9c7dacac6e7517a504be9469e55fcb584c232a62ae5aea0a",
       "category": "source"
     },
     {
@@ -329,8 +329,8 @@
     },
     {
       "path": "backend\\routes\\stream.ts",
-      "size": 9361,
-      "hash": "sha256:2c23fbed7ad37d7fc5260f9bb2d56115588012c2e2f07a290f7ac4ae8369a956",
+      "size": 9389,
+      "hash": "sha256:0ea4f6175dfc1afce8bbc9dded1e23a7b6256a033c28ce8f5e490ab39c2a1e23",
       "category": "source"
     },
     {
@@ -396,7 +396,7 @@
     {
       "path": "backend\\tests\\ts\\action-api.test.ts",
       "size": 12709,
-      "hash": "sha256:57f65b94fb8274c4e1ce2c168ad2d87b3584b83d16b1c0d3869939af8ea05f0f",
+      "hash": "sha256:d94afaf9e1fe3dfda31818d8c6d925440a971cae701f543526a5d911f812a864",
       "category": "source"
     },
     {
@@ -473,8 +473,8 @@
     },
     {
       "path": "backend\\tests\\ts\\provider-and-reasoning.test.ts",
-      "size": 18594,
-      "hash": "sha256:72da9cc0c4a401ec3fa09fa316542ea47c3795ca54d993e3977671db2dbe21d0",
+      "size": 18590,
+      "hash": "sha256:a4259b24080d43c8d9da04fdba9ef685fb22042bf1814c3c1879b492eb7e569b",
       "category": "source"
     },
     {
@@ -527,8 +527,8 @@
     },
     {
       "path": "config.toml",
-      "size": 3069,
-      "hash": "sha256:9d0f4346cc7986c9ee29dea1ef21817a8a6d6c579f98469c23607b24c132581a",
+      "size": 3339,
+      "hash": "sha256:6f15aedb4c5ed179cf81bd277cacf25a993ae394740289d08b8db6f12ba63e4a",
       "category": "source"
     },
     {
@@ -881,8 +881,8 @@
     },
     {
       "path": "frontend\\web\\src\\lib\\providers.ts",
-      "size": 3595,
-      "hash": "sha256:e997a2456bbf5bc27ad59aad2f6ac2b8d54e8279f8b9b4cbd7de7255bcdd6614",
+      "size": 3652,
+      "hash": "sha256:2ba0f535dee79c0e8c66db933268ba628b22ffe0aa218feabd094943efdd9e01",
       "category": "source"
     },
     {
@@ -1157,8 +1157,8 @@
     },
     {
       "path": "packages\\agent-runtime\\src\\models\\model-factory.ts",
-      "size": 11099,
-      "hash": "sha256:0877c84158bbcb868b3bf1ffffe546b538b42775571314cd97adc1bd2fe6b7b7",
+      "size": 11552,
+      "hash": "sha256:139f97c1862273e31c82f3ba63d7ca386b07588770abf7bbf4886683eae6df5c",
       "category": "source"
     },
     {
@@ -1343,8 +1343,8 @@
     },
     {
       "path": "packages\\agent-runtime\\tests\\model-factory-and-agents.test.mjs",
-      "size": 4008,
-      "hash": "sha256:5ce78273cc044129f552c2a63dc6ea415c278c0c47160aa577c672d395f7caa9",
+      "size": 4006,
+      "hash": "sha256:eaded2483fa93bda580adf340277b789d8d267c1a0a5cc50829feee4871df64a",
       "category": "source"
     },
     {
@@ -1531,7 +1531,7 @@
   "statistics": {
     "total_files": 254,
     "source_files": 254,
-    "total_size_bytes": 1526962,
+    "total_size_bytes": 1529073,
     "by_extension": {
       ".yml": 1,
       ".md": 7,
