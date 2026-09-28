@@ -12,7 +12,12 @@ from typing import Dict, List, Set, Union
 # Source file extensions - these are tracked in the manifest
 SOURCE_EXTENSIONS: Set[str] = {
     '.ts', '.tsx', '.js', '.mjs', '.py', '.json',
-    '.md', '.yml', '.yaml', '.toml', '.txt', '.css', '.html'
+    '.md', '.yml', '.yaml', '.toml', '.txt', '.css', '.html',
+    # Windows and shell launchers are hand-written source, not build output.
+    # scripts/start-web.ps1 and scripts/launch.sh decide which port the server
+    # binds and whether a stale instance is reported as ready, so a silent edit
+    # to them is exactly the kind of change the manifest exists to catch.
+    '.ps1', '.sh', '.bat',
 }
 
 # Generated file patterns - excluded from manifest

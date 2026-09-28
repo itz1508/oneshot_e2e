@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-09-28T03:59:43Z",
+  "generated_at": "2026-09-28T04:18:34Z",
   "version": "1.3.0",
-  "commit": "ac90c15d",
+  "commit": "78f89e22",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
-      "size": 3854,
-      "hash": "sha256:64f1605779f4933b83920c8ee72dfa25b7474a8ef3cb5e9c4d1e87ebe1dbbf11",
+      "size": 3869,
+      "hash": "sha256:5f55c022a201aa2887fa0a5f12872ad92e035ef233cbf60acfd50f0ccdda70b1",
       "category": "source"
     },
     {
       "path": "AGENTS.md",
-      "size": 7932,
-      "hash": "sha256:3e6eafc3f934e8b812a7e6621eded6702b6d002a1c9cbdec16f7e7f5ea4e8174",
+      "size": 7940,
+      "hash": "sha256:00bca8c2997761e1b886a5e8f2f797ad0b502f4c9dd5c0b06203cc20f1cd5b06",
       "category": "source"
     },
     {
@@ -36,13 +36,25 @@
     {
       "path": "README.md",
       "size": 6583,
-      "hash": "sha256:e7e1612a6a540c3658305186b61e2ac6db376467a4d15fdeec0710d117aae6e8",
+      "hash": "sha256:2885341689ca4beb901f8ecde88f2345c6ebdd9a763069d6c8fc7bebb621f35c",
       "category": "source"
     },
     {
       "path": "app\\bootstrap\\demo.mjs",
       "size": 4674,
       "hash": "sha256:f6baba8b50830523d3586db46ee142c89e56e575db2e8b25b141ece7c166d8bf",
+      "category": "source"
+    },
+    {
+      "path": "app\\bootstrap\\setup.bat",
+      "size": 3568,
+      "hash": "sha256:997f3f93508511254b3aa0b2738a9d0eaa807b2ce37d2433d00a53ff4c26f522",
+      "category": "source"
+    },
+    {
+      "path": "app\\bootstrap\\setup.sh",
+      "size": 3250,
+      "hash": "sha256:9c26caa4f11d5f9ab87f7b4421be8ca77c4f50370c274049140997ee696507cd",
       "category": "source"
     },
     {
@@ -107,8 +119,8 @@
     },
     {
       "path": "app\\scripts\\source_file_policy.py",
-      "size": 8069,
-      "hash": "sha256:5eb5f569328d677193d28ab3cea1dde18c5b18e9699e2b077bdef0df7d833fcb",
+      "size": 8407,
+      "hash": "sha256:74c2f838766aacd47bfc06a8522e2963be8768bb2b8cf6b75bafebced9d20ea8",
       "category": "source"
     },
     {
@@ -1288,6 +1300,30 @@
       "category": "source"
     },
     {
+      "path": "scripts\\install.ps1",
+      "size": 3507,
+      "hash": "sha256:00b6eea40e80852249b9a7bc62758637f8dea2ed6738025413c989399d6521b5",
+      "category": "source"
+    },
+    {
+      "path": "scripts\\install.sh",
+      "size": 1691,
+      "hash": "sha256:3eb564460786d56ccb85a4a7fbb6ea5c1485cf832f50056c2ab43a1d327ba934",
+      "category": "source"
+    },
+    {
+      "path": "scripts\\launch.bat",
+      "size": 394,
+      "hash": "sha256:3b44ea533dcca0b9d157098106276e01b2533001f416520364156122d569cb0c",
+      "category": "source"
+    },
+    {
+      "path": "scripts\\launch.sh",
+      "size": 355,
+      "hash": "sha256:a09dff52186524bd03adfd2b3432379e3d0ea5015ea56bf7aac6d63497b3bad3",
+      "category": "source"
+    },
+    {
       "path": "scripts\\lib\\colors.mjs",
       "size": 2502,
       "hash": "sha256:c7e9394226b34917b62c932bf796e551156785f90b165bdde8827391ddd8a67e",
@@ -1318,6 +1354,12 @@
       "category": "source"
     },
     {
+      "path": "scripts\\start-web.ps1",
+      "size": 6403,
+      "hash": "sha256:ed56756c52c5354ccb38da600fe4f83e02be68cce70d1497be6e4e89dada4db8",
+      "category": "source"
+    },
+    {
       "path": "scripts\\test-network-connection.mjs",
       "size": 4171,
       "hash": "sha256:ab4b968601e571dc885785ef848d84657ff046f3e45f448b5748752bc94e9dd9",
@@ -1327,6 +1369,12 @@
       "path": "scripts\\tests\\ports.test.mjs",
       "size": 4372,
       "hash": "sha256:b50bbc3ebe6b390907d2c7c922fe20a943994209c558e5c4859f44a62ab454d2",
+      "category": "source"
+    },
+    {
+      "path": "scripts\\tests\\source-file-policy.test.mjs",
+      "size": 3646,
+      "hash": "sha256:8d53817a53cec6273a537e4d999162df0f3c971e859b974ef1994942da690e1f",
       "category": "source"
     },
     {
@@ -1361,14 +1409,16 @@
     }
   ],
   "statistics": {
-    "total_files": 226,
-    "source_files": 226,
-    "total_size_bytes": 1401771,
+    "total_files": 234,
+    "source_files": 234,
+    "total_size_bytes": 1424946,
     "by_extension": {
       ".yml": 1,
       ".md": 7,
       "(no extension)": 1,
-      ".mjs": 37,
+      ".mjs": 38,
+      ".bat": 2,
+      ".sh": 3,
       ".json": 21,
       ".py": 10,
       ".ts": 110,
@@ -1377,7 +1427,8 @@
       ".css": 1,
       ".tsx": 33,
       ".html": 1,
-      ".yaml": 2
+      ".yaml": 2,
+      ".ps1": 2
     }
   }
 }

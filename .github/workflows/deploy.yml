@@ -72,7 +72,7 @@ jobs:
       - name: Run Backend & Runtime Tests
         run: pnpm run test:runtime
 
-      - name: Run Launcher Port Tests
+      - name: Run Launcher and Manifest Policy Tests
         run: pnpm run test:scripts
 
   # Job 2: Test & Build Frontend
