@@ -7,6 +7,7 @@ configuration, manifest, tests, and security.
 """
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -262,6 +263,60 @@ def check_dependencies() -> bool:
                 passed = False
         except Exception as e:
             print_check('uv lock sync', False, str(e))
+            passed = False
+    # Generated pip fallback must stay an installable export of uv.lock
+    requirements_file = python_dir / 'requirements.txt'
+    if not requirements_file.exists():
+        print_check(
+            'python requirements.txt',
+            False,
+            'missing; run node scripts/setup-python.mjs --export-requirements',
+        )
+        passed = False
+    else:
+        try:
+            pinned = {}
+            invalid = []
+            for raw_line in requirements_file.read_text(encoding='utf-8').splitlines():
+                line = raw_line.split('#', 1)[0].strip()
+                if not line:
+                    continue
+                requirement = line.split(';', 1)[0].strip()
+                match = re.fullmatch(r'([A-Za-z0-9._-]+)==([^\s=<>!~]+)', requirement)
+                if match:
+                    pinned[match.group(1).lower()] = match.group(2)
+                else:
+                    invalid.append(requirement)
+
+            locked = {}
+            if (python_dir / 'uv.lock').exists():
+                lock_text = (python_dir / 'uv.lock').read_text(encoding='utf-8')
+                for name, version in re.findall(r'^name = "([^"]+)"\nversion = "([^"]+)"', lock_text, re.MULTILINE):
+                    locked.setdefault(name.lower(), set()).add(version)
+
+            drift = sorted(
+                f'{name}=={version}'
+                for name, version in pinned.items()
+                if version not in locked.get(name, set())
+            )
+            if invalid:
+                print_check(
+                    'python requirements.txt',
+                    False,
+                    f'not pip-installable from repo root: {", ".join(invalid[:3])}',
+                )
+                passed = False
+            elif drift:
+                print_check(
+                    'python requirements.txt',
+                    False,
+                    f'not in sync with uv.lock: {", ".join(drift[:3])}',
+                )
+                passed = False
+            else:
+                print_check('python requirements.txt', True, f'{len(pinned)} pinned exports match uv.lock')
+        except Exception as e:
+            print_check('python requirements.txt', False, str(e))
             passed = False
     if not venv_python.exists():
         print_check('python venv', False, 'missing interpreter; run node scripts/setup-python.mjs')

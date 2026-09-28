@@ -1,8 +1,8 @@
 # Generated fallback only — do not hand-edit.
 # Authority: backend/python/pyproject.toml declares, backend/python/uv.lock pins.
+# Install with pip: pip install -r backend/python/requirements.txt
 # Regenerate: node scripts/setup-python.mjs --export-requirements
 # Preferred setup: cd backend/python && uv sync --frozen
--e .
 annotated-doc==0.0.5
     # via fastapi
 annotated-types==0.8.0

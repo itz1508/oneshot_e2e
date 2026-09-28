@@ -85,7 +85,7 @@ if (syncStatus !== 0) {
 }
 
 if (exportRequirements) {
-  const exported = run('uv', ['export', '--frozen', '--no-hashes', '--no-header', '--output-file', 'requirements.txt']);
+  const exported = run('uv', ['export', '--frozen', '--no-emit-project', '--no-hashes', '--no-header', '--output-file', 'requirements.txt']);
   if (exported !== 0) {
     console.error('[setup-python] ERROR: `uv export` failed; requirements.txt left untouched.');
     process.exit(exported);
@@ -94,6 +94,7 @@ if (exportRequirements) {
   const header = [
     '# Generated fallback only — do not hand-edit.',
     '# Authority: backend/python/pyproject.toml declares, backend/python/uv.lock pins.',
+    '# Install with pip: pip install -r backend/python/requirements.txt',
     '# Regenerate: node scripts/setup-python.mjs --export-requirements',
     '# Preferred setup: cd backend/python && uv sync --frozen',
     '',

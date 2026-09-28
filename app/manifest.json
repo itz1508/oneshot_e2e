@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T00:38:21Z",
+  "generated_at": "2026-09-28T01:09:30Z",
   "version": "1.3.0",
-  "commit": "fabe01cd",
+  "commit": "af923a5e",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -35,8 +35,8 @@
     },
     {
       "path": "README.md",
-      "size": 6258,
-      "hash": "sha256:b3328d6619c9c3705a006ba4088b3d3352941202c7942a221b69c859019fbc57",
+      "size": 6442,
+      "hash": "sha256:4cc05bbbf2030df747b70ee9758a3d1b42f1ea273a01256a66b817a05a1e1d42",
       "category": "source"
     },
     {
@@ -113,8 +113,8 @@
     },
     {
       "path": "app\\scripts\\verify_all.py",
-      "size": 19638,
-      "hash": "sha256:2a36c03aca50871c67573d417f97932ea76f7266fc3be0bd2eacafee2b04a7b4",
+      "size": 21888,
+      "hash": "sha256:06de7ef88a7d8c262a581a18d2e1efd19dd0e5a55ae44df0dad822f9942487fe",
       "category": "source"
     },
     {
@@ -5579,8 +5579,8 @@
     },
     {
       "path": "backend\\python\\README.md",
-      "size": 691,
-      "hash": "sha256:b19e2f344f1550325d7b21e19c50602cfa39cae6b9c7baf907c3824a834d6a8f",
+      "size": 1555,
+      "hash": "sha256:0f4c6738d4b822722e29c136c8587bff51b4a5725cf3005a5bfdc102132e21f1",
       "category": "source"
     },
     {
@@ -5639,8 +5639,8 @@
     },
     {
       "path": "backend\\python\\requirements.txt",
-      "size": 1305,
-      "hash": "sha256:e86a72a5e53495b9a30a3845afa38771cac78df14c6088a8418d447247c9920f",
+      "size": 1367,
+      "hash": "sha256:226f0a1e8af56f03d014beb6ebdaceec903bcf74c9933c536c0aff59d71bf232",
       "category": "source"
     },
     {
@@ -6731,8 +6731,8 @@
     },
     {
       "path": "scripts\\setup-python.mjs",
-      "size": 4181,
-      "hash": "sha256:b4c75f845725f0fd6eac39714ef1cfbecd2dfc42c61a194340554d897ca0f8e3",
+      "size": 4170,
+      "hash": "sha256:e8ed9e4b224c8ccfe40d239edad78aaf3cacc7445a2349ff9e6802fbe5b73dd5",
       "category": "source"
     },
     {
@@ -6775,7 +6775,7 @@
   "statistics": {
     "total_files": 1128,
     "source_files": 1128,
-    "total_size_bytes": 13930281,
+    "total_size_bytes": 13933630,
     "by_extension": {
       ".yml": 1,
       ".md": 20,

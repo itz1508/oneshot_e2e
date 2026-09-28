@@ -121,6 +121,9 @@ cd oneshot_e2e
 pnpm install
 node scripts/setup-python.mjs
 
+# No uv? Install the generated Python lockfile export instead
+python -m pip install -r backend/python/requirements.txt
+
 # Build backend + frontend
 pnpm run build
 
@@ -135,7 +138,7 @@ pnpm start
 .\scripts\start-web.ps1 -Port 9000 -Sample   # custom port + sample data
 ```
 
-> **Requirements:** Node.js `>= 24.21.0` · pnpm `>= 11.27.1` · Python `>= 3.12` · uv (owns `backend/python/.venv` via `uv sync --frozen`)
+> **Requirements:** Node.js `>= 24.21.0` · pnpm `>= 11.27.1` · Python `>= 3.12` · uv (owns `backend/python/.venv` via `uv sync --frozen`; without uv, install `backend/python/requirements.txt` with pip)
 
 ---
 
