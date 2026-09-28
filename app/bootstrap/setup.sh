@@ -80,6 +80,13 @@ echo "[OK] pnpm $PNPM_VERSION"
 echo "[6/8] Installing dependencies..."
 pnpm install --frozen-lockfile
 
+# 6b. Sync uv-managed Python reasoning env
+if command -v uv &> /dev/null; then
+  node scripts/setup-python.mjs || echo "[WARNING] Python env sync failed"
+else
+  echo "[WARNING] uv not found; backend/python/.venv not synced (https://docs.astral.sh/uv/)"
+fi
+
 # 7. Build backend & UI
 echo "[7/8] Compiling backend and UI..."
 pnpm run build:backend

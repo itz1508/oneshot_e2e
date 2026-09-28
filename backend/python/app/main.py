@@ -6,30 +6,21 @@ response matching the shared JSON schema in backend/schema/reasoning.
 Can run as a FastAPI service or as a standalone CLI reasoning engine.
 """
 
+import argparse
+import json
 import os
 import sys
 from pathlib import Path
+
 _cur_dir = Path(__file__).resolve().parent
 _py_dir = _cur_dir.parent
-_repo_dir = _py_dir.parent.parent
-for _p in [str(_cur_dir), str(_py_dir), str(_repo_dir)]:
+for _p in [str(_cur_dir), str(_py_dir)]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-import json
-import argparse
-from typing import Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI  # noqa: E402
 
-try:
-    from app.models.reasoning import ReasoningRequest, ReasoningResponse, Finding, EvidenceItem
-except ImportError:
-    import importlib
-    _mod = importlib.import_module("backend.python.app.models.reasoning")
-    ReasoningRequest = getattr(_mod, "ReasoningRequest")
-    ReasoningResponse = getattr(_mod, "ReasoningResponse")
-    Finding = getattr(_mod, "Finding")
-    EvidenceItem = getattr(_mod, "EvidenceItem")
+from app.models.reasoning import EvidenceItem, Finding, ReasoningRequest, ReasoningResponse  # noqa: E402
 
 app = FastAPI(title="OneShot Python Reasoning Addon")
 
@@ -38,20 +29,20 @@ def execute_reasoning_core(request: ReasoningRequest) -> ReasoningResponse:
     """Core deterministic reasoning logic for when external API keys are absent."""
     task = request.task or "general"
     goal = request.goal or "Analyze and plan request"
-    
+
     analysis = [
         f"Goal formulated: {goal}",
         f"Execution phase: {task}",
         "Local Python reasoning engine evaluating constraints and invariants.",
     ]
-    
+
     findings = []
     risks = []
     missing_evidence = []
 
     if request.constraints:
         analysis.append(f"Enforcing {len(request.constraints)} constraint(s): {', '.join(request.constraints)}")
-    
+
     if task == "critic":
         findings.append(
             Finding(
@@ -62,17 +53,21 @@ def execute_reasoning_core(request: ReasoningRequest) -> ReasoningResponse:
         )
         recommendation = "Proceed with the proposed plan."
     elif task == "planner":
-        analysis.extend([
-            "Step 1: Decompose problem boundaries and inputs.",
-            "Step 2: Execute deterministic state transitions.",
-            "Step 3: Validate outputs against schema contracts.",
-        ])
+        analysis.extend(
+            [
+                "Step 1: Decompose problem boundaries and inputs.",
+                "Step 2: Execute deterministic state transitions.",
+                "Step 3: Validate outputs against schema contracts.",
+            ]
+        )
         recommendation = "Plan constructed and validated."
     elif task == "researcher":
-        analysis.extend([
-            "Indexed repository invariants and API endpoints.",
-            "Cross-referenced local fixtures and execution context.",
-        ])
+        analysis.extend(
+            [
+                "Indexed repository invariants and API endpoints.",
+                "Cross-referenced local fixtures and execution context.",
+            ]
+        )
         recommendation = "Local deterministic analysis completed; no external research source was used."
     elif task == "gap-analysis":
         findings.append(
@@ -95,16 +90,18 @@ def execute_reasoning_core(request: ReasoningRequest) -> ReasoningResponse:
     else:
         goal_lower = goal.lower()
         if any(w in goal_lower for w in ["partition", "sandbox", "security", "invariant", "filesystem"]):
-            analysis.extend([
-                "Decomposed problem into virtual filesystem isolation and security boundary verification.",
-                "Partition 1: /workspace/ — physical repository root; read/write durable source code; path traversal containment enforced.",
-                "Partition 2: /scratch/ — ephemeral RAM/scratchpad partition; isolated execution environment for temporary scripts and intermediate dumps.",
-                "Partition 3: /memories/ — persistent cross-turn memory bank; decoupled from git tracking to prevent tree pollution.",
-                "Partition 4: /artifacts/ — immutable deliverable staging; verified by cryptographic SHA-256 byte/hash validation.",
-                "Security Invariant: Virtual namespace isolation ensures logical URIs do not expose host workstation directories.",
-                "Security Invariant: Canonical root enforcement blocks directory traversal (../) and unauthorized symlink escapes.",
-                "Security Invariant: Human-in-the-loop gates (Gate 1 & Gate 2) govern sensitive state transitions.",
-            ])
+            analysis.extend(
+                [
+                    "Decomposed problem into virtual filesystem isolation and security boundary verification.",
+                    "Partition 1: /workspace/ — physical repository root; read/write durable source code; path traversal containment enforced.",
+                    "Partition 2: /scratch/ — ephemeral RAM/scratchpad partition; isolated execution environment for temporary scripts and intermediate dumps.",
+                    "Partition 3: /memories/ — persistent cross-turn memory bank; decoupled from git tracking to prevent tree pollution.",
+                    "Partition 4: /artifacts/ — immutable deliverable staging; verified by cryptographic SHA-256 byte/hash validation.",
+                    "Security Invariant: Virtual namespace isolation ensures logical URIs do not expose host workstation directories.",
+                    "Security Invariant: Canonical root enforcement blocks directory traversal (../) and unauthorized symlink escapes.",
+                    "Security Invariant: Human-in-the-loop gates (Gate 1 & Gate 2) govern sensitive state transitions.",
+                ]
+            )
             findings.append(
                 Finding(
                     code="SEC-INV-001",
@@ -112,18 +109,22 @@ def execute_reasoning_core(request: ReasoningRequest) -> ReasoningResponse:
                     message="Agent 4-partition sandbox boundary enforced. Path traversal containment verified with zero leaks.",
                 )
             )
-            recommendation = "Sandbox partition isolation verified. Environment complies with Agent security invariants."
+            recommendation = (
+                "Sandbox partition isolation verified. Environment complies with Agent security invariants."
+            )
         elif any(w in goal_lower for w in ["adk", "workflow", "stage", "gate", "orchestration"]):
-            analysis.extend([
-                "Decomposed request into Google ADK multi-agent orchestration lifecycle.",
-                "Stage 1 (IDLE): Baseline system ready; listening on local streaming endpoint.",
-                "Stage 2 (RESEARCH): Deep research mode engaged; gathering verified evidence items.",
-                "Human Gate 1 (Research Review): Manual human confirmation required to proceed.",
-                "Stage 3 (PLANNING): 5 systematic planner reviews (coverage, dependency, structure, fixture, goal).",
-                "Human Gate 2 (Build Ready): Artifact inspection and build authorization.",
-                "Stage 4 (EXECUTION): 7-phase implementation runtime within isolated sandbox partitions.",
-                "Stage 5 (VALIDATION): Cryptographic SHA-256 byte/hash equality and test verification matrix.",
-            ])
+            analysis.extend(
+                [
+                    "Decomposed request into Google ADK multi-agent orchestration lifecycle.",
+                    "Stage 1 (IDLE): Baseline system ready; listening on local streaming endpoint.",
+                    "Stage 2 (RESEARCH): Deep research mode engaged; gathering verified evidence items.",
+                    "Human Gate 1 (Research Review): Manual human confirmation required to proceed.",
+                    "Stage 3 (PLANNING): 5 systematic planner reviews (coverage, dependency, structure, fixture, goal).",
+                    "Human Gate 2 (Build Ready): Artifact inspection and build authorization.",
+                    "Stage 4 (EXECUTION): 7-phase implementation runtime within isolated sandbox partitions.",
+                    "Stage 5 (VALIDATION): Cryptographic SHA-256 byte/hash equality and test verification matrix.",
+                ]
+            )
             findings.append(
                 Finding(
                     code="ADK-WF-001",
@@ -133,15 +134,17 @@ def execute_reasoning_core(request: ReasoningRequest) -> ReasoningResponse:
             )
             recommendation = "ADK multi-agent workflow verified. All stage transitions and human gates compliant."
         elif any(w in goal_lower for w in ["fixture", "dry run", "dryrun", "baseline"]):
-            analysis.extend([
-                "Evaluating repository contract fixtures in app/fixtures/.",
-                "Fixture 1 (app/fixtures/sample.json): Contract baseline sample verified.",
-                "Fixture 2 (app/fixtures/security-invariants.json): Agent 4 sandbox partitions verified.",
-                "Fixture 3 (app/fixtures/adk-workflow.json): Google ADK workflow and human gates verified.",
-                "Fixture 4 (app/fixtures/reasoning-dryrun.json): Offline Python reasoning test suite verified.",
-                "Fixture 5 (app/fixtures/data.json): Runtime engine state baseline verified.",
-                "Cryptographic Invariant: All fixture JSON schemas validated with immutable hash anchors.",
-            ])
+            analysis.extend(
+                [
+                    "Evaluating repository contract fixtures in app/fixtures/.",
+                    "Fixture 1 (app/fixtures/sample.json): Contract baseline sample verified.",
+                    "Fixture 2 (app/fixtures/security-invariants.json): Agent 4 sandbox partitions verified.",
+                    "Fixture 3 (app/fixtures/adk-workflow.json): Google ADK workflow and human gates verified.",
+                    "Fixture 4 (app/fixtures/reasoning-dryrun.json): Offline Python reasoning test suite verified.",
+                    "Fixture 5 (app/fixtures/data.json): Runtime engine state baseline verified.",
+                    "Cryptographic Invariant: All fixture JSON schemas validated with immutable hash anchors.",
+                ]
+            )
             findings.append(
                 Finding(
                     code="FIX-AUDIT-001",
@@ -361,7 +364,10 @@ def cli_main():
                     time.sleep(pace)
             if resp.findings:
                 for f in resp.findings:
-                    print(json.dumps({"type": "delta", "text": f"\n  [{f.severity.upper()}] {f.code}: {f.message}"}), flush=True)
+                    print(
+                        json.dumps({"type": "delta", "text": f"\n  [{f.severity.upper()}] {f.code}: {f.message}"}),
+                        flush=True,
+                    )
                     if pace > 0:
                         time.sleep(pace)
             print(json.dumps({"type": "delta", "text": f"\n\n**Recommendation:** {resp.recommendation}\n"}), flush=True)
@@ -374,6 +380,7 @@ def cli_main():
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "serve":
         import uvicorn
+
         port = int(os.environ.get("PYTHON_REASONING_PORT", os.environ.get("PORT", 8000)))
         host = os.environ.get("HOST", "0.0.0.0")
         uvicorn.run(app, host=host, port=port)

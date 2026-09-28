@@ -52,4 +52,8 @@ if [ ! -d "node_modules" ]; then
     pnpm install --frozen-lockfile
 fi
 
+if command -v uv >/dev/null 2>&1 && [ ! -d "backend/python/.venv" ]; then
+    node scripts/setup-python.mjs || echo "[WARNING] Python env sync failed"
+fi
+
 pnpm run oneshot

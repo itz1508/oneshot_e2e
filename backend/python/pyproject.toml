@@ -7,7 +7,7 @@ name = "oneshot-reasoning"
 version = "1.0.0"
 description = "OneShot Python Reasoning Addon"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.100.0",
     "pydantic>=2.0.0",
@@ -20,6 +20,25 @@ test = [
     "httpx>=0.24.0",
 ]
 
+[dependency-groups]
+dev = [
+    "ruff>=0.8.0",
+    "pytest>=7.0.0",
+    "httpx>=0.24.0",
+]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "auto"

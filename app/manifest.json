@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-09-27T18:43:48Z",
+  "generated_at": "2026-09-28T00:38:21Z",
   "version": "1.3.0",
-  "commit": "2ece6722",
+  "commit": "fabe01cd",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
-      "size": 3089,
-      "hash": "sha256:08f3e60c320d90c28cdcc3d75a41c08ab3817e2ca4b20b12b1d03297b27aee56",
+      "size": 3780,
+      "hash": "sha256:81f5e6a36536b25a2293806499814dab8f66b4c1a7bcb0715db4675a03f83a15",
       "category": "source"
     },
     {
       "path": "AGENTS.md",
-      "size": 7362,
-      "hash": "sha256:16bfb72a0172b1412cbd4307a577ff6bdf8c60a46af087f3598a172d1b657974",
+      "size": 7864,
+      "hash": "sha256:f64234ad43865f7ca6bb67f694dcd5d4607c61c5dd1b1e75bc3caca678bdd666",
       "category": "source"
     },
     {
@@ -35,8 +35,8 @@
     },
     {
       "path": "README.md",
-      "size": 6118,
-      "hash": "sha256:9da445eb53517e214876e0719d12ca93b86891965c51644f727b3c1d5405e4c1",
+      "size": 6258,
+      "hash": "sha256:b3328d6619c9c3705a006ba4088b3d3352941202c7942a221b69c859019fbc57",
       "category": "source"
     },
     {
@@ -113,8 +113,8 @@
     },
     {
       "path": "app\\scripts\\verify_all.py",
-      "size": 12725,
-      "hash": "sha256:78f85146d253df0df0c2c49460ab0ab9fc2082a857005e13b7142a9f23253f5b",
+      "size": 19638,
+      "hash": "sha256:2a36c03aca50871c67573d417f97932ea76f7266fc3be0bd2eacafee2b04a7b4",
       "category": "source"
     },
     {
@@ -173,8 +173,8 @@
     },
     {
       "path": "backend\\python-runtime.ts",
-      "size": 8932,
-      "hash": "sha256:c43020f0b6dfcaeafffcd14ee709ae7a7984270cc8218b69a87ec53db255bd30",
+      "size": 9579,
+      "hash": "sha256:c5b8ae2da659c6d0bb4392c97651cd37b0a13b46d94e57fcb9fcb81b281e4e67",
       "category": "source"
     },
     {
@@ -2088,7 +2088,7 @@
     {
       "path": "backend\\python\\.venv\\Lib\\site-packages\\oneshot_reasoning-1.0.0.dist-info\\uv_cache.json",
       "size": 137,
-      "hash": "sha256:63aa36d2f3edc56d7180fc71fca7a8ef7db3e0b5e2eed547b9e10258242911a1",
+      "hash": "sha256:7281875eee0a29f8eaddc201747de6b4972a41607f31331a0903267a686db6b7",
       "category": "source"
     },
     {
@@ -5020,6 +5020,30 @@
       "category": "source"
     },
     {
+      "path": "backend\\python\\.venv\\Lib\\site-packages\\ruff-0.16.9.dist-info\\sboms\\ruff.cyclonedx.json",
+      "size": 417420,
+      "hash": "sha256:595f0bc5cc9d13d6f8260c3fdaa998ea6818ede8edcabc91855a74066c7adebb",
+      "category": "source"
+    },
+    {
+      "path": "backend\\python\\.venv\\Lib\\site-packages\\ruff\\__init__.py",
+      "size": 103,
+      "hash": "sha256:eba8a7f720d20a26214448eec4b4af01cfe0e717f6a773d870401e06cc10842d",
+      "category": "source"
+    },
+    {
+      "path": "backend\\python\\.venv\\Lib\\site-packages\\ruff\\__main__.py",
+      "size": 547,
+      "hash": "sha256:f28dfadbcc89b3715a2a732335f3e695b5b1609708d79e4b3a9ac2f80e55774d",
+      "category": "source"
+    },
+    {
+      "path": "backend\\python\\.venv\\Lib\\site-packages\\ruff\\_find_ruff.py",
+      "size": 3250,
+      "hash": "sha256:24dc682895e4aa24a4995ad3089fecbf83a5d12c0c05ca3311edd6ebb6dbd22a",
+      "category": "source"
+    },
+    {
       "path": "backend\\python\\.venv\\Lib\\site-packages\\starlette-1.7.0.dist-info\\licenses\\LICENSE.md",
       "size": 1518,
       "hash": "sha256:dcb95677a02240243187e964f941847d19b17821cf99e5afae684fab328c19bf",
@@ -5554,6 +5578,12 @@
       "category": "source"
     },
     {
+      "path": "backend\\python\\README.md",
+      "size": 691,
+      "hash": "sha256:b19e2f344f1550325d7b21e19c50602cfa39cae6b9c7baf907c3824a834d6a8f",
+      "category": "source"
+    },
+    {
       "path": "backend\\python\\app\\__init__.py",
       "size": 40,
       "hash": "sha256:b0fcf03318744ea5facda7ea8cfd623e311a3ccf0b42357c51d641d46d2eb6fe",
@@ -5561,26 +5591,26 @@
     },
     {
       "path": "backend\\python\\app\\main.py",
-      "size": 22631,
-      "hash": "sha256:714102a4d8aac7e1c13667b37770eb92ede0a9a06b0ca303f9e9fc224123dc03",
+      "size": 22597,
+      "hash": "sha256:c30128218f9111643e6f9d103dbf92ac597f925eb0a6db8e0d425a525433bda0",
       "category": "source"
     },
     {
       "path": "backend\\python\\app\\models\\__init__.py",
-      "size": 209,
-      "hash": "sha256:475f2119bf2c31aea6ce4c3fe4365d2289814afe42023364bc0cf59af4c65eae",
+      "size": 210,
+      "hash": "sha256:139d0e538ee6fd6e61bbaf65ed97e37d6c23bdfac37cb327386bb9ed44fc98a3",
       "category": "source"
     },
     {
       "path": "backend\\python\\app\\models\\reasoning.py",
-      "size": 857,
-      "hash": "sha256:b52c557ead4e6857fb33cc8a9a79b9d435ac6f60afbc99e780825b5d9c3bd6c6",
+      "size": 843,
+      "hash": "sha256:089531d6b3be4f42afa6213efa121cdbd2267054ad48cf7f84ba4e13af32984b",
       "category": "source"
     },
     {
       "path": "backend\\python\\oneshot_reasoning.egg-info\\SOURCES.txt",
-      "size": 326,
-      "hash": "sha256:0d9a889ff75e3011df543650fb98f078e066c88407572ef57b658ed1e66ec493",
+      "size": 336,
+      "hash": "sha256:543a85c31ce34169eb986fead25989122114e3e37d66e74db8533bec5acd326c",
       "category": "source"
     },
     {
@@ -5603,14 +5633,14 @@
     },
     {
       "path": "backend\\python\\pyproject.toml",
-      "size": 481,
-      "hash": "sha256:169946ac606e374cbd84330b7f7e0692bf59b47fa6492094b43459ad1a7029fc",
+      "size": 770,
+      "hash": "sha256:c0aac4bec0368a5af0e6896fd302e83173ca9dfd89c431cd34adcb5902190484",
       "category": "source"
     },
     {
       "path": "backend\\python\\requirements.txt",
-      "size": 77,
-      "hash": "sha256:82468b0f99d897224335c7d2f4963e2ab4636b90c7a3493fd77b6b834595bc13",
+      "size": 1305,
+      "hash": "sha256:e86a72a5e53495b9a30a3845afa38771cac78df14c6088a8418d447247c9920f",
       "category": "source"
     },
     {
@@ -6335,8 +6365,8 @@
     },
     {
       "path": "package.json",
-      "size": 2501,
-      "hash": "sha256:8a00925945ba82123256d2c3b2a5a105ee6a13c06d499f9acc570da9d4728659",
+      "size": 2928,
+      "hash": "sha256:a32fe32d9b3129d7aeb89c123d8d97bf1a34443023eb534d1947add856ab6f5b",
       "category": "source"
     },
     {
@@ -6671,8 +6701,8 @@
     },
     {
       "path": "scripts\\dry-run.mjs",
-      "size": 8145,
-      "hash": "sha256:2bc7ab03ffff07f44f42953d7bd2cc1d7bb989bd1a60e7b2ac184bb116fa3604",
+      "size": 8580,
+      "hash": "sha256:22053d58fdf7f377e96123d91b35f2054b66b2cdeb4ea9bbe2dc5191fd53640b",
       "category": "source"
     },
     {
@@ -6697,6 +6727,12 @@
       "path": "scripts\\record-demo.mjs",
       "size": 6777,
       "hash": "sha256:98fb1914b601a01e2aa49007855acdcf0e614e459034afca96a99e8aec8e3810",
+      "category": "source"
+    },
+    {
+      "path": "scripts\\setup-python.mjs",
+      "size": 4181,
+      "hash": "sha256:b4c75f845725f0fd6eac39714ef1cfbecd2dfc42c61a194340554d897ca0f8e3",
       "category": "source"
     },
     {
@@ -6737,16 +6773,16 @@
     }
   ],
   "statistics": {
-    "total_files": 1122,
-    "source_files": 1122,
-    "total_size_bytes": 13492854,
+    "total_files": 1128,
+    "source_files": 1128,
+    "total_size_bytes": 13930281,
     "by_extension": {
       ".yml": 1,
-      ".md": 19,
+      ".md": 20,
       "(no extension)": 1,
-      ".mjs": 34,
-      ".json": 25,
-      ".py": 871,
+      ".mjs": 35,
+      ".json": 26,
+      ".py": 874,
       ".ts": 110,
       ".txt": 23,
       ".toml": 1,

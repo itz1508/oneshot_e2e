@@ -16,11 +16,32 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export function resolvePythonBinary(pythonDir: string): string {
-  const venvWin = path.resolve(pythonDir, ".venv/Scripts/python.exe");
-  const venvUnix = path.resolve(pythonDir, ".venv/bin/python");
+  const venvWin = path.resolve(pythonDir, '.venv/Scripts/python.exe');
+  const venvUnix = path.resolve(pythonDir, '.venv/bin/python');
   if (existsSync(venvWin)) return venvWin;
   if (existsSync(venvUnix)) return venvUnix;
-  return "python";
+  return 'python';
+}
+
+export interface PythonRuntimePaths {
+  rootDir: string;
+  pythonDir: string;
+  pythonScript: string;
+  pythonCmd: string;
+}
+
+/**
+ * Single authority for locating the uv-managed Python reasoning service.
+ * uv owns the venv: pyproject.toml declares, uv.lock pins, `uv sync` creates
+ * backend/python/.venv. This resolver only locates that interpreter
+ * (uv-managed first, then bare `python` fallback with an actionable error
+ * deferred to spawn time).
+ */
+export function resolvePythonRuntime(fromDir?: string): PythonRuntimePaths {
+  const rootDir = fromDir ?? process.cwd();
+  const pythonDir = path.resolve(rootDir, 'backend/python');
+  const pythonScript = path.resolve(pythonDir, 'app/main.py');
+  return { rootDir, pythonDir, pythonScript, pythonCmd: resolvePythonBinary(pythonDir) };
 }
 
 export interface PythonReasoningInput {
@@ -90,18 +111,15 @@ export async function* streamPythonReasoning(
       "Python reasoning subprocess is disabled (ONESHOT_DISABLE_PYTHON_SPAWN=1). Set PYTHON_REASONING_URL to an external Python service."
     );
   }
-  const rootDir = process.cwd();
-  const pythonScript = path.resolve(rootDir, "backend/python/app/main.py");
-  const pythonDir = path.resolve(rootDir, "backend/python");
-  const pythonCmd = resolvePythonBinary(pythonDir);
+  const { pythonDir, pythonScript, pythonCmd } = resolvePythonRuntime();
 
-  const pyProcess = spawn(pythonCmd, [pythonScript, "--stream"], {
+  const pyProcess = spawn(pythonCmd, [pythonScript, '--stream'], {
     cwd: pythonDir,
     env: {
       ...process.env,
-      PYTHONPATH: `${pythonDir}${path.delimiter}${process.env.PYTHONPATH || ""}`,
+      PYTHONPATH: `${pythonDir}${path.delimiter}${process.env.PYTHONPATH || ''}`,
     },
-    stdio: ["pipe", "pipe", "pipe"],
+    stdio: ['pipe', 'pipe', 'pipe'],
   });
 
   const abortHandler = () => {

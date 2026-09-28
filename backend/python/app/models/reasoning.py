@@ -9,9 +9,7 @@ class EvidenceItem(BaseModel):
 
 class ReasoningRequest(BaseModel):
     run_id: str = Field(min_length=1)
-    task: str = Field(
-        pattern="^(researcher|planner|gap-analysis|evaluation|critic|general)$"
-    )
+    task: str = Field(pattern="^(researcher|planner|gap-analysis|evaluation|critic|general)$")
     goal: str = Field(min_length=1)
     constraints: list[str] = Field(default_factory=list)
     evidence: list[EvidenceItem] = Field(default_factory=list)

@@ -42,6 +42,15 @@ if (-not (Test-Path $nodeModules)) {
     }
 }
 
+$pythonVenv = Join-Path $RepoRoot "backend\python\.venv"
+if ((-not (Test-Path $pythonVenv)) -and (Get-Command uv -ErrorAction SilentlyContinue)) {
+    Write-Host "[2/4] Syncing Python reasoning env (uv sync)..." -ForegroundColor Yellow
+    & node scripts/setup-python.mjs
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[WARNING] Python env sync failed." -ForegroundColor Yellow
+    }
+}
+
 # 3. Check / Run Build
 $backendDist = Join-Path $RepoRoot "dist\backend\index.js"
 $frontendDist = Join-Path $RepoRoot "frontend\web\dist\index.html"

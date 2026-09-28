@@ -85,6 +85,15 @@ if errorlevel 1 (
 )
 echo [OK] Dependencies installed
 
+:: 6b. Sync uv-managed Python reasoning env
+where uv >nul 2>&1
+if errorlevel 1 (
+    echo [WARNING] uv not found; backend/python/.venv not synced
+) else (
+    call node scripts/setup-python.mjs
+    if errorlevel 1 echo [WARNING] Python env sync failed
+)
+
 :: 7. Build backend & UI
 echo [7/8] Compiling backend and UI...
 call pnpm run build:backend

@@ -65,8 +65,14 @@ def print_check(name: str, passed: bool, details: str = ''):
 
 def parse_version(version: str) -> tuple[int, int, int]:
     """Parse a semantic version into a comparable tuple."""
-    parts = version.lstrip('v').split('.')
-    return tuple(int(part) for part in parts[:3])
+    import re
+    match = re.search(r'(\d+)\.(\d+)(?:\.(\d+))?', version)
+    if not match:
+        raise ValueError(f"Unable to parse version from: {version!r}")
+    major = int(match.group(1))
+    minor = int(match.group(2))
+    patch = int(match.group(3)) if match.group(3) is not None else 0
+    return (major, minor, patch)
 
 
 def check_environment() -> bool:
@@ -76,8 +82,10 @@ def check_environment() -> bool:
     passed = True
     node_minimum = (24, 21, 0)
     pnpm_minimum = (11, 27, 1)
+    python_minimum = (3, 12, 0)
     node_required = '>=24.21.0'
     pnpm_required = '>=11.27.1'
+    python_required = '>=3.12.0'
     
     # Check Node.js
     try:
@@ -113,17 +121,36 @@ def check_environment() -> bool:
             print_check("pnpm", False, str(e))
             passed = False
     
-    # Check Python
-    try:
-        result = subprocess.run(['python', '--version'], capture_output=True, text=True, timeout=5)
-        version = result.stdout.strip()
-        print_check("Python", True, version)
-    except FileNotFoundError:
-        print_check("Python", False, "not found")
+    # Check Python (>=3.12, single authority with backend/python/pyproject.toml)
+    python_command = shutil.which('python') or shutil.which('python3')
+    if not python_command:
+        print_check('Python', False, 'not found')
         passed = False
-    except Exception as e:
-        print_check("Python", False, str(e))
+    else:
+        try:
+            result = subprocess.run([python_command, '--version'], capture_output=True, text=True, timeout=5)
+            version = (result.stdout or result.stderr).strip()
+            if parse_version(version) >= python_minimum:
+                print_check('Python', True, f'{version} (required: {python_required})')
+            else:
+                print_check('Python', False, f'{version} (required: {python_required})')
+                passed = False
+        except Exception as e:
+            print_check('Python', False, str(e))
+            passed = False
+    # Check uv (owns backend/python/.venv via `uv sync --frozen`)
+    uv_command = shutil.which('uv') or shutil.which('uv.exe')
+    if not uv_command:
+        print_check('uv', False, 'not found; install uv to manage backend/python')
         passed = False
+    else:
+        try:
+            result = subprocess.run([uv_command, '--version'], capture_output=True, text=True, timeout=5)
+            version = (result.stdout or result.stderr).strip()
+            print_check('uv', True, version)
+        except Exception as e:
+            print_check('uv', False, str(e))
+            passed = False
     
     return passed
 
@@ -205,6 +232,109 @@ def check_dependencies() -> bool:
     else:
         print_check("package.json", False, "not found")
         passed = False
+    # Check Python service env (uv authority: pyproject.toml -> uv.lock -> .venv)
+    python_dir = repository_root / 'backend' / 'python'
+    venv_python = (
+        python_dir / '.venv' / 'Scripts' / 'python.exe'
+        if os.name == 'nt'
+        else python_dir / '.venv' / 'bin' / 'python'
+    )
+    uv_command = shutil.which('uv') or shutil.which('uv.exe')
+    if not (python_dir / 'pyproject.toml').exists():
+        print_check('backend/python/pyproject.toml', False, 'missing')
+        passed = False
+    elif not (python_dir / 'uv.lock').exists():
+        print_check('backend/python/uv.lock', False, 'missing; run uv lock in backend/python')
+        passed = False
+    elif not uv_command:
+        print_check('uv lock sync', False, 'uv not found')
+        passed = False
+    else:
+        try:
+            lock_check = subprocess.run(
+                [uv_command, 'lock', '--check'],
+                capture_output=True, text=True, timeout=60, cwd=str(python_dir),
+            )
+            if lock_check.returncode == 0:
+                print_check('uv lock sync', True, 'uv.lock matches pyproject.toml')
+            else:
+                print_check('uv lock sync', False, 'uv.lock out of sync; run node scripts/setup-python.mjs')
+                passed = False
+        except Exception as e:
+            print_check('uv lock sync', False, str(e))
+            passed = False
+    if not venv_python.exists():
+        print_check('python venv', False, 'missing interpreter; run node scripts/setup-python.mjs')
+        passed = False
+    else:
+        try:
+            import_check = subprocess.run(
+                [str(venv_python), '-c', 'import fastapi, pydantic, uvicorn; print("deps-ok")'],
+                capture_output=True, text=True, timeout=60,
+            )
+            if import_check.returncode == 0 and 'deps-ok' in import_check.stdout:
+                print_check('python venv imports', True, 'fastapi/pydantic/uvicorn')
+            else:
+                print_check('python venv imports', False, (import_check.stderr or 'import failed').strip()[-200:])
+                passed = False
+        except Exception as e:
+            print_check('python venv imports', False, str(e))
+            passed = False
+        try:
+            health_check = subprocess.run(
+                [str(venv_python), '-c', (
+                    'from fastapi.testclient import TestClient; '
+                    'from app.main import app; '
+                    "response = TestClient(app).get('/health'); "
+                    'assert response.status_code == 200, response.status_code; '
+                    'body = response.json(); '
+                    "assert body['status'] == 'ok', body; "
+                    "assert body['service'] == 'oneshot-python-reasoner', body; "
+                    "print('health-ok')"
+                )],
+                capture_output=True, text=True, timeout=60, cwd=str(python_dir),
+            )
+            if health_check.returncode == 0 and 'health-ok' in health_check.stdout:
+                print_check('python /health contract', True, 'GET /health 200 status=ok')
+            else:
+                print_check('python /health contract', False, (health_check.stderr or 'no health-ok').strip()[-200:])
+                passed = False
+        except Exception as e:
+            print_check('python /health contract', False, str(e))
+            passed = False
+        if uv_command:
+            for tool_args, tool_name in (
+                (['check', '.'], 'ruff check'),
+                (['format', '--check', '.'], 'ruff format check'),
+            ):
+                try:
+                    tool_check = subprocess.run(
+                        [uv_command, 'run', '--frozen', '--group', 'dev', 'ruff'] + tool_args,
+                        capture_output=True, text=True, timeout=120, cwd=str(python_dir),
+                    )
+                    if tool_check.returncode == 0:
+                        print_check(tool_name, True, 'clean')
+                    else:
+                        detail = (tool_check.stdout or tool_check.stderr).strip()[-200:]
+                        print_check(tool_name, False, detail)
+                        passed = False
+                except Exception as e:
+                    print_check(tool_name, False, str(e))
+                    passed = False
+            try:
+                pytest_check = subprocess.run(
+                    [uv_command, 'run', '--frozen', '--group', 'dev', 'pytest', '-q'],
+                    capture_output=True, text=True, timeout=180, cwd=str(python_dir),
+                )
+                if pytest_check.returncode == 0:
+                    print_check('python pytest', True, pytest_check.stdout.strip().splitlines()[-1][:120])
+                else:
+                    detail = (pytest_check.stdout or pytest_check.stderr).strip()[-300:]
+                    print_check('python pytest', False, detail)
+                    passed = False
+            except Exception as e:
+                print_check('python pytest', False, str(e))
+                passed = False
     
     return passed
 
@@ -305,7 +435,16 @@ def check_tests() -> bool:
         backend_test_files = list(backend_tests.glob('*.test.ts'))
         print_check("backend/tests/ts", True, f"{len(backend_test_files)} test files")
     else:
-        print_check("backend/tests/ts", True, "not found (tests may be elsewhere)")
+        print_check("backend/tests/ts", False, "not found")
+        passed = False
+    # Check Python tests (uv authority: backend/python/tests/test_*.py)
+    python_tests = repository_root / 'backend' / 'python' / 'tests'
+    python_test_files = sorted(python_tests.glob('test_*.py')) if python_tests.exists() else []
+    if python_test_files:
+        print_check('backend/python/tests', True, f'{len(python_test_files)} test files')
+    else:
+        print_check('backend/python/tests', False, 'no test_*.py found')
+        passed = False
     
     # Check frontend tests
     frontend_tests = repository_root / 'frontend/web/tests'
@@ -313,14 +452,16 @@ def check_tests() -> bool:
         frontend_test_files = list(frontend_tests.glob('*.test.mjs'))
         print_check("frontend/web/tests", True, f"{len(frontend_test_files)} test files")
     else:
-        print_check("frontend/web/tests", True, "not found")
+        print_check("frontend/web/tests", False, "not found")
+        passed = False
     
     # Check e2e tests
     e2e_tests = repository_root / 'e2e'
     if e2e_tests.exists() and any(e2e_tests.glob('*.spec.ts')):
         print_check("e2e tests", True, "found")
     else:
-        print_check("e2e tests", True, "not found")
+        print_check("e2e tests", False, "not found")
+        passed = False
     
     return passed
 

@@ -117,8 +117,9 @@ Passed: 7/7 - All checks passed!
 git clone https://github.com/itz1508/oneshot_e2e.git
 cd oneshot_e2e
 
-# Install all dependencies
+# Install all dependencies (Node + uv-managed Python env)
 pnpm install
+node scripts/setup-python.mjs
 
 # Build backend + frontend
 pnpm run build
@@ -134,7 +135,7 @@ pnpm start
 .\scripts\start-web.ps1 -Port 9000 -Sample   # custom port + sample data
 ```
 
-> **Requirements:** Node.js `>= 24.21.0` · pnpm `>= 11.27.1`
+> **Requirements:** Node.js `>= 24.21.0` · pnpm `>= 11.27.1` · Python `>= 3.12` · uv (owns `backend/python/.venv` via `uv sync --frozen`)
 
 ---
 

@@ -46,6 +46,26 @@ jobs:
       - name: Install Root Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync Python Reasoning Env
+        run: uv sync --frozen --project backend/python
+
+      - name: Lint Python Reasoning (Ruff)
+        run: uv run --frozen --group dev --project backend/python ruff check backend/python
+
+      - name: Check Python Formatting (Ruff)
+        run: uv run --frozen --group dev --project backend/python ruff format --check backend/python
+
+      - name: Run Python Reasoning Tests
+        run: uv run --frozen --group dev --project backend/python pytest backend/python/tests -q
+
       - name: Typecheck Agent Runtime
         run: pnpm exec tsc -p packages/agent-runtime/tsconfig.json --noEmit
 

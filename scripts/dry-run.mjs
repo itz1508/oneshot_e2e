@@ -20,6 +20,7 @@
  */
 
 import fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -49,19 +50,28 @@ async function getFixtureSha256(filePath) {
   return crypto.createHash('sha256').update(content).digest('hex');
 }
 
+function resolvePythonRuntime() {
+  const pyDir = path.join(repoRoot, 'backend', 'python');
+  const pyScript = path.join(pyDir, 'app', 'main.py');
+  // Same authority as backend/python-runtime.ts: uv-managed .venv first,
+  // bare `python` fallback only so the error surfaces with stderr context.
+  const candidates =
+    process.platform === 'win32'
+      ? [path.join(pyDir, '.venv', 'Scripts', 'python.exe')]
+      : [path.join(pyDir, '.venv', 'bin', 'python')];
+  const pyCmd = candidates.find((candidate) => existsSync(candidate)) ?? 'python';
+  return { pyDir, pyScript, pyCmd };
+}
+
 async function runPythonReasoning(goal, task = 'general') {
   return new Promise((resolve, reject) => {
-    const pyScript = path.join(repoRoot, 'backend', 'python', 'app', 'main.py');
-    const pyDir = path.join(repoRoot, 'backend', 'python');
-    const isWindows = process.platform === 'win32';
-    const pyCmd = isWindows
-      ? path.join(pyDir, '.venv', 'Scripts', 'python.exe')
-      : path.join(pyDir, '.venv', 'bin', 'python');
+    const { pyDir, pyScript, pyCmd } = resolvePythonRuntime();
 
     const proc = spawn(pyCmd, [pyScript, '--prompt', goal, '--task', task, '--stream'], {
-      cwd: repoRoot,
+      cwd: pyDir,
       env: {
         ...process.env,
+        PYTHONPATH: `${pyDir}${path.delimiter}${process.env.PYTHONPATH || ''}`,
         FAST_STREAM: '1',
       },
       stdio: ['pipe', 'pipe', 'pipe'],

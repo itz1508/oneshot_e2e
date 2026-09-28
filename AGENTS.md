@@ -2,6 +2,8 @@
 
 Standard instructions for AI coding agents working on OneShot. Follow the open [agents.md](https://agents.md) specification stewarded by the Agentic AI Foundation (Linux Foundation).
 
+ Standard language code writing in Python and function include error handling, and more at https://realpython.com/ref/best-practices/exception-handling/.
+
 ## Project Overview
 
 OneShot provides **governed research tools, contextual discovery features, and deterministic runtime boundaries that any AI agent can use**. It exposes modular APIs (`/api/research/run`, `researchSkill`) and deterministic verification boundaries so coding agents (Gemini, Claude, OpenAI, Antigravity, Cursor) can gather verified codebase and web context, plan changes, and execute safely without unconstrained conveyor-belt execution.
@@ -25,7 +27,7 @@ Use `pnpm` exclusively across scripts, installs, builds, and tests. Never use np
 
 - **Node.js**: `>= 24.21.0` (all 8 workspace packages declare `engines.node: >=24.21.0`. Do not reintroduce `22.x ||` alternates).
 - **pnpm**: `>= 11.27.1`
-- **Python**: `3.12+` (for Python validation services in `app/validation/` and scripts)
+- **Python**: `3.12+` (uv-managed service in `backend/python/`; `pyproject.toml` declares, `uv.lock` pins, `uv sync --frozen` creates `.venv`. Scripts in `app/scripts/` run on system Python and need no install)
 - **Dependency holds**: `openai` stays on 6.x (peer range of `@strands-agents/sdk@1.19.0`), `@types/node` on 24.x, TypeScript on 5.9, `undici-types` on 7.x.
 
 ## Code Style
@@ -63,6 +65,10 @@ Never fabricate progress, fake timers, mock data, synthetic success, assistant r
 | Task | Command |
 | :--- | :--- |
 | Backend unit & contract tests (222 tests) | `pnpm test` |
+| Python reasoning tests (5 tests) | `pnpm run test:python` |
+| Python lint (Ruff) | `pnpm run lint:python` |
+| Python format check (Ruff) | `pnpm run format:python` |
+| Python env bootstrap (uv) | `pnpm run setup:python` |
 | Runtime package tests (99 tests) | `pnpm run test:runtime` |
 | Frontend web tests (84 tests) | `pnpm --prefix frontend/web test` |
 | Browser E2E tests (21 tests) | `pnpm run test:e2e` |

@@ -58,6 +58,15 @@ if (-not (Test-Path $InstallDir)) {
 
 Set-Location -Path $InstallDir
 
+# Sync uv-managed Python reasoning env on fresh clone (start-web.ps1 double-checks at launch)
+if ((-not (Test-Path (Join-Path $InstallDir "backend\python\.venv"))) -and (Get-Command uv -ErrorAction SilentlyContinue)) {
+    Write-Host "[2/2] Syncing Python reasoning env (uv sync)..." -ForegroundColor Green
+    & node scripts/setup-python.mjs
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[WARNING] Python env sync failed." -ForegroundColor Yellow
+    }
+}
+
 Write-Host ""
 Write-Host "📍 Project Folder: $(Get-Location)" -ForegroundColor Cyan
 Write-Host "🌐 Launching OneShot console..." -ForegroundColor Cyan
