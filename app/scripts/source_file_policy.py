@@ -23,11 +23,27 @@ GENERATED_PATTERNS: Set[str] = {
     'out',
     '.next',
     '__pycache__',
+    # Virtual environments are machine-local and are never committed. uv and pip
+    # write absolute install paths into them (editable finder modules,
+    # dist-info/direct_url.json, dist-info/uv_cache.json), so hashing them makes
+    # the manifest verify only on the checkout that generated it and fail on
+    # every fresh clone.
+    '.venv',
+    'venv',
+    '.pytest_cache',
     '.git',
     '.gitignore',
     '.DS_Store',
     'Thumbs.db',
     '.env',
+}
+
+# Generated directory name suffixes - excluded from manifest
+# uv and pip write <project>.egg-info next to the sources during an editable
+# install. It is gitignored local build state, so it must never be hashed into
+# the manifest or the manifest would drift on every machine that ran uv sync.
+GENERATED_DIR_SUFFIXES: Set[str] = {
+    '.egg-info',
 }
 
 # Excluded patterns - not for release (logs, secrets, temp)
@@ -58,6 +74,21 @@ WHITELIST: Set[str] = {
 }
 
 
+def is_generated_segment(segment: str) -> bool:
+    """
+    Check if a path segment names a generated directory or file.
+
+    Args:
+        segment: Single path segment (directory or file name)
+
+    Returns:
+        True if the segment belongs to a generated tree
+    """
+    if segment in GENERATED_PATTERNS:
+        return True
+    return any(segment.endswith(suffix) for suffix in GENERATED_DIR_SUFFIXES)
+
+
 def is_source_file(path: str) -> bool:
     """
     Check if a file is a source file.
@@ -82,7 +113,7 @@ def is_source_file(path: str) -> bool:
 
     # Generated trees are never source, even when they contain a whitelisted
     # filename such as package.json.
-    if any(segment in GENERATED_PATTERNS for segment in relative_path.parts):
+    if any(is_generated_segment(segment) for segment in relative_path.parts):
         return False
 
     # Whitelist: always source outside generated trees
@@ -95,7 +126,7 @@ def is_source_file(path: str) -> bool:
     
     # Check if in any generated path
     for segment in relative_path.parts:
-        if segment in GENERATED_PATTERNS:
+        if is_generated_segment(segment):
             return False
     
     # Check if matches excluded patterns
@@ -124,9 +155,9 @@ def is_generated_file(path: str) -> bool:
     
     # Check if in generated directory
     for segment in relative_path.parts:
-        if segment in GENERATED_PATTERNS:
+        if is_generated_segment(segment):
             return True
-    
+
     return False
 
 

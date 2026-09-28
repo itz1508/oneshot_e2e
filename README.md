@@ -101,7 +101,7 @@ $ pnpm run verify
   [✓] dependencies      @strands-agents/sdk, dotenv, openai, ai
   [✓] build_outputs     dist/backend/index.js, frontend/web/dist
   [✓] configuration     tsconfig, package.json, app/env/.env.example
-  [✓] manifest          1,122 files matching SHA-256 tree
+  [✓] manifest          224 files matching SHA-256 tree (committed sources only)
   [✓] tests             backend, runtime, web, e2e
   [✓] security          .env git protection, no hardcoded secrets
 
