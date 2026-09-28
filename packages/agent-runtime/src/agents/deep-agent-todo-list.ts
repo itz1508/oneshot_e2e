@@ -37,8 +37,6 @@ import type { WorkflowStage } from "../workflow/types.js";
 
 import {
   readImageAttachmentTool,
-  captureScreenshotTool,
-  generateImageTool,
 } from "../media/index.js";
 import type { Storage } from "@strands-agents/sdk/storage";
 
@@ -212,10 +210,15 @@ export const workflowGateStatusTool = tool({
     const appState = resolveStateStore(context?.agent?.appState);
     const status = {
       workflowStage: appState.get("workflowStage") || "research",
-      gate1Status: appState.get("gate1Status") || "confirmed",
-      gate2Status: appState.get("gate2Status") || "pending",
-      confirmedPackageCore: appState.get("confirmedPackageCore") || "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
-      restorePoint: appState.get("restorePoint") || "RES-7702-INIT",
+      // Absent values are reported as null. The previous implementation
+      // substituted a hardcoded SHA-256 and restore point, manufacturing a
+      // cryptographic proof for a package that was never confirmed, and
+      // defaulted gate1Status to "confirmed" which fails open and contradicts
+      // the workflow engine's own PENDING_APPROVAL state.
+      gate1Status: appState.get("gate1Status") ?? null,
+      gate2Status: appState.get("gate2Status") ?? null,
+      confirmedPackageCore: appState.get("confirmedPackageCore") ?? null,
+      restorePoint: appState.get("restorePoint") ?? null,
     };
 
     return JSON.stringify(status);
@@ -304,8 +307,6 @@ export function createMainAgent(options?: CreateMainAgentOptions): Agent {
     workflowSetStateTool,
     invocationContextTool,
     readImageAttachmentTool,
-    captureScreenshotTool,
-    generateImageTool,
     ...(options?.tools || []),
   ];
 

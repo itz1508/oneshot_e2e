@@ -5,8 +5,6 @@ import * as path from "node:path";
 import {
   detectImageFormat,
   readImageAttachmentTool,
-  captureScreenshotTool,
-  generateImageTool,
   createStrandsAgent,
   invokeDirectTool,
 } from "../src/index.ts";
@@ -77,69 +75,41 @@ test("Multimodal Vision & Media Tools Suite", async (t) => {
     assert.equal(imageBlock.source.bytes.length, 8);
   });
 
-  await t.test("captureScreenshotTool generates valid screenshot and ImageBlock", async () => {
-    const screenshotPath = path.join(tmpDir, "viewport.png");
+  await t.test("removed tools are no longer exported", async () => {
+    const mod = await import("../src/index.ts");
 
-    const result = await captureScreenshotTool.invoke({
-      url: "http://localhost:8787",
-      outputPath: screenshotPath,
-      viewportWidth: 1440,
-      viewportHeight: 900,
-    });
-
-    assert.ok(Array.isArray(result));
-    const [textBlock, imageBlock] = result;
-    assert.match(textBlock.text, /SCREENSHOT_CAPTURED/);
-    assert.equal(imageBlock.type, "imageBlock");
-    assert.equal(imageBlock.format, "png");
-
-    // File was written to disk
-    const fileStat = await fs.stat(screenshotPath);
-    assert.ok(fileStat.size > 0);
+    // Screenshot capture and image generation fabricated results: each wrote a
+    // 1x1 transparent PNG while reporting success. They must not be exported.
+    assert.equal(mod.captureScreenshotTool, undefined, "capture_screenshot must not be exported");
+    assert.equal(mod.generateImageTool, undefined, "generate_image must not be exported");
+    assert.ok(mod.readImageAttachmentTool, "read_image_attachment (honest tool) must remain");
   });
 
-  await t.test("generateImageTool synthesizes image asset and writes to disk", async () => {
-    const assetPath = path.join(tmpDir, "generated-icon.png");
-
-    const result = await generateImageTool.invoke({
-      prompt: "A modern glowing cybernetic shield logo",
-      outputPath: assetPath,
-      aspectRatio: "1:1",
-      style: "icon",
-    });
-
-    assert.ok(Array.isArray(result));
-    const [textBlock, imageBlock] = result;
-    assert.match(textBlock.text, /IMAGE_GENERATED/);
-    assert.match(textBlock.text, /cybernetic shield/);
-    assert.equal(imageBlock.type, "imageBlock");
-
-    const fileStat = await fs.stat(assetPath);
-    assert.ok(fileStat.size > 0);
-  });
-
-  await t.test("createStrandsAgent registers vision tools natively", async () => {
+  await t.test("removed tools are rejected by the real tool registry", async () => {
     const agent = createStrandsAgent();
 
-    // Verify vision tools are available directly on the agent tool dictionary
-    assert.equal(typeof agent.tool.read_image_attachment?.invoke, "function");
-    assert.equal(typeof agent.tool.capture_screenshot?.invoke, "function");
-    assert.equal(typeof agent.tool.generate_image?.invoke, "function");
+    // NOTE: `agent.tool` is a Proxy that synthesises a handle for ANY property
+    // name, so `agent.tool.capture_screenshot` is truthy regardless of what is
+    // registered. The authoritative check is the SDK ToolRegistry refusing to
+    // resolve the name.
+    for (const name of ["generate_image", "capture_screenshot"]) {
+      await assert.rejects(
+        () => invokeDirectTool(agent, name, { prompt: "x", url: "http://localhost" }),
+        (err) => {
+          assert.match(
+            String(err?.message ?? err),
+            /not found|not registered/i,
+            `${name} must not resolve in the registry`
+          );
+          return true;
+        }
+      );
+    }
 
-    // Test direct tool invocation on agent without polluting conversation history
-    const directResult = await invokeDirectTool(
-      agent,
-      "generate_image",
-      {
-        prompt: "Clean blue dashboard mockup",
-        style: "ui-mockup",
-      },
-      { recordDirectToolCall: false }
-    );
-
-    assert.equal(directResult.status, "success");
-    assert.ok(Array.isArray(directResult.content));
-    assert.equal(directResult.content.length, 2);
-    assert.equal(agent.messages.length, 0, "Direct tool call with recordDirectToolCall: false must not pollute history");
+    // The honest tool still resolves and returns real bytes.
+    const png =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    const ok = await invokeDirectTool(agent, "read_image_attachment", { base64: png });
+    assert.ok(Array.isArray(ok.content), "read_image_attachment must still produce real content");
   });
 });

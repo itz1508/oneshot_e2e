@@ -2,8 +2,6 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import crypto from "node:crypto";
 import {
-  generateImageTool,
-  captureScreenshotTool,
   readImageAttachmentTool,
   tavilySearchBackend,
 } from "../../packages/agent-runtime/src/index.js";
@@ -69,13 +67,7 @@ export const handleFixtureRoutes: RouteHandler = async (req, res, ctx) => {
     const { toolName, input } = body;
     let result: any;
 
-    if (toolName === "generate_image") {
-      result = await generateImageTool.invoke(input || { prompt: "Modern agent dashboard mockup", style: "ui-mockup" });
-    } else if (toolName === "capture_screenshot") {
-      result = await captureScreenshotTool.invoke(input || { url: `http://localhost:${port}` });
-    } else if (toolName === "read_image_attachment") {
-      result = await readImageAttachmentTool.invoke(input);
-    } else if (toolName === "workflow_transition") {
+    if (toolName === "workflow_transition") {
       const transitionRes = WorkflowService.transitionStage(workflowEngine, input?.targetStage);
       if (!transitionRes.ok && transitionRes.status === 400) {
         return sendError(res, 400, transitionRes.error!, { received: transitionRes.received });
