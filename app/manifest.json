@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T21:41:35Z",
+  "generated_at": "2026-09-28T22:06:55Z",
   "version": "1.3.0",
-  "commit": "8940f53e",
+  "commit": "d2604110",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -293,8 +293,8 @@
     },
     {
       "path": "backend\\routes\\fixtures.ts",
-      "size": 6489,
-      "hash": "sha256:d0353f2a48e8d559c50ac771a69ed607daef32c0517e41c5d30aa9edb890916d",
+      "size": 6010,
+      "hash": "sha256:1e8ec1f3f4f95d1a7d12772102988e2d4467409845561f9860ca9f0f43794cc4",
       "category": "source"
     },
     {
@@ -547,12 +547,6 @@
       "path": "e2e\\support\\network-guard.ts",
       "size": 1762,
       "hash": "sha256:598e7519506944dfbd52191b3459281c57c9f23bdef3013a022286ff7ea1d464",
-      "category": "source"
-    },
-    {
-      "path": "e2e\\support\\static-server.mjs",
-      "size": 28033,
-      "hash": "sha256:e0546c415253e3c5556bc984b667aef37350df9a729f0483b71ab8eb7ac8a955",
       "category": "source"
     },
     {
@@ -1037,8 +1031,8 @@
     },
     {
       "path": "packages\\agent-runtime\\src\\agents\\deep-agent-todo-list.ts",
-      "size": 15862,
-      "hash": "sha256:5143903d036c89855bca6a9537375d62ebd9ed8213e63156f91b3404c0457c72",
+      "size": 16034,
+      "hash": "sha256:950e201245e07bf8d2dd773a4df3d408a4641d85df090d8507e3da41c284da0c",
       "category": "source"
     },
     {
@@ -1139,8 +1133,8 @@
     },
     {
       "path": "packages\\agent-runtime\\src\\media\\vision-tools.ts",
-      "size": 7656,
-      "hash": "sha256:4f7ec07e88f578fd0c364400b55a9a38c496195f5b40fb5b049d4b5ef17f410e",
+      "size": 3862,
+      "hash": "sha256:b3af97d7f05d46a0a382d838f54b3d62355095e2dd2ee96214116b6dc0399dc7",
       "category": "source"
     },
     {
@@ -1373,8 +1367,8 @@
     },
     {
       "path": "packages\\agent-runtime\\tests\\vision-media.test.mjs",
-      "size": 5261,
-      "hash": "sha256:8cbb74ff51c1680541c20fe5170f4ae21ca669bfca591584de6e330d1a8aa143",
+      "size": 4595,
+      "hash": "sha256:b9b77a2e88f0643226011eb7d1ad481c9e0e6167a5526dd535c43ac6ee554a20",
       "category": "source"
     },
     {
@@ -1535,14 +1529,14 @@
     }
   ],
   "statistics": {
-    "total_files": 255,
-    "source_files": 255,
-    "total_size_bytes": 1559762,
+    "total_files": 254,
+    "source_files": 254,
+    "total_size_bytes": 1526962,
     "by_extension": {
       ".yml": 1,
       ".md": 7,
       "(no extension)": 1,
-      ".mjs": 40,
+      ".mjs": 39,
       ".bat": 2,
       ".sh": 3,
       ".json": 21,
