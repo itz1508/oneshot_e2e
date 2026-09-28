@@ -101,8 +101,8 @@ $ pnpm run verify
   [✓] dependencies      @strands-agents/sdk, dotenv, openai, ai
   [✓] build_outputs     dist/backend/index.js, frontend/web/dist
   [✓] configuration     tsconfig, package.json, app/env/.env.example
-  [✓] manifest          224 files matching SHA-256 tree (committed sources only)
-  [✓] tests             backend, runtime, web, e2e
+  [✓] manifest          226 files matching SHA-256 tree (committed sources only)
+  [✓] tests             backend, runtime, web, scripts, e2e
   [✓] security          .env git protection, no hardcoded secrets
 
 Passed: 7/7 - All checks passed!
@@ -127,14 +127,17 @@ python -m pip install -r backend/python/requirements.txt
 # Build backend + frontend
 pnpm run build
 
-# Launch server (auto-detects port, opens browser)
+# Launch server (auto-selects the next free port if 8787 is busy)
 pnpm start
+
+# Canonical launcher: verifies the bound port and opens the browser
+pnpm run oneshot
 ```
 
 **Windows shortcut:**
 
 ```powershell
-.\scripts\start-web.ps1          # default port 8787
+.\scripts\start-web.ps1          # first free port from 8787
 .\scripts\start-web.ps1 -Port 9000 -Sample   # custom port + sample data
 ```
 

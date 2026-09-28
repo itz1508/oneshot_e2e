@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-09-28T01:36:34Z",
+  "generated_at": "2026-09-28T01:55:33Z",
   "version": "1.3.0",
-  "commit": "07c1c871",
+  "commit": "2324888b",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
-      "size": 3780,
-      "hash": "sha256:81f5e6a36536b25a2293806499814dab8f66b4c1a7bcb0715db4675a03f83a15",
+      "size": 3854,
+      "hash": "sha256:64f1605779f4933b83920c8ee72dfa25b7474a8ef3cb5e9c4d1e87ebe1dbbf11",
       "category": "source"
     },
     {
       "path": "AGENTS.md",
-      "size": 7864,
-      "hash": "sha256:f64234ad43865f7ca6bb67f694dcd5d4607c61c5dd1b1e75bc3caca678bdd666",
+      "size": 7932,
+      "hash": "sha256:3e6eafc3f934e8b812a7e6621eded6702b6d002a1c9cbdec16f7e7f5ea4e8174",
       "category": "source"
     },
     {
@@ -35,14 +35,14 @@
     },
     {
       "path": "README.md",
-      "size": 6465,
-      "hash": "sha256:3c4903a305c754fe95cb787a4c842b30ebc09572adee5a0a278f438fcc738f22",
+      "size": 6583,
+      "hash": "sha256:e7e1612a6a540c3658305186b61e2ac6db376467a4d15fdeec0710d117aae6e8",
       "category": "source"
     },
     {
       "path": "app\\bootstrap\\demo.mjs",
-      "size": 3789,
-      "hash": "sha256:92365187713683aa5963f92f4031837b94aa6415e888c26aa2117a55a7c1a61e",
+      "size": 4674,
+      "hash": "sha256:f6baba8b50830523d3586db46ee142c89e56e575db2e8b25b141ece7c166d8bf",
       "category": "source"
     },
     {
@@ -113,8 +113,8 @@
     },
     {
       "path": "app\\scripts\\verify_all.py",
-      "size": 21888,
-      "hash": "sha256:06de7ef88a7d8c262a581a18d2e1efd19dd0e5a55ae44df0dad822f9942487fe",
+      "size": 22298,
+      "hash": "sha256:359d239af75dee75bd01922e3c8b47541017e926a3503ab689c3204cf82c7a80",
       "category": "source"
     },
     {
@@ -941,8 +941,8 @@
     },
     {
       "path": "package.json",
-      "size": 2928,
-      "hash": "sha256:a32fe32d9b3129d7aeb89c123d8d97bf1a34443023eb534d1947add856ab6f5b",
+      "size": 3031,
+      "hash": "sha256:9069cbd8b52e771b20fefc30df01adacfb2c3fdabc563dfe0e7b7973ec5d0360",
       "category": "source"
     },
     {
@@ -1294,9 +1294,15 @@
       "category": "source"
     },
     {
+      "path": "scripts\\lib\\ports.mjs",
+      "size": 5027,
+      "hash": "sha256:cc7ce8e8e41eff722d87a80f20902a884518e238cafde85a7e3b68a2eaf04aa2",
+      "category": "source"
+    },
+    {
       "path": "scripts\\oneshot.mjs",
-      "size": 5963,
-      "hash": "sha256:1e1d3010cba8562644eeffaeac433b1e6096099395a8d62b4072096df3f1cd68",
+      "size": 7026,
+      "hash": "sha256:7b92aa93e1bed4f7154f7a733a798ff0d5c8f6918444b127690c5710d3316622",
       "category": "source"
     },
     {
@@ -1315,6 +1321,12 @@
       "path": "scripts\\test-network-connection.mjs",
       "size": 4171,
       "hash": "sha256:ab4b968601e571dc885785ef848d84657ff046f3e45f448b5748752bc94e9dd9",
+      "category": "source"
+    },
+    {
+      "path": "scripts\\tests\\ports.test.mjs",
+      "size": 4372,
+      "hash": "sha256:b50bbc3ebe6b390907d2c7c922fe20a943994209c558e5c4859f44a62ab454d2",
       "category": "source"
     },
     {
@@ -1349,14 +1361,14 @@
     }
   ],
   "statistics": {
-    "total_files": 224,
-    "source_files": 224,
-    "total_size_bytes": 1389651,
+    "total_files": 226,
+    "source_files": 226,
+    "total_size_bytes": 1401771,
     "by_extension": {
       ".yml": 1,
       ".md": 7,
       "(no extension)": 1,
-      ".mjs": 35,
+      ".mjs": 37,
       ".json": 21,
       ".py": 10,
       ".ts": 110,

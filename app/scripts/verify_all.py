@@ -510,6 +510,15 @@ def check_tests() -> bool:
         print_check("frontend/web/tests", False, "not found")
         passed = False
     
+    # Check launcher port utility tests
+    scripts_tests = repository_root / 'scripts' / 'tests'
+    scripts_test_files = sorted(scripts_tests.glob('*.test.mjs')) if scripts_tests.exists() else []
+    if scripts_test_files:
+        print_check('scripts/tests', True, f'{len(scripts_test_files)} test files')
+    else:
+        print_check('scripts/tests', False, 'no *.test.mjs found')
+        passed = False
+
     # Check e2e tests
     e2e_tests = repository_root / 'e2e'
     if e2e_tests.exists() and any(e2e_tests.glob('*.spec.ts')):

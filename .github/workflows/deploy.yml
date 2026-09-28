@@ -72,6 +72,9 @@ jobs:
       - name: Run Backend & Runtime Tests
         run: pnpm run test:runtime
 
+      - name: Run Launcher Port Tests
+        run: pnpm run test:scripts
+
   # Job 2: Test & Build Frontend
   build-and-test-frontend:
     name: Verify Frontend & Build Static Export

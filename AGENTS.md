@@ -70,6 +70,7 @@ Never fabricate progress, fake timers, mock data, synthetic success, assistant r
 | Python format check (Ruff) | `pnpm run format:python` |
 | Python env bootstrap (uv) | `pnpm run setup:python` |
 | Runtime package tests (99 tests) | `pnpm run test:runtime` |
+| Launcher port utility tests (9 tests) | `pnpm run test:scripts` |
 | Frontend web tests (84 tests) | `pnpm --prefix frontend/web test` |
 | Browser E2E tests (21 tests) | `pnpm run test:e2e` |
 | Full 7/7 verification suite | `pnpm run verify` |

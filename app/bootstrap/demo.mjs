@@ -8,6 +8,7 @@ import { spawn } from 'node:child_process';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { findAvailablePort, isHealthyPayload } from '../../scripts/lib/ports.mjs';
 
 const modulePath = fileURLToPath(import.meta.url);
 const moduleDir = dirname(modulePath);
@@ -16,7 +17,8 @@ const repoRoot = join(moduleDir, '..', '..');
 console.log('OneShot Demo');
 console.log('============\n');
 
-const demoUrl = process.env.ONESHOT_DEMO_URL || 'http://127.0.0.1:8787';
+const explicitDemoUrl = process.env.ONESHOT_DEMO_URL || null;
+let demoUrl = explicitDemoUrl || 'http://127.0.0.1:8787';
 let activeServerProcess = null;
 
 // Check if server is already running
@@ -26,7 +28,7 @@ async function checkServer() {
     const contentType = response.headers.get('content-type') || '';
     if (!response.ok || !contentType.includes('application/json')) return false;
     const payload = await response.json();
-    return payload?.ok === true && payload?.status === 'healthy';
+    return isHealthyPayload(payload);
   } catch {
     return false;
   }
@@ -44,14 +46,27 @@ async function pollServerUntilHealthy(timeoutMs = 15000, intervalMs = 250) {
   return false;
 }
 
+/** Port declared by an ONESHOT_DEMO_URL override, when it carries one. */
+function resolvePortFromUrl(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.port) return Number(parsed.port);
+    return parsed.protocol === 'https:' ? 443 : 80;
+  } catch {
+    return null;
+  }
+}
+
 // Start server
 async function startServer() {
-  console.log('[1/3] Starting server...');
+  const port = resolvePortFromUrl(demoUrl);
+  console.log(`[1/3] Starting server on ${demoUrl}...`);
   
   const server = spawn('pnpm', ['run', 'start'], {
     stdio: 'inherit',
     shell: true,
-    cwd: repoRoot
+    cwd: repoRoot,
+    env: port ? { ...process.env, PORT: String(port) } : process.env
   });
   activeServerProcess = server;
   
@@ -67,7 +82,7 @@ async function startServer() {
   const isHealthy = await pollServerUntilHealthy();
   
   if (isHealthy) {
-    console.log('[OK] Server started\n');
+    console.log(`[OK] Server started and verified healthy on ${demoUrl}\n`);
     return true;
   } else {
     console.log('[ERROR] Server failed to start within timeout');
@@ -105,11 +120,19 @@ function cleanup(signal) {
 
 // Main
 async function main() {
-  // Check if server is already running
+  // Reuse a healthy OneShot instance, otherwise start one on a verified-free port
+  console.log('[1/3] Checking for a running OneShot instance...');
   if (await checkServer()) {
-    console.log('[1/3] Checking server...');
-    console.log('[OK] Server already running\n');
+    console.log(`[OK] Server already running (reusing existing instance at ${demoUrl})\n`);
   } else {
+    if (!explicitDemoUrl) {
+      try {
+        demoUrl = `http://127.0.0.1:${await findAvailablePort(8787)}`;
+      } catch (error) {
+        console.error(`[ERROR] ${error.message}`);
+        process.exit(1);
+      }
+    }
     if (!await startServer()) {
       process.exit(1);
     }

@@ -18,10 +18,9 @@
  */
 
 import { spawn } from "node:child_process";
-import http from "node:http";
-import net from "node:net";
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { extractListeningPort, findAvailablePort, probeHealth } from "./lib/ports.mjs";
 
 const isWindows = process.platform === "win32";
 const pkgCmd = isWindows ? "pnpm.cmd" : "pnpm";
@@ -120,26 +119,19 @@ if (options.rebuild || (!options.dev && (!existsSync(backendDist) || !existsSync
   await runCommand(pkgCmd, ["run", "build"]);
 }
 
-// Automated Port Discovery: finds next open port starting at 8787
-function findAvailablePort(startPort = 8787) {
-  return new Promise((resolvePort) => {
-    const server = net.createServer();
-    server.listen(startPort, "127.0.0.1", () => {
-      const port = server.address().port;
-      server.close(() => resolvePort(port));
-    });
-    server.on("error", () => {
-      resolvePort(findAvailablePort(startPort + 1));
-    });
-  });
+// Automated Port Discovery: first port at or above the default that nothing can
+// answer on (loopback connect probes + wildcard bind probes, see lib/ports.mjs)
+const defaultStartPort = Number(process.env.PORT || 8787);
+let activePort;
+try {
+  activePort = await findAvailablePort(defaultStartPort);
+} catch (error) {
+  console.error(`❌ ${error.message}`);
+  process.exit(1);
 }
 
-const defaultStartPort = Number(process.env.PORT || 8787);
-const activePort = await findAvailablePort(defaultStartPort);
-
-const appUrl = `http://localhost:${activePort}`;
 console.log(`📍 Working Directory: ${options.dir}`);
-console.log(`🌐 Application Screen: ${appUrl}`);
+console.log(`🔎 Port ${activePort} verified free (loopback + wildcard occupancy probes)`);
 console.log(`🚀 Starting OneShot server...\n`);
 
 const serverEnv = {
@@ -159,8 +151,26 @@ const execArgs = options.dev
   : ["dist/backend/index.js"];
 
 const serverProc = spawn("node", execArgs, {
-  stdio: "inherit",
+  stdio: ["inherit", "pipe", "inherit"],
   env: serverEnv,
+});
+
+// The backend prints "[OneShot] Listening on http://<host>:<port>" once bound,
+// so the launcher reports the port that is actually serving.
+let boundPort = null;
+let stdoutBuffer = "";
+serverProc.stdout.setEncoding("utf8");
+serverProc.stdout.on("data", (chunk) => {
+  process.stdout.write(chunk);
+  if (boundPort === null) {
+    stdoutBuffer += chunk;
+    boundPort = extractListeningPort(stdoutBuffer);
+  }
+});
+
+let serverExit = null;
+serverProc.on("close", (code, signal) => {
+  serverExit = signal ? `signal ${signal}` : `exit code ${code}`;
 });
 
 process.on("SIGINT", () => {
@@ -173,29 +183,38 @@ process.on("SIGTERM", () => {
   process.exit(0);
 });
 
-// Wait for health check then auto-launch browser
-function checkHealth() {
-  return new Promise((resolveHealth) => {
-    const req = http.get(`http://127.0.0.1:${activePort}/api/health`, (res) => {
-      resolveHealth(res.statusCode === 200);
-    });
-    req.on("error", () => resolveHealth(false));
-    req.setTimeout(800, () => {
-      req.destroy();
-      resolveHealth(false);
-    });
-  });
+// Wait for the verified health payload, then auto-launch the browser
+const servingPort = boundPort ?? activePort;
+let readiness = { healthy: false, status: 0, payload: null };
+
+for (let i = 0; i < 40 && serverExit === null; i++) {
+  readiness = await probeHealth(servingPort, { timeoutMs: 800 });
+  if (readiness.healthy) break;
+  await new Promise((r) => setTimeout(r, 350));
 }
 
-for (let i = 0; i < 40; i++) {
-  await new Promise((r) => setTimeout(r, 350));
-  if (await checkHealth()) {
-    console.log(`\n✅ OneShot Web Console ready at ${appUrl}\n`);
-    if (!options.noBrowser) {
-      const opener = isWindows ? "start" : process.platform === "darwin" ? "open" : "xdg-open";
-      spawn(opener, [appUrl], { shell: true, detached: true, stdio: "ignore" });
-    }
-    break;
+if (readiness.healthy) {
+  const appUrl = `http://localhost:${servingPort}`;
+  console.log(`\n✅ OneShot Web Console ready at ${appUrl}`);
+  console.log(`   Verified /api/health -> HTTP ${readiness.status} ${JSON.stringify(readiness.payload)}\n`);
+  if (servingPort !== activePort) {
+    console.log(`ℹ️  Port ${activePort} was taken at bind time; the server bound ${servingPort}.\n`);
   }
+  if (!options.noBrowser) {
+    const opener = isWindows ? "start" : process.platform === "darwin" ? "open" : "xdg-open";
+    spawn(opener, [appUrl], { shell: true, detached: true, stdio: "ignore" });
+  }
+} else {
+  console.error(`\n❌ OneShot did not become ready: no healthy /api/health payload on port ${servingPort}.`);
+  if (readiness.status) {
+    console.error(`   Last response: HTTP ${readiness.status} ${JSON.stringify(readiness.payload)}`);
+  } else {
+    console.error("   Last response: connection refused");
+  }
+  if (serverExit) {
+    console.error(`   Server process ended before readiness (${serverExit}).`);
+  }
+  serverProc.kill();
+  process.exit(1);
 }
 }

@@ -68,24 +68,51 @@ if ($needsBuild) {
     Write-Host "[3/4] Build artifacts up-to-date (dist/ and frontend/web/dist/ ready)" -ForegroundColor Green
 }
 
-function Get-AvailablePort([int]$start = 8787) {
-    $p = $start
-    while ($p -lt 65535) {
-        $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $p)
+# Occupancy must include connect probes and a wildcard bind probe: Windows lets a
+# loopback bind succeed while another process holds 0.0.0.0 / :: on the same port,
+# which is how a stale instance used to be mistaken for a free port.
+function Test-PortOccupied([int]$candidate) {
+    foreach ($address in @([System.Net.IPAddress]::Loopback, [System.Net.IPAddress]::IPv6Loopback)) {
+        $client = [System.Net.Sockets.TcpClient]::new()
         try {
-            $listener.Start()
-            $listener.Stop()
-            return $p
+            $connectTask = $client.ConnectAsync($address, $candidate)
+            if ($connectTask.Wait(300) -and $client.Connected) { return $true }
         } catch {
-            $p++
+            # Nothing answers on this loopback address
+        } finally {
+            $client.Dispose()
         }
     }
-    return $start
+
+    $listener = $null
+    try {
+        $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Any, $candidate)
+        $listener.ExclusiveAddressUse = $true
+        $listener.Start()
+        return $false
+    } catch [System.Net.Sockets.SocketException] {
+        return $true
+    } finally {
+        if ($listener) { try { $listener.Stop() } catch { } }
+    }
+}
+
+function Get-AvailablePort([int]$start = 8787) {
+    for ($candidate = $start; $candidate -lt 65535; $candidate++) {
+        if (-not (Test-PortOccupied $candidate)) { return $candidate }
+    }
+    Write-Host "[ERROR] No free port found between $start and 65534." -ForegroundColor Red
+    exit 1
 }
 
 # 4. Port & Environment Setup
+$browserSafe = $true
 if (-not $PSBoundParameters.ContainsKey('Port')) {
     $Port = Get-AvailablePort 8787
+} elseif (Test-PortOccupied $Port) {
+    $browserSafe = $false
+    Write-Host "[WARNING] Port $Port is already serving; the backend will advance to the next free port." -ForegroundColor Yellow
+    Write-Host "          Use the [OneShot] Listening on ... line below for the verified URL." -ForegroundColor Yellow
 }
 $env:PORT = "$Port"
 if ($Sample) {
@@ -104,20 +131,25 @@ Write-Host "  ⚡ Backend Health   : $url/api/health" -ForegroundColor DarkCyan
 Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
 Write-Host "  Press Ctrl+C at any time to stop the server.`n" -ForegroundColor DarkGray
 
-# 4. Asynchronously open browser when server is ready
-if (-not $NoBrowser) {
+# 4. Asynchronously open browser once the health payload verifies on this port
+if (-not $NoBrowser -and $browserSafe) {
     [System.Threading.Tasks.Task]::Run([Action]{
         $maxTries = 30
+        $opened = $false
         for ($i = 0; $i -lt $maxTries; $i++) {
             Start-Sleep -Milliseconds 400
             try {
                 $response = Invoke-RestMethod -Uri "http://127.0.0.1:$Port/api/health" -TimeoutSec 1 -ErrorAction SilentlyContinue
-                if ($response) {
+                if ($response -and $response.ok -eq $true -and $response.status -eq 'healthy') {
                     Start-Sleep -Milliseconds 200
                     Start-Process $url
+                    $opened = $true
                     break
                 }
             } catch {}
+        }
+        if (-not $opened) {
+            Write-Host "[WARNING] No healthy /api/health payload on $url after 12s; browser not opened." -ForegroundColor Yellow
         }
     }) | Out-Null
 }
