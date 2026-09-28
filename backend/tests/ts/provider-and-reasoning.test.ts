@@ -35,7 +35,7 @@ describe("Multi-Provider Registry & Prebuilt Presets", () => {
   it("exports MODEL_PRESETS with prebuilt defaults for Mistral, Gemini, OpenAI, Nebius, and Ollama", () => {
     assert.ok(MODEL_PRESETS.mistral, "Mistral preset must exist");
     assert.strictEqual(MODEL_PRESETS.mistral.baseUrl, "https://api.mistral.ai/v1");
-    assert.strictEqual(MODEL_PRESETS.mistral.defaultModel, "mistral-large-latest");
+    assert.strictEqual(MODEL_PRESETS.mistral.defaultModel, "ministral-8b-latest");
     assert.ok(MODEL_PRESETS.mistral.models.includes("mistral-large-latest"));
 
     assert.ok(MODEL_PRESETS.ollama, "Ollama preset must exist");
@@ -71,7 +71,7 @@ describe("Multi-Provider Registry & Prebuilt Presets", () => {
     const data = await res.json();
     assert.ok(data.mistral, "Provider status must contain mistral");
     assert.strictEqual(data.mistral.configured, true, "Mistral must be configured via app/env/.env");
-    assert.strictEqual(data.mistral.model, "mistral-large-latest");
+    assert.strictEqual(data.mistral.model, "ministral-8b-latest");
     assert.strictEqual(data.mistral.endpoint, "https://api.mistral.ai/v1");
 
     assert.ok(data.ollama, "Provider status must contain ollama");

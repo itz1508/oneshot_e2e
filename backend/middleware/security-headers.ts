@@ -32,6 +32,11 @@ export function applySecurityHeaders(
     if (options.contentSecurityPolicy) {
       res.setHeader("Content-Security-Policy", options.contentSecurityPolicy);
     }
+    // Previously declared on the options interface but never emitted, so the
+    // configured value in config.toml was silently discarded.
+    if (options.strictTransportSecurity) {
+      res.setHeader("Strict-Transport-Security", options.strictTransportSecurity);
+    }
   }
 
   // Handle CORS

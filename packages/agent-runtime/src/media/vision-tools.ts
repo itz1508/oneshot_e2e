@@ -17,6 +17,18 @@ import {
 import { z } from "zod";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { resolveContainedPath } from "../security/index.js";
+
+/**
+ * Root boundary for tool-supplied filesystem paths.
+ *
+ * Tool inputs (and any prompt-influenced value that reaches them) are untrusted,
+ * so every path is resolved against the process workspace and must stay inside
+ * it. This is deliberately the same root the rest of the runtime treats as the
+ * workspace; it is not per-partition.
+ */
+const TOOL_PATH_ROOT = process.cwd();
+
 
 // A 1x1 transparent PNG fallback buffer (68 bytes)
 const MINIMAL_PNG_BYTES = new Uint8Array([
@@ -61,7 +73,7 @@ export const readImageAttachmentTool = tool({
     let format: ImageFormat = (input.format as ImageFormat) || "png";
 
     if (input.filePath) {
-      const resolvedPath = path.resolve(input.filePath);
+      const resolvedPath = resolveContainedPath(TOOL_PATH_ROOT, input.filePath);
       const fileBuffer = await fs.readFile(resolvedPath);
       bytes = new Uint8Array(fileBuffer);
       if (!input.format) {
@@ -110,7 +122,7 @@ export const captureScreenshotTool = tool({
     let bytes: Uint8Array;
 
     if (input.outputPath) {
-      const resolved = path.resolve(input.outputPath);
+      const resolved = resolveContainedPath(TOOL_PATH_ROOT, input.outputPath);
       try {
         const existing = await fs.readFile(resolved);
         bytes = new Uint8Array(existing);
@@ -158,7 +170,7 @@ export const generateImageTool = tool({
     const bytes = MINIMAL_PNG_BYTES;
 
     if (input.outputPath) {
-      const resolved = path.resolve(input.outputPath);
+      const resolved = resolveContainedPath(TOOL_PATH_ROOT, input.outputPath);
       await fs.mkdir(path.dirname(resolved), { recursive: true });
       await fs.writeFile(resolved, bytes);
     }

@@ -29,6 +29,22 @@ export class BodyTimeoutError extends Error {
   }
 }
 
+/**
+ * Raised when the request body is not well-formed JSON.
+ *
+ * Without this, the raw SyntaxError escaped to the top-level handler and was
+ * reported as HTTP 500, presenting a client input error as a server fault.
+ */
+export class MalformedJsonError extends Error {
+  public statusCode = 400;
+  constructor(cause: unknown) {
+    super("Request body is not valid JSON");
+    this.name = "MalformedJsonError";
+    // Retained for server-side logging only; never returned to the client.
+    this.cause = cause;
+  }
+}
+
 export function parseJsonBody(
   req: http.IncomingMessage,
   options: BodyParserOptions = {}
@@ -74,7 +90,7 @@ export function parseJsonBody(
       try {
         resolve(JSON.parse(body || "{}"));
       } catch (err) {
-        reject(err);
+        reject(new MalformedJsonError(err));
       }
     });
 

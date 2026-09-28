@@ -38,11 +38,11 @@ describe("OneShot Model Factory & Explicit Injection", () => {
     assert.strictEqual(typeof model, "object");
   });
 
-  it("constructs prebuilt Mistral preset with test key and default mistral-large-latest model", () => {
+  it("constructs prebuilt Mistral preset with test key and default ministral-8b-latest model", () => {
     const model = createLiveModel({ provider: "mistral", apiKey: "vck_test_mistral_key_789" });
     assert.ok(model);
     assert.strictEqual(typeof model, "object");
-    assert.strictEqual(model.modelId, "mistral-large-latest");
+    assert.strictEqual(model.modelId, "ministral-8b-latest");
     assert.strictEqual(model._client?.baseURL, "https://api.mistral.ai/v1");
   });
 

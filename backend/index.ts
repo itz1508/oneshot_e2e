@@ -21,6 +21,8 @@ import {
   TodoChainManager,
   GitLocalStorage,
   getConfig,
+  resolveContainedPath,
+  PathContainmentError,
 } from "../packages/agent-runtime/src/index.js";
 import {
   SlidingWindowRateLimiter,
@@ -67,12 +69,48 @@ const gitStorage = new GitLocalStorage({ rootDir: path.resolve(process.cwd(), ".
 const providerConfigs = new Map<string, ProviderConfig>();
 const sessions = new Map<string, { id: string; title: string; messages: unknown[] }>();
 
+/**
+ * Environment variable that carries each provider's credential.
+ * Kept local so session defaulting does not depend on preset ordering.
+ */
+const PROVIDER_ENV_KEY: Record<ProviderConfig["provider"], string> = {
+  gemini: "GEMINI_API_KEY",
+  openai: "OPENAI_API_KEY",
+  mistral: "MISTRAL_API_KEY",
+  nebius: "NEBIUS_API_KEY",
+  ollama: "OLLAMA_API_KEY",
+  tavily: "TAVILY_API_KEY",
+};
+
+/** Provider preference: config.toml's default first, then remaining providers. */
+function providerPreferenceOrder(): ProviderConfig["provider"][] {
+  const configured = getConfig()?.models?.default_provider as ProviderConfig["provider"] | undefined;
+  const rest: ProviderConfig["provider"][] = ["mistral", "gemini", "openai", "nebius"];
+  return configured ? [configured, ...rest.filter((p) => p !== configured)] : rest;
+}
+
+/**
+ * Resolves the provider for a session: an explicit per-session override wins,
+ * otherwise the first provider with a genuinely configured credential is used,
+ * in config.toml preference order.
+ *
+ * Previously this only ever considered OPENAI/GEMINI and ignored both
+ * MISTRAL_API_KEY and config.toml's `default_provider`, so a deployment with
+ * only a Mistral credential silently fell back to the local reasoner even
+ * though a working provider was configured.
+ */
 function getSessionProvider(sessionId: string): ProviderConfig {
-  return providerConfigs.get(sessionId) || {
-    provider: isConfiguredKey(process.env.OPENAI_API_KEY) && !isConfiguredKey(process.env.GEMINI_API_KEY)
-      ? "openai"
-      : "gemini",
-  };
+  const override = providerConfigs.get(sessionId);
+  if (override) return override;
+
+  for (const provider of providerPreferenceOrder()) {
+    const envKey = PROVIDER_ENV_KEY[provider];
+    if (envKey && isConfiguredKey(process.env[envKey])) {
+      return { provider };
+    }
+  }
+
+  return { provider: providerPreferenceOrder()[0] ?? "gemini" };
 }
 
 /**
@@ -86,7 +124,35 @@ export async function validateRealFixture(params: {
   expectedHash?: string;
 }) {
   const relPath = params.path || "app/fixtures/sample.json";
-  const absPath = path.resolve(process.cwd(), relPath);
+
+  // Containment boundary: a request-supplied path may only address files inside
+  // the fixtures directory. Previously this was `path.resolve(cwd, relPath)`,
+  // which let any JSON file on the host be read back through the API.
+  const fixturesRoot = path.resolve(process.cwd(), "app/fixtures");
+  const normalizedInput = relPath.replace(/\\/g, "/").replace(/^\.?\/+/, "");
+  const withoutPrefix = normalizedInput.replace(/^app\/fixtures\/?/, "");
+
+  let absPath: string;
+  try {
+    absPath = resolveContainedPath(fixturesRoot, withoutPrefix);
+  } catch (error) {
+    if (error instanceof PathContainmentError) {
+      return {
+        ok: false,
+        success: false,
+        error: "Fixture path is not permitted: it must resolve inside app/fixtures.",
+        path: relPath,
+        status: "rejected" as const,
+        actualHash: "",
+        expectedHash: params.expectedHash || "",
+        fixture_id: params.fixture_id || "unknown",
+        session_id: params.sessionId || "session-local",
+        auditTrail: [],
+        metadata: {},
+      };
+    }
+    throw error;
+  }
 
   let fileBuffer: Buffer;
   try {
@@ -175,7 +241,7 @@ function getProviderRegistry() {
   const modelsMap: Record<string, { id: string; models: string[]; priority?: number; fallback?: string }> = {
     mistral: {
       id: "mistral",
-      models: ["mistral-large-latest", "mistral-small-latest", "codestral-latest", "open-mistral-nemo"],
+      models: ["ministral-8b-latest", "codestral-latest", "open-mistral-nemo", "ministral-3b-latest", "open-mistral-7b", "pixtral-12b-2409", "mistral-large-latest", "mistral-small-latest", "mistral-medium-latest"],
     },
     gemini: {
       id: "gemini",

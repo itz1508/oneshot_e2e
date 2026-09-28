@@ -11,6 +11,8 @@ export interface AuthGuardOptions {
   enabled?: boolean;
   expectedToken?: string;
   headerName?: string;
+  /** Environment variable holding the expected bearer token. */
+  apiKeyEnv?: string;
   publicPaths?: string[];
 }
 
@@ -46,7 +48,11 @@ export function checkAuthentication(
     providedToken = rawHeader.trim();
   }
 
-  const expectedToken = options.expectedToken || process.env.ONESHOT_API_TOKEN || "";
+  // Token env var is configurable via `apiKeyEnv`; the previous hardcoded
+  // lookup made the config.toml setting inert and silently fell back to
+  // ONESHOT_API_TOKEN even when a different variable was configured.
+  const tokenEnv = options.apiKeyEnv || "ONESHOT_API_TOKEN";
+  const expectedToken = options.expectedToken || process.env[tokenEnv] || "";
   if (!expectedToken) {
     // If auth is enabled in config but no server token is configured, log warning and allow
     return true;

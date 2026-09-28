@@ -39,8 +39,8 @@ export const MODEL_PRESETS = {
   mistral: {
     provider: "mistral" as const,
     baseUrl: "https://api.mistral.ai/v1",
-    defaultModel: "mistral-large-latest",
-    models: ["mistral-large-latest", "mistral-small-latest", "codestral-latest", "open-mistral-nemo"],
+    defaultModel: "ministral-8b-latest",
+    models: ["ministral-8b-latest", "codestral-latest", "open-mistral-nemo", "ministral-3b-latest", "open-mistral-7b", "pixtral-12b-2409", "mistral-large-latest", "mistral-small-latest", "mistral-medium-latest"],
     envKey: "MISTRAL_API_KEY",
   },
   gemini: {

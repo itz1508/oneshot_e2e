@@ -116,23 +116,57 @@ export async function* streamStrandsToAgUi(
       }
 
       const raw = (event as unknown) as Record<string, unknown>;
+      const rawType = typeof raw.type === "string" ? raw.type : "";
 
-      // Text delta events
-      if (raw.type === "data" || raw.type === "chunk" || typeof raw.text === "string" || typeof raw.data === "string") {
-        const chunk = (raw.data || raw.text || raw.delta || "") as string;
-        if (chunk) {
-          accumulatedText += chunk;
-          yield {
-            type: "TEXT_MESSAGE_DELTA",
-            runId,
-            timestamp: now(),
-            delta: chunk,
-          };
+      // -- Text deltas ----------------------------------------------------------
+      // Real Strands shape:
+      //   { type: "modelStreamUpdateEvent",
+      //     event: { type: "modelContentBlockDeltaEvent",
+      //              delta: { type: "textDelta", text: "..." } } }
+      // The previous implementation read a top-level `data`/`text` field that
+      // this SDK version never emits, so no model output was ever captured and
+      // every live run terminated as an empty stream.
+      const nestedEvent = (raw.event ?? {}) as Record<string, unknown>;
+      const nestedDelta = (nestedEvent.delta ?? {}) as Record<string, unknown>;
+      let chunk: string | null = null;
+
+      if (rawType === "modelStreamUpdateEvent" && nestedEvent.type === "modelContentBlockDeltaEvent") {
+        if (nestedDelta.type === "textDelta" && typeof nestedDelta.text === "string") {
+          chunk = nestedDelta.text;
         }
+      } else if (
+        rawType === "data" ||
+        rawType === "chunk" ||
+        typeof raw.text === "string" ||
+        typeof raw.data === "string"
+      ) {
+        // Legacy/compat shapes retained so existing integrations keep working.
+        const legacy = (raw.data || raw.text || raw.delta || "") as string;
+        if (legacy) chunk = legacy;
       }
 
-      // Lifecycle / Step start
-      if (raw.type === "lifecycle" || raw.lifecycle === "beforeModelCallEvent" || raw.lifecycle === "beforeToolsEvent") {
+      if (chunk) {
+        accumulatedText += chunk;
+        yield {
+          type: "TEXT_MESSAGE_DELTA",
+          runId,
+          timestamp: now(),
+          delta: chunk,
+        };
+      }
+
+      // -- Step lifecycle -------------------------------------------------------
+      // Real events carry the name in `type`; `lifecycle` is a compat shim.
+      // "lifecycle" is a generic legacy wrapper, so the inner `lifecycle`
+      // value takes precedence over it when present.
+      const stepName =
+        rawType && rawType !== "lifecycle"
+          ? rawType
+          : typeof raw.lifecycle === "string"
+            ? raw.lifecycle
+            : "";
+
+      if (stepName === "beforeModelCallEvent" || stepName === "beforeToolsEvent") {
         stepCount++;
         activeStepId = `step-${stepCount}`;
         yield {
@@ -140,12 +174,11 @@ export async function* streamStrandsToAgUi(
           runId,
           timestamp: now(),
           stepId: activeStepId,
-          label: (raw.lifecycle || raw.name || "Processing step") as string,
+          label: stepName,
         };
       }
 
-      // Step finish
-      if (raw.lifecycle === "afterModelCallEvent" || raw.lifecycle === "afterToolsEvent") {
+      if (stepName === "afterModelCallEvent" || stepName === "afterToolsEvent") {
         if (activeStepId) {
           yield {
             type: "STEP_FINISH",
@@ -158,14 +191,17 @@ export async function* streamStrandsToAgUi(
         }
       }
 
-      // Tool call start
-      if (raw.type === "tool_use" || raw.tool) {
-        const toolObj = (raw.tool || raw) as Record<string, unknown>;
-        const toolUseId = (toolObj.toolUseId || toolObj.id || `tool-${Date.now()}`) as string;
-        const toolName = (toolObj.name || "unknownTool") as string;
-        const parameters = (toolObj.input || toolObj.parameters || {}) as Record<string, unknown>;
+      // -- Tool call start ------------------------------------------------------
+      // Real shape: { type: "beforeToolCallEvent", toolUse: { name, toolUseId, input } }
+      // Only this event opens a call. `contentBlockEvent` and
+      // `modelContentBlockStartEvent` carry the same toolUse and previously
+      // opened duplicate calls via the `raw.tool` fallback.
+      if (rawType === "beforeToolCallEvent") {
+        const toolUse = (raw.toolUse ?? {}) as Record<string, unknown>;
+        const toolUseId = (toolUse.toolUseId as string) || `tool-${Date.now()}`;
+        const toolName = (toolUse.name as string) || "unknownTool";
+        const parameters = (toolUse.input ?? {}) as Record<string, unknown>;
 
-        // Track active tool call for correlation
         activeToolCalls.set(toolUseId, {
           toolUseId,
           toolName,
@@ -182,7 +218,6 @@ export async function* streamStrandsToAgUi(
           parameters,
         };
 
-        // Emit RUNNING state immediately after START
         yield {
           type: "TOOL_CALL_RUNNING",
           runId,
@@ -193,48 +228,74 @@ export async function* streamStrandsToAgUi(
         emittedRunningState.add(toolUseId);
       }
 
-      // Tool call finish (success)
-      if (raw.type === "tool_result" && !raw.error) {
-        const resObj = (raw.result || raw) as Record<string, unknown>;
-        const toolUseId = (resObj.toolUseId || "") as string;
+      // -- Tool call result -----------------------------------------------------
+      // Real shape:
+      //   { type: "afterToolCallEvent", toolUse: { name, toolUseId },
+      //     result: ToolResultBlock { type, toolUseId, status, content, error },
+      //     error }
+      // The previous implementation matched `type === "tool_result"`, which this
+      // SDK never emits, so TOOL_CALL_FINISH was never produced and the real tool
+      // output was silently discarded.
+      if (rawType === "afterToolCallEvent") {
+        const toolUse = (raw.toolUse ?? {}) as Record<string, unknown>;
+        // `result` IS the ToolResultBlock. Only its toJSON() wraps it as
+        // { toolResult: ... } on the wire, so reading a .toolResult property
+        // yields undefined and the emitted payload would serialise to {}.
+        const toolResult = (raw.result ?? {}) as Record<string, unknown>;
+        const toolUseId = (toolResult.toolUseId as string) || (toolUse.toolUseId as string) || "";
         const toolCall = activeToolCalls.get(toolUseId);
-        const toolName = toolCall?.toolName || (resObj.toolName as string) || "tool";
+        const toolName = toolCall?.toolName || (toolUse.name as string) || "tool";
+        const content = toolResult.content as Array<Record<string, unknown>> | undefined;
+        const toolError = raw.error ?? toolResult.error;
 
-        yield {
-          type: "TOOL_CALL_FINISH",
-          runId,
-          timestamp: now(),
-          toolUseId,
-          toolName,
-          result: resObj,
-          status: "success",
-        };
+        if (toolError || toolResult.status === "error") {
+          const firstBlock = content?.[0];
+          const errorMsg =
+            toolError instanceof Error
+              ? toolError.message
+              : String(toolError ?? firstBlock?.text ?? "Tool execution failed");
+
+          yield {
+            type: "TOOL_CALL_ERROR",
+            runId,
+            timestamp: now(),
+            toolUseId,
+            toolName,
+            error: errorMsg,
+            status: "error",
+          };
+        } else {
+          yield {
+            type: "TOOL_CALL_FINISH",
+            runId,
+            timestamp: now(),
+            toolUseId,
+            toolName,
+            result: toolResult ?? {},
+            status: "success",
+          };
+        }
 
         activeToolCalls.delete(toolUseId);
         emittedRunningState.delete(toolUseId);
       }
+    }
 
-      // Tool call error
-      if (raw.type === "tool_result" && raw.error) {
-        const resObj = (raw.result || raw) as Record<string, unknown>;
-        const toolUseId = (resObj.toolUseId || "") as string;
-        const toolCall = activeToolCalls.get(toolUseId);
-        const toolName = toolCall?.toolName || (resObj.toolName as string) || "tool";
-        const errorMsg = (raw.error instanceof Error ? raw.error.message : String(raw.error)) || "Unknown error";
-
-        yield {
-          type: "TOOL_CALL_ERROR",
-          runId,
-          timestamp: now(),
-          toolUseId,
-          toolName,
-          error: errorMsg,
-          status: "error",
-        };
-
-        activeToolCalls.delete(toolUseId);
-        emittedRunningState.delete(toolUseId);
-      }
+    // Terminal status must reflect whether the run actually produced output.
+    // A stream that ends without any text is a FAILED run, not a success.
+    // This matches the local Python reasoner path, which already reports
+    // `failed` when no delta was received.
+    if (accumulatedText.trim() === "") {
+      yield {
+        type: "RUN_FINISH",
+        runId,
+        timestamp: now(),
+        status: "FAILED",
+        error: "Agent stream completed without producing any text output",
+        finalMessage: accumulatedText,
+        finalInvocationState: invocationState,
+      };
+      return;
     }
 
     // 2. RUN_FINISH (Successful completion)

@@ -20,6 +20,7 @@ export * from "./handoffs/index.js";
 export * from "./ag-ui/index.js";
 export * from "./state/index.js";
 export * from "./media/index.js";
+export * from "./security/index.js";
 export * from "./storage/index.js";
 export * from "./models/index.js";
 export * from "./agents/deep-agent-todo-list.js";

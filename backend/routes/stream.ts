@@ -5,7 +5,37 @@ import {
   formatAgUiSse,
 } from "../../packages/agent-runtime/src/index.js";
 import { streamPythonReasoning } from "../python-runtime.js";
+import { sendError } from "./helpers.js";
 import type { RouteHandler } from "./types.js";
+import { z } from "zod";
+
+/**
+ * Request contract for the chat stream.
+ *
+ * Previously the prompt was extracted with an unchecked expression
+ * (`parsed.messages?.[i]?.content` followed by `.trim()`), so a non-string
+ * `content` threw a TypeError and surfaced as HTTP 500. Every field the
+ * handler reads is now typed and validated before use.
+ */
+const StreamRequestSchema = z.object({
+  prompt: z.string().optional(),
+  messages: z
+    .array(
+      z.object({
+        content: z.unknown().optional(),
+      })
+    )
+    .optional(),
+  provider: z.string().optional(),
+  model: z.string().optional(),
+  task: z.string().optional(),
+  useResearch: z.boolean().optional(),
+  useDesignPlanning: z.boolean().optional(),
+});
+
+/** Providers the chat stream is able to route to. */
+const SUPPORTED_STREAM_PROVIDERS = ["gemini", "openai", "mistral", "nebius", "ollama"] as const;
+
 
 const REASONING_TASKS = [
   "researcher",
@@ -21,14 +51,70 @@ export const handleStreamRoutes: RouteHandler = async (req, res, ctx) => {
   const { pathname, parseBody, getSessionProvider, isConfiguredKey } = ctx;
 
   if ((pathname === "/invocations" || pathname === "/api/agent/stream") && req.method === "POST") {
-    const parsed = await parseBody(req);
-    const prompt = (parsed.prompt || parsed.messages?.[parsed.messages.length - 1]?.content || "").trim();
+    const parsedBody = await parseBody(req);
+
+    const validation = StreamRequestSchema.safeParse(parsedBody ?? {});
+    if (!validation.success) {
+      return sendError(res, 400, "Invalid request body", {
+        details: validation.error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+    const parsed = validation.data;
+
+    // Only a string may become the prompt. Anything else is a client error,
+    // never a server fault.
+    const lastMessageContent = parsed.messages?.at(-1)?.content;
+    const rawPrompt =
+      typeof parsed.prompt === "string"
+        ? parsed.prompt
+        : typeof lastMessageContent === "string"
+          ? lastMessageContent
+          : "";
+    const prompt = rawPrompt.trim();
     const sessionId = (req.headers["x-session-id"] as string) || "default";
 
     if (!prompt) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Missing prompt" }));
-      return true;
+      return sendError(res, 400, "Missing prompt");
+    }
+
+    // An explicitly requested provider must be routable. Previously any value
+    // was accepted and an unconfigured provider silently fell through to the
+    // local Python reasoner while the response looked like a normal model reply.
+    const requestedProvider = parsed.provider?.trim();
+    if (
+      requestedProvider &&
+      requestedProvider !== "python" &&
+      requestedProvider !== "sample" &&
+      !(SUPPORTED_STREAM_PROVIDERS as readonly string[]).includes(requestedProvider)
+    ) {
+      return sendError(res, 400, `Unsupported provider: ${requestedProvider}`, {
+        supported: [...SUPPORTED_STREAM_PROVIDERS],
+      });
+    }
+    if (
+      requestedProvider &&
+      requestedProvider !== "python" &&
+      requestedProvider !== "sample" &&
+      requestedProvider !== "ollama" &&
+      !isConfiguredKey(
+        requestedProvider === "gemini"
+          ? process.env.GEMINI_API_KEY
+          : requestedProvider === "openai"
+            ? process.env.OPENAI_API_KEY
+            : requestedProvider === "mistral"
+              ? process.env.MISTRAL_API_KEY
+              : process.env.NEBIUS_API_KEY
+      )
+    ) {
+      return sendError(
+        res,
+        503,
+        `Provider "${requestedProvider}" is not configured on this server. No fallback was used.`,
+        { requestedProvider }
+      );
     }
 
     const sessionCfg = getSessionProvider(sessionId);
@@ -36,7 +122,7 @@ export const handleStreamRoutes: RouteHandler = async (req, res, ctx) => {
     const resolvedModel = parsed.model || sessionCfg.model ||
       (resolvedProvider === "gemini" ? process.env.GEMINI_MODEL || "gemini-2.5-flash" :
        resolvedProvider === "openai" ? process.env.OPENAI_MODEL || "gpt-4o-mini" :
-       resolvedProvider === "mistral" ? process.env.MISTRAL_MODEL || "mistral-large-latest" :
+       resolvedProvider === "mistral" ? process.env.MISTRAL_MODEL || "ministral-8b-latest" :
        resolvedProvider === "ollama" ? process.env.OLLAMA_MODEL || "llama3.2" :
        "moonshotai/Kimi-K2.5");
     const resolvedBaseUrl = sessionCfg.baseUrl ||

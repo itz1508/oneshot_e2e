@@ -36,16 +36,18 @@ class RateLimitingConfig(BaseModel):
 
 class AuthConfig(BaseModel):
     enabled: bool = False
-    api_key_env: str = "ONESHOT_API_TOKEN"
-    header_name: str = "authorization"
+    # camelCase to match config.toml / the TS AuthGuardOptions consumers.
+    apiKeyEnv: str = "ONESHOT_API_TOKEN"
+    headerName: str = "authorization"
 
 
 class SecurityHeadersConfig(BaseModel):
     enabled: bool = True
-    content_security_policy: str = "default-src 'self';"
-    x_content_type_options: str = "nosniff"
-    x_frame_options: str = "DENY"
-    strict_transport_security: str = "max-age=31536000; includeSubDomains"
+    # camelCase to match config.toml / the TS SecurityHeadersOptions consumers.
+    contentSecurityPolicy: str = "default-src 'self';"
+    xContentTypeOptions: str = "nosniff"
+    xFrameOptions: str = "DENY"
+    strictTransportSecurity: str = "max-age=31536000; includeSubDomains"
 
 
 class SecurityConfig(BaseModel):
@@ -78,10 +80,10 @@ class ModelProvider(BaseModel):
 
 
 class ModelRoles(BaseModel):
-    reasoning: str = "mistral-large-latest"
+    reasoning: str = "ministral-8b-latest"
     fast: str = "gemini-2.5-flash"
-    coding: str = "mistral-large-latest"
-    critic: str = "mistral-large-latest"
+    coding: str = "ministral-8b-latest"
+    critic: str = "ministral-8b-latest"
     vision: str = "gemini-2.5-flash"
     local: str = "llama3.2"
 

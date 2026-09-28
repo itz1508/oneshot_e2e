@@ -41,7 +41,7 @@ export const PROVIDER_DEFINITIONS: Record<ProviderId, ProviderDefinition> = {
     sub: "Mistral AI",
     badge: "Default",
     dotGradient: "linear-gradient(135deg, #ff7000, #ff9a44)",
-    models: ["mistral-large-latest", "mistral-small-latest", "codestral-latest", "open-mistral-nemo"],
+    models: ["ministral-8b-latest", "codestral-latest", "open-mistral-nemo", "ministral-3b-latest", "open-mistral-7b", "pixtral-12b-2409", "mistral-large-latest", "mistral-small-latest", "mistral-medium-latest"],
     baseUrl: "https://api.mistral.ai/v1",
     modelHelp: "Mistral AI model ID.",
     keyHelp: "Mistral AI API key.",

@@ -10,4 +10,4 @@ def test_python_config_loads_root_toml():
     assert len(config.models.providers) >= 3
     mistral = next((p for p in config.models.providers if p.name == "mistral"), None)
     assert mistral is not None
-    assert mistral.defaultModel == "mistral-large-latest"
+    assert mistral.defaultModel == "ministral-8b-latest"

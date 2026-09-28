@@ -28,16 +28,20 @@ export const RateLimitingConfigSchema = z.object({
 
 export const AuthConfigSchema = z.object({
   enabled: z.boolean().default(false),
-  api_key_env: z.string().default("ONESHOT_API_TOKEN"),
-  header_name: z.string().default("authorization"),
+  // Field names are camelCase to match the AuthGuardOptions consumed at
+  // request time. z.object() strips unknown keys, so a snake_case spelling in
+  // config.toml would be silently discarded and replaced by these defaults.
+  apiKeyEnv: z.string().default("ONESHOT_API_TOKEN"),
+  headerName: z.string().default("authorization"),
 });
 
 export const SecurityHeadersConfigSchema = z.object({
   enabled: z.boolean().default(true),
-  content_security_policy: z.string().default("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;"),
-  x_content_type_options: z.string().default("nosniff"),
-  x_frame_options: z.string().default("DENY"),
-  strict_transport_security: z.string().default("max-age=31536000; includeSubDomains"),
+  // camelCase to match SecurityHeadersOptions. See AuthConfigSchema note.
+  contentSecurityPolicy: z.string().default("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;"),
+  xContentTypeOptions: z.string().default("nosniff"),
+  xFrameOptions: z.string().default("DENY"),
+  strictTransportSecurity: z.string().default("max-age=31536000; includeSubDomains"),
 });
 
 export const SecurityConfigSchema = z.object({
@@ -49,15 +53,15 @@ export const SecurityConfigSchema = z.object({
   }),
   auth: AuthConfigSchema.default({
     enabled: false,
-    api_key_env: "ONESHOT_API_TOKEN",
-    header_name: "authorization",
+    apiKeyEnv: "ONESHOT_API_TOKEN",
+    headerName: "authorization",
   }),
   headers: SecurityHeadersConfigSchema.default({
     enabled: true,
-    content_security_policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;",
-    x_content_type_options: "nosniff",
-    x_frame_options: "DENY",
-    strict_transport_security: "max-age=31536000; includeSubDomains",
+    contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;",
+    xContentTypeOptions: "nosniff",
+    xFrameOptions: "DENY",
+    strictTransportSecurity: "max-age=31536000; includeSubDomains",
   }),
 });
 
@@ -98,10 +102,10 @@ export const ModelProviderSchema = z.object({
 });
 
 export const ModelRolesSchema = z.object({
-  reasoning: z.string().default("mistral-large-latest"),
+  reasoning: z.string().default("ministral-8b-latest"),
   fast: z.string().default("gemini-2.5-flash"),
-  coding: z.string().default("mistral-large-latest"),
-  critic: z.string().default("mistral-large-latest"),
+  coding: z.string().default("ministral-8b-latest"),
+  critic: z.string().default("ministral-8b-latest"),
   vision: z.string().default("gemini-2.5-flash"),
   local: z.string().default("llama3.2"),
 });
@@ -110,44 +114,14 @@ export const ModelsConfigSchema = z.object({
   default_provider: z.string().default("mistral"),
   fallback_provider: z.string().default("gemini"),
   roles: ModelRolesSchema.default({
-    reasoning: "mistral-large-latest",
+    reasoning: "ministral-8b-latest",
     fast: "gemini-2.5-flash",
-    coding: "mistral-large-latest",
-    critic: "mistral-large-latest",
+    coding: "ministral-8b-latest",
+    critic: "ministral-8b-latest",
     vision: "gemini-2.5-flash",
     local: "llama3.2",
   }),
   providers: z.array(ModelProviderSchema).default([]),
-});
-
-export const BobGuidanceConfigSchema = z.object({
-  context_mentions: z.array(z.string()).default([
-    "@workspace",
-    "@file",
-    "@folder",
-    "@diff",
-    "@terminal",
-    "@web",
-    "@docs",
-  ]),
-  human_in_the_loop: z.object({
-    gate_1_research_review: z.boolean().default(true),
-    gate_2_build_ready: z.boolean().default(true),
-  }).default({
-    gate_1_research_review: true,
-    gate_2_build_ready: true,
-  }),
-  streaming_tool_status: z.object({
-    enabled: z.boolean().default(true),
-    stages: z.array(z.string()).default(["tool_pending", "tool_running", "tool_result", "tool_error"]),
-    track_duration_ms: z.boolean().default(true),
-    render_json_fallback: z.boolean().default(true),
-  }).default({
-    enabled: true,
-    stages: ["tool_pending", "tool_running", "tool_result", "tool_error"],
-    track_duration_ms: true,
-    render_json_fallback: true,
-  }),
 });
 
 export const OneShotConfigSchema = z.object({
@@ -172,15 +146,15 @@ export const OneShotConfigSchema = z.object({
     },
     auth: {
       enabled: false,
-      api_key_env: "ONESHOT_API_TOKEN",
-      header_name: "authorization",
+      apiKeyEnv: "ONESHOT_API_TOKEN",
+      headerName: "authorization",
     },
     headers: {
       enabled: true,
-      content_security_policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;",
-      x_content_type_options: "nosniff",
-      x_frame_options: "DENY",
-      strict_transport_security: "max-age=31536000; includeSubDomains",
+      contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;",
+      xContentTypeOptions: "nosniff",
+      xFrameOptions: "DENY",
+      strictTransportSecurity: "max-age=31536000; includeSubDomains",
     },
   }),
   sandbox: SandboxConfigSchema.default({
@@ -197,35 +171,14 @@ export const OneShotConfigSchema = z.object({
     default_provider: "mistral",
     fallback_provider: "gemini",
     roles: {
-      reasoning: "mistral-large-latest",
+      reasoning: "ministral-8b-latest",
       fast: "gemini-2.5-flash",
-      coding: "mistral-large-latest",
-      critic: "mistral-large-latest",
+      coding: "ministral-8b-latest",
+      critic: "ministral-8b-latest",
       vision: "gemini-2.5-flash",
       local: "llama3.2",
     },
     providers: [],
-  }),
-  bob_guidance: BobGuidanceConfigSchema.default({
-    context_mentions: [
-      "@workspace",
-      "@file",
-      "@folder",
-      "@diff",
-      "@terminal",
-      "@web",
-      "@docs",
-    ],
-    human_in_the_loop: {
-      gate_1_research_review: true,
-      gate_2_build_ready: true,
-    },
-    streaming_tool_status: {
-      enabled: true,
-      stages: ["tool_pending", "tool_running", "tool_result", "tool_error"],
-      track_duration_ms: true,
-      render_json_fallback: true,
-    },
   }),
 });
 

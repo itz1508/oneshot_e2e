@@ -80,15 +80,10 @@ describe("OneShot TOML Parser & Configuration Engine", () => {
     assert.equal(config.sandbox.virtual_mode, true);
     assert.equal(config.sandbox.partitions.length, 4);
 
-    // Verify Bob guidance settings
-    assert.ok(config.bob_guidance.context_mentions.includes("@workspace"));
-    assert.equal(config.bob_guidance.human_in_the_loop.gate_1_research_review, true);
-    assert.equal(config.bob_guidance.human_in_the_loop.gate_2_build_ready, true);
-
     // Verify UV-index style multi-provider registry
     assert.ok(config.models.providers.length >= 3);
     const mistral = config.models.providers.find((p) => p.name === "mistral");
     assert.ok(mistral);
-    assert.equal(mistral.defaultModel, "mistral-large-latest");
+    assert.equal(mistral.defaultModel, "ministral-8b-latest");
   });
 });

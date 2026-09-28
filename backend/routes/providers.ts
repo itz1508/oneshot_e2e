@@ -1,8 +1,45 @@
-import { createLiveModel, createMainAgent } from "../../packages/agent-runtime/src/index.js";
+import { createLiveModel, createMainAgent, tavilySearchBackend } from "../../packages/agent-runtime/src/index.js";
 import { oauthManager } from "../oauth.js";
 import { ProviderService } from "../services/provider-service.js";
 import { sendJson, sendError } from "./helpers.js";
 import type { RouteHandler } from "./types.js";
+
+// Event-shape-tolerant text detector used by every provider availability probe.
+//
+// A probe must answer "did the provider actually return model output?" — so it
+// has to recognise the event shapes the installed Strands SDK really emits.
+// Checking only a top-level `text`/`data`/`content` field reports every working
+// provider as unavailable, because output arrives nested:
+//   { type: "modelStreamUpdateEvent",
+//     event: { type: "modelContentBlockDeltaEvent",
+//              delta: { type: "textDelta", text } } }
+// and, once complete, as a `modelMessageEvent` / `contentBlockEvent` message.
+export function eventHasText(event: unknown): boolean {
+  const raw = (event ?? {}) as Record<string, unknown>;
+
+  if (typeof raw.text === "string" && raw.text) return true;
+  if (typeof raw.data === "string" && raw.data) return true;
+
+  const nested = (raw.event ?? {}) as Record<string, unknown>;
+  if (nested.type === "modelContentBlockDeltaEvent") {
+    const delta = (nested.delta ?? {}) as Record<string, unknown>;
+    if (delta.type === "textDelta" && typeof delta.text === "string" && delta.text) return true;
+  }
+
+  // Completed assistant message.
+  const message = (raw.message ?? {}) as Record<string, unknown>;
+  if (Array.isArray(message.content)) {
+    const hasText = message.content.some(
+      (block) => block && typeof block === "object" && typeof (block as Record<string, unknown>).text === "string"
+    );
+    if (hasText) return true;
+  }
+
+  const contentBlock = (raw.contentBlock ?? {}) as Record<string, unknown>;
+  if (typeof contentBlock.text === "string" && contentBlock.text) return true;
+
+  return false;
+}
 
 export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
   const {
@@ -34,8 +71,7 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
 
         let testPassed = false;
         for await (const event of testAgent.stream("Say OK")) {
-          const raw = event as unknown as Record<string, unknown>;
-          if (raw.text || raw.data || raw.content) {
+          if (eventHasText(event)) {
             testPassed = true;
             break;
           }
@@ -78,8 +114,7 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
 
         let testPassed = false;
         for await (const event of testAgent.stream("Say OK")) {
-          const raw = event as unknown as Record<string, unknown>;
-          if (raw.text || raw.data || raw.content) {
+          if (eventHasText(event)) {
             testPassed = true;
             break;
           }
@@ -109,41 +144,116 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
       };
     }
 
-    // Check Mistral
+    // Check Mistral — performs a REAL model invocation so that `available`
+    // means "the provider actually answered", not "a credential-shaped string
+    // exists". A key that is present but rejected upstream (e.g. a model that
+    // is not in the account's subscription tier) must report available:false.
     const hasMistral = isConfiguredKey(process.env.MISTRAL_API_KEY);
-    status.mistral = {
-      configured: hasMistral,
-      available: hasMistral,
-      model: process.env.MISTRAL_MODEL || "mistral-large-latest",
-      endpoint: process.env.MISTRAL_BASE_URL || "https://api.mistral.ai/v1",
-      tested: hasMistral,
-    };
+    if (!hasMistral) {
+      status.mistral = {
+        configured: false,
+        available: false,
+        error: "API key not configured in environment",
+        model: process.env.MISTRAL_MODEL || "ministral-8b-latest",
+        endpoint: process.env.MISTRAL_BASE_URL || "https://api.mistral.ai/v1",
+        tested: false,
+      };
+    } else {
+      try {
+        const testStart = Date.now();
+        const testModel = createLiveModel({
+          provider: "mistral",
+          apiKey: process.env.MISTRAL_API_KEY,
+          modelId: process.env.MISTRAL_MODEL || "ministral-8b-latest",
+        });
+        const testAgent = createMainAgent({ model: testModel });
 
-    // Check Nebius
+        let testPassed = false;
+        for await (const event of testAgent.stream("Say OK")) {
+          if (eventHasText(event)) {
+            testPassed = true;
+            break;
+          }
+        }
+
+        status.mistral = {
+          configured: true,
+          available: testPassed,
+          latency: Date.now() - testStart,
+          model: process.env.MISTRAL_MODEL || "ministral-8b-latest",
+          endpoint: process.env.MISTRAL_BASE_URL || "https://api.mistral.ai/v1",
+          tested: true,
+          ...(testPassed ? {} : { error: "Provider did not return model output during the availability probe" }),
+        };
+      } catch (err: any) {
+        status.mistral = {
+          configured: true,
+          available: false,
+          error: err.message,
+          model: process.env.MISTRAL_MODEL || "ministral-8b-latest",
+          endpoint: process.env.MISTRAL_BASE_URL || "https://api.mistral.ai/v1",
+          tested: true,
+        };
+      }
+    }
+
+    // Check Nebius — same rule: unproven availability is never reported as true.
     const hasNebius = isConfiguredKey(process.env.NEBIUS_API_KEY);
     status.nebius = {
       configured: hasNebius,
-      available: hasNebius,
+      available: false,
       latency: 0,
       model: process.env.NEBIUS_MODEL || "meta-llama/Meta-Llama-3.1-70B-Instruct",
       tested: false,
+      ...(hasNebius
+        ? { error: "Availability has not been proven by a real invocation for this provider" }
+        : { error: "API key not configured in environment" }),
     };
 
     // Check Ollama
     status.ollama = {
       configured: Boolean(process.env.OLLAMA_BASE_URL),
-      available: Boolean(process.env.OLLAMA_BASE_URL),
+      available: false,
       endpoint: process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1",
       model: process.env.OLLAMA_MODEL || "llama3.2",
       tested: false,
+      error: Boolean(process.env.OLLAMA_BASE_URL)
+        ? "Availability has not been proven by a real invocation for this provider"
+        : "OLLAMA_BASE_URL is not configured",
     };
 
-    // Check Tavily
-    status.tavily = {
-      configured: isConfiguredKey(process.env.TAVILY_API_KEY),
-      available: isConfiguredKey(process.env.TAVILY_API_KEY),
-      tested: false,
-    };
+    // Check Tavily — probed for real when a key is present, so `available`
+    // reflects an actual provider round-trip.
+    const hasTavily = isConfiguredKey(process.env.TAVILY_API_KEY);
+    if (!hasTavily) {
+      status.tavily = {
+        configured: false,
+        available: false,
+        tested: false,
+        error: "API key not configured in environment",
+      };
+    } else {
+      const testStart = Date.now();
+      try {
+        const probe = await tavilySearchBackend.search("OneShot availability probe", { maxResults: 1 }, "agent");
+        const reached = Array.isArray(probe.results) && probe.results.length > 0;
+        status.tavily = {
+          configured: true,
+          available: reached,
+          latency: Date.now() - testStart,
+          tested: true,
+          ...(reached ? {} : { error: "Search provider returned no results during the availability probe" }),
+        };
+      } catch (err: any) {
+        status.tavily = {
+          configured: true,
+          available: false,
+          error: err.message,
+          latency: Date.now() - testStart,
+          tested: true,
+        };
+      }
+    }
 
     return sendJson(res, 200, status);
   }
