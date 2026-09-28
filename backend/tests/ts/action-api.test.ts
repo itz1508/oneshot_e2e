@@ -187,8 +187,8 @@ describe("Action API v2 Unified RPC Dispatcher", () => {
       },
       body: JSON.stringify({
         provider: "ollama",
-        model: "llama3.2",
-        baseUrl: "http://localhost:11434/v1",
+        model: "gemma4:31b",
+        baseUrl: "https://ollama.com/v1",
       }),
     });
 
@@ -198,7 +198,7 @@ describe("Action API v2 Unified RPC Dispatcher", () => {
     assert.strictEqual(data.success, true);
     assert.strictEqual(data.sessionId, "sess_act_switch_1");
     assert.strictEqual(data.provider, "ollama");
-    assert.strictEqual(data.model, "llama3.2");
+    assert.strictEqual(data.model, "gemma4:31b");
   });
 
   it("POST /api/v2/switchProvider returns 400 on invalid provider", async () => {

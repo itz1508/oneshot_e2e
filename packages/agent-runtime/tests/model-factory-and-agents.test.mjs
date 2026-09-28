@@ -50,8 +50,8 @@ describe("OneShot Model Factory & Explicit Injection", () => {
     const model = createLiveModel({ provider: "ollama" });
     assert.ok(model);
     assert.strictEqual(typeof model, "object");
-    assert.strictEqual(model.modelId, "llama3.2");
-    assert.strictEqual(model._client?.baseURL, "http://localhost:11434/v1");
+    assert.strictEqual(model.modelId, "gemma4:31b");
+    assert.strictEqual(model._client?.baseURL, "https://ollama.com/v1");
   });
 
   it("accepts caller-injected model instance directly without modification", () => {

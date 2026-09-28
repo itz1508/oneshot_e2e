@@ -123,12 +123,12 @@ export const handleStreamRoutes: RouteHandler = async (req, res, ctx) => {
       (resolvedProvider === "gemini" ? process.env.GEMINI_MODEL || "gemini-2.5-flash" :
        resolvedProvider === "openai" ? process.env.OPENAI_MODEL || "gpt-4o-mini" :
        resolvedProvider === "mistral" ? process.env.MISTRAL_MODEL || "ministral-8b-latest" :
-       resolvedProvider === "ollama" ? process.env.OLLAMA_MODEL || "llama3.2" :
+       resolvedProvider === "ollama" ? process.env.OLLAMA_MODEL || "gemma4:31b" :
        "moonshotai/Kimi-K2.5");
     const resolvedBaseUrl = sessionCfg.baseUrl ||
       (resolvedProvider === "nebius" ? "https://api.studio.nebius.com/v1/" :
        resolvedProvider === "mistral" ? process.env.MISTRAL_BASE_URL || "https://api.mistral.ai/v1" :
-       resolvedProvider === "ollama" ? process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1" :
+       resolvedProvider === "ollama" ? process.env.OLLAMA_BASE_URL || "https://ollama.com/v1" :
        resolvedProvider === "openai" ? process.env.OPENAI_BASE_URL || "" : "");
 
     const rawKey =
@@ -136,7 +136,7 @@ export const handleStreamRoutes: RouteHandler = async (req, res, ctx) => {
       (resolvedProvider === "gemini" ? process.env.GEMINI_API_KEY :
        resolvedProvider === "openai" ? process.env.OPENAI_API_KEY :
        resolvedProvider === "mistral" ? process.env.MISTRAL_API_KEY :
-       resolvedProvider === "ollama" ? "ollama" :
+       resolvedProvider === "ollama" ? process.env.OLLAMA_API_KEY || "ollama" :
        process.env.NEBIUS_API_KEY) || "";
 
     const isLive =

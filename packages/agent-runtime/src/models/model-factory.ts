@@ -66,9 +66,18 @@ export const MODEL_PRESETS = {
   },
   ollama: {
     provider: "ollama" as const,
-    baseUrl: "http://localhost:11434/v1",
-    defaultModel: "llama3.2",
-    models: ["llama3.2", "mistral", "deepseek-r1", "phi3"],
+    // Ollama Cloud. A local Ollama server needs no credential; set
+    // OLLAMA_BASE_URL=http://localhost:11434/v1 to target one instead.
+    baseUrl: "https://ollama.com/v1",
+    defaultModel: "gemma4:31b",
+    models: [
+      "gemma4:31b",
+      "kimi-k2.7-code",
+      "glm-5.3",
+      "deepseek-v4-pro:0813",
+      "gpt-oss:120b",
+      "mistral-large-3:675b",
+    ],
     envKey: "OLLAMA_API_KEY",
   },
 } as const
@@ -151,14 +160,17 @@ export function createLiveModel(config: ModelFactoryConfig = {}): OpenAIModel | 
     })
   }
 
-  // 2. Resolve Ollama Prebuilt Preset (Non-API Local Provider)
+  // 2. Resolve Ollama Prebuilt Preset
   if (config.provider === "ollama") {
     const baseURL = config.baseUrl || process.env.OLLAMA_BASE_URL || MODEL_PRESETS.ollama.baseUrl
     const modelId = config.modelId || process.env.OLLAMA_MODEL || MODEL_PRESETS.ollama.defaultModel
+    // Ollama Cloud requires OLLAMA_API_KEY. A local server takes no credential,
+    // so fall back to the historical literal so local setups keep working.
+    const apiKey = config.apiKey || process.env.OLLAMA_API_KEY || "ollama"
 
-    return cache.getOrCreate("ollama", modelId, "ollama", baseURL, {
-      timeout: timeout * 2, // Local models may be slower to load
-      maxRetries: 1, // Local models don't benefit from retries the same way
+    return cache.getOrCreate("ollama", modelId, apiKey, baseURL, {
+      timeout: timeout * 2, // Cold or large models may be slower to load
+      maxRetries: 1, // Retries rarely help a model that is not warming up
     })
   }
 

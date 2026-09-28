@@ -39,8 +39,8 @@ describe("Multi-Provider Registry & Prebuilt Presets", () => {
     assert.ok(MODEL_PRESETS.mistral.models.includes("mistral-large-latest"));
 
     assert.ok(MODEL_PRESETS.ollama, "Ollama preset must exist");
-    assert.strictEqual(MODEL_PRESETS.ollama.baseUrl, "http://localhost:11434/v1");
-    assert.strictEqual(MODEL_PRESETS.ollama.defaultModel, "llama3.2");
+    assert.strictEqual(MODEL_PRESETS.ollama.baseUrl, "https://ollama.com/v1");
+    assert.strictEqual(MODEL_PRESETS.ollama.defaultModel, "gemma4:31b");
   });
 
   it("verifies /api/integration/providers response payload contains Mistral and Ollama presets", async () => {
@@ -61,7 +61,7 @@ describe("Multi-Provider Registry & Prebuilt Presets", () => {
 
     // Assert Ollama preset
     assert.ok(data.models.ollama, "Models registry must contain ollama");
-    assert.ok(data.models.ollama.models.includes("llama3.2"));
+    assert.ok(data.models.ollama.models.includes("gemma4:31b"));
   });
 
   it("verifies /api/providers/status response payload reports configured Mistral preset", async () => {
@@ -75,7 +75,7 @@ describe("Multi-Provider Registry & Prebuilt Presets", () => {
     assert.strictEqual(data.mistral.endpoint, "https://api.mistral.ai/v1");
 
     assert.ok(data.ollama, "Provider status must contain ollama");
-    assert.strictEqual(data.ollama.endpoint, "http://localhost:11434/v1");
+    assert.strictEqual(data.ollama.endpoint, "https://ollama.com/v1");
   });
 
   it("verifies /api/config/provider configures session with Mistral preset", async () => {

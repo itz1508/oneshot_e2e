@@ -119,13 +119,18 @@ fallback = "ollama"
 [[models.providers]]
 name = "ollama"
 priority = 50
-baseUrl = "http://localhost:11434/v1"
-defaultModel = "llama3.2"
+# Ollama Cloud. Verified reachable on its OpenAI-compatible endpoint with
+# OLLAMA_API_KEY. For a local Ollama server, set
+# OLLAMA_BASE_URL=http://localhost:11434/v1 instead; local needs no credential.
+baseUrl = "https://ollama.com/v1"
+defaultModel = "gemma4:31b"
 models = [
-    "llama3.2",
-    "mistral",
-    "deepseek-r1",
-    "phi3"
+    "gemma4:31b",
+    "kimi-k2.7-code",
+    "glm-5.3",
+    "deepseek-v4-pro:0813",
+    "gpt-oss:120b",
+    "mistral-large-3:675b"
 ]
 envKey = "OLLAMA_API_KEY"
 explicit = true

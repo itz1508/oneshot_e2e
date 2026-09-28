@@ -210,17 +210,58 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
         : { error: "API key not configured in environment" }),
     };
 
-    // Check Ollama
-    status.ollama = {
-      configured: Boolean(process.env.OLLAMA_BASE_URL),
-      available: false,
-      endpoint: process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1",
-      model: process.env.OLLAMA_MODEL || "llama3.2",
-      tested: false,
-      error: Boolean(process.env.OLLAMA_BASE_URL)
-        ? "Availability has not been proven by a real invocation for this provider"
-        : "OLLAMA_BASE_URL is not configured",
-    };
+    // Check Ollama — probed for real so `available` reflects an actual
+    // round-trip. Ollama Cloud needs OLLAMA_API_KEY; a local server needs only
+    // OLLAMA_BASE_URL.
+    const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || "https://ollama.com/v1";
+    const ollamaModel = process.env.OLLAMA_MODEL || "gemma4:31b";
+    const hasOllamaKey = isConfiguredKey(process.env.OLLAMA_API_KEY);
+    if (!hasOllamaKey && !process.env.OLLAMA_BASE_URL) {
+      status.ollama = {
+        configured: false,
+        available: false,
+        endpoint: ollamaBaseUrl,
+        model: ollamaModel,
+        tested: false,
+        error: "Set OLLAMA_API_KEY (Ollama Cloud) or OLLAMA_BASE_URL (local server)",
+      };
+    } else {
+      const ollamaStart = Date.now();
+      try {
+        const testModel = createLiveModel({
+          provider: "ollama",
+          modelId: ollamaModel,
+        });
+        const testAgent = createMainAgent({ model: testModel });
+
+        let ollamaPassed = false;
+        for await (const event of testAgent.stream("Say OK")) {
+          if (eventHasText(event)) {
+            ollamaPassed = true;
+            break;
+          }
+        }
+
+        status.ollama = {
+          configured: true,
+          available: ollamaPassed,
+          latency: Date.now() - ollamaStart,
+          endpoint: ollamaBaseUrl,
+          model: ollamaModel,
+          tested: true,
+          ...(ollamaPassed ? {} : { error: "Provider did not return model output during the availability probe" }),
+        };
+      } catch (err: any) {
+        status.ollama = {
+          configured: true,
+          available: false,
+          error: err.message,
+          endpoint: ollamaBaseUrl,
+          model: ollamaModel,
+          tested: true,
+        };
+      }
+    }
 
     // Check Tavily — probed for real when a key is present, so `available`
     // reflects an actual provider round-trip.
