@@ -256,6 +256,10 @@ export function useChatSession() {
     abortControllerRef.current = abortCtrl;
     const activeCfg = { provider: providerId, config: providerConfigs[providerId] };
 
+    // The session id must be sent so the backend resolves the provider
+    // configuration the user saved for THIS session. Without it the request
+    // falls back to the process environment, which has no credential when the
+    // key was entered in the UI, and the model call fails with 401.
     await streamAgentExecution(
       text,
       {

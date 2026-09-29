@@ -58,7 +58,9 @@ interface WelcomeWorkflowConsoleProps {
   currentProvider: ProviderId;
   onSelectProvider: (provider: ProviderId) => void;
   onRunWorkflow: (prompt: string, mode: "fixture" | "live", provider?: ProviderId) => Promise<void> | void;
-  onConfigureLiveProvider: (provider: ProviderId, model: string, apiKey?: string) => Promise<void> | void;
+  onConfigureLiveProvider: (provider: ProviderId, model: string, apiKey?: string, sessionId?: string) => Promise<void> | void;
+  /** Session id the backend keys saved credentials by. */
+  sessionId?: string;
   hasMessages?: boolean;
 }
 
@@ -69,6 +71,7 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
   onSelectProvider,
   onRunWorkflow,
   onConfigureLiveProvider,
+  sessionId,
   hasMessages = false,
 }) => {
   const [selectedFixtureIndex, setSelectedFixtureIndex] = useState(0);
@@ -145,7 +148,7 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
     setIsConfiguring(true);
     setLiveStatusMsg("Applying live configuration...");
     try {
-      await onConfigureLiveProvider(currentProvider, liveModel, liveApiKey.trim() || undefined);
+      await onConfigureLiveProvider(currentProvider, liveModel, liveApiKey.trim() || undefined, sessionId);
       setLiveStatusMsg(`Connected: ${currentProvider} (${liveModel})`);
       setActiveStep(5); // Move to Try Live step
     } catch (err: any) {
@@ -153,13 +156,13 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
     } finally {
       setIsConfiguring(false);
     }
-  }, [currentProvider, liveModel, liveApiKey, onConfigureLiveProvider]);
+  }, [currentProvider, liveModel, liveApiKey, onConfigureLiveProvider, sessionId]);
 
   const handleConnectAndRunLive = useCallback(async () => {
     setIsConfiguring(true);
     setLiveStatusMsg("Applying live configuration...");
     try {
-      await onConfigureLiveProvider(currentProvider, liveModel, liveApiKey.trim() || undefined);
+      await onConfigureLiveProvider(currentProvider, liveModel, liveApiKey.trim() || undefined, sessionId);
       setLiveStatusMsg(`Connected: ${currentProvider} (${liveModel})`);
       setActiveStep(5); // Move to Try Live step
       onRunWorkflow(effectivePrompt, "live", currentProvider);
@@ -172,7 +175,7 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
     } finally {
       setIsConfiguring(false);
     }
-  }, [currentProvider, liveModel, liveApiKey, effectivePrompt, onConfigureLiveProvider, onRunWorkflow]);
+  }, [currentProvider, liveModel, liveApiKey, effectivePrompt, onConfigureLiveProvider, onRunWorkflow, sessionId]);
 
   return (
     <div

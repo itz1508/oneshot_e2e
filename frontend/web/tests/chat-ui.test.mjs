@@ -162,6 +162,22 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
     assert.match(sidebarSrc, /serverProviderStatus/);
   });
 
+  it("sends the session id on both provider config and agent stream", () => {
+    const appSrc = read("frontend/web/src/components/App.tsx");
+    const sessionSrc = read("frontend/web/src/lib/useChatSession.ts");
+    const consoleSrc = read("frontend/web/src/components/WelcomeWorkflowConsole.tsx");
+
+    // Regression: /api/config/provider stored the pasted key under "default"
+    // (no X-Session-Id header) while /api/agent/stream looked it up under the
+    // active session id. The key was therefore never found and every model
+    // call made after a user entered a key in the UI failed with 401.
+    assert.match(appSrc, /"X-Session-Id": sessionId/);
+    assert.match(appSrc, /sessionId=\{activeSession\?\.id\}/);
+    assert.match(consoleSrc, /onConfigureLiveProvider\(currentProvider, liveModel, liveApiKey\.trim\(\) \|\| undefined, sessionId\)/);
+    // The stream call must pass the session id through.
+    assert.match(sessionSrc, /activeSession\.id/);
+  });
+
   it("verifies obsolete standalone simulations and alternate chat components are absent", () => {
     assert.ok(
       !existsSync(join(root, "frontend/web/public/mock-screen.html")),

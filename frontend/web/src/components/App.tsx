@@ -248,11 +248,18 @@ const AppContent: React.FC = () => {
   );
 
   const handleConfigureLiveProvider = useCallback(
-    async (provider: ProviderId, model: string, apiKey?: string) => {
+    async (provider: ProviderId, model: string, apiKey?: string, sessionId?: string) => {
       try {
         const res = await fetch(resolveApiUrl("/api/config/provider"), {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          // The server keys the saved credential by session id. Without this
+          // header the configuration is stored under "default" while the chat
+          // stream looks it up under the active session id, so a key entered
+          // here was never found and the model call failed with 401.
+          headers: {
+            "Content-Type": "application/json",
+            ...(sessionId ? { "X-Session-Id": sessionId } : {}),
+          },
           body: JSON.stringify({
             provider,
             model,
@@ -454,6 +461,7 @@ const AppContent: React.FC = () => {
                   handleSendMessage(prompt, targetProvider);
                 }}
                 onConfigureLiveProvider={handleConfigureLiveProvider}
+                sessionId={activeSession?.id}
                 hasMessages={(activeSession?.messages.length ?? 0) > 0}
               />
 
