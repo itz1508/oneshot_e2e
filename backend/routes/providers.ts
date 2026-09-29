@@ -1,4 +1,5 @@
 import http from "node:http";
+import https from "node:https";
 import { createLiveModel, createMainAgent, tavilySearchBackend } from "../../packages/agent-runtime/src/index.js";
 import { oauthManager } from "../oauth.js";
 import { ProviderService } from "../services/provider-service.js";
@@ -16,6 +17,41 @@ function resolveOllamaBase(): string {
 }
 
 let ollamaInstalling: string | null = null;
+
+/**
+ * True when the resolved base points at a self-hosted daemon rather than
+ * Ollama Cloud. Model installs only make sense against a local daemon: cloud
+ * models are served remotely, so there is nothing to pull onto disk.
+ */
+function isLocalDaemonBase(base: string): boolean {
+  try {
+    const host = new URL(base).hostname.toLowerCase();
+    return host !== "ollama.com" && !host.endsWith(".ollama.com");
+  } catch {
+    return false;
+  }
+}
+
+/** Build the upstream request options for the resolved base's real scheme. */
+function ollamaRequestOptions(target: URL, method: string): {
+  transport: typeof http | typeof https;
+  options: http.RequestOptions;
+} {
+  const isTls = target.protocol === "https:";
+  const fallbackPort = isTls ? 443 : 11434;
+  return {
+    transport: isTls ? https : http,
+    options: {
+      hostname: target.hostname,
+      // An explicit port wins, else the scheme default — never a blanket
+      // 11434, which would send TLS traffic to a cleartext daemon port.
+      port: target.port ? Number(target.port) : fallbackPort,
+      path: `${target.pathname}${target.search}`,
+      method,
+    },
+  };
+}
+
 
 /** Model names are allowlisted: registry path + tag, nothing else. */
 function sanitizeOllamaModel(model: unknown): string | null {
@@ -97,17 +133,21 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
   } = ctx;
 
   // ── Local Ollama install state ───────────────────────────────────────
-  // GET /api/ollama/status → { available, installed, models, installing }
-  // `installed` means THIS model tag is on disk. Never 503s: an unreachable
-  // daemon is a state (`available:false`), not a server fault.
+  // GET /api/ollama/status → { available, installed, local, models, installing }
+  // `installed` means THIS model tag is served by the configured endpoint.
+  // `local` says whether that endpoint is a self-hosted daemon, which is the
+  // only place an install can land. Never 503s: an unreachable daemon is a
+  // state (`available:false`), not a server fault.
   if (pathname === "/api/ollama/status" && req.method === "GET") {
     const base = resolveOllamaBase();
+    const local = isLocalDaemonBase(base);
     const wanted = (process.env.OLLAMA_MODEL || "gemma4:31b").trim();
     const models = await fetchOllamaTags(base);
     if (models === null) {
       return sendJson(res, 200, {
         available: false,
         installed: false,
+        local,
         models: [],
         installing: ollamaInstalling,
         error: `Ollama daemon unreachable at server-side OLLAMA_BASE_URL (${base}). Start it (host) or enable the compose profile: docker compose --profile local-llm up.`,
@@ -116,6 +156,7 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
     return sendJson(res, 200, {
       available: true,
       installed: models.some((m) => m === wanted || m.startsWith(`${wanted}:`)),
+      local,
       models,
       installing: ollamaInstalling,
     });
@@ -134,40 +175,60 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
       return sendError(res, 409, `Already pulling "${ollamaInstalling}"`);
     }
     const base = resolveOllamaBase();
-    const target = new URL("/api/pull", base);
-    const upstream = await new Promise<http.IncomingMessage>((resolve, reject) => {
-      const up = http.request(
-        {
-          hostname: target.hostname,
-          port: Number(target.port) || 11434,
-          path: "/api/pull",
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          timeout: 10000,
-        },
-        resolve
+    // Ollama Cloud serves models remotely: there is no disk to install onto,
+    // so pulling would either 404 upstream or mislead the user into thinking
+    // an install happened. Say so plainly instead of proxying a failure.
+    if (!isLocalDaemonBase(base)) {
+      return sendError(
+        res,
+        400,
+        `Model installs need a local Ollama daemon; OLLAMA_BASE_URL points at ${base} (remote models are already served there). Start a local daemon or enable the compose profile: docker compose --profile local-llm up`
       );
-      up.on("error", reject);
-      up.on("timeout", () => up.destroy(new Error("Ollama daemon unreachable")));
-      up.end(JSON.stringify({ model, stream: true }));
-    }).catch((err: Error) => sendError(res, 502, `Ollama daemon unreachable: ${err.message}`) as never);
-    if (!upstream || upstream.statusCode !== 200) {
-      upstream?.resume();
-      return sendError(res, 502, `Ollama pull rejected (HTTP ${upstream?.statusCode ?? "?"})`);
     }
+    const target = new URL("/api/pull", base);
+    const { transport, options } = ollamaRequestOptions(target, "POST");
+    // Claim the install slot BEFORE dialing the daemon. Waiting until the
+    // upstream responds leaves a window where a second request (a double
+    // click on [+]) starts a parallel multi-GB pull.
     ollamaInstalling = model;
-    res.writeHead(200, { "Content-Type": "application/x-ndjson" });
-    upstream.on("data", (chunk: Buffer) => {
-      if (!res.writableEnded) res.write(chunk);
-    });
-    await new Promise<void>((done) => {
-      upstream.on("end", done);
-      upstream.on("error", done);
-      (req as http.IncomingMessage).on("close", done);
-    });
-    ollamaInstalling = null;
-    if (!res.writableEnded) res.end();
-    return true;
+    try {
+      const upstream = await new Promise<http.IncomingMessage>((resolve, reject) => {
+        const up = transport.request(
+          {
+            ...options,
+            headers: { "Content-Type": "application/json" },
+            timeout: 10000,
+          },
+          resolve
+        );
+        up.on("error", reject);
+        up.on("timeout", () => up.destroy(new Error("Ollama daemon unreachable")));
+        up.end(JSON.stringify({ model, stream: true }));
+      }).catch((err: Error) => {
+        sendError(res, 502, `Ollama daemon unreachable: ${err.message}`);
+        return null;
+      });
+      if (!upstream) return true;
+      if (upstream.statusCode !== 200) {
+        upstream.resume();
+        sendError(res, 502, `Ollama pull rejected (HTTP ${upstream.statusCode ?? "?"})`);
+        return true;
+      }
+      res.writeHead(200, { "Content-Type": "application/x-ndjson" });
+      upstream.on("data", (chunk: Buffer) => {
+        if (!res.writableEnded) res.write(chunk);
+      });
+      await new Promise<void>((done) => {
+        upstream.on("end", done);
+        upstream.on("error", done);
+        (req as http.IncomingMessage).on("close", done);
+      });
+      if (!res.writableEnded) res.end();
+      return true;
+    } finally {
+      // Always release, so a failed or aborted pull never wedges the slot.
+      ollamaInstalling = null;
+    }
   }
 
   // Provider status — checks configured status and test connectivity safely

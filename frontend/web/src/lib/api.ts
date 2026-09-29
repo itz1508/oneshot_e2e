@@ -677,6 +677,8 @@ export class OneShotPublicApi {
 export interface OllamaInstallState {
   available: boolean;
   installed: boolean;
+  /** True when the resolved endpoint is a self-hosted daemon (installable). */
+  local: boolean;
   models: string[];
   installing: string | null;
   error?: string;

@@ -108,6 +108,9 @@ describe("Multi-Provider Registry & Prebuilt Presets", () => {
       assert.strictEqual(data.available, false);
       assert.strictEqual(data.installed, false);
       assert.deepStrictEqual(data.models, []);
+      // A loopback base is a self-hosted daemon, so installs stay allowed once
+      // it comes up — the UI needs this to decide whether [+] is meaningful.
+      assert.strictEqual(data.local, true);
       assert.ok(typeof data.error === "string" && data.error.length > 0);
     } finally {
       if (prevBase === undefined) delete process.env.OLLAMA_BASE_URL;
@@ -133,6 +136,33 @@ describe("Multi-Provider Registry & Prebuilt Presets", () => {
     }
   });
 
+  it("refuses to pull against a remote Ollama endpoint instead of faking an install (HTTP 400)", async () => {
+    const prevBase = process.env.OLLAMA_BASE_URL;
+    process.env.OLLAMA_BASE_URL = "https://ollama.com/v1";
+    try {
+      const statusRes = await fetch(`${baseUrl}/api/ollama/status`);
+      assert.strictEqual(statusRes.status, 200);
+      const status = await statusRes.json();
+      // The load-bearing distinction: remote endpoint ⇒ nothing to install.
+      assert.strictEqual(status.local, false);
+
+      const res = await fetch(`${baseUrl}/api/ollama/pull`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "gemma4:31b" }),
+      });
+      assert.strictEqual(res.status, 400, "Remote endpoints must not fake a local install");
+      const data = await res.json();
+      assert.match(data.error, /local Ollama daemon/i);
+      // Regression: the old cleartext request aimed at port 11434 on an https
+      // base and surfaced the upstream 308 as a bogus 502.
+      assert.doesNotMatch(data.error, /HTTP 30\d/);
+    } finally {
+      if (prevBase === undefined) delete process.env.OLLAMA_BASE_URL;
+      else process.env.OLLAMA_BASE_URL = prevBase;
+    }
+  });
+
   it("rejects a malicious Ollama model name (HTTP 400)", async () => {
     const res = await fetch(`${baseUrl}/api/ollama/pull`, {
       method: "POST",
@@ -140,6 +170,107 @@ describe("Multi-Provider Registry & Prebuilt Presets", () => {
       body: JSON.stringify({ model: "../../etc/passwd; rm -rf /" }),
     });
     assert.strictEqual(res.status, 400, "Model allowlist must hold");
+  });
+
+  // Full end-to-end install proof against a daemon that really speaks the
+  // Ollama API — no mocks inside the app. The backend dials it, proxies its
+  // NDJSON frames verbatim, and the final state is read back from the daemon
+  // rather than assumed. Needs no Docker and no real multi-GB download.
+  it("installs a model end-to-end through the proxy and reports it as installed", async () => {
+    const pulled = new Set<string>();
+    const stub = http.createServer((req, res) => {
+      if (req.method === "GET" && req.url === "/api/tags") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ models: [...pulled].map((name) => ({ name })) }));
+        return;
+      }
+      if (req.method === "POST" && req.url === "/api/pull") {
+        let raw = "";
+        req.on("data", (chunk) => (raw += chunk));
+        req.on("end", () => {
+          const { model } = JSON.parse(raw) as { model: string };
+          res.writeHead(200, { "Content-Type": "application/x-ndjson" });
+          const total = 1000;
+          let step = 0;
+          // Paced like a real multi-GB pull so a concurrent request overlaps.
+          const timer = setInterval(() => {
+            step += 1;
+            res.write(`${JSON.stringify({ status: "pulling manifest" })}\n`);
+            res.write(
+              `${JSON.stringify({ status: `downloading ${model}`, completed: (total / 4) * step, total })}\n`
+            );
+            if (step >= 4) {
+              clearInterval(timer);
+              pulled.add(model);
+              res.write(`${JSON.stringify({ status: "success" })}\n`);
+              res.end();
+            }
+          }, 40);
+        });
+        return;
+      }
+      res.writeHead(404).end();
+    });
+    await new Promise<void>((resolve) => stub.listen(0, "127.0.0.1", () => resolve()));
+    const stubPort = (stub.address() as { port: number }).port;
+
+    const prevBase = process.env.OLLAMA_BASE_URL;
+    process.env.OLLAMA_BASE_URL = `http://127.0.0.1:${stubPort}/v1`;
+    try {
+      const before = await (await fetch(`${baseUrl}/api/ollama/status`)).json();
+      assert.strictEqual(before.available, true, "stub daemon must be reachable");
+      assert.strictEqual(before.local, true, "a self-hosted daemon is installable");
+      assert.strictEqual(before.installed, false, "nothing installed yet");
+
+      const pull = await fetch(`${baseUrl}/api/ollama/pull`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "gemma4:31b" }),
+      });
+      assert.strictEqual(pull.status, 200);
+      assert.strictEqual(pull.headers.get("content-type"), "application/x-ndjson");
+
+      // The slot is claimed before dialing, so a second click cannot start a
+      // parallel download even in the window before the daemon responds.
+      const conflict = await fetch(`${baseUrl}/api/ollama/pull`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "gemma4:31b" }),
+      });
+      assert.strictEqual(conflict.status, 409, "second pull must be refused while one runs");
+      const conflictBody = await conflict.json();
+      assert.match(conflictBody.error, /Already pulling/);
+
+      const events: Array<{ status: string; completed?: number; total?: number }> = [];
+      const reader = pull.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buffer.indexOf("\n")) >= 0) {
+          const line = buffer.slice(0, idx).trim();
+          buffer = buffer.slice(idx + 1);
+          if (line) events.push(JSON.parse(line) as { status: string });
+        }
+      }
+      const progress = events.filter((e) => typeof e.completed === "number");
+      assert.strictEqual(progress.length, 4, "every daemon progress frame must reach the client");
+      assert.strictEqual(events.at(-1)?.status, "success");
+      const last = progress.at(-1)!;
+      assert.strictEqual(last.completed, last.total, "final frame must be complete");
+      assert.strictEqual(Math.round((last.completed! / last.total!) * 100), 100);
+
+      const after = await (await fetch(`${baseUrl}/api/ollama/status`)).json();
+      assert.strictEqual(after.installed, true, "install must be observed on the daemon, not assumed");
+      assert.ok(after.models.includes("gemma4:31b"));
+    } finally {
+      if (prevBase === undefined) delete process.env.OLLAMA_BASE_URL;
+      else process.env.OLLAMA_BASE_URL = prevBase;
+      await new Promise<void>((resolve) => stub.close(() => resolve()));
+    }
   });
 
   it("executes Python reasoning engine and validates response payload contracts", async () => {

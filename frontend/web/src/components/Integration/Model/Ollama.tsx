@@ -144,6 +144,20 @@ export const ModelOllama: React.FC<ModelOllamaProps> = ({
 
     const modelInstalled =
         install?.models.some((m) => m === selectedModel || m.startsWith(`${selectedModel}:`)) ?? false;
+    // Installing only makes sense against a self-hosted daemon; against a
+    // remote endpoint (Ollama Cloud) the model is served, not stored locally.
+    const canInstall = Boolean(install?.available && install?.local);
+    const installHint = !install
+        ? "Checking the Ollama endpoint…"
+        : modelInstalled && install.local
+          ? `${selectedModel} is already on disk`
+          : modelInstalled
+            ? `${selectedModel} is served by the remote endpoint — nothing to install`
+            : !install.available
+              ? "Ollama daemon unreachable — start it to install models"
+              : !install.local
+                ? "Model installs need a local Ollama daemon"
+                : `Pull ${selectedModel} to the local Ollama daemon`;
 
     return (
         <div
@@ -222,9 +236,9 @@ export const ModelOllama: React.FC<ModelOllamaProps> = ({
                     <button
                         type="button"
                         onClick={handlePull}
-                        disabled={isPulling || modelInstalled}
-                        title={modelInstalled ? `${selectedModel} is already on disk` : `Pull ${selectedModel} to the local Ollama daemon (~20 GB for 31b)`}
-                        aria-label={modelInstalled ? "Model already installed" : `Install ${selectedModel} locally`}
+                        disabled={isPulling || modelInstalled || !canInstall}
+                        title={isPulling ? `Pulling ${selectedModel}…` : installHint}
+                        aria-label={installHint}
                         className="w-8 h-8 shrink-0 rounded-lg border border-white/15 bg-[#262b34] hover:bg-[#2f3640] disabled:opacity-40 disabled:cursor-not-allowed text-sm text-[#c7c7cc] transition-colors"
                     >
                         {modelInstalled ? "✓" : "+"}
@@ -234,7 +248,7 @@ export const ModelOllama: React.FC<ModelOllamaProps> = ({
             </div>
 
             {/* Live pull progress — real NDJSON bytes from the daemon */}
-            {(isPulling || pullStatus) && !modelInstalled && (
+            {(isPulling || pullStatus) && !modelInstalled && canInstall && (
                 <div className="space-y-1" aria-live="polite">
                     <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
                         <div
@@ -254,6 +268,14 @@ export const ModelOllama: React.FC<ModelOllamaProps> = ({
                 <div className="text-[10px] text-[#e5a84b] leading-relaxed">
                     Ollama daemon unreachable. Pulls and status need a running daemon —
                     host Ollama or the compose <code className="font-mono">local-llm</code> profile.
+                </div>
+            )}
+            {install && install.available && !install.local && (
+                <div className="text-[10px] text-[#838d9a] leading-relaxed">
+                    Endpoint serves remote models, so there is nothing to install here. To
+                    install locally, point <code className="font-mono">OLLAMA_BASE_URL</code> at a
+                    self-hosted daemon or enable the compose{" "}
+                    <code className="font-mono">local-llm</code> profile.
                 </div>
             )}
 
