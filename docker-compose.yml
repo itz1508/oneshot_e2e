@@ -1,0 +1,91 @@
+# OneShot — Option 2: single all-in-one container + optional local LLM.
+#
+# Clone, configure keys, run. Two paths for other users:
+#
+#   1) Cloud (default, no extra containers):
+#        cp app/env/.env.example app/env/.env   # then fill in keys
+#        docker compose up --build
+#      Provider keys (MISTRAL_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY,
+#      NEBIUS_API_KEY, TAVILY_API_KEY, OLLAMA_API_KEY for Ollama Cloud)
+#      come from app/env/.env via `env_file` below. NEXT_PUBLIC_BACKEND_URL
+#      stays UNSET so the baked static export uses same-origin /api/*
+#      (it is inlined at `next build` time — changing it needs a rebuild).
+#
+#   2) Local Ollama with gemma (opt-in sidecar, keyless, offline-capable):
+#        OLLAMA_MODEL=gemma4:31b docker compose --profile local-llm up --build
+#      `app` then talks to the sidecar over compose DNS
+#      (http://ollama:11434/v1 — NOT localhost). The model pulls once into
+#      the `ollama-data` volume on first start (~20 GB for a 31b model, plus
+#      ~20 GB RAM/VRAM for sane speed; CPU-only works but is slow).
+#      Override any time: OLLAMA_MODEL=llama3.2 (known-good fallback if a
+#      registry tag 404s — the sidecar fails fast instead of half-starting).
+#
+# GPU (optional, uncomment below): needs the NVIDIA Container Toolkit on
+# the host; omit on CPU-only machines.
+
+services:
+  app:
+    build: .
+    ports:
+      - '${PORT:-8787}:8787'
+    env_file:
+      - app/env/.env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8787
+      NODE_ENV: production
+      # Local sidecar target when the `local-llm` profile is enabled.
+      # Harmless when no sidecar runs: the status probe only marks ollama
+      # configured when OLLAMA_BASE_URL or OLLAMA_API_KEY is set AND the
+      # probe succeeds, so a dead default here cannot fake readiness.
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434/v1}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma4:31b}
+      # Prefer HTTP reasoning when a sidecar exists; unset keeps the
+      # zero-ops in-process CLI subprocess (backend/python/.venv).
+      # PYTHON_REASONING_URL: http://reasoning:8000/v1/reason
+    volumes:
+      - oneshot-storage:/app/.oneshot/storage
+    # NOTE: no depends_on ollama — it is profile-gated (`local-llm`) and a
+    # hard dependency would break the default profile. When the profile is
+    # on, compose starts both; the app marks ollama configured only when
+    # its status probe actually succeeds, so startup order is harmless.
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://localhost:8787/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    restart: unless-stopped
+
+  # Local LLM sidecar. OFF by default — enable with `--profile local-llm`.
+  # Entrypoint: serve in background, pull $OLLAMA_MODEL once (cached in
+  # the volume), then block on the server so the container stays alive.
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ['local-llm']
+    ports:
+      - '11434:11434'
+    environment:
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma4:31b}
+    volumes:
+      - ollama-data:/root/.ollama
+    entrypoint: ['/bin/sh', '-c', 'ollama serve & SERVER_PID=$$!; for i in $$(seq 1 60); do ollama list >/dev/null 2>&1 && break; sleep 2; done; ollama pull \"$${OLLAMA_MODEL}\"; wait $$SERVER_PID']
+    healthcheck:
+      test: ['CMD', 'ollama', 'list']
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    restart: unless-stopped
+    # GPU passthrough (NVIDIA Container Toolkit required on host):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  oneshot-storage:
+  ollama-data:

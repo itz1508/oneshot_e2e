@@ -1,0 +1,47 @@
+# Keep the build context small and secret-free. The image must never
+# contain credentials: app/env/.env stays on the host and arrives via
+# compose `env_file` / `docker run --env-file` at run time.
+node_modules
+frontend/web/node_modules
+backend/node_modules
+app/integration/*/node_modules
+
+# Build outputs are regenerated inside the image (`pnpm run build`).
+dist
+build
+out
+.next
+frontend/web/.next
+frontend/web/dist
+frontend/web/out
+
+# Python caches / venvs are rebuilt via `uv sync --frozen`.
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.venv
+venv
+*.egg-info
+
+# Secrets: never into the build context (belt and braces — .env is also
+# gitignored, so it cannot be committed either).
+.env
+.env.*
+.envrc
+*.pem
+*.key
+*.p12
+*.pfx
+service-account*.json
+*credentials*.json
+
+# Local-only state.
+.git
+.oneshot
+test-results
+coverage
+.nyc_output
+*.log
+*.tmp
+*.temp

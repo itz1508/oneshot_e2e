@@ -157,6 +157,34 @@ Or configure **Google Gemini**, **OpenAI**, **Nebius**, **Mistral**, or local **
 
 ---
 
+## 🐳 Docker — Run Anywhere (Cloud and/or Local Gemma)
+
+One all-in-one image: the backend serves the static frontend on a single
+port (`8787`), Python reasoning runs as an in-process subprocess, and keys
+stay in `app/env/.env` (never baked into the image).
+
+```bash
+# Clone + configure keys
+git clone https://github.com/itz1508/oneshot_e2e.git
+cd oneshot_e2e
+cp app/env/.env.example app/env/.env   # then fill in keys
+
+# Option A — cloud providers (default, no extra containers):
+docker compose up --build
+# → http://localhost:8787 (Mistral/Gemini/OpenAI/Nebius/Ollama Cloud)
+
+# Option B — local Ollama with gemma (opt-in sidecar, keyless, offline):
+OLLAMA_MODEL=gemma4:31b docker compose --profile local-llm up --build
+# → model pulls once into a volume (~20 GB for 31b); override any time,
+#   e.g. OLLAMA_MODEL=llama3.2 if a registry tag 404s.
+```
+
+> `NEXT_PUBLIC_BACKEND_URL` stays **unset** so the baked export uses
+> same-origin `/api/*` (it is inlined at `next build` time — changing it
+> needs a rebuild, only for split Vercel-style deploys).
+
+---
+
 ## 📜 License
 
 [Apache-2.0](LICENSE)

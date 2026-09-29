@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-29T17:58:03Z",
+  "generated_at": "2026-09-29T19:43:00Z",
   "version": "1.3.0",
-  "commit": "d39580d7",
+  "commit": "2a6a7598",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -35,8 +35,8 @@
     },
     {
       "path": "README.md",
-      "size": 6349,
-      "hash": "sha256:4ac58c4620c0738d94a828d3d44a6c360d3daba9db5d7dc8bd3a1c101af6f371",
+      "size": 7420,
+      "hash": "sha256:2f248a3cfdec8b5f72a43cf386adaa67b03bbe09ed7ba98f35fec82239479ee7",
       "category": "source"
     },
     {
@@ -529,6 +529,12 @@
       "path": "config.toml",
       "size": 3339,
       "hash": "sha256:6f15aedb4c5ed179cf81bd277cacf25a993ae394740289d08b8db6f12ba63e4a",
+      "category": "source"
+    },
+    {
+      "path": "docker-compose.yml",
+      "size": 3838,
+      "hash": "sha256:2101ade5aa5fbb4d848358d0316d3e6ce891a4aff26e1b47e42c9e957f4be23a",
       "category": "source"
     },
     {
@@ -1535,11 +1541,11 @@
     }
   ],
   "statistics": {
-    "total_files": 255,
-    "source_files": 255,
-    "total_size_bytes": 1551486,
+    "total_files": 256,
+    "source_files": 256,
+    "total_size_bytes": 1556395,
     "by_extension": {
-      ".yml": 1,
+      ".yml": 2,
       ".md": 7,
       "(no extension)": 1,
       ".mjs": 40,
