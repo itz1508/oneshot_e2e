@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-29T02:18:32Z",
+  "generated_at": "2026-09-29T05:22:12Z",
   "version": "1.3.0",
-  "commit": "086f11b2",
+  "commit": "c6978e9c",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -635,8 +635,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\App.tsx",
-      "size": 21917,
-      "hash": "sha256:abdab9ad3543e92f8ca4384985b4b22f7c3688d960519845254e5deadcc5b6e1",
+      "size": 22376,
+      "hash": "sha256:1c818ef70cc1bef0a386cf558c7b6dee081d7963cffe1b416c4c5ca3a84ef45e",
       "category": "source"
     },
     {
@@ -755,8 +755,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\WelcomeWorkflowConsole.tsx",
-      "size": 26477,
-      "hash": "sha256:1972f13b6165c76818f40df347dace993d427011d30ee5d3f4fef1dcd8f1dc87",
+      "size": 26635,
+      "hash": "sha256:74682c82e7f38c68124b0eaf1853c6366dfc4fc9a1057acd0bc244a31cec2c16",
       "category": "source"
     },
     {
@@ -899,8 +899,8 @@
     },
     {
       "path": "frontend\\web\\src\\lib\\useChatSession.ts",
-      "size": 19138,
-      "hash": "sha256:e9d420403fb3764946f304140895f4fa6dd12223a86c22f2d2473d16d9dda729",
+      "size": 19435,
+      "hash": "sha256:4517fd31d5af84bea2d2d48b2d77ca2341ed52390c3a6210a5f415ba261b7847",
       "category": "source"
     },
     {
@@ -959,8 +959,8 @@
     },
     {
       "path": "frontend\\web\\tests\\chat-ui.test.mjs",
-      "size": 13170,
-      "hash": "sha256:94f87220ef7a16bbf60b3c215cb7564e27abf725cc48a5e9fae8a371e53f779f",
+      "size": 14143,
+      "hash": "sha256:c0e833861f1c9a2e7abb26cfa05337ad1b3164aa72539aa3e7615f24d717d7c8",
       "category": "source"
     },
     {
@@ -1516,81 +1516,21 @@
       "category": "source"
     },
     {
-      "path": "test-results\\dbg.mjs",
-      "size": 1724,
-      "hash": "sha256:6193f2fd3430c96c794971c61751aea7db9b62708da8ae2f5e3631d6ed68b22a",
+      "path": "test-results\\keytest.mjs",
+      "size": 3918,
+      "hash": "sha256:dd38d2984cc95815ddcc2a18d6ace0d452b55ce859d6d42768fbd16f49c3c22c",
       "category": "source"
     },
     {
-      "path": "test-results\\dbg2.mjs",
-      "size": 1008,
-      "hash": "sha256:e4cbd021c30a6153edcc174b1ad546d552c1aa51b2606d5c9a4b8fc020a49cd3",
+      "path": "test-results\\keytest2.mjs",
+      "size": 2057,
+      "hash": "sha256:ba0cecb3cdbd2eab9c44672d8b692d98c3ca3ea94679749dd922cfa0b344f820",
       "category": "source"
     },
     {
-      "path": "test-results\\fix-eol.mjs",
-      "size": 342,
-      "hash": "sha256:94f055deb18bcb8fde2a9937c8203dfb9d0fd474c52b1c5dfe03fa398c931d7f",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\judge-2.mjs",
-      "size": 1787,
-      "hash": "sha256:3ae8c55ed51f2785ebb8d4f00a81b727ce4dde844930cf0353530cba62958699",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\judge-3.mjs",
-      "size": 2677,
-      "hash": "sha256:3155e2ac311c8b043263f88d52c2167abbceba05e4fad06c1b412e1a99c3a7a3",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\judge-chat.mjs",
-      "size": 2858,
-      "hash": "sha256:a1dac18bc3be1d858b2a4ebcb169b5a92a90bee296e8971bf5f02d6e5fa2b812",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\secret-scan.mjs",
-      "size": 3467,
-      "hash": "sha256:1d0dc8ce09fd5bfc43546130fdd5da469e0bcb0f30b683bd44cde5bd6b7c9913",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\secret-scan2.mjs",
-      "size": 3013,
-      "hash": "sha256:99b0708249106c8a93a2dced6c75af7931fd9c7b9d309f47a6f4ab910791ddb7",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\ui-auth.mjs",
-      "size": 1371,
-      "hash": "sha256:70b888d6ec47b37018828e6a02c2a49516851ba08d8755e0dfdbb3ec855e23fe",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\ui-e2e.mjs",
-      "size": 3875,
-      "hash": "sha256:d91df29ba0977dbceb2b50ededc9c500c6c1f593324f895a2d243212a2a0489f",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\ui-explore.mjs",
-      "size": 2325,
-      "hash": "sha256:dccee4ca26da01e8cd4ca994e0920f3fe8241e4540e3f2146910279861d4984c",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\ui-final.mjs",
-      "size": 3076,
-      "hash": "sha256:22a38d32f6d74ea0586d7afdac3e8c8ee3ad0e5613b8088a69ab260fd6056d3d",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\ui-verify-fix.mjs",
-      "size": 3899,
-      "hash": "sha256:6f26f13095739f6a09432a20897eeb93086a28bcb328785f58e96bdf7216f6fe",
+      "path": "test-results\\stripquotes.mjs",
+      "size": 880,
+      "hash": "sha256:ebf9498b338b7662375a53b8d98b21288964df7354734809616ecb189cbed794",
       "category": "source"
     },
     {
@@ -1613,14 +1553,14 @@
     }
   ],
   "statistics": {
-    "total_files": 268,
-    "source_files": 268,
-    "total_size_bytes": 1572404,
+    "total_files": 258,
+    "source_files": 258,
+    "total_size_bytes": 1549724,
     "by_extension": {
       ".yml": 1,
       ".md": 7,
       "(no extension)": 1,
-      ".mjs": 53,
+      ".mjs": 43,
       ".bat": 2,
       ".sh": 3,
       ".json": 21,
