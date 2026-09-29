@@ -4,7 +4,7 @@
 
 <p>
   <a href="https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1">
-    <img src="https://img.shields.io/badge/⚡_OneShot_Installation-One_Click_Automatic_E2E-2563EB?style=for-the-badge&logo=powershell&logoColor=white" alt="OneShot Installation" />
+    <img src="https://img.shields.io/badge/⚡_Installation-Start_Automatic_E2E-2563EB?style=for-the-badge&logo=powershell&logoColor=white" alt="OneShot Installation" />
   </a>
 </p>
 
@@ -14,7 +14,7 @@ For full state machine DAGs [**DIAGRAM.md**](DIAGRAM.md).
 
 ## ⚡ One Click Installation — Launch Server
 
-**Windows (PowerShell — one command, fully automatic):**
+**Windows (PowerShell):**
 
 ```powershell
 irm https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1 | iex
@@ -26,7 +26,7 @@ irm https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.p
 curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.sh | bash
 ```
 
-> The installer automatically: clones the repo → installs dependencies → compiles → discovers an open port → **launches the browser ready for testing**.
+
 
 ---
 
@@ -35,8 +35,8 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 <div align="center">
 
 <p align="center">
-  <a href="https://youtu.be/lE9vtKB-fSk"><img src="https://img.shields.io/badge/YouTube-Watch_Video_Walkthrough-red?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch Video Walkthrough" /></a>
-  <a href="https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1"><img src="https://img.shields.io/badge/⚡_Launch_Console-One_Click_Local-2563EB?style=for-the-badge&logo=powershell&logoColor=white" alt="Launch Real Console" /></a>
+  <a href="https://youtu.be/lE9vtKB-fSk"><img src="https://img.shields.io/badge/YouTube-Watch_Video-red?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch Video Walkthrough" /></a>
+  <a href="https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1"><img src="https://img.shields.io/badge/⚡_Launch_Server-2563EB?style=for-the-badge&logo=powershell&logoColor=white" alt="Launch Real Console" /></a>
 </p>
 
 <!-- Autoplaying 60s fast-forward visualization — click to open full YouTube walkthrough -->

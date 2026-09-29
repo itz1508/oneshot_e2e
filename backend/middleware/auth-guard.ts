@@ -54,8 +54,27 @@ export function checkAuthentication(
   const tokenEnv = options.apiKeyEnv || "ONESHOT_API_TOKEN";
   const expectedToken = options.expectedToken || process.env[tokenEnv] || "";
   if (!expectedToken) {
-    // If auth is enabled in config but no server token is configured, log warning and allow
-    return true;
+    // Fail closed. Previously this returned `true`, so enabling auth in
+    // config.toml with an unset or misspelled token variable produced a
+    // silently unauthenticated server on a 0.0.0.0 bind.
+    console.error(
+      `[OneShot] Authentication is ENABLED but no server token is configured. ` +
+        `Set the environment variable "${tokenEnv}" to the expected bearer token. ` +
+        `Refusing all requests until it is present.`
+    );
+    res.writeHead(503, {
+      "Content-Type": "application/json",
+      "Retry-After": "30",
+    });
+    res.end(
+      JSON.stringify({
+        ok: false,
+        error:
+          "Authentication is enabled but no server token is configured. " +
+          `Set the ${tokenEnv} environment variable on the server.`,
+      })
+    );
+    return false;
   }
 
   // Constant-time comparison

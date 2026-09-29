@@ -154,8 +154,19 @@ def execute_reasoning_core(request: ReasoningRequest) -> ReasoningResponse:
             )
             recommendation = "Dry run fixture audit passed. All fixtures ready for deterministic testing."
         else:
-            analysis.append(f"Successfully processed {task} request using local reasoning engine.")
-            recommendation = "Proceed to next execution stage."
+            # No model was invoked, so nothing was actually reasoned over. Do
+            # not claim otherwise: this branch is a deterministic local
+            # template, and reporting it as processed work is a false claim.
+            analysis.append(
+                f"NO MODEL INVOKED. The '{task}' task was not executed: no LLM "
+                "provider credential is configured, so no reasoning was performed "
+                "and no tool was called. Configure a provider (Integrations panel "
+                "or app/env/.env) to run this request."
+            )
+            recommendation = (
+                "Configure a model provider before sending prompts; this response "
+                "is a local template and contains no model output."
+            )
 
     # Dynamic confidence calculation based on constraints, evidence, and task clarity
     base_confidence = 0.92

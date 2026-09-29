@@ -91,3 +91,31 @@ def test_pydantic_request_rejects_missing_run_id():
             constraints=[],
             evidence=[],
         )
+
+
+def test_no_model_branch_never_claims_the_request_was_processed():
+    """The local fallback performs no reasoning; it must not report that it did.
+
+    Regression: this branch used to emit
+    "Successfully processed {task} request using local reasoning engine.",
+    which asserted work that never happened. A user with no provider
+    credential was told their request succeeded while nothing was executed.
+    """
+    req = ReasoningRequest(
+        run_id="run_no_model_789",
+        task="general",
+        goal="Summarise the repository",
+        constraints=[],
+        evidence=[],
+    )
+    resp = execute_reasoning_core(req)
+
+    joined = " ".join(resp.analysis) + " " + resp.recommendation
+
+    # No claim of completed work.
+    assert "Successfully processed" not in joined
+    assert "local reasoning engine" not in joined
+
+    # Explicitly states that no model ran and no tool was called.
+    assert "NO MODEL INVOKED" in joined
+    assert "not executed" in joined

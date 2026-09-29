@@ -187,5 +187,20 @@ describe("Production Security & Middleware Suite", () => {
 
       assert.equal(allowed, true);
     });
+
+    it("fails closed when auth is enabled but no server token is configured", () => {
+      // Regression: the guard used to `return true` here, so enabling auth in
+      // config.toml with an unset or misspelled token variable produced a
+      // silently unauthenticated server on a 0.0.0.0 bind.
+      const mockReq = { headers: { authorization: "Bearer anything" } } as any;
+      const mockRes = { writeHead: () => true, end: () => true } as any;
+
+      const allowed = checkAuthentication(mockReq, mockRes, "/api/tool/execute", {
+        enabled: true,
+        apiKeyEnv: "ONESHOT_DEFINITELY_UNSET_TOKEN_VAR",
+      });
+
+      assert.equal(allowed, false, "must refuse, not allow, when no token is configured");
+    });
   });
 });

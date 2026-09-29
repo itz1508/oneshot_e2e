@@ -75,6 +75,9 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [activeStep, setActiveStep] = useState<number>(1);
   const [liveApiKey, setLiveApiKey] = useState("");
+  // API keys are masked by default so a pasted key is never displayed on
+  // screen, in a screenshot, or in a screen share.
+  const [showApiKey, setShowApiKey] = useState(false);
   const [liveModel, setLiveModel] = useState(
     PROVIDER_DEFINITIONS[currentProvider]?.models[0] || "gemini-2.5-flash"
   );
@@ -160,6 +163,10 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
       setLiveStatusMsg(`Connected: ${currentProvider} (${liveModel})`);
       setActiveStep(5); // Move to Try Live step
       onRunWorkflow(effectivePrompt, "live", currentProvider);
+      // Drop the secret from component state once the server owns it, so it
+      // cannot be read back off the screen, a screenshot, or the DOM.
+      setLiveApiKey("");
+      setShowApiKey(false);
     } catch (err: any) {
       setLiveStatusMsg(`Configuration error: ${err.message || "Failed to configure provider"}`);
     } finally {
@@ -510,16 +517,44 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
               <label htmlFor="liveApiKeyInput" className="block text-[10px] text-[#788194] uppercase tracking-wider mb-1">
                 API Key (Optional if set in app/env/.env)
               </label>
-              <input
-                id="liveApiKeyInput"
-                data-testid="live-api-key-input"
-                type="text"
-                autoComplete="off"
-                placeholder="Paste key or use server environment"
-                value={liveApiKey}
-                onChange={(e) => setLiveApiKey(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-[#0d0e11] px-3 py-2 text-xs text-white placeholder-[#525866] focus:border-[#3b82f6] focus:outline-none font-mono"
-              />
+              <div className="relative">
+                <input
+                  id="liveApiKeyInput"
+                  data-testid="live-api-key-input"
+                  type={showApiKey ? "text" : "password"}
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="Paste key or use server environment"
+                  value={liveApiKey}
+                  onChange={(e) => setLiveApiKey(e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-[#0d0e11] px-3 py-2 text-xs text-white placeholder-[#525866] focus:border-[#3b82f6] focus:outline-none font-mono pr-16"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
+                  {liveApiKey ? (
+                    <button
+                      type="button"
+                      onClick={() => setLiveApiKey("")}
+                      title="Clear API key from this field"
+                      aria-label="Clear API key"
+                      data-testid="clear-api-key-btn"
+                      className="rounded px-1.5 py-1 text-[10px] text-[#788194] hover:text-white hover:bg-white/10"
+                    >
+                      Clear
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey((v) => !v)}
+                    title={showApiKey ? "Hide API key" : "Show API key"}
+                    aria-label={showApiKey ? "Hide API key" : "Show API key"}
+                    aria-pressed={showApiKey}
+                    data-testid="toggle-api-key-visibility-btn"
+                    className="rounded px-1.5 py-1 text-[10px] text-[#788194] hover:text-white hover:bg-white/10"
+                  >
+                    {showApiKey ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="sm:col-span-3 flex items-end gap-1.5">

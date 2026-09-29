@@ -119,9 +119,23 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
     assert.match(modalSrc, /Server Security Boundary/);
     assert.match(modalSrc, /\/api\/providers\/status/);
     assert.match(modalSrc, /checkServerReadiness/);
-    // Credentials stay strictly server-side; no raw password or secret inputs
-    assert.doesNotMatch(modalSrc, /type=["']password["']/);
+    // This modal collects no secret at all: the key is typed in the workflow
+    // console, not here, so the server boundary holds by construction.
     assert.doesNotMatch(modalSrc, /modalApiKeyInput/);
+  });
+
+  it("masks the pasted API key in the workflow console and drops it once sent", () => {
+    const console_ = read("frontend/web/src/components/WelcomeWorkflowConsole.tsx");
+
+    // A pasted credential must never render in clear text.
+    assert.match(console_, /type=\{showApiKey \? "text" : "password"\}/);
+    assert.match(console_, /data-testid="toggle-api-key-visibility-btn"/);
+    // Masked by default.
+    assert.match(console_, /useState\(false\)/);
+
+    // The key must not linger in component state after the server owns it.
+    assert.match(console_, /setLiveApiKey\(""\)/);
+    assert.match(console_, /setShowApiKey\(false\)/);
   });
 
   it("verifies obsolete standalone simulations and alternate chat components are absent", () => {
