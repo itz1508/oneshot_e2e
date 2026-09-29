@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { Session, ProviderId, ProviderConfig } from "../types";
 import { PROVIDER_DEFINITIONS } from "../lib/providers";
+import { resolveApiUrl } from "../lib/api";
 
 interface SidebarProps {
   sessions: Session[];
@@ -26,6 +27,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const groups: ("Today" | "Yesterday" | "Previous")[] = ["Today", "Yesterday", "Previous"];
   const [searchQuery, setSearchQuery] = useState("");
+  // Real server-reported configuration, so the sidebar never contradicts
+  // /api/providers/status about which providers actually have credentials.
+  const [serverProviderStatus, setServerProviderStatus] = useState<Partial<Record<ProviderId, boolean>>>({});
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(resolveApiUrl("/api/providers/status"));
+        if (!res.ok) return;
+        const data = await res.json();
+        const providers = (data.providers ?? data) as Record<string, { configured?: boolean }>;
+        if (cancelled) return;
+        setServerProviderStatus(
+          Object.fromEntries(
+            Object.entries(providers).map(([k, v]) => [k, v?.configured === true])
+          ) as Partial<Record<ProviderId, boolean>>
+        );
+      } catch {
+        // Leave the empty map; the sidebar falls back to browser-stored config.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const visibleSessions = normalizedSearch
     ? sessions.filter((session) => session.title.toLowerCase().includes(normalizedSearch))
@@ -109,7 +135,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {(["gemini", "openai", "nebius", "mistral", "ollama"] as ProviderId[]).map((pid) => {
               const def = PROVIDER_DEFINITIONS[pid];
               const cfg = providerConfigs[pid];
-              const isConfigured = cfg?.configured && !!cfg?.key;
+              // A key pasted in the browser is only one way to be configured.
+              // Credentials also live server-side in app/env/.env, and the
+              // server reports that truth via /api/providers/status. Requiring
+              // a browser-stored key made every server-configured provider
+              // display "Not configured", contradicting the server.
+              const serverConfigured = serverProviderStatus?.[pid] === true;
+              const isConfigured = cfg?.configured && !!cfg?.key ? true : serverConfigured;
 
               return (
                 <div

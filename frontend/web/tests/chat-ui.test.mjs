@@ -138,6 +138,30 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
     assert.match(console_, /setShowApiKey\(false\)/);
   });
 
+  it("resolves the default chat provider from the server, not a hardcoded id", () => {
+    const appSrc = read("frontend/web/src/components/App.tsx");
+
+    // Regression: the initial provider was hardcoded to "gemini", so on any
+    // installation whose credential belonged to another provider every plain
+    // chat message returned 503 "credentials not configured".
+    assert.match(appSrc, /\/api\/providers\/status/);
+    assert.match(appSrc, /CHAT_PROVIDERS/);
+    assert.match(appSrc, /setModalProviderId\(firstConfigured\)/);
+
+    // `tavily` reports configured=true but cannot answer a chat turn, so it
+    // must be excluded from the chat provider list.
+    assert.doesNotMatch(appSrc, /const CHAT_PROVIDERS[^=]*=\s*\[[^\]]*tavily/);
+  });
+
+  it("shows sidebar provider status from the server, not a browser-stored key", () => {
+    const sidebarSrc = read("frontend/web/src/components/Sidebar.tsx");
+    // Regression: `cfg?.configured && !!cfg?.key` could never be true for
+    // server-side credentials, so every provider displayed "Not configured"
+    // even when /api/providers/status reported it configured.
+    assert.match(sidebarSrc, /\/api\/providers\/status/);
+    assert.match(sidebarSrc, /serverProviderStatus/);
+  });
+
   it("verifies obsolete standalone simulations and alternate chat components are absent", () => {
     assert.ok(
       !existsSync(join(root, "frontend/web/public/mock-screen.html")),
