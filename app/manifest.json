@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-29T09:22:25Z",
+  "generated_at": "2026-09-29T17:58:03Z",
   "version": "1.3.0",
-  "commit": "568864bc",
+  "commit": "d39580d7",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -1025,8 +1025,8 @@
     },
     {
       "path": "packages\\agent-runtime\\src\\ag-ui\\server-adapter.ts",
-      "size": 11274,
-      "hash": "sha256:756ca599d19929b562ff56dfd66c70f7f2f05b1a72438786a0b0fac63294fcf7",
+      "size": 11275,
+      "hash": "sha256:53c88a14c54ab50546dc6dd19c9c2ab315e187fe3753f42511d764da5c16f67e",
       "category": "source"
     },
     {
@@ -1537,7 +1537,7 @@
   "statistics": {
     "total_files": 255,
     "source_files": 255,
-    "total_size_bytes": 1551485,
+    "total_size_bytes": 1551486,
     "by_extension": {
       ".yml": 1,
       ".md": 7,
