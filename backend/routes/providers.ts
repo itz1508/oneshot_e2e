@@ -1,8 +1,50 @@
+import http from "node:http";
 import { createLiveModel, createMainAgent, tavilySearchBackend } from "../../packages/agent-runtime/src/index.js";
 import { oauthManager } from "../oauth.js";
 import { ProviderService } from "../services/provider-service.js";
 import { sendJson, sendError } from "./helpers.js";
 import type { RouteHandler } from "./types.js";
+
+// ── Local Ollama install state (Option B sidecar / host daemon) ──────────
+// The browser must never learn the Ollama URL: in Docker the sidecar is on
+// compose DNS (`ollama:11434`), on the host it is `localhost:11434`. Both
+// endpoints below resolve the URL server-side and proxy daemon responses.
+
+function resolveOllamaBase(): string {
+  const raw = (process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1").trim();
+  return raw.replace(/\/v1\/?$/, "").replace(/\/$/, "");
+}
+
+let ollamaInstalling: string | null = null;
+
+/** Model names are allowlisted: registry path + tag, nothing else. */
+function sanitizeOllamaModel(model: unknown): string | null {
+  if (typeof model !== "string") return null;
+  const name = model.trim();
+  if (!name || name.length > 120) return null;
+  if (!/^[A-Za-z0-9._/:@-]+$/.test(name)) return null;
+  if (name.includes("..") || name.startsWith("/") || name.startsWith("-")) return null;
+  return name;
+}
+
+async function fetchOllamaTags(base: string): Promise<string[] | null> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetch(`${base}/api/tags`, { signal: ctrl.signal });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { models?: Array<{ name?: string }> };
+    if (!Array.isArray(data.models)) return [];
+    return data.models
+      .map((m) => (typeof m?.name === "string" ? m.name : ""))
+      .filter((n) => n.length > 0);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 
 // Event-shape-tolerant text detector used by every provider availability probe.
 //
@@ -53,6 +95,80 @@ export const handleProviderRoutes: RouteHandler = async (req, res, ctx) => {
     getProviderRegistry,
     port,
   } = ctx;
+
+  // ── Local Ollama install state ───────────────────────────────────────
+  // GET /api/ollama/status → { available, installed, models, installing }
+  // `installed` means THIS model tag is on disk. Never 503s: an unreachable
+  // daemon is a state (`available:false`), not a server fault.
+  if (pathname === "/api/ollama/status" && req.method === "GET") {
+    const base = resolveOllamaBase();
+    const wanted = (process.env.OLLAMA_MODEL || "gemma4:31b").trim();
+    const models = await fetchOllamaTags(base);
+    if (models === null) {
+      return sendJson(res, 200, {
+        available: false,
+        installed: false,
+        models: [],
+        installing: ollamaInstalling,
+        error: `Ollama daemon unreachable at server-side OLLAMA_BASE_URL (${base}). Start it (host) or enable the compose profile: docker compose --profile local-llm up.`,
+      });
+    }
+    return sendJson(res, 200, {
+      available: true,
+      installed: models.some((m) => m === wanted || m.startsWith(`${wanted}:`)),
+      models,
+      installing: ollamaInstalling,
+    });
+  }
+
+  // POST /api/ollama/pull { model } → NDJSON progress stream, proxied live
+  // from `POST <ollama>/api/pull`. Single-flight: a second pull while one
+  // runs gets 409, not a parallel 20 GB download.
+  if (pathname === "/api/ollama/pull" && req.method === "POST") {
+    const body = await parseBody(req);
+    const model = sanitizeOllamaModel(body?.model ?? process.env.OLLAMA_MODEL ?? "gemma4:31b");
+    if (!model) {
+      return sendError(res, 400, "Invalid model name");
+    }
+    if (ollamaInstalling) {
+      return sendError(res, 409, `Already pulling "${ollamaInstalling}"`);
+    }
+    const base = resolveOllamaBase();
+    const target = new URL("/api/pull", base);
+    const upstream = await new Promise<http.IncomingMessage>((resolve, reject) => {
+      const up = http.request(
+        {
+          hostname: target.hostname,
+          port: Number(target.port) || 11434,
+          path: "/api/pull",
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          timeout: 10000,
+        },
+        resolve
+      );
+      up.on("error", reject);
+      up.on("timeout", () => up.destroy(new Error("Ollama daemon unreachable")));
+      up.end(JSON.stringify({ model, stream: true }));
+    }).catch((err: Error) => sendError(res, 502, `Ollama daemon unreachable: ${err.message}`) as never);
+    if (!upstream || upstream.statusCode !== 200) {
+      upstream?.resume();
+      return sendError(res, 502, `Ollama pull rejected (HTTP ${upstream?.statusCode ?? "?"})`);
+    }
+    ollamaInstalling = model;
+    res.writeHead(200, { "Content-Type": "application/x-ndjson" });
+    upstream.on("data", (chunk: Buffer) => {
+      if (!res.writableEnded) res.write(chunk);
+    });
+    await new Promise<void>((done) => {
+      upstream.on("end", done);
+      upstream.on("error", done);
+      (req as http.IncomingMessage).on("close", done);
+    });
+    ollamaInstalling = null;
+    if (!res.writableEnded) res.end();
+    return true;
+  }
 
   // Provider status — checks configured status and test connectivity safely
   if (pathname === "/api/providers/status" && req.method === "GET") {

@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-29T19:43:00Z",
+  "generated_at": "2026-09-29T20:26:14Z",
   "version": "1.3.0",
-  "commit": "2a6a7598",
+  "commit": "5b878ee0",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -317,8 +317,8 @@
     },
     {
       "path": "backend\\routes\\providers.ts",
-      "size": 15780,
-      "hash": "sha256:6d110072f818bf4c9c7dacac6e7517a504be9469e55fcb584c232a62ae5aea0a",
+      "size": 20511,
+      "hash": "sha256:13686556969af818a3be2ee4795621bf34c28476c6c1f5cb8dca4771699bdb96",
       "category": "source"
     },
     {
@@ -473,8 +473,8 @@
     },
     {
       "path": "backend\\tests\\ts\\provider-and-reasoning.test.ts",
-      "size": 18590,
-      "hash": "sha256:a4259b24080d43c8d9da04fdba9ef685fb22042bf1814c3c1879b492eb7e569b",
+      "size": 20558,
+      "hash": "sha256:98caf3ce8052931f2c6209919e5b63f318295ded49b5fc17ae71a086447cd2c4",
       "category": "source"
     },
     {
@@ -683,14 +683,20 @@
     },
     {
       "path": "frontend\\web\\src\\components\\Integration\\Integration.tsx",
-      "size": 7404,
-      "hash": "sha256:7107dc3cef48e69d1dfbf84c01fd841ddb21b78244d74f86314ebd3bbb79ff29",
+      "size": 7760,
+      "hash": "sha256:241ac0325907aab6f15fe48efac1cff298f53746cca0b2e8a87c307bf49f7367",
       "category": "source"
     },
     {
       "path": "frontend\\web\\src\\components\\Integration\\Model\\Gemini.tsx",
       "size": 7776,
       "hash": "sha256:337d1776e0c6af0145b5aa4e2f9c33e7165118a4dcdd793fd025151024d74ba3",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\src\\components\\Integration\\Model\\Ollama.tsx",
+      "size": 12836,
+      "hash": "sha256:f7cc7372d331279c8a7efd1c7253d433a8bc5bbe8abcc23e2ddbd56b4653c882",
       "category": "source"
     },
     {
@@ -701,8 +707,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\Integration\\index.ts",
-      "size": 191,
-      "hash": "sha256:1c153ce0de069765c91998063e7adea2474f876683688478f88fc0f18d3ff399",
+      "size": 237,
+      "hash": "sha256:e507c5708a7c93c493a022e6652f517e185c8987e9a803eae92bc5e97553ea17",
       "category": "source"
     },
     {
@@ -869,8 +875,8 @@
     },
     {
       "path": "frontend\\web\\src\\lib\\api.ts",
-      "size": 26512,
-      "hash": "sha256:607b3315d326311935d30cd4f9a19550e2cc5e6d5a3f56ca9ac32d9af923d5f3",
+      "size": 28348,
+      "hash": "sha256:f84d599121b53a118e29d4d72b60c6d4553f1f47f322d170a5a995dff81b702c",
       "category": "source"
     },
     {
@@ -979,6 +985,12 @@
       "path": "frontend\\web\\tests\\main-screen-and-task-rail.test.mjs",
       "size": 6820,
       "hash": "sha256:4b6c695fd4de93b956e76da6ecaf8a360b437f556d2a43fa1278f8c152dc9d4c",
+      "category": "source"
+    },
+    {
+      "path": "frontend\\web\\tests\\ollama-install.test.mjs",
+      "size": 2575,
+      "hash": "sha256:ec28483c3bf2de6f904bf250a5915bc4ca77ccd0813ca2219199d13eca95231f",
       "category": "source"
     },
     {
@@ -1541,14 +1553,14 @@
     }
   ],
   "statistics": {
-    "total_files": 256,
-    "source_files": 256,
-    "total_size_bytes": 1556395,
+    "total_files": 258,
+    "source_files": 258,
+    "total_size_bytes": 1580743,
     "by_extension": {
       ".yml": 2,
       ".md": 7,
       "(no extension)": 1,
-      ".mjs": 40,
+      ".mjs": 41,
       ".bat": 2,
       ".sh": 3,
       ".json": 21,
@@ -1557,7 +1569,7 @@
       ".toml": 2,
       ".txt": 1,
       ".css": 1,
-      ".tsx": 34,
+      ".tsx": 35,
       ".html": 1,
       ".yaml": 2,
       ".ps1": 2

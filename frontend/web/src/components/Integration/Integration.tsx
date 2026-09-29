@@ -3,6 +3,7 @@ import { useOverlayFocus } from "../../lib/useOverlayFocus";
 import { AuthloginGemini } from "./Authlogin/Gemini";
 import { ModelGemini } from "./Model/Gemini";
 import { ModelOpenAI } from "./Model/OpenAI";
+import { ModelOllama } from "./Model/Ollama";
 import { ProviderId } from "../../types";
 
 interface IntegrationProps {
@@ -40,7 +41,7 @@ export const Integration: React.FC<IntegrationProps> = ({
     }, [currentProvider, currentModel]);
 
     const handleProviderSwitch = useCallback(
-        (provider: "gemini" | "openai", model: string) => {
+        (provider: "gemini" | "openai" | "ollama", model: string) => {
             setActiveProvider(provider);
             setActiveModel(model);
             onProviderSwitch?.(provider, model);
@@ -136,6 +137,11 @@ export const Integration: React.FC<IntegrationProps> = ({
                             <ModelOpenAI
                                 sessionId={sessionId}
                                 currentModel={activeProvider === "openai" ? activeModel : undefined}
+                                onProviderSwitch={handleProviderSwitch}
+                            />
+                            <ModelOllama
+                                sessionId={sessionId}
+                                currentModel={activeProvider === "ollama" ? activeModel : undefined}
                                 onProviderSwitch={handleProviderSwitch}
                             />
                         </>

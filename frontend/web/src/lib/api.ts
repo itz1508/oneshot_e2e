@@ -674,6 +674,62 @@ export class OneShotPublicApi {
   }
 }
 
+export interface OllamaInstallState {
+  available: boolean;
+  installed: boolean;
+  models: string[];
+  installing: string | null;
+  error?: string;
+}
+
+/**
+ * Local Ollama install state + model pull, proxied through the backend.
+ *
+ * The browser can never reach the Ollama host directly: in Docker the
+ * sidecar lives on compose DNS (`ollama:11434`), on the host it is
+ * `localhost:11434`. All URLs stay server-side. Progress streams as
+ * newline-delimited JSON (`{ status, completed?, total? }`) from the
+ * Ollama daemon itself.
+ */
+export async function getOllamaInstallState(signal?: AbortSignal): Promise<OllamaInstallState> {
+  const res = await fetch(resolveApiUrl('/api/ollama/status'), { signal });
+  return readJsonResponse<OllamaInstallState>(res, 'Ollama install state request');
+}
+
+export async function* pullOllamaModel(
+  model: string,
+  signal?: AbortSignal,
+): AsyncGenerator<{ status: string; completed?: number; total?: number }, void, void> {
+  const res = await fetch(resolveApiUrl('/api/ollama/pull'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model }),
+    signal,
+  });
+  if (!res.ok || !res.body) {
+    throw new ApiResponseError(
+      `Ollama model pull failed with HTTP ${res.status}`,
+      res.status,
+      null,
+    );
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let idx: number;
+    while ((idx = buffer.indexOf('\n')) >= 0) {
+      const line = buffer.slice(0, idx).trim();
+      buffer = buffer.slice(idx + 1);
+      if (!line) continue;
+      yield JSON.parse(line) as { status: string; completed?: number; total?: number };
+    }
+  }
+}
+
 export const defaultOneShotApi = new OneShotPublicApi();
 
 

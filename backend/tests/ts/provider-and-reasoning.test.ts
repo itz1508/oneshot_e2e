@@ -98,6 +98,50 @@ describe("Multi-Provider Registry & Prebuilt Presets", () => {
     assert.strictEqual(data.model, "mistral-large-latest");
   });
 
+  it("reports local Ollama install state without a daemon (available:false, HTTP 200)", async () => {
+    const prevBase = process.env.OLLAMA_BASE_URL;
+    process.env.OLLAMA_BASE_URL = "http://127.0.0.1:1/v1";
+    try {
+      const res = await fetch(`${baseUrl}/api/ollama/status`);
+      assert.strictEqual(res.status, 200, "Install state must never 503 — unreachable is a state");
+      const data = await res.json();
+      assert.strictEqual(data.available, false);
+      assert.strictEqual(data.installed, false);
+      assert.deepStrictEqual(data.models, []);
+      assert.ok(typeof data.error === "string" && data.error.length > 0);
+    } finally {
+      if (prevBase === undefined) delete process.env.OLLAMA_BASE_URL;
+      else process.env.OLLAMA_BASE_URL = prevBase;
+    }
+  });
+
+  it("rejects an Ollama pull while the daemon is unreachable (HTTP 502, no fake progress)", async () => {
+    const prevBase = process.env.OLLAMA_BASE_URL;
+    process.env.OLLAMA_BASE_URL = "http://127.0.0.1:1/v1";
+    try {
+      const res = await fetch(`${baseUrl}/api/ollama/pull`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "gemma4:31b" }),
+      });
+      assert.strictEqual(res.status, 502, "Unreachable daemon must surface 502, not a fake stream");
+      const data = await res.json();
+      assert.ok(typeof data.error === "string" && /unreachable|rejected/i.test(data.error));
+    } finally {
+      if (prevBase === undefined) delete process.env.OLLAMA_BASE_URL;
+      else process.env.OLLAMA_BASE_URL = prevBase;
+    }
+  });
+
+  it("rejects a malicious Ollama model name (HTTP 400)", async () => {
+    const res = await fetch(`${baseUrl}/api/ollama/pull`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "../../etc/passwd; rm -rf /" }),
+    });
+    assert.strictEqual(res.status, 400, "Model allowlist must hold");
+  });
+
   it("executes Python reasoning engine and validates response payload contracts", async () => {
     const pyResp = await executePythonReasoning({
       runId: "run_test_integration",
