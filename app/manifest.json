@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-29T05:22:12Z",
+  "generated_at": "2026-09-29T09:22:25Z",
   "version": "1.3.0",
-  "commit": "c6978e9c",
+  "commit": "568864bc",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -635,8 +635,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\App.tsx",
-      "size": 22376,
-      "hash": "sha256:1c818ef70cc1bef0a386cf558c7b6dee081d7963cffe1b416c4c5ca3a84ef45e",
+      "size": 21694,
+      "hash": "sha256:c11fb027884e9744a2b2901b009442c6ce2e92a100a9ee7787c6bf3314785259",
       "category": "source"
     },
     {
@@ -755,8 +755,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\WelcomeWorkflowConsole.tsx",
-      "size": 26635,
-      "hash": "sha256:74682c82e7f38c68124b0eaf1853c6366dfc4fc9a1057acd0bc244a31cec2c16",
+      "size": 27472,
+      "hash": "sha256:277b613eb79bc302ca872813328220e9f0fafdd1973640bedef37df4e2d290ce",
       "category": "source"
     },
     {
@@ -857,8 +857,8 @@
     },
     {
       "path": "frontend\\web\\src\\lib\\ag-ui.ts",
-      "size": 2606,
-      "hash": "sha256:0c6faf28d693eefb968d2f7b8dff2973dc58052a7bb43ef8acc92b9e2e290c58",
+      "size": 2779,
+      "hash": "sha256:f2ed6b47377de7b5710ae1b056523ca4c2b68c88d9ddd0468731ccae4c08ebca",
       "category": "source"
     },
     {
@@ -881,8 +881,8 @@
     },
     {
       "path": "frontend\\web\\src\\lib\\providers.ts",
-      "size": 3652,
-      "hash": "sha256:2ba0f535dee79c0e8c66db933268ba628b22ffe0aa218feabd094943efdd9e01",
+      "size": 4985,
+      "hash": "sha256:b30fe6b05d82fc0eb8a15835a103499753d0530cd1606124a0547f9cdd63b910",
       "category": "source"
     },
     {
@@ -959,8 +959,8 @@
     },
     {
       "path": "frontend\\web\\tests\\chat-ui.test.mjs",
-      "size": 14143,
-      "hash": "sha256:c0e833861f1c9a2e7abb26cfa05337ad1b3164aa72539aa3e7615f24d717d7c8",
+      "size": 17335,
+      "hash": "sha256:acbd5d2a66cf4067ef4eba0029245bb2fabcfca533c74b137db12936e79fa5bd",
       "category": "source"
     },
     {
@@ -1008,13 +1008,13 @@
     {
       "path": "package.json",
       "size": 3261,
-      "hash": "sha256:a5bb5037486fac0bfc3459928e3ea1dfdce48e5f2d320df63ec8e5b021cec09b",
+      "hash": "sha256:09be0735f88c1c0e29772fe3591f70d9a9ee58d54a1bab47052848c7475fcd76",
       "category": "source"
     },
     {
       "path": "packages\\agent-runtime\\package.json",
-      "size": 405,
-      "hash": "sha256:6b17dbfd69a29064c7cf9428157a398907b32db7e277de27bbbdff4eaa67c57b",
+      "size": 424,
+      "hash": "sha256:4708e86c1355932eff3d423854095c152a82a17b84c31407029dbfd1cf1212b0",
       "category": "source"
     },
     {
@@ -1025,8 +1025,8 @@
     },
     {
       "path": "packages\\agent-runtime\\src\\ag-ui\\server-adapter.ts",
-      "size": 10965,
-      "hash": "sha256:d7e1c51b929672d3e08a50d4d379d9dbb731f70eab0a948c3e4ce4b3872618cc",
+      "size": 11274,
+      "hash": "sha256:756ca599d19929b562ff56dfd66c70f7f2f05b1a72438786a0b0fac63294fcf7",
       "category": "source"
     },
     {
@@ -1313,8 +1313,8 @@
     },
     {
       "path": "packages\\agent-runtime\\tests\\ag-ui-server.test.mjs",
-      "size": 8135,
-      "hash": "sha256:96896933df44490c4cd8b4b3c8bed2a3b8018bcc35cd9c78533f582d6327f61a",
+      "size": 9369,
+      "hash": "sha256:325f847c1a0a41bb91c547698fe3792419438e8fdb3d44d167898d86b03a046d",
       "category": "source"
     },
     {
@@ -1385,14 +1385,14 @@
     },
     {
       "path": "pnpm-lock.yaml",
-      "size": 140860,
-      "hash": "sha256:c262a03a34671ce39ef983bcb2931105a30709146035d5154d8838f579b628a5",
+      "size": 143061,
+      "hash": "sha256:270b403bdafc09a804fd82a2867f8a567e9c70e4b950fdd6cc06b770acbf4872",
       "category": "source"
     },
     {
       "path": "pnpm-workspace.yaml",
       "size": 782,
-      "hash": "sha256:f42e87416727f6b56cac7bf3cd25f9c5ecacfec43d5147b833d470458b16b490",
+      "hash": "sha256:4364033d708091baecc09ebf221444e4eb07f65fe7a91f4f73bb2aa8db79fdaa",
       "category": "source"
     },
     {
@@ -1516,24 +1516,6 @@
       "category": "source"
     },
     {
-      "path": "test-results\\keytest.mjs",
-      "size": 3918,
-      "hash": "sha256:dd38d2984cc95815ddcc2a18d6ace0d452b55ce859d6d42768fbd16f49c3c22c",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\keytest2.mjs",
-      "size": 2057,
-      "hash": "sha256:ba0cecb3cdbd2eab9c44672d8b692d98c3ca3ea94679749dd922cfa0b344f820",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\stripquotes.mjs",
-      "size": 880,
-      "hash": "sha256:ebf9498b338b7662375a53b8d98b21288964df7354734809616ecb189cbed794",
-      "category": "source"
-    },
-    {
       "path": "tsconfig.build.json",
       "size": 448,
       "hash": "sha256:0326c159c4783e372a8d79cdf1de91013ba7d248f74f0370f484105e0cd6963f",
@@ -1553,14 +1535,14 @@
     }
   ],
   "statistics": {
-    "total_files": 258,
-    "source_files": 258,
-    "total_size_bytes": 1549724,
+    "total_files": 255,
+    "source_files": 255,
+    "total_size_bytes": 1551485,
     "by_extension": {
       ".yml": 1,
       ".md": 7,
       "(no extension)": 1,
-      ".mjs": 43,
+      ".mjs": 40,
       ".bat": 2,
       ".sh": 3,
       ".json": 21,

@@ -61,13 +61,13 @@ interface ActiveToolCall {
 
 /**
  * Executes a real Strands Agent stream and yields formatted AG-UI Server-Sent Events.
- * 
+ *
  * Tool Lifecycle Contract:
  * - TOOL_CALL_START: Tool invocation begins (parameters may be partial during streaming)
  * - TOOL_CALL_RUNNING: Tool acknowledged as running (emitted after START, before result)
  * - TOOL_CALL_FINISH: Tool completed successfully with result
  * - TOOL_CALL_ERROR: Tool failed with error
- * 
+ *
  * Call Correlation:
  * - Every event carries stable toolUseId matching the original TOOL_CALL_START
  * - Multiple concurrent tools can run independently and resolve independently
@@ -96,6 +96,7 @@ export async function* streamStrandsToAgUi(
 
   let stepCount = 0;
   let activeStepId: string | null = null;
+  let activeStepLabel: string | null = null;
   let accumulatedText = "";
 
   try {
@@ -169,6 +170,7 @@ export async function* streamStrandsToAgUi(
       if (stepName === "beforeModelCallEvent" || stepName === "beforeToolsEvent") {
         stepCount++;
         activeStepId = `step-${stepCount}`;
+        activeStepLabel = stepName;
         yield {
           type: "STEP_START",
           runId,
@@ -186,8 +188,12 @@ export async function* streamStrandsToAgUi(
             timestamp: now(),
             stepId: activeStepId,
             status: "completed",
+            // Repeat the label so the consumer can close the step by id alone
+            // and show the real step name, not a generic placeholder.
+            label: activeStepLabel ?? stepName,
           };
           activeStepId = null;
+          activeStepLabel = null;
         }
       }
 

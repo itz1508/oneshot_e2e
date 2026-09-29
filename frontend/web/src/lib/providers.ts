@@ -1,4 +1,5 @@
 import { ProviderDefinition, ProviderId, ProviderConfig } from "../types";
+import { resolveApiUrl } from "./api";
 
 export const PROVIDER_DEFINITIONS: Record<ProviderId, ProviderDefinition> = {
   gemini: {
@@ -61,6 +62,37 @@ export const PROVIDER_DEFINITIONS: Record<ProviderId, ProviderDefinition> = {
 };
 
 const STORAGE_KEY_PREFIX = "oneshot_provider_";
+
+/**
+ * Chat-capable providers, in preference order.
+ *
+ * `tavily` is deliberately excluded: it is a search provider and reports
+ * `configured=true`, but it cannot answer a chat turn.
+ */
+export const CHAT_PROVIDER_IDS: ProviderId[] = ["gemini", "openai", "mistral", "nebius", "ollama"];
+
+/**
+ * Resolves the provider this server can actually execute with, from real
+ * `/api/providers/status` data.
+ *
+ * Callers must await the returned promise rather than reading it from async
+ * state: a click that lands before the status response arrives would otherwise
+ * fall back to the bundled default and be rejected with HTTP 503.
+ *
+ * Returns null when no chat provider is configured, leaving the caller to
+ * report the server's explicit error.
+ */
+export function resolveConfiguredChatProvider(): Promise<ProviderId | null> {
+  return fetch(resolveApiUrl("/api/providers/status"))
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data: unknown) => {
+      const source =
+        data && typeof data === "object" ? ((data as { providers?: unknown }).providers ?? data) : null;
+      const providers = source as Record<string, { configured?: boolean }> | null;
+      return CHAT_PROVIDER_IDS.find((p) => providers?.[p]?.configured === true) ?? null;
+    })
+    .catch(() => null);
+}
 
 export function getStoredProviderConfig(id: ProviderId): ProviderConfig {
   const def = PROVIDER_DEFINITIONS[id];

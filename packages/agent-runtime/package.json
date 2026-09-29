@@ -1,6 +1,7 @@
 {
   "name": "@oneshot/agent-runtime",
   "version": "1.3.0",
+  "private": true,
   "description": "OneShot unified agent runtime, canonical workflow engine, session ledger, and hierarchical todo manager",
   "type": "module",
   "main": "src/index.ts",

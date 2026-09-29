@@ -12,7 +12,7 @@ import { ResearchBanner } from "./ResearchBanner";
 import { Integration } from "./Integration";
 import { WelcomeWorkflowConsole } from "./WelcomeWorkflowConsole";
 import { EarlierContextItem, ProviderId } from "../types";
-import { PROVIDER_DEFINITIONS } from "../lib/providers";
+import { PROVIDER_DEFINITIONS, resolveConfiguredChatProvider } from "../lib/providers";
 import { useChatSession } from "../lib/useChatSession";
 import { readJsonResponse, resolveApiUrl } from "../lib/api";
 
@@ -88,22 +88,9 @@ const AppContent: React.FC = () => {
   const [modalProviderId, setModalProviderId] = useState<ProviderId>("gemini");
   useEffect(() => {
     let cancelled = false;
-    // Chat-capable providers only. `tavily` is a search provider: it reports
-    // configured=true but cannot answer a chat turn.
-    const CHAT_PROVIDERS: ProviderId[] = ["gemini", "openai", "mistral", "nebius", "ollama"];
-    void (async () => {
-      try {
-        const res = await fetch(resolveApiUrl("/api/providers/status"));
-        if (!res.ok) return;
-        const data = await res.json();
-        const providers = (data.providers ?? data) as Record<string, { configured?: boolean }>;
-        const firstConfigured = CHAT_PROVIDERS.find((p) => providers[p]?.configured === true);
-        if (!cancelled && firstConfigured) setModalProviderId(firstConfigured);
-      } catch {
-        // Leave the bundled default in place; the server remains authoritative
-        // and will report an explicit provider error if nothing is configured.
-      }
-    })();
+    void resolveConfiguredChatProvider().then((firstConfigured) => {
+      if (!cancelled && firstConfigured) setModalProviderId(firstConfigured);
+    });
     return () => {
       cancelled = true;
     };

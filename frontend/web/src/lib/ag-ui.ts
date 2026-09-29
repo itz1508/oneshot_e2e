@@ -53,6 +53,9 @@ export interface AgUiStepFinishEvent extends AgUiBaseEvent {
   type: "STEP_FINISH";
   stepId: string;
   status: "completed" | "failed";
+  // The server repeats the STEP_START label so a client can close a step by id
+  // alone and render the real step name instead of a generic placeholder.
+  label?: string;
 }
 
 export interface AgUiTextDeltaEvent extends AgUiBaseEvent {

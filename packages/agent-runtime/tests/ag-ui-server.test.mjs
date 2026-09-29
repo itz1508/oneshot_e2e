@@ -3,6 +3,15 @@ import assert from "node:assert/strict";
 import { formatAgUiSse, streamStrandsToAgUi } from "../src/ag-ui/server-adapter.ts";
 
 describe("Strands AG-UI Backend Server Adapter", () => {
+  // Minimal Strands agent streaming interface, shared by the stream tests.
+  const mockAgent = {
+    async *stream() {
+      yield { type: "lifecycle", lifecycle: "beforeModelCallEvent" };
+      yield { type: "data", data: "Hello" };
+      yield { type: "data", data: " world" };
+      yield { type: "lifecycle", lifecycle: "afterModelCallEvent" };
+    },
+  };
   it("formats AG-UI events as valid Server-Sent Events (SSE)", () => {
     const sse = formatAgUiSse({
       type: "RUN_START",
@@ -17,16 +26,6 @@ describe("Strands AG-UI Backend Server Adapter", () => {
   });
 
   it("streams real agent events translated to standard AG-UI events", async () => {
-    // Mock minimal Strands agent streaming interface
-    const mockAgent = {
-      async *stream(prompt) {
-        yield { type: "lifecycle", lifecycle: "beforeModelCallEvent" };
-        yield { type: "data", data: "Hello" };
-        yield { type: "data", data: " world" };
-        yield { type: "lifecycle", lifecycle: "afterModelCallEvent" };
-      },
-    };
-
     const events = [];
     for await (const evt of streamStrandsToAgUi({ agent: mockAgent, prompt: "Say hello" })) {
       events.push(evt);
@@ -50,6 +49,35 @@ describe("Strands AG-UI Backend Server Adapter", () => {
     assert.strictEqual(finish.type, "RUN_FINISH");
     assert.strictEqual(finish.status, "COMPLETED");
     assert.strictEqual(finish.finalMessage, "Hello world");
+  });
+
+  it("repeats the real step label on STEP_FINISH so the UI never shows a placeholder", async () => {
+    const events = [];
+    for await (const evt of streamStrandsToAgUi({ agent: mockAgent, prompt: "Say hello" })) {
+      events.push(evt);
+    }
+
+    const stepFinishes = events.filter((e) => e.type === "STEP_FINISH");
+    assert.ok(stepFinishes.length > 0);
+
+    // Every finished step must carry the same label it was started with.
+    const labelsById = new Map(
+      events.filter((e) => e.type === "STEP_START").map((e) => [e.stepId, e.label]),
+    );
+    for (const finishEvent of stepFinishes) {
+      assert.strictEqual(
+        typeof finishEvent.label,
+        "string",
+        "STEP_FINISH must carry a label so the client can render a real step name",
+      );
+      assert.ok(finishEvent.label.length > 0, "STEP_FINISH label must not be empty");
+      // The client substitutes a generic label when this is absent, which
+      // rendered five identical "Completed step" rows in the pipeline panel.
+      assert.notStrictEqual(finishEvent.label, "Completed step");
+      if (labelsById.has(finishEvent.stepId)) {
+        assert.strictEqual(finishEvent.label, labelsById.get(finishEvent.stepId));
+      }
+    }
   });
 
   it("handles agent stream failure cleanly with RUN_FINISH FAILED status", async () => {

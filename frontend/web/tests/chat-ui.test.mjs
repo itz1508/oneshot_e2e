@@ -144,12 +144,16 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
     // Regression: the initial provider was hardcoded to "gemini", so on any
     // installation whose credential belonged to another provider every plain
     // chat message returned 503 "credentials not configured".
-    assert.match(appSrc, /\/api\/providers\/status/);
-    assert.match(appSrc, /CHAT_PROVIDERS/);
+    // The resolution now lives in one shared helper rather than inline here.
+    const providersSrc = read("frontend/web/src/lib/providers.ts");
+    assert.match(providersSrc, /\/api\/providers\/status/);
+    assert.match(providersSrc, /CHAT_PROVIDER_IDS/);
+    assert.match(appSrc, /resolveConfiguredChatProvider\(\)/);
     assert.match(appSrc, /setModalProviderId\(firstConfigured\)/);
 
     // `tavily` reports configured=true but cannot answer a chat turn, so it
     // must be excluded from the chat provider list.
+    assert.doesNotMatch(providersSrc, /const CHAT_PROVIDER_IDS[^=]*=\s*\[[^\]]*tavily/);
     assert.doesNotMatch(appSrc, /const CHAT_PROVIDERS[^=]*=\s*\[[^\]]*tavily/);
   });
 
@@ -276,6 +280,67 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
 
     // Re-export in api.ts
     assert.match(apiSrc, /export \* from "\.\/ag-ui"/);
+  });
+
+  it("targets the server-configured provider for fixture runs instead of the bundled default", () => {
+    const consoleSrc = read("frontend/web/src/components/WelcomeWorkflowConsole.tsx");
+    const providersSrc = read("frontend/web/src/lib/providers.ts");
+    const appSrc = read("frontend/web/src/components/App.tsx");
+
+    // A fixture run previously sent the bundled default provider ("gemini"),
+    // which returns 503 on any install whose credential belongs to another
+    // provider, leaving the pipeline panel stuck at FAILED.
+    assert.match(consoleSrc, /await defaultProviderReady\.current/);
+    assert.match(consoleSrc, /serverProvider \?\? currentProvider/);
+
+    // The resolution must be awaited, not read from async state, or a fast
+    // click still races the fetch and sends the unconfigured default.
+    assert.ok(
+      !/serverFallbackProvider \?\? currentProvider/.test(consoleSrc),
+      "fixture run must not depend on asynchronously resolved state for provider selection",
+    );
+
+    // One resolver, shared by every call site. Two independent copies of this
+    // list is what let the fixture path drift away from the composer path.
+    assert.match(providersSrc, /export function resolveConfiguredChatProvider/);
+    assert.match(consoleSrc, /useRef\(resolveConfiguredChatProvider\(\)\)/);
+    assert.match(appSrc, /resolveConfiguredChatProvider\(\)/);
+
+    // The chat-capable list must be declared in exactly one place. It is
+    // referenced again inside the resolver, so allow the declaration plus use.
+    const listDeclarations = (providersSrc.match(/export const CHAT_PROVIDER_IDS/g) ?? []).length;
+    assert.strictEqual(
+      listDeclarations,
+      1,
+      "chat provider list must be declared exactly once",
+    );
+    const strayDeclarations =
+      (consoleSrc.match(/const CHAT_PROVIDER_IDS/g) ?? []).length +
+      (appSrc.match(/const CHAT_PROVIDER_IDS/g) ?? []).length +
+      (providersSrc.match(/const CHAT_PROVIDER_IDS/g) ?? []).length -
+      1;
+    assert.strictEqual(
+      strayDeclarations,
+      0,
+      "no call site may redeclare the chat provider list",
+    );
+  });
+
+  it("declares the STEP_FINISH label in the shared AG-UI contract", () => {
+    const agUiSrc = read("frontend/web/src/lib/ag-ui.ts");
+
+    // The server repeats the STEP_START label on STEP_FINISH so the client can
+    // render a real step name. If the consumer contract omits it, the field is
+    // untyped and the client silently falls back to a generic placeholder.
+    const finishBlock = agUiSrc.slice(
+      agUiSrc.indexOf("AgUiStepFinishEvent"),
+      agUiSrc.indexOf("AgUiTextDeltaEvent"),
+    );
+    assert.match(finishBlock, /label\?: string;/);
+
+    // The client must keep tolerating an absent label for older servers.
+    const apiSrc = read("frontend/web/src/lib/api.ts");
+    assert.match(apiSrc, /"Completed step"/);
   });
 
   it("verifies Agent Backends and Multi-Agent Handoffs frontend models and drawer UI", () => {

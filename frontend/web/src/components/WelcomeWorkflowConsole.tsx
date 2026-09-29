@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { ProviderId } from "../types";
-import { PROVIDER_DEFINITIONS } from "../lib/providers";
+import { PROVIDER_DEFINITIONS, resolveConfiguredChatProvider } from "../lib/providers";
 import { resolveApiUrl, readJsonResponse } from "../lib/api";
 
 export interface FixtureScenario {
@@ -75,6 +75,13 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
   hasMessages = false,
 }) => {
   const [selectedFixtureIndex, setSelectedFixtureIndex] = useState(0);
+  // A fixture run must not silently target a provider that has no credential:
+  // that returns 503 and leaves the pipeline panel in a FAILED state. The
+  // default provider is resolved asynchronously from real server status, so a
+  // click that lands before it resolves would still send the bundled default.
+  // Awaiting it here makes the request target the configured provider
+  // deterministically, instead of depending on fetch timing.
+  const defaultProviderReady = useRef(resolveConfiguredChatProvider());
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [activeStep, setActiveStep] = useState<number>(1);
   const [liveApiKey, setLiveApiKey] = useState("");
@@ -140,10 +147,13 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
       setIsValidatingFixture(false);
     }
 
-    // 2. Stream the live agent execution with the effective prompt
-    onRunWorkflow(effectivePrompt, "fixture", currentProvider);
+    // 2. Stream the live agent execution with the effective prompt. Resolve the
+    // server's configured provider first so a click that beats the default
+    // resolution still targets a provider that actually has a credential.
+    const serverProvider = await defaultProviderReady.current;
+    const runProvider = serverProvider ?? currentProvider;
+    onRunWorkflow(effectivePrompt, "fixture", runProvider);
   }, [activeFixture, effectivePrompt, currentProvider, onRunWorkflow]);
-
   const handleConnectProvider = useCallback(async () => {
     setIsConfiguring(true);
     setLiveStatusMsg("Applying live configuration...");
