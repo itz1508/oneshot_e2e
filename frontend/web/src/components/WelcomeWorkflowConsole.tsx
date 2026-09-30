@@ -81,7 +81,14 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
   // click that lands before it resolves would still send the bundled default.
   // Awaiting it here makes the request target the configured provider
   // deterministically, instead of depending on fetch timing.
-  const defaultProviderReady = useRef(resolveConfiguredChatProvider());
+  // Lazy initialiser, not useRef. `useRef(resolveConfiguredChatProvider())`
+  // evaluates its argument on EVERY render, and this component re-renders on
+  // every streamed delta, so it fired one /api/providers/status request per
+  // delta — 386 identical GETs in a single measured run. That exhausted the
+  // server rate limit mid-run and made the app throttle its own message
+  // actions. useState runs the initialiser exactly once and returns a stable
+  // promise, which is all the await below needs.
+  const [defaultProviderReady] = useState(() => resolveConfiguredChatProvider());
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [activeStep, setActiveStep] = useState<number>(1);
   const [liveApiKey, setLiveApiKey] = useState("");
@@ -150,7 +157,7 @@ export const WelcomeWorkflowConsole: React.FC<WelcomeWorkflowConsoleProps> = ({
     // 2. Stream the live agent execution with the effective prompt. Resolve the
     // server's configured provider first so a click that beats the default
     // resolution still targets a provider that actually has a credential.
-    const serverProvider = await defaultProviderReady.current;
+    const serverProvider = await defaultProviderReady;
     const runProvider = serverProvider ?? currentProvider;
     onRunWorkflow(effectivePrompt, "fixture", runProvider);
   }, [activeFixture, effectivePrompt, currentProvider, onRunWorkflow]);

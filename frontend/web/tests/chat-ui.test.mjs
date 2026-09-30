@@ -290,11 +290,21 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
     // A fixture run previously sent the bundled default provider ("gemini"),
     // which returns 503 on any install whose credential belongs to another
     // provider, leaving the pipeline panel stuck at FAILED.
-    assert.match(consoleSrc, /await defaultProviderReady\.current/);
-    assert.match(consoleSrc, /serverProvider \?\? currentProvider/);
-
     // The resolution must be awaited, not read from async state, or a fast
     // click still races the fetch and sends the unconfigured default.
+    //
+    // It must also be captured ONCE. `useRef(resolveConfiguredChatProvider())`
+    // evaluates its argument on every render, and this console re-renders on
+    // every streamed delta, so it issued one /api/providers/status request per
+    // delta — 386 in a single measured run, which exhausted the server rate
+    // limit mid-run and made the app throttle its own message actions. A lazy
+    // useState initialiser runs once and yields the stable promise that the
+    // fixture run awaits.
+    assert.match(consoleSrc, /useState\(\(\) => resolveConfiguredChatProvider\(\)\)/);
+    assert.doesNotMatch(consoleSrc, /const defaultProviderReady = useRef\(/);
+    assert.match(consoleSrc, /await defaultProviderReady/);
+    assert.doesNotMatch(consoleSrc, /await defaultProviderReady\.current/);
+    assert.match(consoleSrc, /serverProvider \?\? currentProvider/);
     assert.ok(
       !/serverFallbackProvider \?\? currentProvider/.test(consoleSrc),
       "fixture run must not depend on asynchronously resolved state for provider selection",
