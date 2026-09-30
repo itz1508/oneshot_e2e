@@ -67,6 +67,12 @@ COPY backend/ backend/
 COPY packages/ packages/
 COPY frontend/web/ frontend/web/
 COPY app/scripts/ app/scripts/
+# Contract fixtures. backend/routes/fixtures.ts resolves
+# path.resolve(process.cwd(), "app/fixtures") at REQUEST time, so the
+# directory must exist in the runtime image. Without it /api/fixtures
+# fails with 500 ENOENT inside the container while the host dev server
+# works fine -- the directory is never reached by any other COPY.
+COPY app/fixtures/ app/fixtures/
 COPY scripts/check-ui-build.mjs scripts/
 
 RUN pnpm run build
@@ -97,6 +103,7 @@ COPY --from=builder /app/backend/node_modules ./backend/node_modules
 COPY --from=builder /app/frontend/web/node_modules ./frontend/web/node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/app/scripts ./app/scripts
+COPY --from=builder /app/app/fixtures ./app/fixtures
 COPY --from=builder /app/scripts/check-ui-build.mjs ./scripts/check-ui-build.mjs
 COPY package.json config.toml ./
 
