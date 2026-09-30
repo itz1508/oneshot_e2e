@@ -7,22 +7,42 @@ backend/node_modules
 app/integration/*/node_modules
 
 # Build outputs are regenerated inside the image (`pnpm run build`).
+# NOTE: a pattern with no slash matches the context ROOT only, so bare
+# `dist` misses backend/*/dist. The `**/` forms are what exclude nested
+# paths; the explicit ones are kept for clarity at the paths that matter.
 dist
+**/dist
 build
+**/build
 out
+**/out
 .next
+**/.next
 frontend/web/.next
 frontend/web/dist
 frontend/web/out
 
 # Python caches / venvs are rebuilt via `uv sync --frozen`.
+#
+# CRITICAL: bare `.venv` does NOT exclude backend/python/.venv, and the
+# builder stage runs `uv sync` BEFORE `COPY backend/ backend/`. A host venv
+# in the context therefore overwrites the freshly built Linux venv with
+# Windows binaries whose pyvenv.cfg `home` is a C:\ path, leaving no
+# .venv/bin/python. Always pair the root pattern with a `**/` form.
+**/__pycache__
 __pycache__
+**/*.py[cod]
 *.py[cod]
 .pytest_cache
+**/.pytest_cache
 .ruff_cache
+**/.ruff_cache
 .venv
+**/.venv
 venv
+**/venv
 *.egg-info
+**/*.egg-info
 
 # Secrets: never into the build context (belt and braces — .env is also
 # gitignored, so it cannot be committed either).
@@ -43,5 +63,8 @@ test-results
 coverage
 .nyc_output
 *.log
+**/*.log
 *.tmp
+**/*.tmp
 *.temp
+**/*.temp

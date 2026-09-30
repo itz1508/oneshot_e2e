@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-29T20:41:41Z",
+  "generated_at": "2026-09-30T00:57:19Z",
   "version": "1.3.0",
-  "commit": "d870d69a",
+  "commit": "a6b9baf9",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -1534,24 +1534,6 @@
       "category": "source"
     },
     {
-      "path": "test-results\\commitmsg.txt",
-      "size": 1316,
-      "hash": "sha256:f265ca7b78317a757f654493b85a87c9a8b7cdbbe3a66fba363c967883b1cf7d",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\ollama-e2e.mjs",
-      "size": 7008,
-      "hash": "sha256:8538e4421846329660eff9549a3946aba37fd32f97990ca5616f41550d8f7e6d",
-      "category": "source"
-    },
-    {
-      "path": "test-results\\probe.mjs",
-      "size": 2008,
-      "hash": "sha256:ff8e08d4b75f194e2cb07ff909b35081a5bcee920e3a83decffff74031159f9e",
-      "category": "source"
-    },
-    {
       "path": "tsconfig.build.json",
       "size": 448,
       "hash": "sha256:0326c159c4783e372a8d79cdf1de91013ba7d248f74f0370f484105e0cd6963f",
@@ -1571,21 +1553,21 @@
     }
   ],
   "statistics": {
-    "total_files": 261,
-    "source_files": 261,
-    "total_size_bytes": 1603407,
+    "total_files": 258,
+    "source_files": 258,
+    "total_size_bytes": 1593075,
     "by_extension": {
       ".yml": 2,
       ".md": 7,
       "(no extension)": 1,
-      ".mjs": 43,
+      ".mjs": 41,
       ".bat": 2,
       ".sh": 3,
       ".json": 21,
       ".py": 12,
       ".ts": 125,
       ".toml": 2,
-      ".txt": 2,
+      ".txt": 1,
       ".css": 1,
       ".tsx": 35,
       ".html": 1,

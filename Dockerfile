@@ -21,6 +21,20 @@ RUN corepack enable && corepack prepare pnpm@11.27.1 --activate
 # uv.lock pins, `uv sync --frozen` creates .venv).
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+# The Python interpreter lives at a stable, explicit path so the runtime
+# stage can carry it alongside the venv. A venv is NOT self-contained:
+# uv's managed CPython links against libpython inside this directory, so
+# copying .venv without /opt/python leaves backend/python/.venv/bin/python
+# dangling (resolvePythonBinary() -> existsSync false -> bare `python`).
+# `only-managed` stops uv silently adopting a distro interpreter.
+ENV UV_PYTHON_INSTALL_DIR=/opt/python
+ENV UV_PYTHON_PREFERENCE=only-managed
+# Keep the [dependency-groups] dev tools (pytest/ruff/httpx) out of the
+# production image.
+ENV UV_NO_DEV=1
+
+RUN uv python install 3.12
+
 WORKDIR /app
 
 # Dependency manifests first for layer caching.
@@ -28,7 +42,20 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY backend/package.json backend/
 COPY frontend/web/package.json frontend/web/
 COPY packages/agent-runtime/package.json packages/agent-runtime/
-COPY app/integration/*/package.json app/integration/*/
+# Each integration package must land at its real path, because
+# pnpm-workspace.yaml declares the `app/integration/*` glob and resolves
+# those importer keys straight out of pnpm-lock.yaml.
+#
+# `COPY app/integration/*/package.json app/integration/*/` does NOT work: Docker
+# expands wildcards in the SOURCE only, never in the destination. It creates one
+# directory literally named `*` and collapses all four package.json files into
+# it (last one alphabetically wins). pnpm then discovers a single unexpected
+# workspace project and fails with ERR_PNPM_OUTDATED_LOCKFILE ("1 dependencies
+# were added"), while Gemini/OpenAI/Strands silently vanish from the image.
+# Copying the directory keeps every package at its real path and stays correct
+# when a fifth integration is added. .dockerignore keeps
+# app/integration/*/node_modules out of the context, so this stays small.
+COPY app/integration/ app/integration/
 COPY backend/python/pyproject.toml backend/python/uv.lock backend/python/
 
 RUN pnpm install --frozen-lockfile
@@ -51,15 +78,19 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=8787
 
-# Python 3.12 for the reasoning subprocess (backend/python-runtime.ts
-# spawns backend/python/.venv/.../python; falls back to bare `python`).
-RUN apt-get update && apt-get install -y --no-install-recommends python3 && \
-    rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/frontend/web/dist ./frontend/web/dist
+# Deliberately no `apt-get install python3`: bookworm only ships 3.11 (below
+# the pyproject `requires-python = ">=3.12"` contract) and provides no
+# unversioned `python`, so a broken venv lookup would degrade into an ENOENT
+# spawn rather than an obvious error. The managed interpreter below is the
+# only one this image needs, and it must land at the exact absolute path it
+# was installed to: backend/python/.venv/bin/python and pyvenv.cfg's `home`
+# both point into /opt/python, and Docker COPY does not follow symlinks out
+# of the copied tree.
+COPY --from=builder /opt/python /opt/python
 COPY --from=builder /app/backend/python ./backend/python
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/backend/node_modules ./backend/node_modules
