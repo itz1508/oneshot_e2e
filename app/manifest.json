@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-30T01:22:04Z",
+  "generated_at": "2026-09-30T02:42:59Z",
   "version": "1.3.0",
-  "commit": "e24768a2",
+  "commit": "b86f10fb",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -119,8 +119,8 @@
     },
     {
       "path": "app\\scripts\\source_file_policy.py",
-      "size": 8407,
-      "hash": "sha256:74c2f838766aacd47bfc06a8522e2963be8768bb2b8cf6b75bafebced9d20ea8",
+      "size": 8768,
+      "hash": "sha256:660e1da1479c5089897364e0df80daf8d30dd0b8059f715d2ee5d915eb9c8c29",
       "category": "source"
     },
     {
@@ -545,8 +545,8 @@
     },
     {
       "path": "e2e\\researcher-preview.spec.ts",
-      "size": 13842,
-      "hash": "sha256:b7e0a8539e10dfcc29282d674dd7ddb5605358a9aa6a01b84c8499fd5ab0071b",
+      "size": 14071,
+      "hash": "sha256:34c9669f51070d5bc9d69b55e621c4b6e7bbfe750f7e1a7b7efd08855542c82d",
       "category": "source"
     },
     {
@@ -725,8 +725,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\ProviderConfigModal.tsx",
-      "size": 15264,
-      "hash": "sha256:0d5983313a80843d246cdce44a42057954d25150c26aa3d0572632260d21ffa0",
+      "size": 15290,
+      "hash": "sha256:7ca0aad7e630a24eedec82b964b88e2a749325e032050973b60de7ae43ef0f0f",
       "category": "source"
     },
     {
@@ -1555,7 +1555,7 @@
   "statistics": {
     "total_files": 258,
     "source_files": 258,
-    "total_size_bytes": 1593075,
+    "total_size_bytes": 1593691,
     "by_extension": {
       ".yml": 2,
       ".md": 7,

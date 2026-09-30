@@ -165,7 +165,7 @@ export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           <Dialog.Content
             ref={modalRef}
             id="providerModal"
-            className="provider-modal p-5 pointer-events-auto focus:outline-none"
+            className={`provider-modal ${isOpen ? "open" : ""} p-5 pointer-events-auto focus:outline-none`}
             aria-labelledby="modal-title"
             aria-describedby="modal-description"
           >

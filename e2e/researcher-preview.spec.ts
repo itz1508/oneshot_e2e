@@ -68,8 +68,11 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await expect(page.locator("text=Server Security Boundary")).toBeVisible();
         await expect(page.locator("#serverBadge")).toHaveText("SERVER-OWNED");
 
-        // Security assertion: NO password input or API key input in DOM
-        const passwordInputs = page.locator('input[type="password"]');
+        // Security assertion: the provider modal collects no secret at all, so it
+        // must contain NO password input. A pasted credential is typed in the
+        // workflow console instead, where it is masked behind an explicit
+        // show/hide toggle rather than rendered in clear text.
+        const passwordInputs = modal.locator('input[type="password"]');
         await expect(passwordInputs).toHaveCount(0);
 
         // Probe server status

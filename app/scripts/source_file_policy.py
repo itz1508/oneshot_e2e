@@ -41,6 +41,12 @@ GENERATED_PATTERNS: Set[str] = {
     '.DS_Store',
     'Thumbs.db',
     '.env',
+    # Playwright writes these per-run, and it only emits error-context.md for
+    # tests that FAIL. .md is a source extension, so without this a single red
+    # e2e run injects a new hashed file into the manifest and verify_manifest
+    # fails on a tree nobody edited. They are gitignored run output, not source.
+    'test-results',
+    'playwright-report',
 }
 
 # Generated directory name suffixes - excluded from manifest
