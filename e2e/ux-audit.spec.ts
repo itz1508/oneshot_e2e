@@ -13,6 +13,12 @@ for (const viewport of viewports) {
 
     test('keeps the conversation shell within the viewport and composer in normal flow', async ({ page }) => {
       await page.goto('/')
+      // Wait for the shell before measuring. A bare evaluate() fires while
+      // React is still committing, so on a loaded machine it throws
+      // "Canonical chat controls are missing" — which is why this test only
+      // failed in full-suite runs and never in isolation.
+      await expect(page.locator('main')).toBeVisible()
+      await expect(page.locator('#composerInput')).toBeVisible()
       const metrics = await page.evaluate(() => {
         const main = document.querySelector('main')
         const composer = document.querySelector('#composerInput')
@@ -34,21 +40,23 @@ for (const viewport of viewports) {
     test('opens mobile navigation without reserving the desktop sidebar width', async ({ page }) => {
       test.skip(viewport.width >= 768, 'Mobile navigation only applies below the desktop breakpoint')
       await page.goto('/')
-      const sidebarBefore = await page.locator('.app-sidebar-nav').boundingBox()
-      expect(sidebarBefore?.x ?? 0).toBeLessThan(0)
+      const nav = page.locator('.app-sidebar-nav')
+      await expect(nav).toBeVisible()
+
+      // Poll the measured offset instead of sleeping a fixed 250ms. The
+      // transform transition is 0.2s, so a fixed sleep is flaky when the
+      // machine is loaded and wastefully slow when it is idle.
+      const navX = async () => (await nav.boundingBox())?.x ?? 0
+      await expect.poll(navX).toBeLessThan(0)
 
       await page.getByRole('button', { name: 'Open navigation' }).click()
-      await expect(page.locator('.app-sidebar-nav')).toHaveClass(/mobile-open/)
-      await page.waitForTimeout(250)
-      const sidebarOpen = await page.locator('.app-sidebar-nav').boundingBox()
-      expect(sidebarOpen?.x ?? -1).toBeGreaterThanOrEqual(0)
-      expect(sidebarOpen?.x ?? 0).toBeLessThan(viewport.width)
+      await expect(nav).toHaveClass(/mobile-open/)
+      await expect.poll(navX).toBeGreaterThanOrEqual(0)
+      expect(await navX()).toBeLessThan(viewport.width)
 
       await page.getByRole('button', { name: 'Close navigation' }).click({ position: { x: viewport.width - 20, y: 20 } })
-      await expect(page.locator('.app-sidebar-nav')).not.toHaveClass(/mobile-open/)
-      await page.waitForTimeout(250)
-      const sidebarClosed = await page.locator('.app-sidebar-nav').boundingBox()
-      expect(sidebarClosed?.x ?? 0).toBeLessThan(0)
+      await expect(nav).not.toHaveClass(/mobile-open/)
+      await expect.poll(navX).toBeLessThan(0)
     })
 
     test('autogrows, scrolls, and resets the canonical composer', async ({ page }) => {
@@ -75,20 +83,24 @@ for (const viewport of viewports) {
 
     test('keeps closed drawers inert and restores focus after Escape', async ({ page }) => {
       await page.goto('/')
-      const closed = await page.locator('#contextDrawer').evaluate((element) => ({ inert: element.inert, hidden: element.getAttribute('aria-hidden') }))
-      expect(closed.inert).toBe(true)
-      expect(closed.hidden).toBe('true')
+      const drawer = page.locator('#contextDrawer')
+
+      // Retry rather than read once. React commits state asynchronously, so an
+      // evaluate() fired straight after click() can observe the previous
+      // render. expect() polls until the committed DOM matches. These assert
+      // exactly the same values the old one-shot reads did.
+      await expect(drawer).toHaveAttribute('aria-hidden', 'true')
+      await expect(drawer).toHaveJSProperty('inert', true)
 
       const trigger = page.locator('#toggleDrawerBtn')
       await trigger.click()
-      const open = await page.locator('#contextDrawer').evaluate((element) => ({ inert: element.inert, hidden: element.getAttribute('aria-hidden'), modal: element.getAttribute('aria-modal') }))
-      expect(open.inert).toBe(false)
-      expect(open.hidden).toBe('false')
-      expect(open.modal).toBe('true')
+      await expect(drawer).toHaveAttribute('aria-hidden', 'false')
+      await expect(drawer).toHaveAttribute('aria-modal', 'true')
+      await expect(drawer).toHaveJSProperty('inert', false)
 
       await page.keyboard.press('Escape')
       await expect(trigger).toBeFocused()
-      await expect(page.locator('#contextDrawer')).toHaveAttribute('aria-hidden', 'true')
+      await expect(drawer).toHaveAttribute('aria-hidden', 'true')
     })
   })
 }

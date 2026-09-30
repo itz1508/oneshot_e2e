@@ -302,15 +302,26 @@ export function startAgentServer(options: ServerOptions = {}): Promise<http.Serv
     if (!continuePipeline) return;
 
     // 2. Sliding-Window Rate Limiter
-    const rateLimit = rateLimiter.checkLimit(rateLimiter.getClientKey(req));
-    res.setHeader("X-RateLimit-Limit", rateLimit.limit.toString());
-    res.setHeader("X-RateLimit-Remaining", rateLimit.remaining.toString());
-    res.setHeader("X-RateLimit-Reset", rateLimit.resetSeconds.toString());
-    if (!rateLimit.allowed) {
-      res.setHeader("Retry-After", rateLimit.resetSeconds.toString());
-      res.writeHead(429, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: false, error: "Rate limit exceeded. Please retry later.", requestId }));
-      return;
+    // Static frontend assets are deliberately exempt. One page load pulls the
+    // document plus a dozen hashed chunks and a stylesheet, so charging those
+    // against the API budget exhausted the 120/min allowance after roughly
+    // eight page loads, and then answered the *document* request with a JSON
+    // 429 that the browser renders as raw text instead of the app. This
+    // limiter exists to bound expensive agent work, not to ration page loads.
+    // The predicate is the same one the static handler uses below.
+    const isStaticAsset =
+      (req.method === "GET" || req.method === "HEAD") && !pathname.startsWith("/api");
+    if (!isStaticAsset) {
+      const rateLimit = rateLimiter.checkLimit(rateLimiter.getClientKey(req));
+      res.setHeader("X-RateLimit-Limit", rateLimit.limit.toString());
+      res.setHeader("X-RateLimit-Remaining", rateLimit.remaining.toString());
+      res.setHeader("X-RateLimit-Reset", rateLimit.resetSeconds.toString());
+      if (!rateLimit.allowed) {
+        res.setHeader("Retry-After", rateLimit.resetSeconds.toString());
+        res.writeHead(429, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "Rate limit exceeded. Please retry later.", requestId }));
+        return;
+      }
     }
 
     // 3. Authentication Guard
