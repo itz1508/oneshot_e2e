@@ -8,6 +8,21 @@ const screenshotsOutputDir = path.resolve(
   "../test-results/screenshots"
 );
 
+/**
+ * Parse the `event:` names out of an AG-UI SSE body, in arrival order.
+ *
+ * Scenarios 4 and 7 assert on this rather than on a particular reasoning
+ * engine. `POST /api/agent/stream` branches on whether live credentials exist
+ * (ARCHITECTURE.MD 2.1), so a label like "Local Python reasoning engine" or
+ * "Python reasoning subprocess" only ever appears on a machine with no usable
+ * provider key. Asserting them made the scenarios environment-dependent: they
+ * failed on a credentialed install even when the stream was entirely correct.
+ * The lifecycle below is emitted by both branches.
+ */
+function readSseEvents(body: string): string[] {
+  return [...body.matchAll(/^event:\s*(\S+)/gm)].map((match) => match[1]!);
+}
+
 test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () => {
     test("Scenario 1: Fresh Workspace Starts Without Fabricated Content", async ({ page }) => {
         const guard = attachNetworkGuard(page);
@@ -98,8 +113,18 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         const response = await responsePromise;
         expect(response.status()).toBe(200);
 
+        // Assert the AG-UI lifecycle every correct run must emit, rather than
+        // which engine produced it. A run that answers 200 but never opens the
+        // lifecycle, streams no deltas, or never finishes still fails here, so
+        // this is not a weakened substitute for the old text match.
+        const events = readSseEvents(await response.text());
+        expect(events[0]).toBe("RUN_START");
+        expect(events.filter((event) => event === "TEXT_MESSAGE_DELTA").length).toBeGreaterThan(0);
+        expect(events[events.length - 1]).toBe("RUN_FINISH");
+
+        // Those deltas must have reached the DOM as real assistant content.
         const asstMessage = page.locator("#asstContent");
-        await expect(asstMessage).toContainText("Local Python reasoning engine", { timeout: 15_000 });
+        await expect(asstMessage).not.toBeEmpty();
         await expect(asstMessage).not.toContainText("Backend Service Unavailable (503)");
         await expect(asstMessage).not.toContainText("Credentials remain server-side per security policy.");
         await expect(page.getByText("Backend agent stream completed", { exact: true })).toBeVisible();
@@ -238,23 +263,38 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await guard.dispose();
     });
 
-    test("Scenario 7: Real Run Activity, Hook Log, Gate 1 Confirmation, & Message Actions", async ({ page }) => {
+    test("Scenario 7: Real Run Activity, Hook Log, Gate 1 Confirmation, & Message Actions", async ({ page, context }) => {
+        // The default 30s budget assumed a run that failed fast. This scenario
+        // now drives a real model that makes several tool calls, so it needs room
+        // for the run plus the drawer, flip-card and message-action assertions.
+        test.setTimeout(120_000);
         const guard = attachNetworkGuard(page);
 
         await page.goto("http://127.0.0.1:4173/index.html");
 
-        // Start a real local run.
+        // Start a real run.
+        const firstMessageText = "research the response verification invariant with Python reasoning";
         const input = page.locator("#composerInput");
-        await input.fill("research the response verification invariant with Python reasoning");
+        await input.fill(firstMessageText);
         await page.locator("#composerSendBtn").click();
-        await expect(page.getByText("Backend agent stream completed", { exact: true })).toBeVisible({ timeout: 15_000 });
+        // 60s, not 15s: once provider resolution was fixed this drives an actual
+        // model that makes several tool calls before it finishes. 15s only held
+        // while the run was being rejected with 503 and returning instantly.
+        await expect(page.getByText("Backend agent stream completed", { exact: true })).toBeVisible({ timeout: 60_000 });
 
         // Sending a real run opens the Tasks drawer automatically.
         const drawer = page.locator("#contextDrawer");
         await expect(drawer).toHaveClass(/open/);
         await page.locator("#tabTaskBtn").click();
-        await expect(page.getByText("Python reasoning subprocess", { exact: true })).toBeVisible();
+        // A real run emits lifecycle steps and at least one reaches COMPLETED.
+        // The step label itself is engine-specific (the local reasoner reports
+        // "Python reasoning subprocess", the live agent reports its own callback
+        // names), so assert the completed lifecycle rather than one branch's
+        // label. The empty state would satisfy a bare "drawer is open" check.
         await expect(page.getByText("No activity steps have been emitted for this run.")).toHaveCount(0);
+        await expect(
+            page.locator("#tasksFlipCard").getByText("COMPLETED", { exact: true }).first()
+        ).toBeVisible();
 
         // Test Tasks Flip Card (real activity ⇆ real event log).
         const flipBtn = page.locator("#tasksFlipBtn");
@@ -264,23 +304,55 @@ test.describe("OneShot Modern Agentic Chat — E2E & Security Verification", () 
         await flipBtn.click();
         await expect(flipCard).toHaveClass(/flipped/);
         await expect(page.locator("#hookLogScroll")).toBeVisible();
-        await expect(page.locator("#hookLogScroll").getByText(/Python reasoning subprocess \[completed\]/)).toBeVisible();
+        // The ledger must record at least one completed step. "[completed]" is
+        // appended by the client for every pipeline step on both branches.
+        await expect(page.locator("#hookLogScroll").getByText(/\[completed\]/).first()).toBeVisible();
         await flipBtn.click();
         await expect(flipCard).not.toHaveClass(/flipped/);
 
         // Gate 1 remains explicit until confirmation.
         await expect(page.getByText("PENDING_APPROVAL", { exact: true }).first()).toBeVisible();
 
-        // Test real Message Content Actions (Copy & Fork).
+        // Test real Message Content Actions (Copy & Fork). Both buttons show a
+        // 1500ms transient confirmation and then reset, so matching the label
+        // races that window and failed intermittently. Assert the contract the
+        // label stands for instead: the clipboard really receives the message,
+        // and the fork really returns a new session.
+        await context.grantPermissions(["clipboard-read", "clipboard-write"]);
         const copyBtn = page.getByRole("button", { name: "Copy message to clipboard" }).first();
         await expect(copyBtn).toBeVisible();
+        // The action buttons live on the assistant bubble, so the clipboard must
+        // receive that bubble's content, not the prompt that was typed. The
+        // clipboard gets the raw string while the DOM renders markdown, so this
+        // compares a normalized prefix rather than the full text: emphasis and
+        // list markers are rendered away, and chasing every markdown form would
+        // make the assertion brittle without making it stronger.
+        const normalize = (value: string) =>
+            value.replace(/\*\*|__|`/g, "").replace(/\s+/g, " ").trim();
+        const renderedPrefix = normalize(
+            await page.locator("#asstContent").first().innerText()
+        ).slice(0, 60);
+        expect(renderedPrefix.length).toBeGreaterThan(0);
         await copyBtn.click();
-        await expect(copyBtn).toHaveText(/Copied|Clipboard unavailable/);
+        await expect
+            .poll(
+                async () => normalize(await page.evaluate(() => navigator.clipboard.readText())),
+                { timeout: 10_000 }
+            )
+            .toContain(renderedPrefix);
 
+        const forkResponsePromise = page.waitForResponse(
+            (response) => response.url().endsWith("/api/session/fork") && response.request().method() === "POST",
+        );
         const forkBtn = page.getByRole("button", { name: "Fork conversation from this message" }).first();
         await expect(forkBtn).toBeVisible();
         await forkBtn.click();
-        await expect(forkBtn).toHaveText(/Branch|Fork unavailable/);
+        const forkResponse = await forkResponsePromise;
+        expect(forkResponse.status()).toBe(200);
+        const forkBody = JSON.parse(await forkResponse.text()) as { forked?: boolean; newSessionId?: string };
+        expect(forkBody.forked).toBe(true);
+        expect(typeof forkBody.newSessionId).toBe("string");
+        expect((forkBody.newSessionId ?? "").length).toBeGreaterThan(0);
 
         await page.screenshot({ path: path.join(screenshotsOutputDir, "06-real-run-activity-and-gate.png") });
         await guard.dispose();

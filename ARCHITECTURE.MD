@@ -149,6 +149,30 @@ no live credentials ──► streamPythonReasoning()  (local Python subprocess)
 live credentials    ──► createMainAgent() → streamStrandsToAgUi()
 ```
 
+**Environment-dependent E2E expectations.** The two branches are not
+interchangeable at the UI level, and this has bitten the browser suite. The
+lower branch emits `agentName: "OneShot Local Python Reasoner"` and a
+`STEP_START` labelled `"Python reasoning subprocess"`
+(`backend/routes/stream.ts:195-221`); the upper branch emits the Strands
+agent's own step labels. `e2e/researcher-preview.spec.ts` Scenarios 4 and 7
+once asserted those two literal strings, so they could only pass on a
+machine with **no** usable provider credential. On a credentialed
+installation `isLive` is true, the local reasoner is unreachable, and the
+scenarios failed even when the stream was correct.
+
+This was masked for a long time by a separate defect: `App.tsx` read the
+provider from async state, so a send that beat
+`/api/providers/status` fell back to the bundled default `gemini` and was
+rejected with 503 before either branch ran. Fixing that (221470c8) exposed
+the assertion problem rather than causing it.
+
+Scenarios 4 and 7 now assert the **AG-UI stream contract** — `RUN_START`,
+at least one `TEXT_MESSAGE_DELTA`, `RUN_FINISH`, and a real non-empty
+assistant turn — which holds on both branches. The provider-specific
+routing behaviour above stays covered by the backend suite
+(`backend/tests/ts/health-endpoint.test.ts`, which runs without
+credentials and so does reach the local reasoner).
+
 **No research branch and no Design_Planning branch exist on this route.**
 
 The coupling the corrected model forbids is present in a different form — a keyword

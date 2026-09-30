@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-30T03:34:12Z",
+  "generated_at": "2026-09-30T04:00:51Z",
   "version": "1.3.0",
-  "commit": "08cacec8",
+  "commit": "221470c8",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -17,8 +17,8 @@
     },
     {
       "path": "ARCHITECTURE.MD",
-      "size": 15088,
-      "hash": "sha256:05bac4295d156f94e8935d5b5c8369334b6eac81658583f6458020399ffeb444",
+      "size": 16476,
+      "hash": "sha256:95e79f8bbecb6ddae56d0a978bd61f4091fb3680837269f769a5aff79df3eae9",
       "category": "source"
     },
     {
@@ -545,8 +545,8 @@
     },
     {
       "path": "e2e\\researcher-preview.spec.ts",
-      "size": 14071,
-      "hash": "sha256:34c9669f51070d5bc9d69b55e621c4b6e7bbfe750f7e1a7b7efd08855542c82d",
+      "size": 18379,
+      "hash": "sha256:d1726fed7ecc9405480615bcd9c4ad2b1a8afe608076857120f17a1a0482eaaa",
       "category": "source"
     },
     {
@@ -767,8 +767,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\WelcomeWorkflowConsole.tsx",
-      "size": 27472,
-      "hash": "sha256:277b613eb79bc302ca872813328220e9f0fafdd1973640bedef37df4e2d290ce",
+      "size": 27986,
+      "hash": "sha256:2ba75964ae257909bdfa22c3d53874eab14cf8003c7c4f05537e3e75d19c88ec",
       "category": "source"
     },
     {
@@ -971,8 +971,8 @@
     },
     {
       "path": "frontend\\web\\tests\\chat-ui.test.mjs",
-      "size": 17335,
-      "hash": "sha256:acbd5d2a66cf4067ef4eba0029245bb2fabcfca533c74b137db12936e79fa5bd",
+      "size": 18073,
+      "hash": "sha256:eaa8283c2abf5f3b75d659ca70cd8ca49a5fb5251d2deceb30d201f3d988e42d",
       "category": "source"
     },
     {
@@ -1555,7 +1555,7 @@
   "statistics": {
     "total_files": 258,
     "source_files": 258,
-    "total_size_bytes": 1596159,
+    "total_size_bytes": 1603107,
     "by_extension": {
       ".yml": 2,
       ".md": 7,
