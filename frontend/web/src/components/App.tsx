@@ -86,10 +86,16 @@ const AppContent: React.FC = () => {
   // Hardcoding "gemini" made every plain chat message return 503 on any
   // installation whose credential belongs to another provider.
   const [modalProviderId, setModalProviderId] = useState<ProviderId>("gemini");
+  // True once the server's authoritative provider status has been read. Until
+  // that happens `modalProviderId` is still the bundled default and carries no
+  // information about this server, so a send must await the real answer.
+  const providerStatusResolvedRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
     void resolveConfiguredChatProvider().then((firstConfigured) => {
-      if (!cancelled && firstConfigured) setModalProviderId(firstConfigured);
+      if (cancelled) return;
+      providerStatusResolvedRef.current = true;
+      if (firstConfigured) setModalProviderId(firstConfigured);
     });
     return () => {
       cancelled = true;
@@ -226,10 +232,28 @@ const AppContent: React.FC = () => {
   }, [handleClearHistory]);
 
   const onSend = useCallback(
-    (text: string) => {
+    async (text: string) => {
       setDrawerTab("task");
       setIsDrawerOpen(true);
-      handleSendMessage(text, modalProviderId);
+      // Resolve the provider from the server at send time rather than trusting
+      // async state. providers.ts requires callers to await this helper: a send
+      // that lands before the mount effect stores the result reads the bundled
+      // default ("gemini"), which is unconfigured on most installations, and the
+      // request is rejected with HTTP 503 before any model is reached. Once the
+      // status has been read the user may have deliberately chosen a provider,
+      // so only this first unresolved send re-resolves and nothing else changes.
+      if (!providerStatusResolvedRef.current) {
+        const resolved = await resolveConfiguredChatProvider();
+        providerStatusResolvedRef.current = true;
+        if (resolved) {
+          setModalProviderId(resolved);
+          await handleSendMessage(text, resolved);
+          return;
+        }
+      }
+      // No provider is configured at all. Send the current selection so the
+      // server returns its own explicit error instead of the UI inventing one.
+      await handleSendMessage(text, modalProviderId);
     },
     [handleSendMessage, modalProviderId]
   );

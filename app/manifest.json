@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-30T03:04:43Z",
+  "generated_at": "2026-09-30T03:34:12Z",
   "version": "1.3.0",
-  "commit": "5530e787",
+  "commit": "08cacec8",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -641,8 +641,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\App.tsx",
-      "size": 21694,
-      "hash": "sha256:c11fb027884e9744a2b2901b009442c6ce2e92a100a9ee7787c6bf3314785259",
+      "size": 23089,
+      "hash": "sha256:b29d91b29e13a5abe6d29ee5bf0e4307e8587989d1b89f8367b2e488442e5a85",
       "category": "source"
     },
     {
@@ -1555,7 +1555,7 @@
   "statistics": {
     "total_files": 258,
     "source_files": 258,
-    "total_size_bytes": 1594764,
+    "total_size_bytes": 1596159,
     "by_extension": {
       ".yml": 2,
       ".md": 7,
