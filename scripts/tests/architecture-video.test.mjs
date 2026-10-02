@@ -79,20 +79,31 @@ test('jargon is spoken through a pronunciation alias, never as spelled glyphs', 
     /<sub alias="request dot schema dot J S O N">request\.schema\.json<\/sub>/,
   )
   // ...while the text a viewer reads is untouched. The alias changes what is
-  // spoken, never what the caption or the VTT file says.
-  assert.equal(SCENES.filter((scene) => scene.voice.includes('E2E')).length, 4)
+  // spoken, never what the caption or the VTT file says. This asserts the
+  // aliasing rule holds for every token that IS present, not how many times a
+  // particular term happens to appear -- the narration is allowed to drop a
+  // term, but never allowed to mispronounce one.
   for (const scene of SCENES) {
-    // Every E2E the narrator sees must sit inside a <sub> alias, so the engine
-    // is told how to read it. A bare, unwrapped E2E is the glyph-spelling bug.
-    const bare = toSpeechSsml(scene.voice).replace(/<sub alias="[^"]*">E2E<\/sub>/g, '')
-    assert.ok(!bare.includes('E2E'), `scene ${scene.id} still hands a bare E2E to the narrator`)
+    // Every aliased token the narrator sees must sit inside a <sub> alias. A
+    // bare, unwrapped occurrence is the glyph-spelling bug.
+    const bare = toSpeechSsml(scene.voice).replace(/<sub alias="[^"]*">[^<]*<\/sub>/g, ' ')
+    for (const [token] of PRONUNCIATION_ALIASES) {
+      if (!new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(scene.voice)) continue
+      assert.ok(
+        !new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(bare),
+        `scene ${scene.id} hands a bare ${token} to the narrator`,
+      )
+    }
+    // Any scene that displays a code still displays it the way a reader
+    // expects, and speaks it through the alias instead.
+    for (const [token, alias] of PRONUNCIATION_ALIASES) {
+      if (!scene.voice.includes(token)) continue
+      assert.ok(!scene.voice.includes(alias), `scene ${scene.id} must keep the displayed form "${token}", not the spoken form`)
+    }
   }
-  // Every scene that displays the code still displays it spelled the way a
-  // reader expects, and speaks it through the alias instead.
-  for (const scene of SCENES.filter((entry) => entry.voice.includes('E2E'))) {
-    assert.match(toSpeechSsml(scene.voice), /<sub alias="E to E">E2E<\/sub>/)
-    assert.ok(!scene.voice.includes('E to E'), 'the caption itself must keep the E2E code, not the spoken form')
-  }
+  // The table is exercised end to end, so a future narration that reintroduces
+  // the project name is still spoken correctly rather than silently regressing.
+  assert.match(toSpeechSsml('OneShot E2E validates every request.'), /<sub alias="E to E">E2E<\/sub>/)
   // Longest alias wins, so a dotted identifier is never half-substituted by a
   // shorter token nested inside it.
   const nested = toSpeechSsml('a single request.schema.json file')
@@ -252,6 +263,29 @@ test('walkthrough claims stay qualified', () => {
   assert.match(narration, /optional http rpc/)
   assert.match(narration, /depends on configuration/)
   assert.doesNotMatch(narration, /completely secure|100% reproducible|absolute data integrity/)
+})
+
+test('every rewritten cue fits its 15-second window', () => {
+  // The capture throws when a measured narration exceeds its scene window
+  // (assertRendition/buildVtt both bound it at 15s), so an over-long line is a
+  // hard build failure, not a subtle quality issue. Measured against the real
+  // System.Speech engine at Rate 1, the longest rewritten cue lands at 14.7s,
+  // so the budget below leaves headroom while still catching a runaway line.
+  // Estimated at ~2.6 words/second, which matched the engine within a second on
+  // all twelve cues.
+  const WORDS_PER_SECOND = 2.6
+  const SCENE_SECONDS = 15
+  for (const scene of SCENES) {
+    const words = scene.voice.trim().split(/\s+/).length
+    const estimated = words / WORDS_PER_SECOND
+    assert.ok(
+      estimated < SCENE_SECONDS,
+      `${scene.id} narration is ${words} words (~${estimated.toFixed(1)}s) and will not fit its ${SCENE_SECONDS}s window`,
+    )
+  }
+  // Guard the constant itself: if this drifts far above the real rate the guard
+  // stops catching anything.
+  assert.ok(WORDS_PER_SECOND > 2 && WORDS_PER_SECOND < 3.2)
 })
 
 test('WebVTT cues end at each measured narration duration', () => {

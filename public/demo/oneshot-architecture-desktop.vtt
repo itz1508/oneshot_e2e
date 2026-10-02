@@ -1,49 +1,49 @@
 WEBVTT
 
 1
-00:00:00.000 --> 00:00:11.694
-Market practice leans on naive prompt chaining. OneShot E2E establishes deterministic runtime guarantees over non-deterministic LLM output through a hardened, verifiable polyglot architecture.
+00:00:00.000 --> 00:00:08.907
+Most agent demos prove a prompt ran. OneShot proves the run was governed, bounded, and checkable afterwards, before anyone trusts the output.
 
 2
-00:00:15.000 --> 00:00:22.415
-OneShot connects agent workflows with backend reasoning, contract validation, reproducible fixtures, and automated verification.
+00:00:15.000 --> 00:00:24.163
+Research stops at ready for planning. Planning stops at approved plan. The agent reaches a boundary, and a human decides what happens next.
 
 3
-00:00:30.000 --> 00:00:41.717
-A Next.js interface meets a TypeScript Node service and a Python 3.12 reasoning runtime. Python runs as a subprocess by default, with optional HTTP RPC.
+00:00:30.000 --> 00:00:41.392
+A Next.js interface, a TypeScript service, and a Python 3.12 runtime. It runs as a subprocess by default, with optional HTTP RPC.
 
 4
-00:00:45.000 --> 00:00:55.672
-Six integrations: OpenAI, Google Gemini, Mistral, Nebius, and Ollama, plus Tavily search and the Strands SDK, behind a failover chain ordered by config.
+00:00:45.000 --> 00:00:54.383
+Seven provider paths ship in the box: OpenAI, Gemini, Claude, Mistral, Nebius, a gateway, and local Ollama, behind one failover chain.
 
 5
-00:01:00.000 --> 00:01:11.531
-Market practice passes unvalidated payloads between gateways and reasoning engines. OneShot E2E validates every request against a single request.schema.json at each runtime boundary.
+00:01:00.000 --> 00:01:10.498
+One request schema, enforced twice: the same JSON is validated in TypeScript and again in Python, so a payload that passes one runtime cannot quietly fail the other.
 
 6
-00:01:15.000 --> 00:01:24.053
-The workflow runtime composes explicit phases, gates, and pre- and post-execution hooks. It records lifecycle events and structured failures.
+00:01:15.000 --> 00:01:24.813
+Phases, gates, and before-and-after hooks are explicit, and every step emits a lifecycle event. When a run fails, the record says which phase stopped it.
 
 7
-00:01:30.000 --> 00:01:40.421
-Bearer-token guards, per-client and per-session rate limits, and configurable security headers strengthen request boundaries. Secure deployment still depends on configuration.
+00:01:30.000 --> 00:01:40.441
+Bearer-token guards, per-client and per-session rate limits, and configurable security headers guard every boundary. How secure a deployment is still depends on configuration.
 
 8
-00:01:45.000 --> 00:01:55.427
-Market practice runs agent tool execution in monolithic runtimes. OneShot E2E confines work to four virtual partitions with virtual-mode enforcement and blocked path traversal.
+00:01:45.000 --> 00:01:55.049
+Tool calls do not inherit your filesystem. Every write lands in one of four virtual partitions, and path traversal is blocked at the boundary rather than logged after the fact.
 
 9
-00:02:00.000 --> 00:02:08.422
-Playwright end-to-end coverage exercises browser workflows. UX and network audits inspect real application states and request boundaries.
+00:02:00.000 --> 00:02:08.843
+A browser drives the real application, and a network guard fails the run on any request the app should not have made. Layout is asserted at four viewports.
 
 10
-00:02:15.000 --> 00:02:23.580
-A seven-stage harness runs before every release, pairing backend and contract tests with Playwright audits that assert real layout geometry at four viewports.
+00:02:15.000 --> 00:02:25.670
+Five hundred and five tests run against this repository, then a seven-stage harness checks layout geometry at four viewports. Playwright audits the shipped build, not a mock.
 
 11
-00:02:30.000 --> 00:02:38.769
-Docker Compose runs the app and can enable an optional Ollama sidecar. GitHub Actions verifies builds and deploys the static frontend to Pages from main.
+00:02:30.000 --> 00:02:39.648
+Docker Compose brings the app up with an optional Ollama sidecar, and GitHub Actions verifies the build and deploys the frontend. The demo you are watching is the shipped build.
 
 12
-00:02:45.000 --> 00:02:56.227
-OneShot E2E: deterministic boundaries, governed workflows, and verifiable outcomes. Clone the repository, install with the frozen lockfile, and run the project launcher.
+00:02:45.000 --> 00:02:55.155
+Deterministic boundaries. Governed workflows. Verifiable outcomes. Clone it, install with the frozen lockfile, and run the launcher.

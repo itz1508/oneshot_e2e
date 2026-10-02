@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-02T02:46:27Z",
+  "generated_at": "2026-10-02T06:29:23Z",
   "version": "1.3.0",
-  "commit": "5c420a6c",
+  "commit": "4f28beb0",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -1415,8 +1415,8 @@
     },
     {
       "path": "scripts\\capture-architecture-video.mjs",
-      "size": 47482,
-      "hash": "sha256:afb45e2191c06c3626b4a3a46eff60fd124d3b13bd0a848e10a7347450af9f18",
+      "size": 47579,
+      "hash": "sha256:1aa6fdba1265f6b6c3a290c6c4bcfba57fa98a38e6c6ebba258e7dd78d58b13a",
       "category": "source"
     },
     {
@@ -1523,8 +1523,8 @@
     },
     {
       "path": "scripts\\tests\\architecture-video.test.mjs",
-      "size": 19251,
-      "hash": "sha256:b5b0577632482d538629793fdeccbdbb549de12cabf14103d9e551d055572a47",
+      "size": 20953,
+      "hash": "sha256:bcad41fceb1a5ee718a1e048f69011114a19e376b40f56092432deffa04d675c",
       "category": "source"
     },
     {
@@ -1573,7 +1573,7 @@
   "statistics": {
     "total_files": 261,
     "source_files": 261,
-    "total_size_bytes": 1688184,
+    "total_size_bytes": 1689983,
     "by_extension": {
       ".yml": 2,
       ".md": 7,
