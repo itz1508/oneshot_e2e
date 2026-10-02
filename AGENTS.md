@@ -64,14 +64,14 @@ Never fabricate progress, fake timers, mock data, synthetic success, assistant r
 
 | Task | Command |
 | :--- | :--- |
-| Backend unit & contract tests (222 tests) | `pnpm test` |
+| Backend unit & contract tests (237 tests) | `pnpm test` |
 | Python reasoning tests (5 tests) | `pnpm run test:python` |
 | Python lint (Ruff) | `pnpm run lint:python` |
 | Python format check (Ruff) | `pnpm run format:python` |
 | Python env bootstrap (uv) | `pnpm run setup:python` |
-| Runtime package tests (99 tests) | `pnpm run test:runtime` |
-| Launcher and manifest policy tests (13 tests) | `pnpm run test:scripts` |
-| Frontend web tests (84 tests) | `pnpm --prefix frontend/web test` |
+| Runtime package tests (117 tests) | `pnpm run test:runtime` |
+| Launcher, manifest policy and Vercel layout tests (39 tests) | `pnpm run test:scripts` |
+| Frontend web tests (100 tests) | `pnpm --prefix frontend/web test` |
 | Browser E2E tests (21 tests) | `pnpm run test:e2e` |
 | Full 7/7 verification suite | `pnpm run verify` |
 | Manifest integrity check | `python app/scripts/verify_manifest.py` |

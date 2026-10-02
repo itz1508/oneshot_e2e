@@ -7,24 +7,34 @@ Functions and must run on a persistent container/VM host.
 
 ## 1. Vercel project settings (dashboard)
 
-- Root Directory: **`frontend/web`** — this is the only supported layout
-- Framework Preset: Next.js (static export)
-- Install / Build / Output: leave blank; `frontend/web/vercel.json` pins them
+Vercel reads `vercel.json` from the project's **Root Directory**, so both
+layouts are supported and each pins its own install/build/output values:
 
-`frontend/web/vercel.json` is only ever read when the Root Directory is
-`frontend/web`, so its values are written for that location:
+| Vercel Root Directory | Config file read | Install | Build | Output |
+| :--- | :--- | :--- | :--- | :--- |
+| repository root (empty) | `vercel.json` | `pnpm install --frozen-lockfile` | `node scripts/check-vercel-env.mjs && pnpm --prefix frontend/web run build` | `frontend/web/dist` |
+| `frontend/web` | `frontend/web/vercel.json` | `cd ../.. && pnpm install --frozen-lockfile` | `pnpm run build` | `dist` |
 
-| Setting | Value | Why |
-| :--- | :--- | :--- |
-| `installCommand` | `cd ../.. && pnpm install --frozen-lockfile` | The only lockfile is at the repo root; `--frozen-lockfile` is kept so versions are reproducible. Do **not** drop this override — with no lockfile in this directory, a plain install would resolve fresh versions. |
-| `buildCommand` | `pnpm run build` | Runs `next build --webpack && node scripts/export.mjs` from `frontend/web`. |
-| `outputDirectory` | `dist` | `next.config.ts` sets `output: "export"`, `distDir: "dist"`, and `export.mjs` writes a relative `dist`. |
+Leave Install / Build / Output blank in the dashboard for either layout: the
+committed `vercel.json` for that Root Directory takes precedence. Do **not** drop
+`--frozen-lockfile` from either install command — the only lockfile is at the repo
+root, so a plain install would resolve fresh versions.
 
-If your Vercel project uses the repo root as its Root Directory instead, this
-file is **not read** — set Install/Build/Output on the dashboard
-(`pnpm run build` from root, output `frontend/web/dist`).
+`scripts/check-vercel-env.mjs` runs first at the repo-root layout. It fails with
+an actionable message — instead of Vercel's bare `Exited with status 1` — when
+the Node.js version is below `24.21.0` or when the layout is wrong. Note that the
+repo-root build script is frontend-only: it never runs `build:backend`/`tsc`, so
+the serverless container does not compile the Node backend.
 
-- Node.js: `>=24.21.0` — all eight workspace manifests enforce it and CI pins `24.21.0` (see the `AGENTS.md` engines note)
+- Root Directory: **repository root** *or* **`frontend/web`** — both work
+- Framework Preset: Next.js (static export) at `frontend/web`; at the repo root
+  `vercel.json` pins `framework: null` so no framework is detected and the static
+  export is served as-is
+- Node.js: `>=24.21.0` — all eight workspace manifests enforce it and CI pins
+  `24.21.0`. Vercel resolves this from `engines.node` in `package.json` and
+  ignores `.nvmrc`/`.node-version`; set **Settings → Build and Deployment →
+  Node.js Version** to **24.x** if a project still builds on an older image
+- Env var: `NEXT_PUBLIC_BACKEND_URL=https://<backend-host>` (no trailing path)
 - Env var: `NEXT_PUBLIC_BACKEND_URL=https://<backend-host>` (no trailing path)
 
 > **`NEXT_PUBLIC_*` is inlined at build time.** Next.js substitutes it into the
