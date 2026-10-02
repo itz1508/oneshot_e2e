@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-02T06:29:23Z",
+  "generated_at": "2026-10-02T11:34:32Z",
   "version": "1.3.0",
-  "commit": "4f28beb0",
+  "commit": "2f7e81af",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -629,8 +629,8 @@
     },
     {
       "path": "frontend\\web\\scripts\\export.mjs",
-      "size": 163,
-      "hash": "sha256:9cc15ba8f6fc7213083b840cc64ac43f3211ab515d3cbe2e29131f3b65afb2dc",
+      "size": 871,
+      "hash": "sha256:f94c50f00e0b42fe6f80f8b542fdad4a4fe1426e596d845b8a7623f82bc1da63",
       "category": "source"
     },
     {
@@ -971,8 +971,8 @@
     },
     {
       "path": "frontend\\web\\tests\\chat-ui.test.mjs",
-      "size": 19281,
-      "hash": "sha256:50f9a209a6916af6f15d821336906515c2ac3d3b298fc2aa71e70ce8198c1660",
+      "size": 20378,
+      "hash": "sha256:83a6e21809cd8ccfabedfbce8e7f6d817b05fcbd5b1c8ba1aa32992c3e838d94",
       "category": "source"
     },
     {
@@ -1573,7 +1573,7 @@
   "statistics": {
     "total_files": 261,
     "source_files": 261,
-    "total_size_bytes": 1689983,
+    "total_size_bytes": 1691788,
     "by_extension": {
       ".yml": 2,
       ".md": 7,

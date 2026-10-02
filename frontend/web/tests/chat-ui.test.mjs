@@ -26,6 +26,26 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
     }
   });
 
+  it("emits .nojekyll so GitHub Pages serves the _next/ bundle verbatim", () => {
+    // Without this marker Pages runs the artifact through Jekyll, which ignores
+    // every underscore-prefixed path. That silently deleted _next/ -- the JS and
+    // CSS the app boots on -- and deployed an unstyled HTML shell. The deploy
+    // step uploads frontend/web/dist, so the marker has to be written into dist
+    // by the export that produces it, not by a caller that can forget.
+    const exportScript = read("frontend/web/scripts/export.mjs");
+    assert.match(exportScript, /\.nojekyll/, "the export must write the .nojekyll marker");
+    assert.match(exportScript, /writeFileSync\(/, "the marker must actually be written, not just referenced");
+
+    // A built artifact, if present, must carry it too.
+    const distIndex = join(root, "frontend/web/dist/index.html");
+    if (existsSync(distIndex)) {
+      assert.ok(
+        existsSync(join(root, "frontend/web/dist/.nojekyll")),
+        "dist/ exists without .nojekyll: Pages would strip _next/ and deploy a broken site",
+      );
+    }
+  });
+
   it("keeps executable and test paths portable", () => {
     const executableFiles = [
       "e2e/researcher-preview.spec.ts",
