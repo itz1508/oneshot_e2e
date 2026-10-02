@@ -10,8 +10,8 @@
     "lint": "node scripts/check.mjs lint",
     "check": "node scripts/check.mjs lint",
     "test": "node --import tsx --test \"tests/**/*.test.mjs\"",
-    "build": "next build --webpack && node scripts/export.mjs",
-    "dev": "next dev --webpack -p 5173",
+    "build": "node ../../scripts/sync-demo-assets.mjs && next build --webpack && node scripts/export.mjs",
+    "dev": "node ../../scripts/sync-demo-assets.mjs && next dev --webpack -p 5173",
     "preview": "node scripts/serve.mjs",
     "start": "node scripts/serve.mjs",
     "serve": "node scripts/serve.mjs"

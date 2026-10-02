@@ -166,6 +166,24 @@ describe("OneShot Modern Chat UI — Architecture & Contracts", () => {
     assert.match(sidebarSrc, /serverProviderStatus/);
   });
 
+  it("embeds the narrated architecture walkthrough with a codec ladder, captions, and a poster", () => {
+    const drawerSrc = read("frontend/web/src/components/ContextReviewDrawer.tsx");
+    assert.match(drawerSrc, /<video/);
+    assert.match(drawerSrc, /oneshot-architecture-desktop\.av1\.mp4/);
+    assert.match(drawerSrc, /oneshot-architecture-desktop\.vp9\.webm/);
+    assert.match(drawerSrc, /oneshot-architecture-desktop\.h264\.mp4/);
+    assert.match(drawerSrc, /oneshot-architecture-desktop\.vtt/);
+    assert.match(drawerSrc, /oneshot-architecture-desktop-poster\.webp/);
+    assert.match(drawerSrc, /preload="none"/);
+    // AV1 and VP9 must be offered before the H.264 fallback so browsers pick the
+    // smallest payload they can actually decode. The fallback must be the 1080p
+    // H.264 cut and never the 4K archival master, or every browser without AV1
+    // and VP9 downloads 65MB to fill a 1080p drawer.
+    const sources = [...drawerSrc.matchAll(/<source src="\/demo\/oneshot-architecture-desktop\.([^"]+)"/g)].map((match) => match[1]);
+    assert.deepEqual(sources, ["av1.mp4", "vp9.webm", "h264.mp4"]);
+    assert.doesNotMatch(drawerSrc, /oneshot-architecture-desktop\.mp4/);
+  });
+
   it("sends the session id on both provider config and agent stream", () => {
     const appSrc = read("frontend/web/src/components/App.tsx");
     const sessionSrc = read("frontend/web/src/lib/useChatSession.ts");

@@ -77,11 +77,13 @@ Never fabricate progress, fake timers, mock data, synthetic success, assistant r
 | Manifest integrity check | `python app/scripts/verify_manifest.py` |
 | Regenerate manifest | `python app/scripts/generate_manifest.py` |
 | Verify demo assets | `pnpm run verify:demo` |
+| Sync demo assets into derived trees | `pnpm run sync:demo` |
 
 ## Canonical Sources
 
 | Concern | Canonical location |
 | :--- | :--- |
+| Demo payload (only committed copy) | `public/demo` — `frontend/web/public/demo` and `frontend/web/dist/demo` are derived, gitignored build output written by `scripts/sync-demo-assets.mjs`; 4K masters and the unpublished portrait cut stay in gitignored `public/demo/archival/` |
 | Production frontend | `frontend/web/app/` and `frontend/web/src/` |
 | Reference-only alternate frontend | `frontend/web/src/components/main-screen/` |
 | Backend HTTP/SSE entry | `backend/index.ts` |

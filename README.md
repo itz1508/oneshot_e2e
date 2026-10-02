@@ -2,6 +2,8 @@
 
 # OneShot: Deterministic E2E Agent Runtime
 
+**OneShot E2E** advances beyond standard market practice by establishing **deterministic runtime guarantees over non-deterministic LLM outputs** through a hardened, verifiable polyglot architecture.
+
 <p>
   <a href="https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/install.ps1">
     <img src="https://img.shields.io/badge/⚡_Installation-Start_Automatic_E2E-2563EB?style=for-the-badge&logo=powershell&logoColor=white" alt="OneShot Installation" />
@@ -49,6 +51,12 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 <sub>
   ▶ <b><a href="https://youtu.be/lE9vtKB-fSk">Watch Full Walkthrough on YouTube</a></b> · <a href="public/demo/oneshot-60s.mp4">Direct MP4</a> · <a href="public/demo/oneshot-demo.vtt">Subtitles (.vtt)</a>
 </sub>
+
+<p align="center">
+  <b>Architecture deep dive</b> — a 3:00 narrated walkthrough composited from 12 live product captures.<br>
+  <a href="public/demo/oneshot-architecture-desktop.av1.mp4">1080p AV1</a> · <a href="public/demo/oneshot-architecture-desktop.vp9.webm">1080p VP9</a> · <a href="public/demo/oneshot-architecture-desktop.h264.mp4">1080p H.264</a> · <a href="public/demo/oneshot-architecture-desktop.vtt">Captions (.vtt)</a> · <a href="public/demo/oneshot-architecture-desktop-poster.webp">Poster</a><br>
+  <sub>The 4K H.264 masters and the portrait cut are archival and gitignored — regenerate them with <code>pnpm run capture:architecture-video</code>.</sub>
+</p>
 
 </div>
 

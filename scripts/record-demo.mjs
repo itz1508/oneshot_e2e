@@ -9,11 +9,11 @@ import { chromium } from "@playwright/test";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { syncDemoAssets } from "./sync-demo-assets.mjs";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(moduleDir, "..");
 const demoOutputDir = path.join(repoRoot, "public", "demo");
-const frontendDemoDir = path.join(repoRoot, "frontend", "web", "public", "demo");
 const demoArtifactDir = path.join(
   repoRoot,
   "test-results",
@@ -21,11 +21,10 @@ const demoArtifactDir = path.join(
 );
 
 await fs.mkdir(demoOutputDir, { recursive: true });
-await fs.mkdir(frontendDemoDir, { recursive: true });
 await fs.mkdir(demoArtifactDir, { recursive: true });
 
 const obsoleteDemoFiles = ["screen-1-initial.png"];
-for (const directory of [demoOutputDir, frontendDemoDir]) {
+for (const directory of [demoOutputDir]) {
   for (const filename of obsoleteDemoFiles) {
     await fs.rm(path.join(directory, filename), { force: true });
   }
@@ -140,9 +139,11 @@ if (!finalVideoPath) {
   throw new Error("Playwright did not produce a video");
 }
 
+// Only the canonical tree and the scratch artifact dir are written here. The
+// frontend copy under frontend/web/public/demo is derived output owned by
+// scripts/sync-demo-assets.mjs, refreshed once at the end of this run.
 const videoTargets = [
   path.join(demoOutputDir, "oneshot-demo.webm"),
-  path.join(frontendDemoDir, "oneshot-demo.webm"),
   path.join(demoArtifactDir, "oneshot-demo.webm"),
 ];
 for (const target of videoTargets) {
@@ -158,15 +159,17 @@ const screenshots = [
 for (const screenshot of screenshots) {
   const sourcePath = path.join(demoOutputDir, screenshot);
   if (await fs.access(sourcePath).then(() => true).catch(() => false)) {
-    await fs.copyFile(sourcePath, path.join(frontendDemoDir, screenshot));
     await fs.copyFile(sourcePath, path.join(demoArtifactDir, screenshot));
   }
 }
 
-for (const directory of [demoOutputDir, frontendDemoDir]) {
+for (const directory of [demoOutputDir]) {
   const generatedVideoFiles = (await fs.readdir(directory))
     .filter((filename) => filename.startsWith("page@") && filename.endsWith(".webm"));
   await Promise.all(generatedVideoFiles.map((filename) => fs.rm(path.join(directory, filename), { force: true })));
 }
+
+// Publish the derived Next.js trees from the canonical payload, once.
+await syncDemoAssets();
 
 console.log(`✅ Published real ${((Date.now() - startTime) / 1000).toFixed(1)}s capture`);

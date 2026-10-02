@@ -20,7 +20,9 @@
  *   - public/demo/oneshot-demo.vtt (synchronized WebVTT live captions)
  *   - public/demo/screen-*.png (full screenshot set)
  *
- * Mirrors all assets into frontend/web/public/demo and frontend/web/dist/demo for static export parity.
+ * Writes the canonical tree only (public/demo). The derived copies under
+ * frontend/web/public/demo and frontend/web/dist/demo are produced once at the
+ * end by scripts/sync-demo-assets.mjs, never mirrored file by file.
  *
  * Usage: node scripts/capture-demo.mjs [--base http://127.0.0.1:4173] [--slow]
  */
@@ -35,6 +37,23 @@ import http from 'node:http';
 
 const run = promisify(execFile);
 const isWindows = process.platform === 'win32';
+
+// This capture has its own TTS path (generateSynchronizedVoiceover below), so it
+// needs the same pronunciation guard the architecture video uses. Handing the
+// narrator a raw "E2E" makes it spell the code out letter by letter, and the
+// spoken track then contradicts the on-screen caption. The alias table is shared
+// so both videos pronounce this project's jargon identically and a term is
+// added in exactly one place.
+const { toSpeechSsml } = await import('./capture-architecture-video.mjs');
+
+const xmlAttrEscape = (value) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * Escape a caption for embedding inside a single-quoted PowerShell string.
+ * The narrator receives SSML rather than bare text so shared jargon is spoken
+ * correctly; without the conversion it would be read glyph by glyph.
+ */
+const toSpokenText = (displayText) => xmlAttrEscape(toSpeechSsml(displayText).replace(/^<speak[^>]*>/, '').replace(/<\/speak>$/, ''));
 const runCmd = (cmd, args, opts = {}) =>
   isWindows
     ? run('cmd.exe', ['/d', '/s', '/c', [cmd, ...args].join(' ')], opts)
@@ -43,19 +62,16 @@ const runCmd = (cmd, args, opts = {}) =>
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(moduleDir, '..');
 const rootDemoDir = path.join(repoRoot, 'public', 'demo');
-const frontendDemoDir = path.join(repoRoot, 'frontend', 'web', 'public', 'demo');
-const distDemoDir = path.join(repoRoot, 'frontend', 'web', 'dist', 'demo');
 const rawVideoDir = path.join(repoRoot, '.demo-capture');
 
-async function copyToTargetDirs(srcPath, filename) {
-  await fs.copyFile(srcPath, path.join(frontendDemoDir, filename));
-  try {
-    const distExists = await fs.access(distDemoDir).then(() => true).catch(() => false);
-    if (distExists) {
-      await fs.copyFile(srcPath, path.join(distDemoDir, filename));
-    }
-  } catch {}
-}
+// public/demo is the single canonical tree. The derived Next.js copies
+// (frontend/web/public/demo and frontend/web/dist/demo) belong exclusively to
+// scripts/sync-demo-assets.mjs, which runs once at the end of the capture.
+// Mirroring every asset from here is what duplicated the whole payload into the
+// commit surface and into the Pages bundle.
+const syncDerivedDemoTrees = async () => {
+  await runCmd('node', [path.join(moduleDir, 'sync-demo-assets.mjs')]);
+};
 
 const args = process.argv.slice(2);
 const baseArgIndex = args.indexOf('--base');
@@ -588,9 +604,13 @@ async function generateSynchronizedVoiceover(cues, totalDurationMs, outWavPath) 
   for (let i = 0; i < cues.length; i++) {
     const c = cues[i];
     const clipPath = path.join(tempDir, `clip_${i}.wav`).replace(/\\/g, '/');
-    const spokenText = (c.voice || c.text || `${c.title}. ${c.desc}`).replace(/'/g, "''");
+    const displayText = (c.voice || c.text || `${c.title}. ${c.desc}`);
+    // The caption text a viewer reads is never altered; toSpokenText only wraps
+    // jargon in pronunciation aliases for the narrator.
+    const spokenText = toSpokenText(displayText).replace(/'/g, "''");
     psLines.push(`$synth.SetOutputToWaveFile('${clipPath}')`);
-    psLines.push(`$synth.Speak('${spokenText}')`);
+    // SpeakSsml, not Speak: markup is what carries the <sub alias> overrides.
+    psLines.push(`$synth.SpeakSsml('<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">${spokenText}</speak>')`);
   }
 
   psLines.push('$synth.Dispose()');
@@ -686,7 +706,6 @@ let page = null;
 
 try {
   await fs.mkdir(rootDemoDir, { recursive: true });
-  await fs.mkdir(frontendDemoDir, { recursive: true });
 
   console.log(`Starting combined multi-minute high-motion capture against ${BASE}...`);
 
@@ -1074,7 +1093,6 @@ for (let i = 0; i < vttCues.length; i++) {
 
 const vttPath = path.join(rootDemoDir, 'oneshot-demo.vtt');
 await fs.writeFile(vttPath, vttContent, 'utf-8');
-await copyToTargetDirs(vttPath, 'oneshot-demo.vtt');
 console.log(`  generated oneshot-demo.vtt with ${vttCues.length} cues`);
 
 // 2. Synthesize synchronized voiceover narration
@@ -1102,7 +1120,6 @@ try {
   }
   mp4Args.push('-c:s', 'mov_text', '-metadata:s:s:0', 'language=eng', '-movflags', '+faststart', publishedMp4);
   await runCmd('ffmpeg', mp4Args);
-  await copyToTargetDirs(publishedMp4, 'oneshot-demo.mp4');
   console.log('  transcoded oneshot-demo.mp4 (H.264 + AAC Narrated Audio + Embedded Subtitles)');
 } catch (err) {
   console.warn(`  ! could not transcode mp4: ${err.message}`);
@@ -1124,8 +1141,6 @@ if (hasVoiceover) {
     console.warn(`  ! could not mux audio into webm: ${err.message}`);
   }
 }
-await copyToTargetDirs(publishedVideo, 'oneshot-demo.webm');
-
 // 5. Generate animated GIF for native inline GitHub README autoplay (32s high-action window from Try It streaming)
 const publishedGif = path.join(rootDemoDir, 'oneshot-demo.gif');
 try {
@@ -1134,7 +1149,6 @@ try {
     '-vf', 'fps=10,scale=800:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse',
     publishedGif
   ]);
-  await copyToTargetDirs(publishedGif, 'oneshot-demo.gif');
   console.log('  generated animated oneshot-demo.gif');
 } catch (err) {
   console.warn(`  ! could not generate gif: ${err.message}`);
@@ -1143,17 +1157,9 @@ try {
 await fs.rm(voiceoverWav, { force: true }).catch(() => {});
 await fs.rm(rawVideoDir, { recursive: true, force: true });
 
-const allDemoFiles = await fs.readdir(rootDemoDir);
-for (const filename of allDemoFiles) {
-  if (filename.endsWith('.png') || filename.endsWith('.mp4') || filename.endsWith('.webm') || filename.endsWith('.gif') || filename.endsWith('.vtt')) {
-    const src = path.join(rootDemoDir, filename);
-    try {
-      await copyToTargetDirs(src, filename);
-    } catch (err) {
-      console.warn(`  ! could not mirror ${filename}: ${err.message}`);
-    }
-  }
-}
+// Refresh the derived Next.js trees once, from the canonical payload, instead of
+// mirroring each file as it is produced.
+await syncDerivedDemoTrees();
 
 const videoStat = await fs.stat(publishedVideo);
 console.log(`\nVideo published: public/demo/oneshot-demo.webm (${(videoStat.size / 1024).toFixed(1)} KB)`);

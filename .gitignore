@@ -59,6 +59,11 @@ coverage/
 test.txt
 test-api.mjs
 
+# Ad-hoc codec/rendition comparison scratch from the demo video capture work
+# (frame grabs and ffprobe sidecars used to pick av1 vs h264 vs vp9). Kept
+# out of the repo; regenerate by re-running the capture comparison locally.
+_cmp/
+
 # Python cache & virtual environments
 __pycache__/
 *.py[cod]
@@ -77,5 +82,15 @@ Thumbs.db
 
 public/demo/page@*.webm
 debug-screenshot.png
+
+# Demo payload: public/demo is the single canonical, committed copy.
+# frontend/web/public/demo is derived build output written by
+# scripts/sync-demo-assets.mjs, and public/demo/archival holds the regenerable
+# 4K H.264 masters plus the unpublished portrait cut. Committing either copy
+# doubles clone size and GitHub page weight for zero user benefit, and a 4K
+# master is a file GitHub warns about at 50MB and blocks at 100MB.
+frontend/web/public/demo/*
+!frontend/web/public/demo/.gitignore
+public/demo/archival/
 
 *.egg-info/

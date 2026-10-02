@@ -688,6 +688,35 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
               />
             </div>
 
+            <div className="rounded-xl border border-white/10 overflow-hidden bg-black shadow-xl">
+              <video
+                controls
+                preload="none"
+                playsInline
+                poster="/demo/oneshot-architecture-desktop-poster.webp"
+                className="w-full h-auto"
+                aria-label="OneShot 3-minute architecture walkthrough"
+              >
+                <source src="/demo/oneshot-architecture-desktop.av1.mp4" type="video/mp4; codecs=av01.0.08M.10" />
+                <source src="/demo/oneshot-architecture-desktop.vp9.webm" type="video/webm; codecs=vp9" />
+                <source src="/demo/oneshot-architecture-desktop.h264.mp4" type="video/mp4" />
+                <track
+                  kind="captions"
+                  src="/demo/oneshot-architecture-desktop.vtt"
+                  srcLang="en"
+                  label="English"
+                  default
+                />
+                Your browser cannot play the embedded architecture walkthrough.
+              </video>
+              <p className="px-3 py-2 text-[10px] text-[#8e8e93]">
+                3-minute narrated tour composited from 12 live product captures. 1080p AV1, VP9 and H.264
+                renditions cover every modern browser at a fraction of the bytes; the 4K H.264 master and the
+                portrait edition are archival and regenerate with
+                <code className="text-[#a0a0a5]"> pnpm run capture:architecture-video</code>.
+              </p>
+            </div>
+
             <div className="p-3 rounded-lg border border-blue-500/20 bg-blue-500/5 space-y-1">
               <span className="text-xs font-semibold text-blue-300">Layer 1: Canonical Web UI</span>
               <p className="text-[11px] text-[#b0b0b8] leading-relaxed">

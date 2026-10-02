@@ -1,0 +1,5 @@
+# Derived build output: scripts/sync-demo-assets.mjs copies the canonical
+# public/demo payload here during build/dev. Never commit this copy; the
+# multi-hundred-MB video ladder lives once in public/demo only.
+*
+!.gitignore

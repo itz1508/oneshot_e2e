@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-30T04:00:51Z",
+  "generated_at": "2026-10-01T20:50:54Z",
   "version": "1.3.0",
-  "commit": "221470c8",
+  "commit": "eef2c14b",
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
@@ -11,8 +11,8 @@
     },
     {
       "path": "AGENTS.md",
-      "size": 7940,
-      "hash": "sha256:00bca8c2997761e1b886a5e8f2f797ad0b502f4c9dd5c0b06203cc20f1cd5b06",
+      "size": 8285,
+      "hash": "sha256:55395ce299f7c966ec31f37726bf790bb8d2c12c83266341730eb57cc5c3f2b8",
       "category": "source"
     },
     {
@@ -35,8 +35,8 @@
     },
     {
       "path": "README.md",
-      "size": 7420,
-      "hash": "sha256:2f248a3cfdec8b5f72a43cf386adaa67b03bbe09ed7ba98f35fec82239479ee7",
+      "size": 8303,
+      "hash": "sha256:bff9b832ff271ace4f0024874db5fda5231ca2a842faf51b6b0655b369d79796",
       "category": "source"
     },
     {
@@ -605,8 +605,8 @@
     },
     {
       "path": "frontend\\web\\package.json",
-      "size": 1399,
-      "hash": "sha256:5d337c56fbabc5602d01a419e92d5b4e09899f912f88ab46940094ef2997fe74",
+      "size": 1485,
+      "hash": "sha256:37c82b6c908651ccebf7c296af107d1247df8292a26936aab04d227815c4d73b",
       "category": "source"
     },
     {
@@ -653,8 +653,8 @@
     },
     {
       "path": "frontend\\web\\src\\components\\ContextReviewDrawer.tsx",
-      "size": 36997,
-      "hash": "sha256:039f3f91ba46d108ec01b0014c5ab98877b3fd4af5061fb43eb24811c4e14467",
+      "size": 38533,
+      "hash": "sha256:1e43f414de08e4ee86c63a009d2b0f8c58d4128cfb26bd414cbb37bcf1acb609",
       "category": "source"
     },
     {
@@ -971,8 +971,8 @@
     },
     {
       "path": "frontend\\web\\tests\\chat-ui.test.mjs",
-      "size": 18073,
-      "hash": "sha256:eaa8283c2abf5f3b75d659ca70cd8ca49a5fb5251d2deceb30d201f3d988e42d",
+      "size": 19281,
+      "hash": "sha256:50f9a209a6916af6f15d821336906515c2ac3d3b298fc2aa71e70ce8198c1660",
       "category": "source"
     },
     {
@@ -1025,8 +1025,8 @@
     },
     {
       "path": "package.json",
-      "size": 3261,
-      "hash": "sha256:09be0735f88c1c0e29772fe3591f70d9a9ee58d54a1bab47052848c7475fcd76",
+      "size": 3607,
+      "hash": "sha256:6b8a76889d4ccd1962918854bac5ea230589f816a714bc06cd8cea383954384d",
       "category": "source"
     },
     {
@@ -1414,9 +1414,15 @@
       "category": "source"
     },
     {
+      "path": "scripts\\capture-architecture-video.mjs",
+      "size": 46925,
+      "hash": "sha256:882172a3c7f9bab45dcd9f14a3fc320410ac8e42804dff9270b496462d5f8c18",
+      "category": "source"
+    },
+    {
       "path": "scripts\\capture-demo.mjs",
-      "size": 44946,
-      "hash": "sha256:968e6f61c009e4f3a8549f8b750e9c22e3ca48f0ae5bc144cfc72a835b252ca2",
+      "size": 45826,
+      "hash": "sha256:3ee6d599ff83377159910b81474858f2ebe1014ad288359b9f805df103b52074",
       "category": "source"
     },
     {
@@ -1487,8 +1493,8 @@
     },
     {
       "path": "scripts\\record-demo.mjs",
-      "size": 6777,
-      "hash": "sha256:98fb1914b601a01e2aa49007855acdcf0e614e459034afca96a99e8aec8e3810",
+      "size": 6859,
+      "hash": "sha256:6f9ca8976380c4696e04596d647a03b9cb1ea10bf9f96e89bf0c3d483fe7b5d5",
       "category": "source"
     },
     {
@@ -1504,9 +1510,21 @@
       "category": "source"
     },
     {
+      "path": "scripts\\sync-demo-assets.mjs",
+      "size": 4608,
+      "hash": "sha256:80079580b48e5ce40eddcc093355f575d9e34e68e8b3f9da7446d7bf0a9194af",
+      "category": "source"
+    },
+    {
       "path": "scripts\\test-network-connection.mjs",
       "size": 4171,
       "hash": "sha256:ab4b968601e571dc885785ef848d84657ff046f3e45f448b5748752bc94e9dd9",
+      "category": "source"
+    },
+    {
+      "path": "scripts\\tests\\architecture-video.test.mjs",
+      "size": 16100,
+      "hash": "sha256:64f017db5770066eb45d7cfb3e47134df4faf6605797af51390a8f56251c3ca0",
       "category": "source"
     },
     {
@@ -1529,8 +1547,8 @@
     },
     {
       "path": "scripts\\verify-demo-assets.mjs",
-      "size": 3131,
-      "hash": "sha256:3a9ba41456aac4398ac69decb90a2f5dd82618e7cff97770ad8ead241af62f9f",
+      "size": 11415,
+      "hash": "sha256:0d62708ce7df5f4fc7bb0471ec4658a431c6f9d8fd00303f053c765dd7077d76",
       "category": "source"
     },
     {
@@ -1553,14 +1571,14 @@
     }
   ],
   "statistics": {
-    "total_files": 258,
-    "source_files": 258,
-    "total_size_bytes": 1603107,
+    "total_files": 261,
+    "source_files": 261,
+    "total_size_bytes": 1684390,
     "by_extension": {
       ".yml": 2,
       ".md": 7,
       "(no extension)": 1,
-      ".mjs": 41,
+      ".mjs": 44,
       ".bat": 2,
       ".sh": 3,
       ".json": 21,

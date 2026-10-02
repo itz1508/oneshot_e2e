@@ -1,0 +1,49 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:11.694
+Market practice leans on naive prompt chaining. OneShot E2E establishes deterministic runtime guarantees over non-deterministic LLM output through a hardened, verifiable polyglot architecture.
+
+2
+00:00:15.000 --> 00:00:22.415
+OneShot connects agent workflows with backend reasoning, contract validation, reproducible fixtures, and automated verification.
+
+3
+00:00:30.000 --> 00:00:41.717
+A Next.js interface meets a TypeScript Node service and a Python 3.12 reasoning runtime. Python runs as a subprocess by default, with optional HTTP RPC.
+
+4
+00:00:45.000 --> 00:00:55.672
+Six integrations: OpenAI, Google Gemini, Mistral, Nebius, and Ollama, plus Tavily search and the Strands SDK, behind a failover chain ordered by config.
+
+5
+00:01:00.000 --> 00:01:11.531
+Market practice passes unvalidated payloads between gateways and reasoning engines. OneShot E2E validates every request against a single request.schema.json at each runtime boundary.
+
+6
+00:01:15.000 --> 00:01:24.053
+The workflow runtime composes explicit phases, gates, and pre- and post-execution hooks. It records lifecycle events and structured failures.
+
+7
+00:01:30.000 --> 00:01:40.421
+Bearer-token guards, per-client and per-session rate limits, and configurable security headers strengthen request boundaries. Secure deployment still depends on configuration.
+
+8
+00:01:45.000 --> 00:01:55.427
+Market practice runs agent tool execution in monolithic runtimes. OneShot E2E confines work to four virtual partitions with virtual-mode enforcement and blocked path traversal.
+
+9
+00:02:00.000 --> 00:02:08.422
+Playwright end-to-end coverage exercises browser workflows. UX and network audits inspect real application states and request boundaries.
+
+10
+00:02:15.000 --> 00:02:23.580
+A seven-stage harness runs before every release, pairing backend and contract tests with Playwright audits that assert real layout geometry at four viewports.
+
+11
+00:02:30.000 --> 00:02:38.769
+Docker Compose runs the app and can enable an optional Ollama sidecar. GitHub Actions verifies builds and deploys the static frontend to Pages from main.
+
+12
+00:02:45.000 --> 00:02:56.227
+OneShot E2E: deterministic boundaries, governed workflows, and verifiable outcomes. Clone the repository, install with the frozen lockfile, and run the project launcher.
