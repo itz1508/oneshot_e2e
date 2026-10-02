@@ -72,6 +72,9 @@ jobs:
       - name: Run Backend & Runtime Tests
         run: pnpm run test:runtime
 
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install chromium --with-deps
+
       - name: Run Launcher and Manifest Policy Tests
         run: pnpm run test:scripts
 

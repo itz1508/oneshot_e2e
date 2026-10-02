@@ -5,8 +5,8 @@
   "files": [
     {
       "path": ".github\\workflows\\deploy.yml",
-      "size": 3869,
-      "hash": "sha256:5f55c022a201aa2887fa0a5f12872ad92e035ef233cbf60acfd50f0ccdda70b1",
+      "size": 3975,
+      "hash": "sha256:f0e0ae19065087cf4e471640c7f31ca5efaed3dea8c3222e4da40a0c8bd19532",
       "category": "source"
     },
     {
