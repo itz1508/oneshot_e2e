@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { chromium } from '@playwright/test'
 import { readFileSync } from 'node:fs'
-import { buildHtml, buildVtt, SCENES, SCENE_SCREENSHOTS, storyboardTimeline, toVttTimestamp, toSpeechSsml, PRONUNCIATION_ALIASES, LAYOUT_HEIGHT, LAYOUT_WIDTH, RENDITIONS, VIDEO_HEIGHT, VIDEO_WIDTH } from '../capture-architecture-video.mjs'
+import { buildHtml, buildVtt, SCENES, SCENE_SCREENSHOTS, storyboardTimeline, toVttTimestamp, toSpeechSsml, toSpokenText, PRONUNCIATION_ALIASES, LAYOUT_HEIGHT, LAYOUT_WIDTH, RENDITIONS, VIDEO_HEIGHT, VIDEO_WIDTH } from '../capture-architecture-video.mjs'
 import { readFileSync as read } from 'node:fs'
 
 const captureDemoSource = read(new URL('../capture-demo.mjs', import.meta.url), 'utf8')
@@ -112,6 +112,51 @@ test('the narrator is driven with SSML, not a raw Speak call', () => {
   assert.match(captureSource, /ssml: toSpeechSsml\(voice\)/, 'the cue file must carry SSML, not the display string')
 })
 
+test('the demo capture keeps its intermediates out of the committed tree', () => {
+  // The rendered narration WAV is consumed by the mux step and is not a
+  // deliverable. public/demo is the single COMMITTED tree, and
+  // sync-demo-assets.mjs mirrors whatever is in it into both derived frontend
+  // trees, so an intermediate written there would add a ~34MB uncompressed file
+  // to every clone and to the Pages bundle. It belongs in the capture's scratch
+  // dir, which is removed at the end of the run.
+  assert.doesNotMatch(
+    captureDemoSource,
+    /path\.join\(rootDemoDir, '[^']*-voice\.wav'\)/,
+    'a rendered voiceover intermediate must not be written into public/demo',
+  )
+  assert.match(captureDemoSource, /path\.join\(rawVideoDir, 'oneshot-demo-voice\.wav'\)/)
+  // The dir is created rather than assumed, so the write cannot depend on the
+  // recorder having run first.
+  assert.match(captureDemoSource, /mkdir\(rawVideoDir, \{ recursive: true \}\)/)
+  // And the scratch dir is cleaned up when the capture finishes.
+  assert.match(captureDemoSource, /rm\(rawVideoDir, \{ recursive: true, force: true \}\)/)
+})
+
+test('a spoken cue is XML-escaped exactly once and quote-escaped exactly once', () => {
+  // Regression: toSpeechSsml already escapes XML. A second escaping pass turned
+  // "&" into "&amp;amp;", and the narrator audibly said "amp semicolon" instead
+  // of "and" -- measured in the real SAPI engine at 2.79s versus 1.88s for the
+  // same sentence. The PowerShell single-quote was likewise escaped twice,
+  // turning "operator's" into "operator''''s".
+  assert.equal(toSpokenText('A & B'), 'A &amp; B', 'the ampersand must be escaped once, not twice')
+  assert.ok(!toSpokenText('A & B').includes('&amp;amp;'), 'a double escape is an audible defect')
+  assert.equal(toSpokenText("the operator's guard"), "the operator''s guard", 'the PowerShell quote is doubled exactly once')
+  assert.ok(!toSpokenText("it's").includes("''''"), 'a doubled quote escape is a defect')
+  // Angle brackets and quotes stay valid XML so the engine accepts the document.
+  assert.equal(toSpokenText('a < b > c "d"'), 'a &lt; b &gt; c "d"')
+  // Aliases survive the unwrap, and no <speak> envelope leaks into the body.
+  assert.equal(toSpokenText('OneShot E2E'), 'OneShot <sub alias="E to E">E2E</sub>')
+  assert.ok(!toSpokenText('E2E').includes('<speak'), 'the envelope must be stripped for the caller to rewrap')
+  // A cue that is already clean is passed through untouched.
+  assert.equal(toSpokenText('Bearer-token guards.'), 'Bearer-token guards.')
+  // Every real caption must be safe to embed in the single-quoted literal.
+  for (const scene of SCENES) {
+    const spoken = toSpokenText(scene.voice)
+    assert.ok(!spoken.includes('&amp;amp;'), `${scene.id} double-escapes XML`)
+    assert.ok(!spoken.includes("''''"), `${scene.id} double-escapes the PowerShell quote`)
+  }
+})
+
 test('the walkthrough demo shares the same pronunciation layer', () => {
   // capture-demo.mjs drives its own TTS (generateSynchronizedVoiceover), so it
   // does not inherit the architecture video's fix by proximity. It is a committed
@@ -122,9 +167,11 @@ test('the walkthrough demo shares the same pronunciation layer', () => {
   // One shared table, so a term is aliased once and both videos agree on how it
   // is pronounced rather than drifting apart.
   assert.match(captureDemoSource, /import\('\.\/capture-architecture-video\.mjs'\)/)
-  assert.match(captureDemoSource, /const toSpokenText = \(displayText\)/, 'the demo must route captions through the shared alias layer')
-  // The caption a viewer reads is never rewritten.
+  assert.match(captureDemoSource, /const \{ toSpokenText \} = await import/, 'the demo must reuse the shared escaping and alias layer')
+  assert.doesNotMatch(captureDemoSource, /xmlAttrEscape/, 'a second escaping pass in the demo would double-escape the cue')
+  // The caption a viewer reads is never rewritten, and the quote is escaped once.
   assert.match(captureDemoSource, /const displayText = \(c\.voice \|\| c\.text/)
+  assert.match(captureDemoSource, /const spokenText = toSpokenText\(displayText\);/)
 })
 
 test('no caption hands unaliased jargon to the narrator', () => {

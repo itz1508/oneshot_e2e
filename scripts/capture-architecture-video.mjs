@@ -246,6 +246,19 @@ export function toSpeechSsml(displayText) {
   return `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">${spoken}</speak>`
 }
 
+/**
+ * Render the inner markup of a caption as a PowerShell-safe literal body.
+ * toSpeechSsml ALREADY XML-escapes the caption text, so this must not escape a
+ * second time: doing so turns "&" into "&amp;amp;" and the narrator audibly says
+ * "amp semicolon" instead of "and". Only the PowerShell single-quote is escaped,
+ * because the cue is embedded in a single-quoted string literal.
+ */
+export const toSpokenText = (displayText) =>
+  toSpeechSsml(displayText)
+    .replace(/^<speak[^>]*>/, '')
+    .replace(/<\/speak>$/, '')
+    .replace(/'/g, "''")
+
 export function buildVtt(timeline, spokenDurationsMs) {
   const cues = timeline.map((scene, index) => {
     const spokenDuration = spokenDurationsMs[index]

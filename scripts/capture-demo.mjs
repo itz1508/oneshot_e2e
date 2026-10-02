@@ -41,19 +41,11 @@ const isWindows = process.platform === 'win32';
 // This capture has its own TTS path (generateSynchronizedVoiceover below), so it
 // needs the same pronunciation guard the architecture video uses. Handing the
 // narrator a raw "E2E" makes it spell the code out letter by letter, and the
-// spoken track then contradicts the on-screen caption. The alias table is shared
-// so both videos pronounce this project's jargon identically and a term is
-// added in exactly one place.
-const { toSpeechSsml } = await import('./capture-architecture-video.mjs');
+// spoken track then contradicts the on-screen caption. The alias table AND the
+// escaping are shared so both videos pronounce this project's jargon
+// identically and a term is corrected in exactly one place.
+const { toSpokenText } = await import('./capture-architecture-video.mjs');
 
-const xmlAttrEscape = (value) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-/**
- * Escape a caption for embedding inside a single-quoted PowerShell string.
- * The narrator receives SSML rather than bare text so shared jargon is spoken
- * correctly; without the conversion it would be read glyph by glyph.
- */
-const toSpokenText = (displayText) => xmlAttrEscape(toSpeechSsml(displayText).replace(/^<speak[^>]*>/, '').replace(/<\/speak>$/, ''));
 const runCmd = (cmd, args, opts = {}) =>
   isWindows
     ? run('cmd.exe', ['/d', '/s', '/c', [cmd, ...args].join(' ')], opts)
@@ -605,9 +597,9 @@ async function generateSynchronizedVoiceover(cues, totalDurationMs, outWavPath) 
     const c = cues[i];
     const clipPath = path.join(tempDir, `clip_${i}.wav`).replace(/\\/g, '/');
     const displayText = (c.voice || c.text || `${c.title}. ${c.desc}`);
-    // The caption text a viewer reads is never altered; toSpokenText only wraps
-    // jargon in pronunciation aliases for the narrator.
-    const spokenText = toSpokenText(displayText).replace(/'/g, "''");
+    // The caption text a viewer reads is never altered; toSpokenText only adds
+    // pronunciation aliases and escapes the PowerShell quote exactly once.
+    const spokenText = toSpokenText(displayText);
     psLines.push(`$synth.SetOutputToWaveFile('${clipPath}')`);
     // SpeakSsml, not Speak: markup is what carries the <sub alias> overrides.
     psLines.push(`$synth.SpeakSsml('<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">${spokenText}</speak>')`);
@@ -1095,10 +1087,18 @@ const vttPath = path.join(rootDemoDir, 'oneshot-demo.vtt');
 await fs.writeFile(vttPath, vttContent, 'utf-8');
 console.log(`  generated oneshot-demo.vtt with ${vttCues.length} cues`);
 
-// 2. Synthesize synchronized voiceover narration
-const voiceoverWav = path.join(rootDemoDir, 'oneshot-demo-voice.wav');
+// 2. Synthesize synchronized voiceover narration.
+// The rendered WAV is an intermediate consumed by the mux below, not a
+// deliverable. public/demo is the single COMMITTED tree, so writing it there
+// would put a ~34MB uncompressed file in the commit surface and have
+// sync-demo-assets.mjs copy it into both derived frontend trees. It is built
+// in the capture's own scratch dir instead and dies with the run.
+const voiceoverWav = path.join(rawVideoDir, 'oneshot-demo-voice.wav');
 let hasVoiceover = false;
 try {
+  // Created here rather than assumed: the scratch dir is normally made by the
+  // recorder, but the narration must not depend on that call order.
+  await fs.mkdir(rawVideoDir, { recursive: true });
   const lastCueEnd = vttCues[vttCues.length - 1]?.endMs || 196000;
   await generateSynchronizedVoiceover(vttCues, lastCueEnd, voiceoverWav);
   hasVoiceover = true;
