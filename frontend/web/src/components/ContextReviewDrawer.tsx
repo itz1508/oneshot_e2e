@@ -700,17 +700,17 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
           <div className="space-y-4">
             <div>
               <strong className="block text-xs font-semibold text-[#dedede]">
-                OneShot Fleet Architecture
+                OneShot Verified Console
               </strong>
               <small className="block text-[9px] text-[#6e6e73]">
-                Google ADK Workflow · Agent SSE · Gemini 3.5 Flash · Cloud Run
+                Agent SSE Stream · Python Subprocess · RFC 8785 · SHA-256 · 4-Partition Sandbox
               </small>
             </div>
 
             <div className="rounded-xl border border-white/10 overflow-hidden bg-[#0d0d11] p-1.5 shadow-xl">
               <img
                 src="/demo/architecture-diagram.svg"
-                alt="OneShot Enterprise Architecture"
+                alt="OneShot verified console architecture"
                 className="w-full h-auto rounded-lg"
               />
             </div>
@@ -722,7 +722,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
                 playsInline
                 poster="/demo/oneshot-architecture-desktop-poster.webp"
                 className="w-full h-auto"
-                aria-label="OneShot 3-minute architecture walkthrough"
+                aria-label="OneShot 3-minute verified console walkthrough"
               >
                 <source src="/demo/oneshot-architecture-desktop.av1.mp4" type="video/mp4; codecs=av01.0.08M.10" />
                 <source src="/demo/oneshot-architecture-desktop.vp9.webm" type="video/webm; codecs=vp9" />
@@ -737,7 +737,7 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
                 Your browser cannot play the embedded architecture walkthrough.
               </video>
               <p className="px-3 py-2 text-[10px] text-[#8e8e93]">
-                3-minute narrated tour composited from 12 live product captures. 1080p AV1, VP9 and H.264
+                3-minute narrated tour of the verified console, composited from 12 live product captures. 1080p AV1, VP9 and H.264
                 renditions cover every modern browser at a fraction of the bytes; the 4K H.264 master and the
                 portrait edition are archival and regenerate with
                 <code className="text-[#a0a0a5]"> pnpm run capture:architecture-video</code>.

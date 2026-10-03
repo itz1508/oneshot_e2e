@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-03T08:38:58Z",
+  "generated_at": "2026-10-03T11:33:38Z",
   "version": "1.3.0",
-  "commit": "ed6b84da",
+  "commit": "29c4cc88",
   "files": [
     {
       "path": ".github/workflows/deploy.yml",
@@ -35,8 +35,8 @@
     },
     {
       "path": "README.md",
-      "size": 9527,
-      "hash": "sha256:49178ce523e39523d0361aaef2c1967caf38235a533d28d0059f2884ce780a50",
+      "size": 9781,
+      "hash": "sha256:6b1695bc82be6e9eb79cc9a2daebbdbcb3b17219864f4da1a00b5de02ae149ed",
       "category": "source"
     },
     {
@@ -653,8 +653,8 @@
     },
     {
       "path": "frontend/web/src/components/ContextReviewDrawer.tsx",
-      "size": 39747,
-      "hash": "sha256:1dc555315ce9cb946e9f6a83bab508c6c624cf5ac583c530821bf6c8844e818b",
+      "size": 39798,
+      "hash": "sha256:d338e5ee23b93908ab9c1464ddffd40580c647b72da4331267b216feb5f557e8",
       "category": "source"
     },
     {
@@ -1415,8 +1415,8 @@
     },
     {
       "path": "scripts/capture-architecture-video.mjs",
-      "size": 47579,
-      "hash": "sha256:1aa6fdba1265f6b6c3a290c6c4bcfba57fa98a38e6c6ebba258e7dd78d58b13a",
+      "size": 49070,
+      "hash": "sha256:5a5a939a9e70094102fc827197b62232b3c547c844eaf497c4f0b824144daf1e",
       "category": "source"
     },
     {
@@ -1535,8 +1535,8 @@
     },
     {
       "path": "scripts/tests/architecture-video.test.mjs",
-      "size": 20953,
-      "hash": "sha256:bcad41fceb1a5ee718a1e048f69011114a19e376b40f56092432deffa04d675c",
+      "size": 25321,
+      "hash": "sha256:c4bc4528b86fee38cc759c59378230e9baa321c97fc4b1fa857b00fa94c88343",
       "category": "source"
     },
     {
@@ -1571,8 +1571,8 @@
     },
     {
       "path": "scripts/verify-demo-assets.mjs",
-      "size": 11415,
-      "hash": "sha256:0d62708ce7df5f4fc7bb0471ec4658a431c6f9d8fd00303f053c765dd7077d76",
+      "size": 14980,
+      "hash": "sha256:f475141b87f44e94f3110a8ea9030645263614052f9c063e3cfb6943ca478632",
       "category": "source"
     },
     {
@@ -1603,7 +1603,7 @@
   "statistics": {
     "total_files": 266,
     "source_files": 266,
-    "total_size_bytes": 1726053,
+    "total_size_bytes": 1735782,
     "by_extension": {
       ".yml": 2,
       ".md": 7,

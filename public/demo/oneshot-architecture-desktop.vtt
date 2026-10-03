@@ -1,49 +1,49 @@
 WEBVTT
 
 1
-00:00:00.000 --> 00:00:08.907
-Most agent demos prove a prompt ran. OneShot proves the run was governed, bounded, and checkable afterwards, before anyone trusts the output.
+00:00:00.000 --> 00:00:10.648
+The install runs on Node and pnpm: the backend builds, the suites pass, and the full verification harness reports seven of seven green. OneShot is ready to run.
 
 2
-00:00:15.000 --> 00:00:24.163
-Research stops at ready for planning. Planning stops at approved plan. The agent reaches a boundary, and a human decides what happens next.
+00:00:15.000 --> 00:00:26.014
+The Verified Agentic Console loads ready with offline dry-run enabled, so no API key is needed. A five-step onboarding starts at Understand: read the fixture, then run it.
 
 3
-00:00:30.000 --> 00:00:41.392
-A Next.js interface, a TypeScript service, and a Python 3.12 runtime. It runs as a subprocess by default, with optional HTTP RPC.
+00:00:30.000 --> 00:00:39.243
+Step two offers four pre-loaded scenarios; the four-partition sandbox is selected. The prompt shows each partition tag, and one click tries it.
 
 4
-00:00:45.000 --> 00:00:54.383
-Seven provider paths ship in the box: OpenAI, Gemini, Claude, Mistral, Nebius, a gateway, and local Ollama, behind one failover chain.
+00:00:45.000 --> 00:00:56.967
+The button turns to executing and the pipeline reads stream in progress. Four live columns appear, and the Python runtime runs as a subprocess by default, with optional HTTP RPC.
 
 5
-00:01:00.000 --> 00:01:10.498
-One request schema, enforced twice: the same JSON is validated in TypeScript and again in Python, so a payload that passes one runtime cannot quietly fail the other.
+00:01:00.000 --> 00:01:11.637
+The stream completes as fixture verified, and the result card records a successful HTTP response with the SHA-256 hash confirmed byte for byte. Every column settles to verified.
 
 6
-00:01:15.000 --> 00:01:24.813
-Phases, gates, and before-and-after hooks are explicit, and every step emits a lifecycle event. When a run fails, the record says which phase stopped it.
+00:01:15.000 --> 00:01:24.408
+Open the context drawer and the context tab shows the stored source and the session restore fields: every run keeps its original input, ready to restore into a new session.
 
 7
-00:01:30.000 --> 00:01:40.441
-Bearer-token guards, per-client and per-session rate limits, and configurable security headers guard every boundary. How secure a deployment is still depends on configuration.
+00:01:30.000 --> 00:01:44.968
+The backends tab enforces virtual mode and blocks path traversal. Four partitions: workspace durable, scratch ephemeral, memories across sessions, and artifacts immutable. How secure a deployment is still depends on configuration.
 
 8
-00:01:45.000 --> 00:01:55.049
-Tool calls do not inherit your filesystem. Every write lands in one of four virtual partitions, and path traversal is blocked at the boundary rather than logged after the fact.
+00:01:45.000 --> 00:01:55.252
+The governance panel shows two review checkpoints: the first waits for approval with a confirm button, the second waits for a verified package hash. Neither advances on its own.
 
 9
-00:02:00.000 --> 00:02:08.843
-A browser drives the real application, and a network guard fails the run on any request the app should not have made. Layout is asserted at four viewports.
+00:02:00.000 --> 00:02:11.117
+Live provider configuration lets you switch between Gemini, Openai, and Nebius. Only the config source changes; the same workflow and the same event stream contract run against the real provider.
 
 10
-00:02:15.000 --> 00:02:25.670
-Five hundred and five tests run against this repository, then a seven-stage harness checks layout geometry at four viewports. Playwright audits the shipped build, not a mock.
+00:02:15.000 --> 00:02:28.139
+Expand the reasoning chain: the goal, the execution phase, and the invariant results emitted by the local Python subprocess. A verified badge confirms the SHA-256 contract matched byte for byte.
 
 11
-00:02:30.000 --> 00:02:39.648
-Docker Compose brings the app up with an optional Ollama sidecar, and GitHub Actions verifies the build and deploys the frontend. The demo you are watching is the shipped build.
+00:02:30.000 --> 00:02:40.974
+Tool execution runs against workspace files and emits real output records. The event log lists pipeline stages with timestamps, no synthetic delays, no mocked results.
 
 12
-00:02:45.000 --> 00:02:55.155
-Deterministic boundaries. Governed workflows. Verifiable outcomes. Clone it, install with the frozen lockfile, and run the launcher.
+00:02:45.000 --> 00:02:58.617
+Offline fixture verification and live agentic execution follow the same verifiable contract: real streams, real hash proofs, real partition isolation. Clone the repository, install, and run the launcher.

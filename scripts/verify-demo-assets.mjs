@@ -7,6 +7,12 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+// The committed .vtt is generated from SCENES[].voice by buildVtt, never authored
+// by hand. Importing the storyboard is what lets this script prove that, and the
+// module is import-safe: its capture run is guarded behind the import.meta.url
+// check at the bottom, so importing it here performs no rendering.
+const { SCENES } = await import('./capture-architecture-video.mjs')
+
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(moduleDir, '..')
 const rootDemoDir = path.join(repoRoot, 'public', 'demo')
@@ -15,10 +21,20 @@ const frontendDemoDir = path.join(repoRoot, 'frontend', 'web', 'public', 'demo')
 const distDemoDir = path.join(repoRoot, 'frontend', 'web', 'dist', 'demo')
 
 /**
- * The committed, served payload. public/demo is the ONLY canonical tree:
+ * Committed, served payload. public/demo is the ONLY canonical tree:
  * frontend/web/public/demo and frontend/web/dist/demo are derived by
  * scripts/sync-demo-assets.mjs and are byte-compared against this one.
  * Order follows the storyboard timeline.
+ *
+ * The screen-*.png set is the full capture output of `pnpm run capture:demo`, not
+ * a subset chosen for the architecture video. Only the twelve files named in
+ * SCENE_SCREENSHOTS (scripts/capture-architecture-video.mjs) are composited into
+ * the walkthrough; the rest are README screenshot-table sources, and several are
+ * alternate states of a beat the video samples once (sidebar collapsed, loading
+ * pulse, tasks-empty vs typed). So an entry here does NOT imply video usage, and a
+ * scene remap does not orphan a file. This set is reconciled against the capture
+ * script's own `shot()` calls rather than against the storyboard -- deleting
+ * "unused" screenshots would silently strip the README.
  */
 const expectedFiles = [
   'architecture-diagram.svg',
@@ -130,6 +146,61 @@ for (const demoDir of checkedDirs) {
 }
 
 /**
+ * Extract the caption text of each WebVTT cue, in order. Timing is deliberately
+ * ignored: cue ends are measured from real narration length at capture time, so
+ * only the TEXT is reproducible outside a capture run. That is exactly the part
+ * that must not drift.
+ */
+const parseVttCueTexts = (contents) => contents
+  .replace(/^﻿/, '')
+  .replace(/\r\n/g, '\n')
+  .split(/\n{2,}/)
+  .map((block) => block.trim())
+  .filter((block) => block.startsWith('WEBVTT') === false && block.includes(' --> '))
+  .map((block) => {
+    const lines = block.split('\n')
+    const timingIndex = lines.findIndex((line) => line.includes(' --> '))
+    // A cue id, when present, is the line above the timing line.
+    return lines.slice(timingIndex + 1).join('\n').trim()
+  })
+
+/**
+ * The captions must describe THIS storyboard.
+ *
+ * Every other check in this file is byte- or geometry-level: it proves the .vtt
+ * exists, carries a text stream, and matches across the derived trees. None of
+ * them tie the cue TEXT to the narration the video actually burns in. That gap
+ * let a hand-edited VTT ship beside an un-regenerated video with the suite still
+ * green -- reproduced by replacing this file with one cue reading
+ * "STALE NARRATION FROM A HAND EDIT" and re-running this script, which passed.
+ *
+ * The storyboard is the single source of truth for the caption, the burned-in
+ * text and the spoken audio, so the committed file is compared against it. A
+ * mismatch means the video and its captions describe different things, and the
+ * fix is to re-run `pnpm run capture:architecture-video` rather than to edit the
+ * .vtt.
+ */
+const assertCaptionsMatchStoryboard = async () => {
+  const vttPath = path.join(rootDemoDir, 'oneshot-architecture-desktop.vtt')
+  const committed = parseVttCueTexts(await fs.readFile(vttPath, 'utf8'))
+  const expected = SCENES.map((scene) => scene.voice)
+
+  assert.equal(
+    committed.length,
+    expected.length,
+    `caption cue count does not match the ${expected.length}-scene storyboard; regenerate the video instead of hand-editing the .vtt`,
+  )
+  expected.forEach((voice, index) => {
+    assert.equal(
+      committed[index],
+      voice,
+      `caption ${index + 1} does not match scene "${SCENES[index].id}".voice; regenerate with pnpm run capture:architecture-video`,
+    )
+  })
+  return committed.length
+}
+
+/**
  * Every committed asset stays under one byte budget. The 4K masters are 65-82MB
  * apiece, so a single oversized file here means archival bytes leaked into the
  * commit surface -- exactly the regression this layout exists to prevent.
@@ -144,6 +215,8 @@ assert.deepEqual(
   `served assets exceed the ${MAX_SERVED_BYTES / (1024 * 1024)}MB budget: ${oversizedFiles.join(', ')}`,
 )
 const totalServedBytes = servedSizes.reduce((total, size) => total + size, 0)
+
+const captionCueCount = await assertCaptionsMatchStoryboard()
 
 for (const filename of expectedFiles) {
   const rootPath = path.join(rootDemoDir, filename)
@@ -245,5 +318,6 @@ console.log(
   `Demo asset verification passed: ${expectedFiles.length} committed files in the canonical tree ` +
     `(${megabytes(totalServedBytes)}MB total, largest ${megabytes(Math.max(...servedSizes))}MB, budget ${MAX_SERVED_BYTES / (1024 * 1024)}MB) ` +
     `verified across ${checkedDirs.length} location(s); served ladder is 180 seconds with audio and captions - ${renditionSummaries.join(';')}; ` +
+    `captions: ${captionCueCount} cues match the storyboard; ` +
     `archival tree: ${archivalSummaries.join(';')}`,
 )

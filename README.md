@@ -53,7 +53,7 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 </sub>
 
 <p align="center">
-  <b>Architecture deep dive</b> — a 3:00 narrated walkthrough composited from 12 live product captures.<br>
+  <b>Console deep dive</b> — a 3:00 narrated walkthrough composited from 12 live product captures: install and boot, the verified agentic console, a governed fixture, the live SSE workflow, SHA-256 invariant proofs, the context drawer, the 4-partition sandbox, the human governance gates, live providers, the Python reasoning chain, and real tool execution.<br>
   <a href="public/demo/oneshot-architecture-desktop.av1.mp4">1080p AV1</a> · <a href="public/demo/oneshot-architecture-desktop.vp9.webm">1080p VP9</a> · <a href="public/demo/oneshot-architecture-desktop.h264.mp4">1080p H.264</a> · <a href="public/demo/oneshot-architecture-desktop.vtt">Captions (.vtt)</a> · <a href="public/demo/oneshot-architecture-desktop-poster.webp">Poster</a><br>
   <sub>The 4K H.264 masters and the portrait cut are archival and gitignored — regenerate them with <code>pnpm run capture:architecture-video</code>.</sub>
 </p>

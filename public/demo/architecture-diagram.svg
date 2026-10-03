@@ -1,174 +1,174 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="100%" height="100%" style="background:#0d0d11;font-family:'Inter',system-ui,-apple-system,sans-serif;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="100%" height="100%" style="background:#0b0d16;font-family:'Inter',system-ui,sans-serif;">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0e1118"/>
-      <stop offset="50%" stop-color="#0a0c12"/>
-      <stop offset="100%" stop-color="#06070a"/>
-    </linearGradient>
-    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#161b26"/>
-      <stop offset="100%" stop-color="#10131c"/>
-    </linearGradient>
-    <linearGradient id="geminiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1a73e8"/>
-      <stop offset="50%" stop-color="#8ab4f8"/>
-      <stop offset="100%" stop-color="#4285f4"/>
-    </linearGradient>
-    <linearGradient id="accentBlue" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#3b82f6"/>
-      <stop offset="100%" stop-color="#60a5fa"/>
-    </linearGradient>
-    <linearGradient id="accentEmerald" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#10b981"/>
-      <stop offset="100%" stop-color="#34d399"/>
-    </linearGradient>
-    <linearGradient id="accentPurple" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#8b5cf6"/>
-      <stop offset="100%" stop-color="#a78bfa"/>
-    </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="6" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0b0d16"/><stop offset="100%" stop-color="#080a12"/></linearGradient>
+    <linearGradient id="card" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#141824"/><stop offset="100%" stop-color="#0f1220"/></linearGradient>
+    <linearGradient id="blue" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#60a5fa"/></linearGradient>
+    <linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#34d399"/></linearGradient>
+    <linearGradient id="amber" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#d97706"/><stop offset="100%" stop-color="#fbbf24"/></linearGradient>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#a78bfa"/></linearGradient>
+    <marker id="aB" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 z" fill="#3b82f6"/></marker>
+    <marker id="aG" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 z" fill="#10b981"/></marker>
+    <marker id="aA" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 z" fill="#f59e0b"/></marker>
+    <marker id="aP" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 z" fill="#8b5cf6"/></marker>
   </defs>
 
-  <!-- Background -->
-  <rect width="1200" height="680" fill="url(#bgGrad)"/>
-  <rect width="1200" height="680" fill="none" stroke="#1f293d" stroke-width="1.5"/>
+  <rect width="1200" height="720" fill="url(#bg)"/>
 
-  <!-- Title & Header -->
-  <g transform="translate(60, 48)">
-    <rect x="0" y="0" width="10" height="32" rx="3" fill="url(#geminiGrad)" filter="url(#glow)"/>
-    <text x="24" y="24" fill="#ffffff" font-size="24" font-weight="700" letter-spacing="-0.5">OneShot E2E — System Architecture</text>
-    <text x="500" y="23" fill="#8ab4f8" font-size="12" font-family="'JetBrains Mono',monospace" font-weight="600" letter-spacing="1">GOOGLE GEMINI 3.5 · AGENT DEVELOPMENT KIT (ADK) · GOOGLE CLOUD RUN</text>
-  </g>
+  <!-- TITLE -->
+  <rect x="56" y="20" width="8" height="38" rx="2" fill="url(#blue)"/>
+  <text x="76" y="41" fill="#f1f5f9" font-size="21" font-weight="700" letter-spacing="-0.4">OneShot E2E — Verified Agentic Console Architecture</text>
+  <text x="76" y="57" fill="#475569" font-size="11" font-family="'JetBrains Mono',monospace" letter-spacing="0.3">useStream · AG-UI SSE · Python Subprocess · RFC 8785 · SHA-256 · 4-Partition Sandbox</text>
 
-  <!-- ==================== LAYER 1: CLIENT / FRONTEND ==================== -->
-  <g transform="translate(60, 100)">
-    <rect width="1080" height="135" rx="12" fill="url(#cardGrad)" stroke="#1e293b" stroke-width="1.5"/>
-    <rect x="0" y="0" width="6" height="135" rx="3" fill="#3b82f6"/>
-    <text x="24" y="28" fill="#60a5fa" font-size="11" font-weight="700" letter-spacing="1.5" text-transform="uppercase">Layer 1: Canonical Web UI &amp; Streaming Client (Next.js 16 App Router)</text>
+  <!-- ═══════════════ ROW A: INSTALL + BOOT ═══════════════ -->
+  <rect x="56" y="72" width="1088" height="100" rx="8" fill="url(#card)" stroke="#1e293b" stroke-width="1"/>
+  <rect x="56" y="72" width="5" height="100" rx="2" fill="url(#amber)"/>
+  <text x="74" y="90" fill="#fbbf24" font-size="9" font-weight="700" letter-spacing="1.5">INSTALL + BOOT  ·  screen-0 / 00:00</text>
 
-    <!-- Component 1: Chat Shell & Projections -->
-    <g transform="translate(24, 42)">
-      <rect width="320" height="75" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-      <text x="16" y="24" fill="#f8fafc" font-size="14" font-weight="600">Agent React Projections</text>
-      <text x="16" y="44" fill="#94a3b8" font-size="11">stream.messages · stream.subagents</text>
-      <text x="16" y="60" fill="#94a3b8" font-size="11">stream.tool_calls · stream.values.todos</text>
-    </g>
+  <rect x="74" y="98" width="320" height="62" rx="6" fill="#0d1117" stroke="#1e3a10" stroke-width="1"/>
+  <text x="90" y="116" fill="#22c55e" font-size="11" font-family="'JetBrains Mono',monospace">$ pnpm test          tests 222  pass 222  fail 0</text>
+  <text x="90" y="131" fill="#22c55e" font-size="11" font-family="'JetBrains Mono',monospace">$ pnpm run test:e2e  21 passed</text>
+  <text x="90" y="146" fill="#22c55e" font-size="11" font-family="'JetBrains Mono',monospace">$ pnpm run verify    Passed: 7/7 — All checks passed!</text>
 
-    <!-- Component 2: Action API v2 Client -->
-    <g transform="translate(364, 42)">
-      <rect width="330" height="75" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-      <text x="16" y="24" fill="#f8fafc" font-size="14" font-weight="600">Action API v2 Client</text>
-      <text x="16" y="44" fill="#94a3b8" font-size="11">OneShotPublicApi &amp; SecurityWorker</text>
-      <text x="16" y="60" fill="#94a3b8" font-size="11">Strict Server-Side Credential Boundary</text>
-    </g>
+  <rect x="414" y="98" width="320" height="62" rx="6" fill="#0d1117" stroke="#1e3a10" stroke-width="1"/>
+  <text x="430" y="116" fill="#94a3b8" font-size="11" font-family="'JetBrains Mono',monospace">Node v24.21.0 · pnpm 11.27.1 · Python 3.12</text>
+  <text x="430" y="131" fill="#94a3b8" font-size="11" font-family="'JetBrains Mono',monospace">tsc --outDir dist --noEmit false   exit 0</text>
+  <text x="430" y="146" fill="#64748b" font-size="11" font-family="'JetBrains Mono',monospace">$ pnpm dev  →  http://localhost:8787</text>
 
-    <!-- Component 3: Task Rail & Verification Panel -->
-    <g transform="translate(714, 42)">
-      <rect width="342" height="75" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-      <text x="16" y="24" fill="#f8fafc" font-size="14" font-weight="600">Task Management Rail</text>
-      <text x="16" y="44" fill="#94a3b8" font-size="11">Human Review Gates (Gate 1 &amp; Gate 2)</text>
-      <text x="16" y="60" fill="#94a3b8" font-size="11">Proof Ledger: Expected == Observed</text>
-    </g>
-  </g>
+  <rect x="754" y="98" width="370" height="62" rx="6" fill="#0d1117" stroke="#1e3a10" stroke-width="1"/>
+  <text x="770" y="116" fill="#f8fafc" font-size="12" font-weight="600">Verified Agentic Console</text>
+  <text x="770" y="133" fill="#94a3b8" font-size="11">READY (OFFLINE DRY-RUN ENABLED)</text>
+  <text x="770" y="149" fill="#64748b" font-size="11">5-step onboarding · no API key needed · SEC-INV-001</text>
 
-  <!-- Connectors Layer 1 -> Layer 2 -->
-  <g stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 4" fill="none">
-    <line x1="220" y1="235" x2="220" y2="270"/>
-    <line x1="530" y1="235" x2="530" y2="270"/>
-    <line x1="880" y1="235" x2="880" y2="270"/>
-  </g>
-  <text x="540" y="258" fill="#60a5fa" font-size="10" font-family="'JetBrains Mono',monospace">Real-time SSE (/api/agent/stream) &amp; HTTP POST (/api/v2/*)</text>
+  <!-- ═══════════════ ROW B: FIXTURE + STREAM ═══════════════ -->
+  <line x1="600" y1="172" x2="600" y2="195" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#aB)"/>
+  <text x="480" y="188" fill="#3b82f6" font-size="10" font-family="'JetBrains Mono',monospace">00:31 — TEST SCENARIO  →  "Try fixture" step selected</text>
 
-  <!-- ==================== LAYER 2: BACKEND RUNTIME ==================== -->
-  <g transform="translate(60, 270)">
-    <rect width="1080" height="195" rx="12" fill="url(#cardGrad)" stroke="#1e293b" stroke-width="1.5"/>
-    <rect x="0" y="0" width="6" height="195" rx="3" fill="#10b981"/>
-    <text x="24" y="28" fill="#34d399" font-size="11" font-weight="700" letter-spacing="1.5" text-transform="uppercase">Layer 2: OneShot Runtime &amp; Google ADK Workflow Engine</text>
+  <rect x="56" y="196" width="1088" height="140" rx="8" fill="url(#card)" stroke="#1e293b" stroke-width="1"/>
+  <rect x="56" y="196" width="5" height="140" rx="2" fill="url(#blue)"/>
+  <text x="74" y="215" fill="#60a5fa" font-size="9" font-weight="700" letter-spacing="1.5">FRONTEND · useStream + AG-UI SSE EVENT LOOP  ·  00:41 START WORKFLOW</text>
 
-    <!-- Box 1: Multi-Agent Coordinator -->
-    <g transform="translate(24, 44)">
-      <rect width="250" height="130" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-      <text x="16" y="24" fill="#f8fafc" font-size="13" font-weight="600">Multi-Agent SOPs</text>
-      <text x="16" y="44" fill="#34d399" font-size="11" font-weight="500">• Researcher Agent</text>
-      <text x="16" y="62" fill="#34d399" font-size="11" font-weight="500">• Planner Agent</text>
-      <text x="16" y="80" fill="#34d399" font-size="11" font-weight="500">• Builder Agent</text>
-      <text x="16" y="98" fill="#34d399" font-size="11" font-weight="500">• Refactor &amp; Critic</text>
-      <text x="16" y="118" fill="#64748b" font-size="10">Private scoped tool bindings</text>
-    </g>
+  <!-- useStream box -->
+  <rect x="74" y="223" width="310" height="100" rx="6" fill="#111827" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="90" y="242" fill="#f8fafc" font-size="12" font-weight="700">useStream&#40;&#123; sessionId &#125;&#41;</text>
+  <text x="90" y="259" fill="#60a5fa" font-size="11">conversation · isStreaming · streamingChunk</text>
+  <text x="90" y="275" fill="#94a3b8" font-size="11">sendMessage() → AbortController + SSE fetch</text>
+  <text x="90" y="291" fill="#94a3b8" font-size="11">abort() → fetch cancel + pyProcess.kill()</text>
+  <text x="90" y="307" fill="#475569" font-size="10">Invariant 3 · Invariant 22 · useStream.ts</text>
 
-    <!-- Box 2: Google ADK Engine & Transitions -->
-    <g transform="translate(290, 44)">
-      <rect width="250" height="130" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-      <text x="16" y="24" fill="#f8fafc" font-size="13" font-weight="600">Google ADK Workflow</text>
-      <text x="16" y="44" fill="#94a3b8" font-size="11">Transition State Machine</text>
-      <text x="16" y="62" fill="#94a3b8" font-size="11">Stage Scope Isolation</text>
-      <text x="16" y="80" fill="#94a3b8" font-size="11">Gate 1: Research Review</text>
-      <text x="16" y="98" fill="#94a3b8" font-size="11">Gate 2: Package Core Hash</text>
-      <text x="16" y="118" fill="#64748b" font-size="10">backend/workflow/adk</text>
-    </g>
+  <!-- iterateAgentStream -->
+  <rect x="404" y="223" width="360" height="100" rx="6" fill="#111827" stroke="#1d4ed8" stroke-width="1"/>
+  <text x="420" y="242" fill="#f8fafc" font-size="12" font-weight="600">iterateAgentStream&#40;&#41; — SSE Parser</text>
+  <text x="420" y="259" fill="#60a5fa" font-size="11">fetch /api/agent/stream · TextDecoder loop</text>
+  <text x="420" y="275" fill="#94a3b8" font-size="11">RUN_START · STEP_START/FINISH</text>
+  <text x="420" y="291" fill="#94a3b8" font-size="11">TEXT_MESSAGE_DELTA · TOOL_CALL_* · RUN_FINISH</text>
+  <text x="420" y="307" fill="#475569" font-size="10">runId correlation enforced · no open tools at RUN_FINISH · api.ts</text>
 
-    <!-- Box 3: Deterministic Reasoner -->
-    <g transform="translate(556, 44)">
-      <rect width="250" height="130" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-      <text x="16" y="24" fill="#f8fafc" font-size="13" font-weight="600">Python Reasoner</text>
-      <text x="16" y="44" fill="#94a3b8" font-size="11">Offline Local Reasoning</text>
-      <text x="16" y="62" fill="#94a3b8" font-size="11">Deterministic RPC &amp; Subprocess</text>
-      <text x="16" y="80" fill="#94a3b8" font-size="11">Fixture SHA-256 Hashing</text>
-      <text x="16" y="98" fill="#94a3b8" font-size="11">Contract Canonicalization</text>
-      <text x="16" y="118" fill="#64748b" font-size="10">backend/python/app/main.py</text>
-    </g>
+  <!-- Pipeline status -->
+  <rect x="784" y="223" width="340" height="100" rx="6" fill="#111827" stroke="#1d4ed8" stroke-width="1"/>
+  <text x="800" y="242" fill="#f8fafc" font-size="12" font-weight="600">Pipeline Status Panel</text>
+  <text x="800" y="259" fill="#34d399" font-size="11">Stream In Progress (AG-UI SSE) → live columns</text>
+  <text x="800" y="275" fill="#94a3b8" font-size="11">Active · Evaluating · Checking · Pending</text>
+  <text x="800" y="291" fill="#34d399" font-size="11">→ Fixture Verified: HTTP 200 · SHA-256 CONFIRMED</text>
+  <text x="800" y="307" fill="#94a3b8" font-size="11">Verified · Deterministic · SHA-256 Equal · Governed</text>
 
-    <!-- Box 4: SessionLedger & Storage -->
-    <g transform="translate(822, 44)">
-      <rect width="234" height="130" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-      <text x="16" y="24" fill="#f8fafc" font-size="13" font-weight="600">State &amp; Memory Bank</text>
-      <text x="16" y="44" fill="#94a3b8" font-size="11">SessionLedger Checkpoints</text>
-      <text x="16" y="62" fill="#94a3b8" font-size="11">Virtual Filesystem Sandbox</text>
-      <text x="16" y="80" fill="#94a3b8" font-size="11">Git &amp; Byte-Exact Storage</text>
-      <text x="16" y="98" fill="#94a3b8" font-size="11">Audit Trail &amp; Telemetry</text>
-      <text x="16" y="118" fill="#64748b" font-size="10">packages/agent-runtime/storage</text>
-    </g>
-  </g>
+  <!-- arrows row B -->
+  <line x1="384" y1="273" x2="402" y2="273" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#aB)"/>
+  <line x1="764" y1="273" x2="782" y2="273" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#aB)"/>
+  <text x="387" y="268" fill="#3b82f6" font-size="9">calls</text>
+  <text x="767" y="268" fill="#3b82f6" font-size="9">projects</text>
 
-  <!-- Connectors Layer 2 -> Layer 3 -->
-  <g stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 4" fill="none">
-    <line x1="220" y1="465" x2="220" y2="505"/>
-    <line x1="530" y1="465" x2="530" y2="505"/>
-    <line x1="880" y1="465" x2="880" y2="505"/>
-  </g>
-  <text x="490" y="490" fill="#34d399" font-size="10" font-family="'JetBrains Mono',monospace">Google GenAI SDK · Vertex AI · Google Cloud Infrastructure</text>
+  <!-- ═══════════════ CONNECTORS B→C ═══════════════ -->
+  <line x1="280" y1="336" x2="280" y2="362" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#aB)"/>
+  <line x1="760" y1="336" x2="760" y2="362" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#aG)"/>
+  <text x="130" y="354" fill="#3b82f6" font-size="10" font-family="'JetBrains Mono',monospace">SSE POST /api/agent/stream</text>
+  <text x="620" y="354" fill="#10b981" font-size="10" font-family="'JetBrains Mono',monospace">Context Drawer opens · 01:12 PARTITION INSPECTION</text>
 
-  <!-- ==================== LAYER 3: INFRASTRUCTURE ==================== -->
-  <g transform="translate(60, 505)">
-    <rect width="1080" height="135" rx="12" fill="url(#cardGrad)" stroke="#1e293b" stroke-width="1.5"/>
-    <rect x="0" y="0" width="6" height="135" rx="3" fill="#8b5cf6"/>
-    <text x="24" y="28" fill="#a78bfa" font-size="11" font-weight="700" letter-spacing="1.5" text-transform="uppercase">Layer 3: Google Cloud &amp; Foundation Models (Gemini Enterprise Platform)</text>
+  <!-- ═══════════════ ROW C: BACKEND + CONTEXT DRAWER ═══════════════ -->
+  <rect x="56" y="363" width="1088" height="140" rx="8" fill="url(#card)" stroke="#1e293b" stroke-width="1"/>
+  <rect x="56" y="363" width="5" height="140" rx="2" fill="url(#green)"/>
+  <text x="74" y="382" fill="#34d399" font-size="9" font-weight="700" letter-spacing="1.5">BACKEND RUNTIME · Python Subprocess Bridge  /  CONTEXT DRAWER · Backends + Human Governance</text>
 
-    <!-- Infra 1: Gemini 3.5 Flash & Vertex AI -->
-    <g transform="translate(24, 42)">
-      <rect width="320" height="75" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-      <text x="16" y="24" fill="#8ab4f8" font-size="14" font-weight="600">Google Gemini 3.5 &amp; Vertex AI</text>
-      <text x="16" y="44" fill="#94a3b8" font-size="11">Fast Multi-modal Flash Reasoning</text>
-      <text x="16" y="60" fill="#94a3b8" font-size="11">Resilient Gateway Fallbacks (OpenAI, Mistral)</text>
-    </g>
+  <!-- SSE Emitter -->
+  <rect x="74" y="390" width="250" height="100" rx="6" fill="#111827" stroke="#064e3b" stroke-width="1"/>
+  <text x="90" y="408" fill="#f8fafc" font-size="12" font-weight="600">SSE Event Emitter</text>
+  <text x="90" y="425" fill="#34d399" font-size="11">RUN_START &#123; runId, timestamp &#125;</text>
+  <text x="90" y="441" fill="#34d399" font-size="11">STEP_START / STEP_FINISH</text>
+  <text x="90" y="457" fill="#34d399" font-size="11">TEXT_MESSAGE_DELTA &#123; delta &#125;</text>
+  <text x="90" y="473" fill="#34d399" font-size="11">RUN_FINISH &#123; status: COMPLETED &#125;</text>
 
-    <!-- Infra 2: Google Cloud Run -->
-    <g transform="translate(364, 42)">
-      <rect width="330" height="75" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-      <text x="16" y="24" fill="#8ab4f8" font-size="14" font-weight="600">Google Cloud Run (Serverless)</text>
-      <text x="16" y="44" fill="#94a3b8" font-size="11">Containerized Deployment (docker/Dockerfile)</text>
-      <text x="16" y="60" fill="#94a3b8" font-size="11">Asynchronous Long-Running Task Workers</text>
-    </g>
+  <!-- Python Bridge -->
+  <rect x="344" y="390" width="340" height="100" rx="6" fill="#111827" stroke="#064e3b" stroke-width="1"/>
+  <text x="360" y="408" fill="#f8fafc" font-size="12" font-weight="600">Python Runtime Bridge</text>
+  <text x="360" y="425" fill="#34d399" font-size="11">spawn(python, [main.py, --stream]) ← JSON stdin</text>
+  <text x="360" y="441" fill="#34d399" font-size="11">stdout → &#123; type:"delta", text &#125; yields immediately</text>
+  <text x="360" y="457" fill="#34d399" font-size="11">&#123; type:"done", response &#125; → contract validation</text>
+  <text x="360" y="473" fill="#475569" font-size="10">signal.abort() → pyProcess.kill() · python-runtime.ts</text>
 
-    <!-- Infra 3: Observability & Security -->
-    <g transform="translate(714, 42)">
-      <rect width="342" height="75" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-      <text x="16" y="24" fill="#8ab4f8" font-size="14" font-weight="600">Observability &amp; Guardrails</text>
-      <text x="16" y="44" fill="#94a3b8" font-size="11">OpenTelemetry / Cloud Logging Traces</text>
-      <text x="16" y="60" fill="#94a3b8" font-size="11">Zero-Trust Credential Isolation &amp; Model Armor</text>
-    </g>
-  </g>
+  <!-- Backends panel -->
+  <rect x="704" y="390" width="260" height="100" rx="6" fill="#111827" stroke="#064e3b" stroke-width="1"/>
+  <text x="720" y="408" fill="#f8fafc" font-size="12" font-weight="600">Backends Panel · 01:13</text>
+  <text x="720" y="425" fill="#f87171" font-size="11">Virtual Mode: ENFORCED</text>
+  <text x="720" y="441" fill="#f87171" font-size="11">Path Traversal: BLOCKED</text>
+  <text x="720" y="457" fill="#94a3b8" font-size="11">/workspace  /scratch  /memories  /artifacts</text>
+  <text x="720" y="473" fill="#475569" font-size="10">Pluggable prefix routing · sandbox isolation</text>
+
+  <!-- Human Gov panel -->
+  <rect x="984" y="390" width="148" height="100" rx="6" fill="#111827" stroke="#4c1d95" stroke-width="1"/>
+  <text x="996" y="408" fill="#f8fafc" font-size="11" font-weight="600">Human Gov · 01:28</text>
+  <text x="996" y="425" fill="#a78bfa" font-size="10">Gate 1: Research Review</text>
+  <text x="996" y="440" fill="#fbbf24" font-size="10">PENDING_APPROVAL</text>
+  <text x="996" y="456" fill="#a78bfa" font-size="10">Gate 2: Build Ready</text>
+  <text x="996" y="471" fill="#fbbf24" font-size="10">PENDING_APPROVAL</text>
+  <text x="996" y="483" fill="#475569" font-size="9">neither auto-advances</text>
+
+  <line x1="324" y1="440" x2="342" y2="440" stroke="#10b981" stroke-width="1.5" marker-end="url(#aG)"/>
+  <line x1="684" y1="440" x2="702" y2="440" stroke="#10b981" stroke-width="1.5" marker-end="url(#aG)"/>
+  <line x1="964" y1="440" x2="982" y2="440" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#aP)"/>
+
+  <!-- ═══════════════ CONNECTORS C→D ═══════════════ -->
+  <line x1="220" y1="503" x2="220" y2="530" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#aG)"/>
+  <line x1="700" y1="503" x2="700" y2="530" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#aA)"/>
+  <text x="60" y="521" fill="#10b981" font-size="10" font-family="'JetBrains Mono',monospace">Strands SDK · Gemini / OpenAI / Nebius</text>
+  <text x="490" y="521" fill="#f59e0b" font-size="10" font-family="'JetBrains Mono',monospace">02:32 TOOL EXECUTION · Reasoning Chain · Verified Invariants</text>
+
+  <!-- ═══════════════ ROW D: PROVIDERS + PYTHON ENGINE + FINAL ═══════════════ -->
+  <rect x="56" y="531" width="520" height="148" rx="8" fill="url(#card)" stroke="#1e293b" stroke-width="1"/>
+  <rect x="56" y="531" width="5" height="148" rx="2" fill="url(#purple)"/>
+  <text x="74" y="550" fill="#a78bfa" font-size="9" font-weight="700" letter-spacing="1.5">LLM PROVIDERS · Live Provider Configuration</text>
+
+  <rect x="74" y="558" width="230" height="108" rx="6" fill="#111827" stroke="#3b1f6e" stroke-width="1"/>
+  <text x="90" y="576" fill="#f8fafc" font-size="12" font-weight="600">Live Execution</text>
+  <text x="90" y="594" fill="#a78bfa" font-size="11">Gemini · Openai · Nebius</text>
+  <text x="90" y="610" fill="#94a3b8" font-size="11">Same streamAgentExecution()</text>
+  <text x="90" y="626" fill="#94a3b8" font-size="11">Only config source changes</text>
+  <text x="90" y="651" fill="#475569" font-size="10">Strands Agents SDK · failover chain</text>
+
+  <rect x="324" y="558" width="230" height="108" rx="6" fill="#111827" stroke="#3b1f6e" stroke-width="1"/>
+  <text x="340" y="576" fill="#f8fafc" font-size="12" font-weight="600">Offline Fixture Mode</text>
+  <text x="340" y="594" fill="#a78bfa" font-size="11">iterateAgentStream on fixture</text>
+  <text x="340" y="610" fill="#94a3b8" font-size="11">Identical events to live run</text>
+  <text x="340" y="626" fill="#94a3b8" font-size="11">Frontend cannot distinguish</text>
+  <text x="340" y="651" fill="#475569" font-size="10">app/fixtures/security-invari...</text>
+
+  <rect x="596" y="531" width="548" height="148" rx="8" fill="url(#card)" stroke="#1e293b" stroke-width="1"/>
+  <rect x="596" y="531" width="5" height="148" rx="2" fill="url(#amber)"/>
+  <text x="614" y="550" fill="#fbbf24" font-size="9" font-weight="700" letter-spacing="1.5">PYTHON REASONING ENGINE · backend/python/app/main.py</text>
+
+  <rect x="614" y="558" width="240" height="108" rx="6" fill="#111827" stroke="#78350f" stroke-width="1"/>
+  <text x="630" y="576" fill="#f8fafc" font-size="12" font-weight="600">Reasoning Tasks</text>
+  <text x="630" y="594" fill="#fbbf24" font-size="11">researcher · planner</text>
+  <text x="630" y="610" fill="#fbbf24" font-size="11">gap-analysis · evaluation</text>
+  <text x="630" y="626" fill="#fbbf24" font-size="11">critic · general</text>
+  <text x="630" y="651" fill="#475569" font-size="10">uv-managed venv · pyproject.toml · uv.lock</text>
+
+  <rect x="874" y="558" width="256" height="108" rx="6" fill="#111827" stroke="#78350f" stroke-width="1"/>
+  <text x="890" y="576" fill="#f8fafc" font-size="12" font-weight="600">Contract Validation</text>
+  <text x="890" y="594" fill="#fbbf24" font-size="11">RFC 8785 canonical JSON</text>
+  <text x="890" y="610" fill="#fbbf24" font-size="11">SHA-256 byte equality check</text>
+  <text x="890" y="626" fill="#fbbf24" font-size="11">run_id · task correlation</text>
+  <text x="890" y="642" fill="#fbbf24" font-size="11">success + confidence contract</text>
+  <text x="890" y="651" fill="#475569" font-size="10">parsePythonReasoningResponse()</text>
+
+  <!-- bottom label -->
+  <text x="56" y="697" fill="#1e3a5f" font-size="10" font-family="'JetBrains Mono',monospace">03:03 UNIFIED PROGRESSION — both offline fixture and live run follow the same event contract · real SSE · real SHA-256 proofs · real partition isolation</text>
 </svg>

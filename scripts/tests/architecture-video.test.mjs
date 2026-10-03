@@ -1,7 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { chromium } from '@playwright/test'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { buildHtml, buildVtt, SCENES, SCENE_SCREENSHOTS, storyboardTimeline, toVttTimestamp, toSpeechSsml, toSpokenText, PRONUNCIATION_ALIASES, LAYOUT_HEIGHT, LAYOUT_WIDTH, RENDITIONS, VIDEO_HEIGHT, VIDEO_WIDTH } from '../capture-architecture-video.mjs'
 import { readFileSync as read } from 'node:fs'
 
@@ -286,6 +288,89 @@ test('every rewritten cue fits its 15-second window', () => {
   // Guard the constant itself: if this drifts far above the real rate the guard
   // stops catching anything.
   assert.ok(WORDS_PER_SECOND > 2 && WORDS_PER_SECOND < 3.2)
+})
+
+test('every scene composites a real capture that exists on disk', () => {
+  // A typo or a stale rename in SCENE_SCREENSHOTS used to surface only as an
+  // ENOENT thrown inside the capture run, roughly an hour in, after twelve
+  // scenes had already been recorded. The screenshot is inlined into the scene
+  // document as a data URI, so nothing else in this file ever touches the file
+  // system -- which is why an unused import was the only trace of the map. These
+  // assertions read the actual bytes and close that gap.
+  const demoDir = fileURLToPath(new URL('../../public/demo/', import.meta.url))
+  const ids = SCENES.map((scene) => scene.id)
+
+  // One capture per scene, no extras: a scene with no capture would silently
+  // render as bare diagram art, and an unreferenced entry hides a dead file.
+  assert.deepEqual(
+    Object.keys(SCENE_SCREENSHOTS).sort(),
+    [...ids].sort(),
+    'SCENE_SCREENSHOTS must map exactly one existing screenshot per scene',
+  )
+
+  for (const [id, filename] of Object.entries(SCENE_SCREENSHOTS)) {
+    assert.ok(
+      typeof filename === 'string' && filename.endsWith('.png'),
+      `${id} must point at a .png capture, got ${JSON.stringify(filename)}`,
+    )
+    assert.ok(
+      existsSync(path.join(demoDir, filename)),
+      `${id} maps to ${filename}, which is not in public/demo`,
+    )
+  }
+})
+
+test('the demo capture produces every committed screenshot, and none are missing', () => {
+  // Reconciles the committed screen-*.png set against the capture script's own
+  // `shot()` calls in BOTH directions. The architecture video samples only twelve
+  // of them, which used to look like seven orphaned files; they are in fact
+  // alternate states of beats the video visits once, and they are README
+  // screenshot-table sources. Asserting the video's usage instead of the
+  // capture's output would invite exactly the wrong "cleanup" -- deleting
+  // screenshots the README still links to.
+  const demoDir = fileURLToPath(new URL('../../public/demo/', import.meta.url))
+  const verifier = read(new URL('../verify-demo-assets.mjs', import.meta.url), 'utf8')
+  const expectedBlock = verifier.slice(verifier.indexOf('const expectedFiles = ['), verifier.indexOf(']', verifier.indexOf('const expectedFiles = [')))
+
+  const committed = [...expectedBlock.matchAll(/'(screen-[\w-]+\.png)'/g)].map(([, name]) => name)
+  const produced = [...captureDemoSource.matchAll(/'(screen-[\w-]+\.png)'/g)].map(([, name]) => name)
+
+  assert.ok(committed.length >= SCENES.length, 'the committed set must cover every scene')
+  assert.deepEqual(
+    [...new Set(produced)].sort(),
+    [...committed].sort(),
+    'committed screenshots must match the demo capture outputs exactly (both directions)',
+  )
+  for (const filename of committed) {
+    assert.ok(existsSync(path.join(demoDir, filename)), `${filename} is committed but missing from public/demo`)
+  }
+})
+
+test('the committed captions describe the current storyboard', () => {
+  // The committed .vtt is generated output, and the failure it guards is a
+  // hand-edited VTT shipping beside an un-regenerated video: the file looked
+  // fine, matched across every derived tree, and passed every other assertion in
+  // verify-demo-assets.mjs while describing a completely different video. This
+  // asserts the invariant at the cheapest possible cost -- cue text only, since
+  // cue ends are measured from real narration length and are not reproducible
+  // outside a capture run.
+  const vttPath = fileURLToPath(new URL('../../public/demo/oneshot-architecture-desktop.vtt', import.meta.url))
+  assert.ok(existsSync(vttPath), 'the committed caption file must exist')
+
+  const committed = readFileSync(vttPath, 'utf8')
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter((block) => !block.startsWith('WEBVTT') && block.includes(' --> '))
+    .map((block) => block.split('\n').slice(block.split('\n').findIndex((line) => line.includes(' --> ')) + 1).join('\n').trim())
+
+  assert.equal(committed.length, SCENES.length, 'one caption cue per scene')
+  SCENES.forEach((scene, index) => {
+    assert.equal(
+      committed[index],
+      scene.voice,
+      `caption ${index + 1} does not match scene "${scene.id}".voice; regenerate with pnpm run capture:architecture-video`,
+    )
+  })
 })
 
 test('WebVTT cues end at each measured narration duration', () => {
