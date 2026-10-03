@@ -76,6 +76,11 @@ describe('Source file policy — launcher coverage', () => {
       '.venv/Scripts/activate.ps1',
       'dist/launch.ps1',
       'frontend/web/.next/launch.sh',
+      // Release packaging output: RELEASE.md is a source extension, and the
+      // whitelist must not let package.json through from an extracted archive.
+      'release/RELEASE.md',
+      'release/oneshot-e2e-1.3.0-src/package.json',
+      'release/.verify-tmp/oneshot-e2e-1.3.0-src/backend/index.ts',
     ]
 
     assert.deepEqual(

@@ -90,13 +90,13 @@ $ pnpm run build
 ✓ Compiled static frontend dist/
 
 $ pnpm test
-tests 222   pass 222   fail 0
+tests 237   pass 237   fail 0
 
 $ pnpm run test:runtime
-tests 99    pass 99    fail 0
+tests 117   pass 117   fail 0
 
 $ pnpm --prefix frontend/web test
-tests 84    pass 84    fail 0
+tests 100   pass 100   fail 0
 
 $ pnpm run test:e2e
 21 passed (38.6s)
@@ -109,7 +109,7 @@ $ pnpm run verify
   [✓] dependencies      @strands-agents/sdk, dotenv, openai, ai
   [✓] build_outputs     dist/backend/index.js, frontend/web/dist
   [✓] configuration     tsconfig, package.json, app/env/.env.example
-  [✓] manifest          234 files matching SHA-256 tree (committed sources only)
+  [✓] manifest          266 files matching SHA-256 tree (committed sources only)
   [✓] tests             backend, runtime, web, scripts, e2e
   [✓] security          .env git protection, no hardcoded secrets
 
@@ -193,6 +193,28 @@ OLLAMA_MODEL=gemma4:31b docker compose --profile local-llm up --build
 
 ---
 
+## 📦 Source Releases
+
+Every GitHub release ships a verifiable source package built by `scripts/release.mjs` — `node: builtins` only, so git, Node, and a Python 3 interpreter are enough to build or verify one:
+
+```sh
+pnpm run release:preflight   # refuses dirty trees, missing tags, unpushed commits, stale manifests
+pnpm run release build       # release/oneshot-e2e-<v>-src.tar.gz + .zip + SHA256SUMS + RELEASE.md
+pnpm run release verify release/oneshot-e2e-<v>-src.tar.gz   # hash + re-check the extracted tree's manifest
+pnpm run release publish     # gh release create with archives and notes attached
+```
+
+**Version consistency rule:** the tag freezes every manifest at one version. `package.json`, `frontend/web/package.json`, `backend/package.json`, `packages/agent-runtime/package.json`, all four `app/integration/*/package.json` files, and `backend/python/pyproject.toml` must agree *before* tagging — `pnpm run test:scripts` fails on any drift. When the release is published, CI re-runs preflight → build → verify against the tag and attaches the archives only from a green run.
+
+```sh
+# Consumers verify a download either way:
+sha256sum -c SHA256SUMS
+node scripts/release.mjs verify oneshot-e2e-1.3.0-src.tar.gz   # from a checkout
+```
+
+---
+
+## 📜 License
 ## 📜 License
 
 [Apache-2.0](LICENSE)

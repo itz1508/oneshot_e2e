@@ -70,7 +70,7 @@ Never fabricate progress, fake timers, mock data, synthetic success, assistant r
 | Python format check (Ruff) | `pnpm run format:python` |
 | Python env bootstrap (uv) | `pnpm run setup:python` |
 | Runtime package tests (117 tests) | `pnpm run test:runtime` |
-| Launcher, manifest policy and Vercel layout tests (39 tests) | `pnpm run test:scripts` |
+| Launcher, manifest policy and Vercel layout tests (45 tests) | `pnpm run test:scripts` |
 | Frontend web tests (100 tests) | `pnpm --prefix frontend/web test` |
 | Browser E2E tests (21 tests) | `pnpm run test:e2e` |
 | Full 7/7 verification suite | `pnpm run verify` |
@@ -93,6 +93,7 @@ Never fabricate progress, fake timers, mock data, synthetic success, assistant r
 | Workflow engine | `backend/pipeline/` and `backend/workflow/` |
 | Deterministic validation | `backend/validation/` and `app/validation/` |
 | Manifest and integrity | `app/scripts/` |
+| Source release packaging | `scripts/release.mjs` |
 | Root package manager config | `package.json` and `pnpm-workspace.yaml` |
 | Root lockfile | `pnpm-lock.yaml` |
 | CI and deployment | `.github/workflows/deploy.yml` |

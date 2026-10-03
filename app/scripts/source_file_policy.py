@@ -6,7 +6,7 @@ Classifies files as source, generated, or excluded for manifest generation.
 """
 
 import hashlib
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Dict, List, Set, Union
 
 # Source file extensions - these are tracked in the manifest
@@ -47,6 +47,12 @@ GENERATED_PATTERNS: Set[str] = {
     # fails on a tree nobody edited. They are gitignored run output, not source.
     'test-results',
     'playwright-report',
+    # scripts/release.mjs build output. RELEASE.md is a .md (a source
+    # extension) and .verify-tmp/ holds an extracted copy of the whole tree,
+    # so one local release build would otherwise double-hash every source file
+    # into the manifest and fail verify on a tree nobody edited. Gitignored
+    # packaging output, never tracked source.
+    'release',
 }
 
 # Generated directory name suffixes - excluded from manifest
@@ -85,6 +91,14 @@ WHITELIST: Set[str] = {
 }
 
 
+# Manifest paths use forward slashes on every platform. Git archives and
+# Linux checkouts list them that way, while Path on Windows yields
+# backslashes. normalize_repo_path is the one place that conversion lives,
+# so manifest keys, verifier lookups, and archive listings stay identical.
+def normalize_repo_path(repo_path: str) -> str:
+    return PurePath(repo_path.replace(chr(92), chr(47))).as_posix()
+
+
 def is_generated_segment(segment: str) -> bool:
     """
     Check if a path segment names a generated directory or file.
@@ -110,7 +124,7 @@ def is_source_file(path: str) -> bool:
     Returns:
         True if the file should be included in the manifest as a source file
     """
-    relative_path = Path(path)
+    relative_path = Path(normalize_repo_path(path))
     name = relative_path.name
     ext = relative_path.suffix.lower()
     
@@ -161,7 +175,7 @@ def is_generated_file(path: str) -> bool:
     Returns:
         True if the file is generated output
     """
-    relative_path = Path(path)
+    relative_path = Path(normalize_repo_path(path))
     name = relative_path.name
     
     # Check if in generated directory
@@ -182,7 +196,7 @@ def is_excluded_file(path: str) -> bool:
     Returns:
         True if the file should not be tracked
     """
-    relative_path = Path(path)
+    relative_path = Path(normalize_repo_path(path))
     name = relative_path.name
     
     # Check excluded patterns
@@ -220,7 +234,7 @@ def get_source_files(root: str = '.') -> List[str]:
             continue
         
         # Get relative path
-        relative_path = str(source_file_path.relative_to(repository_root))
+        relative_path = normalize_repo_path(str(source_file_path.relative_to(repository_root)))
         
         # Check if source file
         if is_source_file(relative_path):

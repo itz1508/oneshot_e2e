@@ -43,6 +43,8 @@
     "verify": "python app/scripts/verify_all.py",
     "verify:demo": "node scripts/verify-demo-assets.mjs",
     "sync:demo": "node scripts/sync-demo-assets.mjs",
+    "release": "node scripts/release.mjs",
+    "release:preflight": "node scripts/release.mjs preflight",
     "capture:architecture-video": "node scripts/capture-architecture-video.mjs",
     "dry-run": "node scripts/dry-run.mjs",
     "test:dry-run": "node scripts/dry-run.mjs",

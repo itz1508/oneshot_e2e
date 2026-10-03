@@ -44,6 +44,10 @@ service-account*.json
 *serviceAccount*.json
 *credentials*.json
 
+# Release packaging output (scripts/release.mjs build). Rebuilt from a tag on
+# demand; never committed.
+/release/
+
 # Logs and test artifacts
 *.log
 *.tmp
