@@ -550,6 +550,33 @@ export const ContextReviewDrawer: React.FC<ContextReviewDrawerProps> = ({
               </div>
             </div>
 
+            {/* Embedded Demo Video */}
+            <div className="rounded-xl border border-white/10 overflow-hidden bg-black shadow-xl">
+              <video
+                controls
+                preload="none"
+                playsInline
+                poster="/demo/oneshot-60s.gif"
+                className="w-full h-auto"
+                aria-label="OneShot 60s fast-forward demo"
+              >
+                <source src="/demo/oneshot-demo.webm" type="video/webm" />
+                <source src="/demo/oneshot-demo.mp4" type="video/mp4" />
+                <track
+                  kind="captions"
+                  src="/demo/oneshot-demo.vtt"
+                  srcLang="en"
+                  label="English"
+                  default
+                />
+                Your browser cannot play the embedded demo video.
+              </video>
+              <p className="px-3 py-2 text-[10px] text-[#8e8e93]">
+                60-second fast-forward demo of the OneShot console. Full walkthrough available on
+                <a href="https://youtu.be/lE9vtKB-fSk" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:underline">YouTube</a>.
+              </p>
+            </div>
+
             {/* YouTube Walkthrough & Chapter Guide */}
             <a
               href="https://youtu.be/lE9vtKB-fSk"

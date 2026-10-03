@@ -49,7 +49,7 @@ curl -fsSL https://raw.githubusercontent.com/itz1508/oneshot_e2e/main/scripts/in
 </p>
 
 <sub>
-  ▶ <b><a href="https://youtu.be/lE9vtKB-fSk">Watch Full Walkthrough on YouTube</a></b> · <a href="public/demo/oneshot-60s.mp4">Direct MP4</a> · <a href="public/demo/oneshot-demo.vtt">Subtitles (.vtt)</a>
+  ▶ <b><a href="https://youtu.be/lE9vtKB-fSk">Watch Full Walkthrough on YouTube</a></b> · <a href="public/demo/oneshot-demo.vtt">Subtitles (.vtt)</a>
 </sub>
 
 <p align="center">
