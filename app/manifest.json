@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-03T04:50:18Z",
+  "generated_at": "2026-10-03T04:59:57Z",
   "version": "1.3.0",
-  "commit": "8435865e",
+  "commit": "288f97e4",
   "files": [
     {
       "path": ".github/workflows/deploy.yml",
@@ -1505,8 +1505,8 @@
     },
     {
       "path": "scripts/release.mjs",
-      "size": 15469,
-      "hash": "sha256:744049c0ad8950d743c9cd2894d69054b92df8068c2b594730f190bbf256d5e7",
+      "size": 15761,
+      "hash": "sha256:3bf516e7ccdf6d28197ed776a9e9de7b3de494bb61d9723177292f9a76d3b2bd",
       "category": "source"
     },
     {
@@ -1603,7 +1603,7 @@
   "statistics": {
     "total_files": 266,
     "source_files": 266,
-    "total_size_bytes": 1724603,
+    "total_size_bytes": 1724895,
     "by_extension": {
       ".yml": 2,
       ".md": 7,

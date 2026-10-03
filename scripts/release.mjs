@@ -327,7 +327,13 @@ export const publish = (version) => {
     fail(`run build first: ${RELEASE_DIR_NAME}/${RELEASE_NOTES_NAME} is missing`)
     return 1
   }
-  const assets = archiveNames(version).map((name) => path.join(REPO_ROOT, RELEASE_DIR_NAME, name))
+  // Same four files the CI source-release job attaches, so a locally published
+  // release is complete even before (or without) the workflow re-upload.
+  const assets = [
+    ...archiveNames(version).map((name) => path.join(REPO_ROOT, RELEASE_DIR_NAME, name)),
+    path.join(REPO_ROOT, RELEASE_DIR_NAME, CHECKSUMS_NAME),
+    path.join(REPO_ROOT, RELEASE_DIR_NAME, RELEASE_NOTES_NAME),
+  ]
   for (const asset of assets) {
     if (!existsSync(asset)) {
       fail(`run build first: ${path.basename(asset)} is missing`)
